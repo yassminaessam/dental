@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,9 @@ import {
 } from "@/components/ui/tabs";
 import { medicalRecordsData, medicalRecordsPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Upload, Search, User, Download } from "lucide-react";
+import { Search, User, Download } from "lucide-react";
+import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
+import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 
 export default function MedicalRecordsPage() {
   return (
@@ -40,14 +43,8 @@ export default function MedicalRecordsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Medical Records</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Image
-            </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Record
-            </Button>
+            <UploadImageDialog />
+            <NewRecordDialog />
           </div>
         </div>
 

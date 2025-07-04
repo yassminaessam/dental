@@ -1,3 +1,4 @@
+
 // Mock data for the dashboard
 export const overviewStats = [
   {
@@ -327,6 +328,9 @@ export const medicalRecordsData = [
   },
 ];
 
+export const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
+export const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
+
 
 export const financialPageStats = [
   {
@@ -383,6 +387,9 @@ export const expensesByCategoryData = [
 ];
 
 export const transactionHistoryData: any[] = [];
+
+export const transactionCategories = ['Patient Payment', 'Insurance Payment', 'Supplies', 'Salary', 'Rent', 'Utilities', 'Marketing', 'Other'];
+export const paymentMethods = ['Credit Card', 'Cash', 'Check', 'Insurance', 'Bank Transfer'];
 
 export const inventoryPageStats = [
   {
@@ -475,6 +482,7 @@ export const inventoryItemsData = [
     location: "Refrigerated Storage",
   },
 ];
+export const inventoryCategories = [...new Set(inventoryItemsData.map(i => i.category))];
 
 export const pharmacyPageStats = [
   {
@@ -543,6 +551,8 @@ export const medicationInventoryData = [
     status: "Low Stock",
   },
 ];
+export const medicationCategories = [...new Set(medicationInventoryData.map(i => i.category))];
+
 
 export const suppliersPageStats = [
   {
@@ -608,6 +618,8 @@ export const suppliersData = [
     status: "active",
   },
 ];
+export const supplierCategories = [...new Set(suppliersData.map(s => s.category))];
+export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
 export const communicationsPageStats = [
   {
@@ -760,6 +772,13 @@ export const outgoingReferralsData = [
   }
 ];
 
+export const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
+export const referralUrgency = ['Routine', 'Urgent', 'Emergency'];
+export const specialistNetwork = [
+    { id: 'spec1', name: 'Dr. Robert Chen', specialty: 'Oral Surgery' },
+    { id: 'spec2', name: 'Dr. Maria Rodriguez', specialty: 'Periodontics' },
+];
+
 export const insurancePageStats = [
   {
     title: "Total Claims",
@@ -822,6 +841,12 @@ export const insuranceClaimsData = [
     statusReason: "Pre-authorization required",
     submitDate: "Dec 9, 2024",
   },
+];
+
+export const insuranceProviders = [
+    { id: 'prov1', name: 'DentalCare Plus' },
+    { id: 'prov2', name: 'HealthFirst Dental' },
+    { id: 'prov3', name: 'SmileCare Insurance' },
 ];
 
 export const prescriptionPageStats = [

@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,8 @@ import {
 } from "@/components/ui/table";
 import { patientPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Filter } from "lucide-react";
+import { Search, Filter } from "lucide-react";
+import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 
 export default function PatientsPage() {
   return (
@@ -25,10 +27,7 @@ export default function PatientsPage() {
       <main className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Patients</h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Patient
-          </Button>
+          <AddPatientDialog />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

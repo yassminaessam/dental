@@ -33,9 +33,7 @@ import {
 import { medicationInventoryData, pharmacyPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
-  Plus,
   Search,
-  ClipboardPen,
   AlertTriangle,
   CalendarClock,
   ClipboardList,
@@ -43,6 +41,8 @@ import {
   ShoppingCart,
   Pencil,
 } from "lucide-react";
+import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
+import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
 
 const iconMap = {
   Pill,
@@ -69,14 +69,8 @@ export default function PharmacyPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <ClipboardPen className="mr-2 h-4 w-4" />
-              New Prescription
-            </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Medication
-            </Button>
+            <NewPrescriptionDialog />
+            <AddMedicationDialog />
           </div>
         </div>
 

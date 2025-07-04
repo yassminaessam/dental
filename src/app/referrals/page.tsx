@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/tabs";
 import { referralPageStats, outgoingReferralsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Send, Eye, UserPlus } from "lucide-react";
+import { Search, Send, Eye } from "lucide-react";
+import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
+import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 
 export default function ReferralsPage() {
   return (
@@ -41,14 +43,8 @@ export default function ReferralsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Referral Management</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Add Specialist
-            </Button>
-            <Button>
-              <Send className="mr-2 h-4 w-4" />
-              New Referral
-            </Button>
+            <AddSpecialistDialog />
+            <NewReferralDialog />
           </div>
         </div>
 

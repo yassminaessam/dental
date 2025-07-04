@@ -31,7 +31,6 @@ import {
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
-  Plus,
   Search,
   BarChart,
   AlertTriangle,
@@ -39,6 +38,7 @@ import {
   Pencil,
   Package as PackageIcon,
 } from "lucide-react";
+import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 
 export default function InventoryPage() {
   const inventoryCategories = [
@@ -54,10 +54,7 @@ export default function InventoryPage() {
               <BarChart className="mr-2 h-4 w-4" />
               Analytics
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
+            <AddItemDialog />
           </div>
         </div>
 

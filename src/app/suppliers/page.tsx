@@ -33,7 +33,6 @@ import {
 import { suppliersData, suppliersPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
-  Plus,
   Search,
   ShoppingCart,
   Building2,
@@ -44,6 +43,8 @@ import {
   Mail,
   Pencil,
 } from "lucide-react";
+import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
+import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
 
 const iconMap = {
   Building2,
@@ -70,14 +71,8 @@ export default function SuppliersPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              New Purchase Order
-            </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Supplier
-            </Button>
+            <NewPurchaseOrderDialog />
+            <AddSupplierDialog />
           </div>
         </div>
 

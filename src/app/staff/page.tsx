@@ -23,7 +23,8 @@ import {
   staffRoles,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 
 export default function StaffPage() {
   return (
@@ -31,10 +32,7 @@ export default function StaffPage() {
       <main className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Staff Management</h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Employee
-          </Button>
+          <AddEmployeeDialog />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

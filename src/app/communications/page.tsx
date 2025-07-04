@@ -1,6 +1,6 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,7 +23,9 @@ import {
 } from "@/components/ui/tabs";
 import { communicationsPageStats, recentMessagesData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock } from "lucide-react";
+import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock } from "lucide-react";
+import { NewMessageDialog } from "@/components/communications/new-message-dialog";
+import { NewTemplateDialog } from "@/components/communications/new-template-dialog";
 
 export default function CommunicationsPage() {
   return (
@@ -32,14 +34,8 @@ export default function CommunicationsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Communications</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              New Template
-            </Button>
-            <Button>
-              <MessageSquareIcon className="mr-2 h-4 w-4" />
-              New Message
-            </Button>
+            <NewTemplateDialog />
+            <NewMessageDialog />
           </div>
         </div>
 

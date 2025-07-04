@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ import {
 } from "@/components/ui/tabs";
 import { patientMessagesData, patientPortalPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Settings, Send, Search, User, Eye, Reply, Circle, CheckCircle2 } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2 } from "lucide-react";
+import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 
 export default function PatientPortalPage() {
   return (
@@ -37,10 +39,11 @@ export default function PatientPortalPage() {
               <Settings className="mr-2 h-4 w-4" />
               Portal Settings
             </Button>
-            <Button>
-              <Send className="mr-2 h-4 w-4" />
-              Send Message
-            </Button>
+            <NewMessageDialog 
+              triggerButtonText="Send Message"
+              dialogTitle="Send a New Message"
+              dialogDescription="Compose and send a message to a patient."
+            />
           </div>
         </div>
 

@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/tabs";
 import { insuranceClaimsData, insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
+import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 
 export default function InsurancePage() {
   return (
@@ -45,10 +46,7 @@ export default function InsurancePage() {
               <Download className="mr-2 h-4 w-4" />
               Export Claims
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Claim
-            </Button>
+            <NewClaimDialog />
           </div>
         </div>
 

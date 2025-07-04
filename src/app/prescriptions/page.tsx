@@ -32,7 +32,6 @@ import {
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
-  Plus,
   Search,
   Download,
   Send,
@@ -41,6 +40,7 @@ import {
   Clock,
   Pill,
 } from "lucide-react";
+import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 
 export default function PrescriptionsPage() {
   return (
@@ -53,10 +53,7 @@ export default function PrescriptionsPage() {
               <Download className="mr-2 h-4 w-4" />
               Export Report
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Prescription
-            </Button>
+            <NewPrescriptionDialog />
           </div>
         </div>
 

@@ -33,7 +33,6 @@ import {
 import { financialPageStats, transactionHistoryData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
-  Plus,
   Search,
   FileText,
   TrendingUp,
@@ -43,6 +42,7 @@ import {
 } from "lucide-react";
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
+import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 
 const iconMap = {
   TrendingUp,
@@ -64,10 +64,7 @@ export default function FinancialPage() {
               <FileText className="mr-2 h-4 w-4" />
               Generate Report
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Transaction
-            </Button>
+            <AddTransactionDialog />
           </div>
         </div>
 

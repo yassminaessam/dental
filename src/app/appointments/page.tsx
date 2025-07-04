@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
 import { appointmentPageStats, availableTimeSlots } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, List, Search } from "lucide-react";
+import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 
 export default function AppointmentsPage() {
   return (
@@ -32,10 +34,7 @@ export default function AppointmentsPage() {
       <main className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Appointments</h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Schedule Appointment
-          </Button>
+          <ScheduleAppointmentDialog />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

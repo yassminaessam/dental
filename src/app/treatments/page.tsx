@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +29,8 @@ import {
   treatmentStats,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 
 export default function TreatmentsPage() {
   return (
@@ -36,10 +38,7 @@ export default function TreatmentsPage() {
       <main className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Treatments</h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Treatment Plan
-          </Button>
+          <NewTreatmentPlanDialog />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
