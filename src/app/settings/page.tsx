@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building } from "lucide-react";
+import { Building, Users } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -162,12 +162,74 @@ export default function SettingsPage() {
               </Card>
             </div>
           </TabsContent>
-          <TabsContent value="users">
-            <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                User settings will be shown here.
-              </CardContent>
-            </Card>
+          <TabsContent value="users" className="mt-6">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Users className="h-5 w-5" />
+                    User Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-6">
+                  <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                    <div className="flex flex-col">
+                      <Label htmlFor="2fa-switch">
+                        Require Two-Factor Authentication
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        All users must enable 2FA
+                      </span>
+                    </div>
+                    <Switch id="2fa-switch" />
+                  </div>
+                  <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                    <div className="flex flex-col">
+                      <Label htmlFor="autolock-switch">
+                        Auto-lock Inactive Sessions
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        Lock sessions after 30 minutes of inactivity
+                      </span>
+                    </div>
+                    <Switch id="autolock-switch" defaultChecked />
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="session-timeout">Session Timeout</Label>
+                      <Select defaultValue="30">
+                        <SelectTrigger id="session-timeout">
+                          <SelectValue placeholder="Select timeout" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">60 minutes</SelectItem>
+                          <SelectItem value="never">Never</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="password-policy">Password Policy</Label>
+                      <Select defaultValue="strong">
+                        <SelectTrigger id="password-policy">
+                          <SelectValue placeholder="Select policy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simple">
+                            Simple (8+ chars)
+                          </SelectItem>
+                          <SelectItem value="strong">
+                            Strong (8+ chars, mixed case, numbers, symbols)
+                          </SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
           <TabsContent value="notifications">
             <Card>
