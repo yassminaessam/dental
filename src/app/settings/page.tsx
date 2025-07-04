@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building, Users, Bell, Shield, Database } from "lucide-react";
+import { Building, Users, Bell, Shield, Database, Palette } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -423,10 +423,57 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="appearance">
+          <TabsContent value="appearance" className="mt-6">
             <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                Appearance settings will be shown here.
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Palette className="h-5 w-5" />
+                  Appearance Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="theme">Theme</Label>
+                  <Select defaultValue="light">
+                    <SelectTrigger id="theme">
+                      <SelectValue placeholder="Select theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="language">Language</Label>
+                  <Select defaultValue="english">
+                    <SelectTrigger id="language">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="english">English</SelectItem>
+                      <SelectItem value="spanish">Spanish</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4 md:col-span-2">
+                  <div className="flex flex-col">
+                    <Label htmlFor="compact-mode">Compact Mode</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Use smaller spacing and elements
+                    </span>
+                  </div>
+                  <Switch id="compact-mode" />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4 md:col-span-2">
+                  <div className="flex flex-col">
+                    <Label htmlFor="show-animations">Show Animations</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Enable UI animations and transitions
+                    </span>
+                  </div>
+                  <Switch id="show-animations" defaultChecked />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
