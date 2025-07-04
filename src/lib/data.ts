@@ -591,3 +591,57 @@ export const suppliersData = [
     status: "active",
   },
 ];
+
+export const communicationsPageStats = [
+  {
+    title: "Messages Sent",
+    value: "3",
+    description: "Total messages",
+  },
+  {
+    title: "Sent Today",
+    value: "0",
+    description: "Messages today",
+  },
+  {
+    title: "Delivery Rate",
+    value: "66.7%",
+    description: "Successfully delivered",
+    valueClassName: "text-green-600",
+  },
+  {
+    title: "Templates",
+    value: "3",
+    description: "Message templates",
+  },
+];
+
+export const recentMessagesData = [
+  {
+    id: "MSG-001",
+    patient: "John Smith",
+    type: "SMS",
+    content: "Reminder: Your appointment is tomorrow at 9:00 ...",
+    subContent: null,
+    status: "Delivered",
+    sent: "Dec 19, 12:00 PM",
+  },
+  {
+    id: "MSG-002",
+    patient: "Sarah Johnson",
+    type: "EMAIL",
+    content: "Post-Treatment Care Instructions",
+    subContent: "Thank you for visiting our clinic today. Please follo...",
+    status: "Read",
+    sent: "Dec 18, 5:30 PM",
+  },
+  {
+    id: "MSG-003",
+    patient: "Michael Brown",
+    type: "SMS",
+    content: "Your dental cleaning is scheduled for next week. R...",
+    subContent: null,
+    status: "Sent",
+    sent: "Dec 17, 2:00 PM",
+  },
+];
