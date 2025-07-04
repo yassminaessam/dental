@@ -51,9 +51,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Calendar />
-          Appointments
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/appointments")}>
+          <Link href="/appointments">
+            <Calendar />
+            Appointments
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>

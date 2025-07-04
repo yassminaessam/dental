@@ -110,4 +110,39 @@ export const patientPageStats = [
   },
 ];
 
+export const appointmentPageStats = [
+  {
+    title: "Today's Appointments",
+    value: "8",
+    description: "3 confirmed, 2 pending",
+  },
+  {
+    title: "This Week",
+    value: "47",
+    description: "89% show rate",
+  },
+  {
+    title: "No Shows",
+    value: "3",
+    description: "This month",
+    valueClassName: "text-destructive",
+  },
+  {
+    title: "Available Slots",
+    value: "12",
+    description: "Next 7 days",
+    valueClassName: "text-green-600",
+  },
+];
+
+export const availableTimeSlots = [
+  "09:00",
+  "10:30",
+  "11:00",
+  "14:00",
+  "15:30",
+  "16:00",
+];
+
+
 export const patientsData = [];
