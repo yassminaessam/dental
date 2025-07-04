@@ -526,3 +526,68 @@ export const medicationInventoryData = [
     status: "Low Stock",
   },
 ];
+
+export const suppliersPageStats = [
+  {
+    title: "Active Suppliers",
+    value: "3",
+    description: "Verified and approved",
+    icon: "Building2",
+  },
+  {
+    title: "Pending Orders",
+    value: "1",
+    description: "Awaiting delivery",
+    icon: "FileText",
+    valueClassName: "text-destructive",
+  },
+  {
+    title: "Monthly Spending",
+    value: "$19,220.75",
+    description: "This month",
+    icon: "DollarSign",
+  },
+  {
+    title: "Avg Rating",
+    value: "4.5",
+    description: "Supplier rating",
+    icon: "Star",
+    valueClassName: "text-yellow-500",
+  },
+];
+
+export const suppliersData = [
+  {
+    id: "SUP-001",
+    name: "MedPharma Supplies",
+    address: "123 Medical District",
+    phone: "+1-555-0123",
+    email: "orders@medpharma.com",
+    category: "Medication",
+    paymentTerms: "Net 30",
+    rating: 4.8,
+    status: "active",
+  },
+  {
+    id: "SUP-002",
+    name: "Dental Equipment Co.",
+    address: "456 Equipment Way",
+    phone: "+1-555-0124",
+    email: "sales@dentalequip.com",
+    category: "Equipment",
+    paymentTerms: "Net 15",
+    rating: 4.6,
+    status: "active",
+  },
+  {
+    id: "SUP-003",
+    name: "Medical Supplies Plus",
+    address: "789 Supply Lane",
+    phone: "+1-555-0125",
+    email: "contact@medsupplies.com",
+    category: "Supplies",
+    paymentTerms: "Net 30",
+    rating: 4.2,
+    status: "active",
+  },
+];
