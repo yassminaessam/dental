@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building, Users } from "lucide-react";
+import { Building, Users, Bell } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -231,10 +231,79 @@ export default function SettingsPage() {
               </Card>
             </div>
           </TabsContent>
-          <TabsContent value="notifications">
+          <TabsContent value="notifications" className="mt-6">
             <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                Notification settings will be shown here.
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Bell className="h-5 w-5" />
+                  Notification Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label>Appointment Reminders</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Send reminders to patients
+                    </span>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label>Payment Notifications</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Notify when payments are received
+                    </span>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label>Staff Schedule Changes</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Alert when staff schedules change
+                    </span>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label>System Maintenance</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Notify about system updates
+                    </span>
+                  </div>
+                  <Switch />
+                </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="reminder-timing">Reminder Timing</Label>
+                    <Select defaultValue="24h">
+                      <SelectTrigger id="reminder-timing">
+                        <SelectValue placeholder="Select timing" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1h">1 hour before</SelectItem>
+                        <SelectItem value="24h">24 hours before</SelectItem>
+                        <SelectItem value="48h">2 days before</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="notification-method">Notification Method</Label>
+                    <Select defaultValue="both">
+                      <SelectTrigger id="notification-method">
+                        <SelectValue placeholder="Select method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">Email only</SelectItem>
+                        <SelectItem value="sms">SMS only</SelectItem>
+                        <SelectItem value="both">Both email and SMS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
