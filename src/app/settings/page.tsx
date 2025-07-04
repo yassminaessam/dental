@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building, Users, Bell, Shield } from "lucide-react";
+import { Building, Users, Bell, Shield, Database } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -361,10 +361,65 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="backup">
+          <TabsContent value="backup" className="mt-6">
             <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                Backup settings will be shown here.
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Database className="h-5 w-5" />
+                  Backup & Recovery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div>
+                    <Label htmlFor="automatic-backups">Automatic Backups</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Daily automatic backups of all data
+                    </p>
+                  </div>
+                  <Switch id="automatic-backups" defaultChecked />
+                </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="backup-frequency">Backup Frequency</Label>
+                    <Select defaultValue="daily">
+                      <SelectTrigger id="backup-frequency">
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="backup-retention">Backup Retention</Label>
+                    <Select defaultValue="30d">
+                      <SelectTrigger id="backup-retention">
+                        <SelectValue placeholder="Select retention" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7d">7 days</SelectItem>
+                        <SelectItem value="30d">30 days</SelectItem>
+                        <SelectItem value="90d">90 days</SelectItem>
+                        <SelectItem value="1y">1 year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Manual Backup</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Create an immediate backup of all data
+                  </p>
+                  <div className="mt-2">
+                    <Button variant="outline">
+                      <Database className="mr-2 h-4 w-4" />
+                      Create Backup Now
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
