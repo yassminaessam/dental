@@ -131,9 +131,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Globe />
-          Patient Portal
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/patient-portal")}>
+          <Link href="/patient-portal">
+            <Globe />
+            Patient Portal
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>

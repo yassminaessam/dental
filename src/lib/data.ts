@@ -645,3 +645,51 @@ export const recentMessagesData = [
     sent: "Dec 17, 2:00 PM",
   },
 ];
+
+export const patientPortalPageStats = [
+  {
+    title: "Active Portal Users",
+    value: "2",
+    description: "Registered patients",
+  },
+  {
+    title: "Unread Messages",
+    value: "1",
+    description: "Requiring response",
+    valueClassName: "text-destructive"
+  },
+  {
+    title: "Pending Requests",
+    value: "1",
+    description: "Appointment requests",
+  },
+  {
+    title: "Shared Documents",
+    value: "2",
+    description: "Available to patients",
+    valueClassName: "text-green-600"
+  },
+];
+
+export const patientMessagesData = [
+    {
+        id: 'MSG-001',
+        patient: 'John Smith',
+        subject: 'Question about post-treatment care',
+        snippet: "Hi, I had my root canal yesterday and I'm experien...",
+        category: 'treatment',
+        priority: 'high',
+        date: 'Dec 18, 11:15 AM',
+        status: 'Unread',
+    },
+    {
+        id: 'MSG-002',
+        patient: 'Sarah Johnson',
+        subject: 'Your appointment reminder',
+        snippet: 'This is a reminder that you have an appointment s...',
+        category: 'appointment',
+        priority: 'normal',
+        date: 'Dec 17, 6:00 PM',
+        status: 'Read',
+    }
+];
