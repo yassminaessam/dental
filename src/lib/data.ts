@@ -85,3 +85,29 @@ export const financialSummaryData = {
   newPatientAcquisitionCost: 150,
   marketingSpend: 5000,
 };
+
+export const patientPageStats = [
+  {
+    title: "Total Patients",
+    value: "156",
+    description: "+12 this month",
+  },
+  {
+    title: "New This Month",
+    value: "12",
+    description: "+15% from last month",
+  },
+  {
+    title: "Active Treatments",
+    value: "34",
+    description: "8 completed this week",
+  },
+  {
+    title: "Overdue Checkups",
+    value: "7",
+    description: "Needs follow-up",
+    valueClassName: "text-destructive",
+  },
+];
+
+export const patientsData = [];
