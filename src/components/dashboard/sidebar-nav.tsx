@@ -91,9 +91,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Landmark />
-          Financial
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/financial")}>
+          <Link href="/financial">
+            <Landmark />
+            Financial
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>

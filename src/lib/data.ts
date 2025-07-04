@@ -309,3 +309,60 @@ export const medicalRecordsData = [
     status: "Final",
   },
 ];
+
+
+export const financialPageStats = [
+  {
+    title: "Total Revenue",
+    value: "$0",
+    change: "+12% from last month",
+    icon: "TrendingUp",
+    changeType: "positive",
+  },
+  {
+    title: "Total Expenses",
+    value: "$0",
+    change: "+5% from last month",
+    icon: "TrendingDown",
+    changeType: "negative",
+  },
+  {
+    title: "Net Profit",
+    value: "$0",
+    change: "+15% from last month",
+    icon: "DollarSign",
+    changeType: "positive",
+  },
+  {
+    title: "Pending Payments",
+    value: "$2,300",
+    description: "5 invoices pending",
+    icon: "Wallet",
+    changeType: "neutral",
+  },
+];
+
+export const revenueVsExpensesData = [
+  { month: "Jan", revenue: 42000, expenses: 20000, profit: 22000 },
+  { month: "Feb", revenue: 40000, expenses: 18000, profit: 22000 },
+  { month: "Mar", revenue: 45000, expenses: 17000, profit: 28000 },
+  { month: "Apr", revenue: 43000, expenses: 22000, profit: 21000 },
+  { month: "May", revenue: 52000, expenses: 21000, profit: 31000 },
+  { month: "Jun", revenue: 55000, expenses: 24000, profit: 31000 },
+  { month: "Jul", revenue: 54000, expenses: 25000, profit: 29000 },
+  { month: "Aug", revenue: 57000, expenses: 26000, profit: 31000 },
+  { month: "Sep", revenue: 53000, expenses: 23000, profit: 30000 },
+  { month: "Oct", revenue: 58000, expenses: 24000, profit: 34000 },
+  { month: "Nov", revenue: 56000, expenses: 22000, profit: 34000 },
+  { month: "Dec", revenue: 45000, expenses: 21000, profit: 24000 },
+];
+
+export const expensesByCategoryData = [
+    { name: 'Salaries', value: 45, color: 'hsl(var(--chart-1))' },
+    { name: 'Supplies', value: 25, color: 'hsl(var(--chart-2))' },
+    { name: 'Rent', value: 15, color: 'hsl(var(--chart-3))' },
+    { name: 'Marketing', value: 10, color: 'hsl(var(--chart-4))' },
+    { name: 'Other', value: 5, color: 'hsl(var(--chart-5))' },
+];
+
+export const transactionHistoryData: any[] = [];
