@@ -144,5 +144,69 @@ export const availableTimeSlots = [
   "16:00",
 ];
 
-
 export const patientsData = [];
+
+export const treatmentPageStats = [
+  {
+    title: "Total Treatments",
+    value: "89",
+    description: "+15 this month",
+  },
+  {
+    title: "In Progress",
+    value: "12",
+    description: "Active treatments",
+  },
+  {
+    title: "Completed",
+    value: "67",
+    description: "75% success rate",
+  },
+  {
+    title: "Revenue",
+    value: "$24,500",
+    description: "This month",
+  },
+];
+
+export const treatmentCategories = [
+  {
+    name: "Preventive",
+    count: 23,
+    status: "Active",
+    color: "bg-green-100 text-green-700",
+  },
+  {
+    name: "Restorative",
+    count: 18,
+    status: "Active",
+    color: "bg-blue-100 text-blue-700",
+  },
+  {
+    name: "Cosmetic",
+    count: 12,
+    status: "Active",
+    color: "bg-purple-100 text-purple-700",
+  },
+  {
+    name: "Orthodontic",
+    count: 8,
+    status: "Active",
+    color: "bg-yellow-100 text-yellow-700",
+  },
+  {
+    name: "Emergency",
+    count: 4,
+    status: "Active",
+    color: "bg-red-100 text-red-700",
+  },
+];
+
+export const treatmentStats = [
+  { label: "Success Rate", value: "94%" },
+  { label: "Average Cost", value: "$275" },
+  { label: "Average Duration", value: "45 min" },
+  { label: "Follow-up Rate", value: "88%" },
+];
+
+export const treatmentRecordsData = [];
