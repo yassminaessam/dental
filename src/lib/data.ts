@@ -226,3 +226,41 @@ export const dentalChartPatients = [
     { id: 'pat3', name: 'Peter Jones' },
     { id: 'pat4', name: 'Mary Williams' },
 ];
+
+export const staffPageStats = [
+  {
+    title: "Total Staff",
+    value: "12",
+    description: "All active",
+  },
+  {
+    title: "Dentists",
+    value: "3",
+    description: "Licensed practitioners",
+  },
+  {
+    title: "Support Staff",
+    value: "9",
+    description: "Assistants & hygienists",
+  },
+  {
+    title: "Payroll",
+    value: "$42K",
+    description: "Monthly total",
+  },
+];
+
+export const staffRoles = [
+  { name: "Dentist", count: 3, color: "bg-blue-100 text-blue-800" },
+  { name: "Hygienist", count: 4, color: "bg-green-100 text-green-800" },
+  { name: "Assistant", count: 3, color: "bg-purple-100 text-purple-800" },
+  { name: "Receptionist", count: 1, color: "bg-yellow-100 text-yellow-800" },
+  { name: "Manager", count: 1, color: "bg-red-100 text-red-800" },
+];
+
+export const staffPerformanceData = [
+  { metric: "Attendance Rate", value: "97%" },
+  { metric: "Patient Satisfaction", value: "95%" },
+  { metric: "Productivity Score", value: "92%" },
+  { metric: "Training Completed", value: "100%" },
+];
