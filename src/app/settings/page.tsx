@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building, Users, Bell } from "lucide-react";
+import { Building, Users, Bell, Shield } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -307,10 +307,57 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="security">
+          <TabsContent value="security" className="mt-6">
             <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                Security settings will be shown here.
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Shield className="h-5 w-5" />
+                  Security Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label htmlFor="audit-logging">Enable Audit Logging</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Track all system access and changes
+                    </span>
+                  </div>
+                  <Switch id="audit-logging" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label htmlFor="encrypt-data">Encrypt Patient Data</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Additional encryption for sensitive data
+                    </span>
+                  </div>
+                  <Switch id="encrypt-data" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                  <div className="flex flex-col">
+                    <Label htmlFor="hipaa-mode">HIPAA Compliance Mode</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Enable strict HIPAA compliance features
+                    </span>
+                  </div>
+                  <Switch id="hipaa-mode" defaultChecked />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="data-retention">Data Retention Period</Label>
+                  <Select defaultValue="7y">
+                    <SelectTrigger id="data-retention" className="w-full md:w-1/2">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1y">1 year</SelectItem>
+                      <SelectItem value="3y">3 years</SelectItem>
+                      <SelectItem value="5y">5 years</SelectItem>
+                      <SelectItem value="7y">7 years</SelectItem>
+                      <SelectItem value="forever">Indefinitely</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
