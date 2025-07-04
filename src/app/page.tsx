@@ -10,6 +10,7 @@ import OverviewStats from "@/components/dashboard/overview-stats";
 import RevenueTrendsChart from "@/components/dashboard/revenue-trends-chart";
 import AppointmentTypesChart from "@/components/dashboard/appointment-types-chart";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 
 export default function DashboardPage() {
   return (
@@ -18,10 +19,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Appointment
-            </Button>
+            <ScheduleAppointmentDialog />
             <Button variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               New Patient

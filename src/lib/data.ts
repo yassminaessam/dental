@@ -227,6 +227,14 @@ export const dentalChartPatients = [
     { id: 'pat4', name: 'Mary Williams' },
 ];
 
+export const mockDoctors = [
+  { id: 'doc1', name: 'Dr. Emily Wilson' },
+  { id: 'doc2', name: 'Dr. James Davis' },
+  { id: 'doc3', name: 'Dr. Sarah Miller' },
+];
+
+export const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
+
 export const staffPageStats = [
   {
     title: "Total Staff",
