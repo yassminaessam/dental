@@ -458,3 +458,71 @@ export const inventoryItemsData = [
     location: "Refrigerated Storage",
   },
 ];
+
+export const pharmacyPageStats = [
+  {
+    title: "Total Medications",
+    value: "3",
+    description: "Active inventory items",
+    icon: "Pill",
+  },
+  {
+    title: "Low Stock Alerts",
+    value: "1",
+    description: "Items below threshold",
+    icon: "AlertTriangle",
+    valueClassName: "text-destructive",
+  },
+  {
+    title: "Expiring Soon",
+    value: "2",
+    description: "Within 30 days",
+    icon: "CalendarClock",
+    valueClassName: "text-destructive",
+  },
+  {
+    title: "Pending Prescriptions",
+    value: "1",
+    description: "Awaiting dispensing",
+    icon: "ClipboardList",
+  },
+];
+
+export const medicationInventoryData = [
+  {
+    id: "MED-001",
+    name: "Amoxicillin",
+    fullName: "Amoxicillin",
+    strength: "500mg",
+    form: "tablet",
+    category: "Antibiotic",
+    stock: 150,
+    unitPrice: "$0.75",
+    expiryDate: "2025-12-31",
+    status: "In Stock",
+  },
+  {
+    id: "MED-002",
+    name: "Ibuprofen",
+    fullName: "Ibuprofen",
+    strength: "400mg",
+    form: "tablet",
+    category: "Analgesic",
+    stock: 200,
+    unitPrice: "$0.25",
+    expiryDate: "2025-06-30",
+    status: "In Stock",
+  },
+  {
+    id: "MED-003",
+    name: "Lidocaine",
+    fullName: "Lidocaine HCl",
+    strength: "2%",
+    form: "injection",
+    category: "Anesthetic",
+    stock: 25,
+    unitPrice: "$3.50",
+    expiryDate: "2024-08-15",
+    status: "Low Stock",
+  },
+];

@@ -107,9 +107,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Pill />
-          Pharmacy
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/pharmacy")}>
+          <Link href="/pharmacy">
+            <Pill />
+            Pharmacy
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
