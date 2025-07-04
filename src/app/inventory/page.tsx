@@ -1,0 +1,223 @@
+
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  inventoryItemsData,
+  inventoryPageStats,
+  lowStockItems,
+} from "@/lib/data";
+import { cn } from "@/lib/utils";
+import {
+  Plus,
+  Search,
+  BarChart,
+  AlertTriangle,
+  ShoppingCart,
+  Pencil,
+  Package as PackageIcon,
+} from "lucide-react";
+
+export default function InventoryPage() {
+  const inventoryCategories = [
+    ...new Set(inventoryItemsData.map((i) => i.category)),
+  ];
+  return (
+    <DashboardLayout>
+      <main className="flex flex-1 flex-col gap-6 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Inventory Management</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline">
+              <BarChart className="mr-2 h-4 w-4" />
+              Analytics
+            </Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Item
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {inventoryPageStats.map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={cn("text-2xl font-bold", stat.valueClassName)}>
+                  {stat.value}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="border-destructive bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Low Stock Alert
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            {lowStockItems.map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center justify-between rounded-lg border bg-card p-3"
+              >
+                <div>
+                  <p className="font-semibold">{item.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.stock} / {item.minStock} min
+                  </p>
+                </div>
+                <Button variant="destructive" size="sm">
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Restock
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+            <CardTitle>Inventory Items</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search items..."
+                  className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                />
+              </div>
+              <Select>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {inventoryCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">Item</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Unit Cost</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inventoryItemsData.length > 0 ? (
+                  inventoryItemsData.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted">
+                            <PackageIcon className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{item.name}</div>
+                            {item.expires !== "N/A" && (
+                              <div className="text-xs text-muted-foreground">
+                                Expires: {item.expires}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{item.stock}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Min: {item.min} | Max: {item.max}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.status === "Low Stock"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{item.unitCost}</TableCell>
+                      <TableCell>{item.supplier}</TableCell>
+                      <TableCell>{item.location}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="sm">
+                            <Pencil className="mr-2 h-3 w-3" />
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <ShoppingCart className="mr-2 h-3 w-3" />
+                            Restock
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      No inventory items found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </main>
+    </DashboardLayout>
+  );
+}

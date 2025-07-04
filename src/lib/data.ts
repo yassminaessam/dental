@@ -366,3 +366,95 @@ export const expensesByCategoryData = [
 ];
 
 export const transactionHistoryData: any[] = [];
+
+export const inventoryPageStats = [
+  {
+    title: "Total Items",
+    value: "10",
+    description: "Active inventory",
+  },
+  {
+    title: "Low Stock",
+    value: "2",
+    description: "Items need restocking",
+    valueClassName: "text-destructive",
+  },
+  {
+    title: "Total Value",
+    value: "$22,348.35",
+    description: "Current inventory",
+  },
+  {
+    title: "Categories",
+    value: "8",
+    description: "Item categories",
+  },
+];
+
+export const lowStockItems = [
+  {
+    name: "Disposable Gloves (Box)",
+    stock: 8,
+    minStock: 20,
+  },
+  {
+    name: "Anesthetic Cartridges",
+    stock: 5,
+    minStock: 12,
+  },
+];
+
+export const inventoryItemsData = [
+  {
+    id: "INV-001",
+    name: "Dental Composite Resin",
+    expires: "2025-06-15",
+    category: "Restorative Materials",
+    stock: 15,
+    min: 10,
+    max: 50,
+    status: "Normal",
+    unitCost: "$45.99",
+    supplier: "DentalSupplies Inc.",
+    location: "Storage Room A",
+  },
+  {
+    id: "INV-002",
+    name: "Disposable Gloves (Box)",
+    expires: "N/A",
+    category: "Safety Equipment",
+    stock: 8,
+    min: 20,
+    max: 100,
+    status: "Low Stock",
+    unitCost: "$12.50",
+    supplier: "MedSafe Corp",
+    location: "Supply Closet",
+  },
+  {
+    id: "INV-003",
+    name: "Dental Impression Material",
+    expires: "2025-03-20",
+    category: "Impression Materials",
+    stock: 25,
+    min: 15,
+    max: 60,
+    status: "Normal",
+    unitCost: "$89.99",
+    supplier: "ProDental Materials",
+    location: "Storage Room A",
+  },
+  {
+    id: "INV-004",
+    name: "Anesthetic Cartridges",
+    expires: "2025-08-30",
+    category: "Anesthetics",
+    stock: 5,
+    min: 12,
+    max: 40,
+    status: "Low Stock",
+    unitCost: "$3.75",
+    supplier: "PharmaSupply Ltd",
+    location: "Refrigerated Storage",
+  },
+];
