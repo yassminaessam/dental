@@ -742,3 +742,67 @@ export const outgoingReferralsData = [
     apptDate: "Appt: Dec 12"
   }
 ];
+
+export const insurancePageStats = [
+  {
+    title: "Total Claims",
+    value: "3",
+    description: "All time",
+  },
+  {
+    title: "Pending Claims",
+    value: "1",
+    description: "Processing",
+    valueClassName: "text-yellow-600",
+  },
+  {
+    title: "Approved Claims",
+    value: "1",
+    description: "Ready for payment",
+    valueClassName: "text-green-600",
+  },
+  {
+    title: "Approved Amount",
+    value: "$120",
+    description: "Total approved",
+    valueClassName: "text-green-600",
+  },
+];
+
+export const insuranceClaimsData = [
+  {
+    id: "CLM-001",
+    patient: "John Smith",
+    patientId: "DC123456789",
+    insurance: "DentalCare Plus",
+    procedure: "Routine Cleaning",
+    procedureCode: "D1110",
+    amount: "$150",
+    approvedAmount: "$120",
+    status: "Approved",
+    submitDate: "Dec 16, 2024",
+  },
+  {
+    id: "CLM-002",
+    patient: "Sarah Johnson",
+    patientId: "HF987654321",
+    insurance: "HealthFirst Dental",
+    procedure: "Composite Filling",
+    procedureCode: "D2391",
+    amount: "$275",
+    status: "Processing",
+    submitDate: "Dec 11, 2024",
+  },
+  {
+    id: "CLM-003",
+    patient: "Michael Brown",
+    patientId: "SC456789123",
+    insurance: "SmileCare Insurance",
+    procedure: "Crown Placement",
+    procedureCode: "D2750",
+    amount: "$1200",
+    status: "Denied",
+    statusReason: "Pre-authorization required",
+    submitDate: "Dec 9, 2024",
+  },
+];
