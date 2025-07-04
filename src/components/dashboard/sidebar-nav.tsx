@@ -139,9 +139,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Send />
-          Referrals
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/referrals")}>
+          <Link href="/referrals">
+            <Send />
+            Referrals
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>

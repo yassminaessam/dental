@@ -693,3 +693,52 @@ export const patientMessagesData = [
         status: 'Read',
     }
 ];
+
+export const referralPageStats = [
+  {
+    title: "Total Referrals",
+    value: "2",
+    description: "All time",
+  },
+  {
+    title: "Pending Referrals",
+    value: "0",
+    description: "Awaiting response",
+  },
+  {
+    title: "Completed",
+    value: "1",
+    description: "This month",
+  },
+  {
+    title: "Incoming",
+    value: "1",
+    description: "Pending review",
+    valueClassName: "text-destructive"
+  },
+];
+
+export const outgoingReferralsData = [
+  {
+    id: "REF-001",
+    patient: "John Smith",
+    specialist: "Dr. Robert Chen",
+    specialty: "Oral Surgery",
+    reason: "Wisdom tooth extraction - impacted #32",
+    urgency: "routine",
+    status: "scheduled",
+    date: "Dec 15, 2024",
+    apptDate: "Appt: Dec 22"
+  },
+  {
+    id: "REF-002",
+    patient: "Sarah Johnson",
+    specialist: "Dr. Maria Rodriguez",
+    specialty: "Periodontics",
+    reason: "Advanced periodontal disease - requires specialist...",
+    urgency: "urgent",
+    status: "completed",
+    date: "Dec 5, 2024",
+    apptDate: "Appt: Dec 12"
+  }
+];
