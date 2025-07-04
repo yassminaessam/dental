@@ -886,3 +886,47 @@ export const commonMedicationsData = [
         description: 'Pain Relief'
     }
 ];
+
+export const analyticsPageStats = [
+    {
+        title: "Total Revenue",
+        value: "$0",
+        change: "+12.5% from last period",
+        icon: "DollarSign",
+        changeType: "positive"
+    },
+    {
+        title: "Patient Acquisition",
+        value: "0",
+        change: "+8.3% from last period",
+        icon: "Users",
+        changeType: "positive"
+    },
+    {
+        title: "Appointment Show Rate",
+        value: "98.2%",
+        change: "+2.1% from last period",
+        icon: "TrendingUp",
+        changeType: "positive"
+    },
+    {
+        title: "Average Treatment Value",
+        value: "$385",
+        change: "-1.2% from last period",
+        icon: "Activity",
+        changeType: "negative"
+    }
+];
+
+export const appointmentAnalyticsData = [
+  { time: '8:00', appointments: 3, noShows: 0, cancellations: 0 },
+  { time: '9:00', appointments: 5, noShows: 1, cancellations: 0 },
+  { time: '10:00', appointments: 6, noShows: 0, cancellations: 1 },
+  { time: '11:00', appointments: 4, noShows: 0, cancellations: 0 },
+  { time: '12:00', appointments: 2, noShows: 0, cancellations: 0 },
+  { time: '13:00', appointments: 4, noShows: 1, cancellations: 0 },
+  { time: '14:00', appointments: 6, noShows: 0, cancellations: 1 },
+  { time: '15:00', appointments: 5, noShows: 1, cancellations: 0 },
+  { time: '16:00', appointments: 4, noShows: 0, cancellations: 0 },
+  { time: '17:00', appointments: 3, noShows: 0, cancellations: 0 },
+];

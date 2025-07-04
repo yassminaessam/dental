@@ -163,9 +163,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <BarChart />
-          Analytics
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/analytics")}>
+          <Link href="/analytics">
+            <BarChart />
+            Analytics
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
