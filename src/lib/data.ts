@@ -806,3 +806,83 @@ export const insuranceClaimsData = [
     submitDate: "Dec 9, 2024",
   },
 ];
+
+export const prescriptionPageStats = [
+  {
+    title: "Total Prescriptions",
+    value: "3",
+    description: "All time",
+  },
+  {
+    title: "Active Prescriptions",
+    value: "2",
+    description: "Currently active",
+  },
+  {
+    title: "Completed This Month",
+    value: "1",
+    description: "Successfully filled",
+  },
+  {
+    title: "Common Medications",
+    value: "3",
+    description: "In database",
+  },
+];
+
+export const prescriptionRecordsData = [
+  {
+    id: "RX-001",
+    patient: "John Smith",
+    medication: "Amoxicillin",
+    strength: "500mg",
+    dosage: "3 times daily",
+    duration: "7 days",
+    refills: 0,
+    doctor: "Dr. Emily Wilson",
+    date: "Dec 15, 2024",
+    status: "Active",
+  },
+  {
+    id: "RX-002",
+    patient: "Sarah Johnson",
+    medication: "Ibuprofen",
+    strength: "600mg",
+    dosage: "Every 6 hours as needed",
+    duration: "5 days",
+    refills: 1,
+    doctor: "Dr. Emily Wilson",
+    date: "Dec 10, 2024",
+    status: "Completed",
+  },
+  {
+    id: "RX-003",
+    patient: "Michael Brown",
+    medication: "Chlorhexidine Rinse",
+    strength: "0.12%",
+    dosage: "Twice daily",
+    duration: "14 days",
+    refills: 0,
+    doctor: "Dr. James Davis",
+    date: "Dec 8, 2024",
+    status: "Active",
+  },
+];
+
+export const commonMedicationsData = [
+    {
+        name: 'Amoxicillin',
+        genericName: 'Generic: Amoxicillin',
+        description: 'Antibiotic'
+    },
+    {
+        name: 'Ibuprofen',
+        genericName: 'Generic: Ibuprofen',
+        description: 'Pain Relief'
+    },
+    {
+        name: 'Vicodin',
+        genericName: 'Generic: Hydrocodone/Acetaminophen',
+        description: 'Pain Relief'
+    }
+];
