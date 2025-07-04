@@ -930,3 +930,71 @@ export const appointmentAnalyticsData = [
   { time: '16:00', appointments: 4, noShows: 0, cancellations: 0 },
   { time: '17:00', appointments: 3, noShows: 0, cancellations: 0 },
 ];
+
+export const reportsPageStats = [
+    {
+        title: "Total Revenue",
+        value: "$578K",
+        change: "+12.5% from last period",
+        icon: "DollarSign",
+    },
+    {
+        title: "Total Patients",
+        value: "216",
+        change: "+13.2% growth rate",
+        icon: "Users",
+    },
+    {
+        title: "Appointments",
+        value: "1,247",
+        change: "88% show rate",
+        icon: "Calendar",
+    },
+    {
+        title: "Avg. Treatment Value",
+        value: "$463",
+        change: "+8.3% increase",
+        icon: "TrendingUp",
+    }
+];
+
+export const reportsRevenueTrendData = [
+  { month: "Jan", revenue: 38000, expenses: 28000 },
+  { month: "Feb", revenue: 40000, expenses: 30000 },
+  { month: "Mar", revenue: 37000, expenses: 25000 },
+  { month: "Apr", revenue: 43000, expenses: 33000 },
+  { month: "May", revenue: 48000, expenses: 38000 },
+  { month: "Jun", revenue: 52000, expenses: 42000 },
+  { month: "Jul", revenue: 55000, expenses: 45000 },
+  { month: "Aug", revenue: 58000, expenses: 48000 },
+  { month: "Sep", revenue: 53000, expenses: 43000 },
+  { month: "Oct", revenue: 59000, expenses: 49000 },
+  { month: "Nov", revenue: 61000, expenses: 51000 },
+  { month: "Dec", revenue: 63000, expenses: 53000 },
+];
+
+export const reportsPatientGrowthData = [
+  { month: 'Jan', total: 110, new: 20 },
+  { month: 'Feb', total: 120, new: 22 },
+  { month: 'Mar', total: 140, new: 25 },
+  { month: 'Apr', total: 160, new: 30 },
+  { month: 'May', total: 190, new: 35 },
+  { month: 'Jun', total: 216, new: 40 },
+];
+
+export const reportsTreatmentsByTypeData = [
+  { type: 'Check-up', count: 45 },
+  { type: 'Cleaning', count: 38 },
+  { type: 'Filling', count: 25 },
+  { type: 'Crown', count: 15 },
+  { type: 'Canal', count: 8 },
+  { type: 'Other', count: 12 },
+];
+
+export const reportsAppointmentDistributionData = [
+  { type: 'Check-up', count: 350, color: 'hsl(var(--chart-1))' },
+  { type: 'Cleaning', count: 250, color: 'hsl(var(--chart-2))' },
+  { type: 'Filling', count: 150, color: 'hsl(var(--chart-3))' },
+  { type: 'Crown', count: 100, color: 'hsl(var(--chart-4))' },
+  { type: 'Other', count: 50, color: 'hsl(var(--muted))' },
+];
