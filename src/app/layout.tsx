@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Dental Analytics Dashboard',
-  description: 'Analytics for your dental practice.',
+  title: 'DentalPro',
+  description: 'Dental Practice Management Dashboard.',
 };
 
 export default function RootLayout({

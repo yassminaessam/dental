@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
@@ -12,19 +12,25 @@ import { revenueTrendsData } from "@/lib/data";
 const chartConfig = {
   revenue: {
     label: "Revenue",
-    color: "hsl(var(--accent))",
+    color: "hsl(var(--chart-1))",
+  },
+  expenses: {
+    label: "Expenses",
+    color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
 
 export default function RevenueTrendsChart() {
   return (
-    <ChartContainer config={chartConfig} className="h-[300px] w-full">
-      <AreaChart
+    <ChartContainer config={chartConfig} className="h-[350px] w-full">
+      <LineChart
         accessibilityLayer
         data={revenueTrendsData}
         margin={{
+          top: 20,
           left: 12,
           right: 12,
+          bottom: 0,
         }}
       >
         <CartesianGrid vertical={false} />
@@ -39,21 +45,27 @@ export default function RevenueTrendsChart() {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(value) => `$${value / 1000}k`}
+          tickFormatter={(value) => `${value}`}
         />
         <ChartTooltip
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        <Area
+        <Line
           dataKey="revenue"
-          type="natural"
-          fill="var(--color-revenue)"
-          fillOpacity={0.4}
+          type="monotone"
           stroke="var(--color-revenue)"
           strokeWidth={2}
+          dot={{ r: 4, fill: "var(--color-revenue)", strokeWidth: 2, stroke: "hsl(var(--card))" }}
         />
-      </AreaChart>
+        <Line
+          dataKey="expenses"
+          type="monotone"
+          stroke="var(--color-expenses)"
+          strokeWidth={2}
+          dot={{ r: 4, fill: "var(--color-expenses)", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+        />
+      </LineChart>
     </ChartContainer>
   );
 }
