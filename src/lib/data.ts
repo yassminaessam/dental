@@ -235,6 +235,15 @@ export const mockDoctors = [
 
 export const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
+export const emergencyContactRelationships = [
+    'Spouse',
+    'Parent',
+    'Child',
+    'Sibling',
+    'Friend',
+    'Other',
+];
+
 export const staffPageStats = [
   {
     title: "Total Staff",
