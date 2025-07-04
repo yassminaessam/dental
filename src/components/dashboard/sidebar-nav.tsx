@@ -83,9 +83,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <FolderArchive />
-          Medical Records
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/medical-records")}>
+          <Link href="/medical-records">
+            <FolderArchive />
+            Medical Records
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>

@@ -264,3 +264,48 @@ export const staffPerformanceData = [
   { metric: "Productivity Score", value: "92%" },
   { metric: "Training Completed", value: "100%" },
 ];
+
+export const medicalRecordsPageStats = [
+  {
+    title: "Total Records",
+    value: "2",
+    description: "Medical records",
+  },
+  {
+    title: "This Month",
+    value: "0",
+    description: "New records",
+  },
+  {
+    title: "Clinical Images",
+    value: "2",
+    description: "X-rays & photos",
+    valueClassName: "text-green-600",
+  },
+  {
+    title: "Pending Review",
+    value: "0",
+    description: "Draft records",
+  },
+];
+
+export const medicalRecordsData = [
+  {
+    id: "MR-001",
+    patient: "John Smith",
+    type: "SOAP",
+    complaint: "Tooth pain on upper right",
+    provider: "Dr. Emily Wilson",
+    date: "Dec 15, 2024",
+    status: "Final",
+  },
+  {
+    id: "MR-002",
+    patient: "Sarah Johnson",
+    type: "CLINICAL",
+    complaint: "Routine cleaning and checkup",
+    provider: "Dr. James Davis",
+    date: "Dec 10, 2024",
+    status: "Final",
+  },
+];
