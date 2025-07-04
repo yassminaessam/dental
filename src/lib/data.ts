@@ -210,3 +210,19 @@ export const treatmentStats = [
 ];
 
 export const treatmentRecordsData = [];
+
+export const dentalChartStats = [
+    { name: 'Healthy', count: 0, color: 'bg-green-500' },
+    { name: 'Cavities', count: 0, color: 'bg-red-500' },
+    { name: 'Filled', count: 0, color: 'bg-blue-500' },
+    { name: 'Crowned', count: 0, color: 'bg-purple-500' },
+    { name: 'Missing', count: 0, color: 'bg-gray-500' },
+    { name: 'Root Canal', count: 0, color: 'bg-yellow-500' },
+];
+
+export const dentalChartPatients = [
+    { id: 'pat1', name: 'John Doe' },
+    { id: 'pat2', name: 'Jane Smith' },
+    { id: 'pat3', name: 'Peter Jones' },
+    { id: 'pat4', name: 'Mary Williams' },
+];

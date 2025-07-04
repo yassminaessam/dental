@@ -67,9 +67,11 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton>
-          <LineChart />
-          Dental Chart
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/dental-chart")}>
+          <Link href="/dental-chart">
+            <LineChart />
+            Dental Chart
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
