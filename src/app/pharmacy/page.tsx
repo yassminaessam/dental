@@ -60,8 +60,8 @@ export default function PharmacyPage() {
     ];
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">Pharmacy Management</h1>
             <p className="text-muted-foreground">
@@ -107,19 +107,19 @@ export default function PharmacyPage() {
           </TabsList>
           <TabsContent value="medications" className="mt-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <CardTitle>Medication Inventory</CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+                <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+                  <div className="relative w-full md:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder="Search medications..."
-                      className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                     />
                   </div>
                   <Select>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>

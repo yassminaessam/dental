@@ -31,8 +31,8 @@ import { NewMessageDialog } from "@/components/communications/new-message-dialog
 export default function PatientPortalPage() {
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Patient Portal Management</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline">
@@ -77,9 +77,9 @@ export default function PatientPortalPage() {
           </TabsList>
           <TabsContent value="messages" className="mt-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <CardTitle>Patient Messages</CardTitle>
-                <div className="relative">
+                <div className="relative w-full md:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"

@@ -23,8 +23,8 @@ import InteractiveDentalChart from "@/components/dental-chart/interactive-dental
 export default function DentalChartPage() {
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Dental Chart</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline">

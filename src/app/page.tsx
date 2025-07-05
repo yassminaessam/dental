@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -14,8 +15,8 @@ import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
             <ScheduleAppointmentDialog />

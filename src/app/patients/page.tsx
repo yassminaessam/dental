@@ -24,7 +24,7 @@ import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 export default function PatientsPage() {
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Patients</h1>
           <AddPatientDialog />
@@ -51,10 +51,10 @@ export default function PatientsPage() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+          <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
             <CardTitle>Patient Directory</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative flex-1 md:flex-initial">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"

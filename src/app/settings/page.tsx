@@ -28,7 +28,7 @@ import { Building, Users, Bell, Shield, Database, Palette } from "lucide-react";
 export default function SettingsPage() {
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col gap-6 p-6">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Settings</h1>
           <Button>Save Changes</Button>
