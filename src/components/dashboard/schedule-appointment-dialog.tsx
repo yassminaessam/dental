@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,9 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -34,13 +35,47 @@ import {
   availableTimeSlots,
   appointmentDurations
 } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
 
-export function ScheduleAppointmentDialog() {
-  const [date, setDate] = React.useState<Date>();
+const appointmentSchema = z.object({
+  patient: z.string({ required_error: "Patient is required." }),
+  doctor: z.string({ required_error: "Doctor is required." }),
+  date: z.date({ required_error: "Date is required." }),
+  time: z.string({ required_error: "Time is required." }),
+  type: z.string().default('Check-up'),
+  duration: z.string().default('1 hour'),
+  notes: z.string().optional(),
+});
+
+type AppointmentFormData = z.infer<typeof appointmentSchema>;
+
+interface ScheduleAppointmentDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<AppointmentFormData>({
+    resolver: zodResolver(appointmentSchema),
+  });
+
+  const onSubmit = (data: AppointmentFormData) => {
+    const [hours, minutes] = data.time.split(':');
+    const dateTime = new Date(data.date);
+    dateTime.setHours(parseInt(hours, 10));
+    dateTime.setMinutes(parseInt(minutes, 10));
+
+    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
+
+    onSave({ ...data, dateTime, patient: patientName, doctor: doctorName });
+    form.reset();
+    setOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -54,123 +89,185 @@ export function ScheduleAppointmentDialog() {
             Schedule a new appointment for a patient
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient">Patient *</Label>
-            <Select>
-              <SelectTrigger id="patient">
-                <SelectValue placeholder="Select patient" />
-              </SelectTrigger>
-              <SelectContent>
-                {dentalChartPatients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="doctor">Doctor *</Label>
-            <Select>
-              <SelectTrigger id="doctor">
-                <SelectValue placeholder="Select doctor" />
-              </SelectTrigger>
-              <SelectContent>
-                {mockDoctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>
-                    {doctor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="date">Date *</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="date"
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>mm/dd/yyyy</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="time">Time *</Label>
-            <Select>
-              <SelectTrigger id="time">
-                <SelectValue placeholder="Select time" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTimeSlots.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="appointment-type">Appointment Type *</Label>
-            <Select defaultValue="Check-up">
-              <SelectTrigger id="appointment-type">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {appointmentTypesData.map((type) => (
-                  <SelectItem key={type.name} value={type.name}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="duration">Duration *</Label>
-            <Select defaultValue="1 hour">
-              <SelectTrigger id="duration">
-                <SelectValue placeholder="Select duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {appointmentDurations.map((duration) => (
-                  <SelectItem key={duration} value={duration}>
-                    {duration}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Additional notes or special instructions"
-              className="resize-none"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-6 py-4">
+            <FormField
+              control={form.control}
+              name="patient"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Patient *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select patient" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {dentalChartPatients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Schedule Appointment</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="doctor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Doctor *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select doctor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {mockDoctors.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          {doctor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date *</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Time *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availableTimeSlots.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Appointment Type *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {appointmentTypesData.map((type) => (
+                        <SelectItem key={type.name} value={type.name}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {appointmentDurations.map((duration) => (
+                        <SelectItem key={duration} value={duration}>
+                          {duration}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Additional notes or special instructions"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="col-span-2">
+              <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Schedule Appointment</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

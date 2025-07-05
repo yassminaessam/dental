@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,7 @@ import {
 import {
   commonMedicationsData,
   prescriptionPageStats,
-  prescriptionRecordsData,
+  initialPrescriptionRecordsData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
@@ -42,7 +45,38 @@ import {
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 
+export type Prescription = {
+  id: string;
+  patient: string;
+  medication: string;
+  strength: string;
+  dosage: string;
+  duration: string;
+  refills: number;
+  doctor: string;
+  date: string;
+  status: 'Active' | 'Completed';
+};
+
 export default function PrescriptionsPage() {
+  const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+
+  const handleSavePrescription = (data: any) => {
+    const newPrescription: Prescription = {
+      id: `RX-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      patient: data.patient,
+      medication: data.medication,
+      strength: data.dosage, // Assuming dosage field contains strength
+      dosage: data.instructions,
+      duration: 'As directed',
+      refills: data.refills,
+      doctor: data.doctor,
+      date: new Date(data.date).toLocaleDateString(),
+      status: 'Active',
+    };
+    setPrescriptions(prev => [newPrescription, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -53,7 +87,7 @@ export default function PrescriptionsPage() {
               <Download className="mr-2 h-4 w-4" />
               Export Report
             </Button>
-            <NewPrescriptionDialog />
+            <NewPrescriptionDialog onSave={handleSavePrescription} />
           </div>
         </div>
 
@@ -116,7 +150,7 @@ export default function PrescriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {prescriptionRecordsData.map((record) => (
+                {prescriptions.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell className="font-medium">{record.id}</TableCell>
                     <TableCell>{record.patient}</TableCell>

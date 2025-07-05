@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,9 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -23,11 +24,40 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import { dentalChartPatients, specialistNetwork, referralUrgency } from '@/lib/data';
+import { dentalChartPatients, referralUrgency } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import type { Specialist } from '@/app/referrals/page';
 
-export function NewReferralDialog() {
+const referralSchema = z.object({
+  patient: z.string({ required_error: 'Patient is required.' }),
+  specialist: z.string({ required_error: 'Specialist is required.' }),
+  reason: z.string().min(1, 'Reason for referral is required.'),
+  urgency: z.enum(['routine', 'urgent', 'emergency'], { required_error: 'Urgency level is required.' }),
+});
+
+type ReferralFormData = z.infer<typeof referralSchema>;
+
+interface NewReferralDialogProps {
+  onSave: (data: any) => void;
+  specialists: Specialist[];
+}
+
+export function NewReferralDialog({ onSave, specialists }: NewReferralDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<ReferralFormData>({
+    resolver: zodResolver(referralSchema),
+  });
+
+  const onSubmit = (data: ReferralFormData) => {
+    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const specialistName = specialists.find(s => s.id === data.specialist)?.name;
+    onSave({ ...data, patient: patientName, specialist: specialistName });
+    form.reset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Send className="mr-2 h-4 w-4" />
@@ -41,69 +71,105 @@ export function NewReferralDialog() {
             Fill out the form to refer a patient to a specialist.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="patient">Patient *</Label>
-              <Select>
-                <SelectTrigger id="patient">
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dentalChartPatients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="patient"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select patient" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {dentalChartPatients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="specialist"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specialist *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select specialist" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {specialists.map((specialist) => (
+                          <SelectItem key={specialist.id} value={specialist.id}>
+                            {specialist.name} ({specialist.specialty})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="specialist">Specialist *</Label>
-              <Select>
-                <SelectTrigger id="specialist">
-                  <SelectValue placeholder="Select specialist" />
-                </SelectTrigger>
-                <SelectContent>
-                  {specialistNetwork.map((specialist) => (
-                    <SelectItem key={specialist.id} value={specialist.id}>
-                      {specialist.name} ({specialist.specialty})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="reason">Reason for Referral *</Label>
-            <Textarea 
-              id="reason" 
-              placeholder="Provide a detailed reason for the referral."
-              className="min-h-[100px]"
+            <FormField
+              control={form.control}
+              name="reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reason for Referral *</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Provide a detailed reason for the referral."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="urgency">Urgency *</Label>
-            <Select>
-              <SelectTrigger id="urgency">
-                <SelectValue placeholder="Select urgency level" />
-              </SelectTrigger>
-              <SelectContent>
-                {referralUrgency.map((urgency) => (
-                  <SelectItem key={urgency} value={urgency.toLowerCase()}>
-                    <span className="capitalize">{urgency}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Send Referral</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="urgency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Urgency *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select urgency level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {referralUrgency.map((urgency) => (
+                        <SelectItem key={urgency} value={urgency.toLowerCase() as 'routine' | 'urgent' | 'emergency'}>
+                          <span className="capitalize">{urgency}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Send Referral</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

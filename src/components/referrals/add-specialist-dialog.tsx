@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,17 +14,41 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import { specialistTypes } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function AddSpecialistDialog() {
+const specialistSchema = z.object({
+  name: z.string().min(1, 'Specialist name is required.'),
+  specialty: z.string({ required_error: 'Specialty is required.' }),
+  phone: z.string().optional(),
+  email: z.string().email('Invalid email address').optional(),
+  clinicName: z.string().optional(),
+});
+
+type SpecialistFormData = z.infer<typeof specialistSchema>;
+
+interface AddSpecialistDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<SpecialistFormData>({
+    resolver: zodResolver(specialistSchema),
+  });
+
+  const onSubmit = (data: SpecialistFormData) => {
+    onSave(data);
+    form.reset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <UserPlus className="mr-2 h-4 w-4" />
@@ -35,47 +62,90 @@ export function AddSpecialistDialog() {
             Add a new specialist to your referral network.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="specialist-name">Specialist Name *</Label>
-            <Input id="specialist-name" placeholder="e.g., Dr. Robert Chen" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="specialty">Specialty *</Label>
-            <Select>
-                <SelectTrigger id="specialty">
-                    <SelectValue placeholder="Select specialty" />
-                </SelectTrigger>
-                <SelectContent>
-                    {specialistTypes.map((type) => (
-                        <SelectItem key={type} value={type.toLowerCase()}>
-                            {type}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Specialist Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Dr. Robert Chen" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="specialty"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Specialty *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select specialty" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {specialistTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
                         </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input id="phone" type="tel" placeholder="(555) 123-4567" />
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="specialist@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" placeholder="specialist@example.com" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="clinic-name">Clinic/Practice Name</Label>
-            <Input id="clinic-name" placeholder="e.g., City Oral Surgery" />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Save Specialist</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="clinicName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Clinic/Practice Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., City Oral Surgery" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Specialist</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

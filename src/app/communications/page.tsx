@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,13 +24,38 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { communicationsPageStats, recentMessagesData } from "@/lib/data";
+import { communicationsPageStats, initialRecentMessagesData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { NewTemplateDialog } from "@/components/communications/new-template-dialog";
 
+export type Message = {
+  id: string;
+  patient: string;
+  type: 'SMS' | 'Email';
+  content: string;
+  subContent: string | null;
+  status: 'Sent' | 'Delivered' | 'Read';
+  sent: string;
+};
+
 export default function CommunicationsPage() {
+  const [messages, setMessages] = React.useState<Message[]>(initialRecentMessagesData);
+  
+  const handleSendMessage = (data: any) => {
+    const newMessage: Message = {
+      id: `MSG-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      patient: data.patient,
+      type: data.type,
+      content: data.subject,
+      subContent: data.message,
+      status: 'Sent',
+      sent: new Date().toLocaleString(),
+    };
+    setMessages(prev => [newMessage, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -35,7 +63,7 @@ export default function CommunicationsPage() {
           <h1 className="text-3xl font-bold">Communications</h1>
           <div className="flex items-center gap-2">
             <NewTemplateDialog />
-            <NewMessageDialog />
+            <NewMessageDialog onSend={handleSendMessage} />
           </div>
         </div>
 
@@ -82,8 +110,8 @@ export default function CommunicationsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentMessagesData.length > 0 ? (
-                      recentMessagesData.map((message: any) => (
+                    {messages.length > 0 ? (
+                      messages.map((message: any) => (
                         <TableRow key={message.id}>
                           <TableCell className="font-medium">{message.patient}</TableCell>
                           <TableCell>

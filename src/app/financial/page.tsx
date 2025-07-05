@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { financialPageStats, transactionHistoryData } from "@/lib/data";
+import { financialPageStats, initialTransactionHistoryData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -44,6 +47,17 @@ import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-c
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 
+export type Transaction = {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  type: 'Revenue' | 'Expense';
+  amount: string;
+  paymentMethod: string;
+  status: 'Completed' | 'Pending';
+};
+
 const iconMap = {
   TrendingUp,
   TrendingDown,
@@ -54,6 +68,19 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
+  const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactionHistoryData);
+
+  const handleSaveTransaction = (data: Omit<Transaction, 'id' | 'status'>) => {
+    const newTransaction: Transaction = {
+      id: `TRN-${Math.floor(1000 + Math.random() * 9000)}`,
+      ...data,
+      date: new Date(data.date).toLocaleDateString(),
+      amount: `$${parseFloat(data.amount).toFixed(2)}`,
+      status: 'Completed',
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -64,7 +91,7 @@ export default function FinancialPage() {
               <FileText className="mr-2 h-4 w-4" />
               Generate Report
             </Button>
-            <AddTransactionDialog />
+            <AddTransactionDialog onSave={handleSaveTransaction} />
           </div>
         </div>
 
@@ -169,8 +196,8 @@ export default function FinancialPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactionHistoryData.length > 0 ? (
-                      transactionHistoryData.map((transaction: any) => (
+                    {transactions.length > 0 ? (
+                      transactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.date}</TableCell>
                           <TableCell>{transaction.description}</TableCell>

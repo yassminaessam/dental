@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,21 +33,65 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { referralPageStats, outgoingReferralsData } from "@/lib/data";
+import { referralPageStats, initialOutgoingReferralsData, initialSpecialistNetwork } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, Send, Eye } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 
+export type Referral = {
+  id: string;
+  patient: string;
+  specialist: string;
+  specialty: string;
+  reason: string;
+  urgency: 'routine' | 'urgent' | 'emergency';
+  status: 'scheduled' | 'completed' | 'pending' | 'cancelled';
+  date: string;
+  apptDate: string | null;
+};
+
+export type Specialist = {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
 export default function ReferralsPage() {
+  const [referrals, setReferrals] = React.useState<Referral[]>(initialOutgoingReferralsData);
+  const [specialists, setSpecialists] = React.useState<Specialist[]>(initialSpecialistNetwork);
+
+  const handleSaveReferral = (data: any) => {
+    const newReferral: Referral = {
+      id: `REF-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      patient: data.patient,
+      specialist: data.specialist,
+      specialty: specialists.find(s => s.name === data.specialist)?.specialty || 'Unknown',
+      reason: data.reason,
+      urgency: data.urgency,
+      status: 'pending',
+      date: new Date().toLocaleDateString(),
+      apptDate: null,
+    };
+    setReferrals(prev => [newReferral, ...prev]);
+  };
+
+  const handleSaveSpecialist = (data: any) => {
+    const newSpecialist: Specialist = {
+      id: `SPEC-${Math.floor(100 + Math.random() * 900)}`,
+      ...data,
+    };
+    setSpecialists(prev => [newSpecialist, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Referral Management</h1>
           <div className="flex items-center gap-2">
-            <AddSpecialistDialog />
-            <NewReferralDialog />
+            <AddSpecialistDialog onSave={handleSaveSpecialist} />
+            <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} />
           </div>
         </div>
 
@@ -116,8 +163,8 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {outgoingReferralsData.length > 0 ? (
-                      outgoingReferralsData.map((referral) => (
+                    {referrals.length > 0 ? (
+                      referrals.map((referral) => (
                         <TableRow key={referral.id}>
                           <TableCell className="font-medium">{referral.patient}</TableCell>
                           <TableCell>
@@ -148,7 +195,7 @@ export default function ReferralsPage() {
                           </TableCell>
                           <TableCell>
                             <div>{referral.date}</div>
-                            <div className="text-xs text-muted-foreground">{referral.apptDate}</div>
+                            {referral.apptDate && <div className="text-xs text-muted-foreground">{referral.apptDate}</div>}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">

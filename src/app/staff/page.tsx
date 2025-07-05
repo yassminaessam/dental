@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,20 +22,50 @@ import {
 } from "@/components/ui/table";
 import {
   staffPageStats,
-  staffPerformanceData,
   staffRoles,
+  staffPerformanceData,
+  initialStaffData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 
+export type StaffMember = {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  schedule: string;
+  salary: string;
+  hireDate: string;
+  status: 'Active' | 'Inactive';
+};
+
 export default function StaffPage() {
+  const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
+
+  const handleSaveEmployee = (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
+    const newEmployee: StaffMember = {
+      id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: `${data.name}`,
+      role: data.role,
+      email: data.email,
+      phone: data.phone,
+      schedule: 'Mon-Fri, 9-5',
+      salary: `$${parseInt(data.salary).toLocaleString()}`,
+      hireDate: new Date(data.hireDate).toLocaleDateString(),
+      status: 'Active'
+    };
+    setStaff(prev => [newEmployee, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Staff Management</h1>
-          <AddEmployeeDialog />
+          <AddEmployeeDialog onSave={handleSaveEmployee} />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -76,7 +109,7 @@ export default function StaffPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6">
           <div className="lg:col-span-3">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
@@ -105,47 +138,42 @@ export default function StaffPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
-                        No staff found.
-                      </TableCell>
-                    </TableRow>
+                    {staff.length > 0 ? (
+                      staff.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="font-medium">{member.name}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{member.role}</TableCell>
+                          <TableCell>
+                            <div>{member.email}</div>
+                            <div className="text-xs text-muted-foreground">{member.phone}</div>
+                          </TableCell>
+                          <TableCell>{member.schedule}</TableCell>
+                          <TableCell>{member.salary}</TableCell>
+                          <TableCell>{member.hireDate}</TableCell>
+                          <TableCell>
+                            <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>{member.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">View</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                          No staff found.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Today's Schedule</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex h-48 items-center justify-center text-center text-muted-foreground">
-                  No schedule for today.
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Staff Performance</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                {staffPerformanceData.map((item) => (
-                  <div
-                    key={item.metric}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-muted-foreground">
-                      {item.metric}
-                    </span>
-                    <span className="font-semibold">{item.value}</span>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           </div>

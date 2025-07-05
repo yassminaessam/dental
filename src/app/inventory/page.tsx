@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  inventoryItemsData,
+  initialInventoryItemsData,
   inventoryPageStats,
   lowStockItems,
 } from "@/lib/data";
@@ -40,10 +43,44 @@ import {
 } from "lucide-react";
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 
+export type InventoryItem = {
+  id: string;
+  name: string;
+  expires: string;
+  category: string;
+  stock: number;
+  min: number;
+  max: number;
+  status: 'Normal' | 'Low Stock';
+  unitCost: string;
+  supplier: string;
+  location: string;
+};
+
 export default function InventoryPage() {
+  const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
+
   const inventoryCategories = [
-    ...new Set(inventoryItemsData.map((i) => i.category)),
+    ...new Set(inventory.map((i) => i.category)),
   ];
+
+  const handleSaveItem = (data: any) => {
+    const newItem: InventoryItem = {
+      id: `INV-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      name: data.name,
+      expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
+      category: data.category,
+      stock: data.stock,
+      min: 10,
+      max: 50,
+      status: data.stock < 10 ? 'Low Stock' : 'Normal',
+      unitCost: `$${parseFloat(data.unitCost).toFixed(2)}`,
+      supplier: data.supplier,
+      location: data.location,
+    };
+    setInventory(prev => [newItem, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -54,7 +91,7 @@ export default function InventoryPage() {
               <BarChart className="mr-2 h-4 w-4" />
               Analytics
             </Button>
-            <AddItemDialog />
+            <AddItemDialog onSave={handleSaveItem} />
           </div>
         </div>
 
@@ -148,8 +185,8 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventoryItemsData.length > 0 ? (
-                  inventoryItemsData.map((item) => (
+                {inventory.length > 0 ? (
+                  inventory.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">

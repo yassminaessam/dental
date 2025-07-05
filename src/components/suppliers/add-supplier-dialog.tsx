@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,17 +14,42 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { supplierCategories, supplierPaymentTerms } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function AddSupplierDialog() {
+const supplierSchema = z.object({
+  name: z.string().min(1, 'Supplier name is required'),
+  phone: z.string().optional(),
+  email: z.string().email('Invalid email address').optional(),
+  address: z.string().optional(),
+  category: z.string().optional(),
+  paymentTerms: z.string().optional(),
+});
+
+type SupplierFormData = z.infer<typeof supplierSchema>;
+
+interface AddSupplierDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierSchema),
+  });
+
+  const onSubmit = (data: SupplierFormData) => {
+    onSave(data);
+    form.reset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -35,64 +63,114 @@ export function AddSupplierDialog() {
             Enter the details of the new supplier.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="supplier-name">Supplier Name *</Label>
-            <Input id="supplier-name" placeholder="e.g., MedPharma Supplies" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" placeholder="+1-555-0123" />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Supplier Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., MedPharma Supplies" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="+1-555-0123" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="orders@medpharma.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="orders@medpharma.com" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Input id="address" placeholder="123 Medical District" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-                <Select>
-                    <SelectTrigger id="category">
-                        <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 Medical District" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
                         {supplierCategories.map((cat) => (
-                            <SelectItem key={cat} value={cat.toLowerCase()}>
-                                {cat}
-                            </SelectItem>
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
                         ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment-terms">Payment Terms</Label>
-                <Select>
-                    <SelectTrigger id="payment-terms">
-                        <SelectValue placeholder="Select terms" />
-                    </SelectTrigger>
-                    <SelectContent>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Terms</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select terms" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
                         {supplierPaymentTerms.map((term) => (
-                            <SelectItem key={term} value={term.toLowerCase().replace(' ', '-')}>
-                                {term}
-                            </SelectItem>
+                          <SelectItem key={term} value={term}>
+                            {term}
+                          </SelectItem>
                         ))}
-                    </SelectContent>
-                </Select>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Save Supplier</Button>
-        </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Supplier</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicationInventoryData, pharmacyPageStats } from "@/lib/data";
+import { initialMedicationInventoryData, pharmacyPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -44,6 +47,19 @@ import {
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
 
+export type Medication = {
+  id: string;
+  name: string;
+  fullName: string;
+  strength: string;
+  form: string;
+  category: string;
+  stock: number;
+  unitPrice: string;
+  expiryDate: string;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+};
+
 const iconMap = {
   Pill,
   AlertTriangle,
@@ -55,9 +71,28 @@ type IconKey = keyof typeof iconMap;
 
 
 export default function PharmacyPage() {
+    const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
+
     const medicationCategories = [
-        ...new Set(medicationInventoryData.map((i) => i.category)),
+        ...new Set(medications.map((i) => i.category)),
     ];
+
+    const handleSaveMedication = (data: any) => {
+      const newMedication: Medication = {
+        id: `MED-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+        name: data.name,
+        fullName: data.name,
+        strength: data.strength,
+        form: data.form,
+        category: data.category,
+        stock: data.stock,
+        unitPrice: `$${parseFloat(data.unitPrice).toFixed(2)}`,
+        expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
+        status: data.stock > 20 ? 'In Stock' : 'Low Stock',
+      };
+      setMedications(prev => [newMedication, ...prev]);
+    };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -70,7 +105,7 @@ export default function PharmacyPage() {
           </div>
           <div className="flex items-center gap-2">
             <NewPrescriptionDialog />
-            <AddMedicationDialog />
+            <AddMedicationDialog onSave={handleSaveMedication} />
           </div>
         </div>
 
@@ -148,8 +183,8 @@ export default function PharmacyPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {medicationInventoryData.length > 0 ? (
-                      medicationInventoryData.map((item) => (
+                    {medications.length > 0 ? (
+                      medications.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
                             <div className="font-medium">{item.name}</div>

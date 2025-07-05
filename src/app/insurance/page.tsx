@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,12 +33,44 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { insuranceClaimsData, insurancePageStats } from "@/lib/data";
+import { initialInsuranceClaimsData, insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 
+export type Claim = {
+  id: string;
+  patient: string;
+  patientId: string;
+  insurance: string;
+  procedure: string;
+  procedureCode: string;
+  amount: string;
+  approvedAmount: string | null;
+  status: 'Approved' | 'Processing' | 'Denied';
+  statusReason?: string;
+  submitDate: string;
+};
+
 export default function InsurancePage() {
+  const [claims, setClaims] = React.useState<Claim[]>(initialInsuranceClaimsData);
+
+  const handleSaveClaim = (data: any) => {
+    const newClaim: Claim = {
+      id: `CLM-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      patient: data.patient,
+      patientId: 'DC' + Math.floor(100000000 + Math.random() * 900000000),
+      insurance: data.insurance,
+      procedure: data.procedure,
+      procedureCode: data.procedureCode,
+      amount: `$${parseFloat(data.amount).toFixed(2)}`,
+      approvedAmount: null,
+      status: 'Processing',
+      submitDate: new Date(data.submitDate).toLocaleDateString(),
+    };
+    setClaims(prev => [newClaim, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -46,7 +81,7 @@ export default function InsurancePage() {
               <Download className="mr-2 h-4 w-4" />
               Export Claims
             </Button>
-            <NewClaimDialog />
+            <NewClaimDialog onSave={handleSaveClaim} />
           </div>
         </div>
 
@@ -121,8 +156,8 @@ export default function InsurancePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {insuranceClaimsData.length > 0 ? (
-                      insuranceClaimsData.map((claim) => (
+                    {claims.length > 0 ? (
+                      claims.map((claim) => (
                         <TableRow key={claim.id}>
                           <TableCell className="font-medium">
                             {claim.id}

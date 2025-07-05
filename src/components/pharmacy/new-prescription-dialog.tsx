@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,10 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -25,16 +26,49 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, ClipboardPen, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, ClipboardPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { dentalChartPatients, mockDoctors, commonMedicationsData } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function NewPrescriptionDialog() {
-  const [date, setDate] = React.useState<Date>(new Date());
+const prescriptionSchema = z.object({
+  patient: z.string({ required_error: 'Patient is required.' }),
+  doctor: z.string({ required_error: 'Doctor is required.' }),
+  medication: z.string({ required_error: 'Medication is required.' }),
+  dosage: z.string().optional(),
+  refills: z.coerce.number().default(0),
+  instructions: z.string().optional(),
+  date: z.date({ required_error: 'Date is required.' }),
+});
+
+type PrescriptionFormData = z.infer<typeof prescriptionSchema>;
+
+interface NewPrescriptionDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function NewPrescriptionDialog({ onSave }: NewPrescriptionDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<PrescriptionFormData>({
+    resolver: zodResolver(prescriptionSchema),
+    defaultValues: {
+      date: new Date(),
+      refills: 0,
+    }
+  });
+
+  const onSubmit = (data: PrescriptionFormData) => {
+    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
+    const medicationName = commonMedicationsData.find(m => m.name.toLowerCase() === data.medication)?.name;
+    onSave({ ...data, patient: patientName, doctor: doctorName, medication: medicationName });
+    form.reset();
+    setOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <ClipboardPen className="mr-2 h-4 w-4" />
@@ -48,101 +82,152 @@ export function NewPrescriptionDialog() {
             Fill out the form to create a new prescription for a patient.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="patient">Patient *</Label>
-              <Select>
-                <SelectTrigger id="patient">
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dentalChartPatients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="patient"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select patient" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {dentalChartPatients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="doctor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Doctor *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select doctor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {mockDoctors.map((doctor) => (
+                          <SelectItem key={doctor.id} value={doctor.id}>
+                            {doctor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="doctor">Doctor *</Label>
-              <Select>
-                <SelectTrigger id="doctor">
-                  <SelectValue placeholder="Select doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockDoctors.map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
-                      {doctor.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <FormField
+              control={form.control}
+              name="medication"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Medication *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select medication" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {commonMedicationsData.map((med) => (
+                        <SelectItem key={med.name} value={med.name.toLowerCase()}>
+                          {med.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="dosage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dosage</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 500mg" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="refills"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Refills</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="medication">Medication *</Label>
-            <Select>
-              <SelectTrigger id="medication">
-                <SelectValue placeholder="Select medication" />
-              </SelectTrigger>
-              <SelectContent>
-                {commonMedicationsData.map((med) => (
-                  <SelectItem key={med.name} value={med.name.toLowerCase()}>
-                    {med.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dosage">Dosage</Label>
-              <Input id="dosage" placeholder="e.g., 500mg" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="refills">Refills</Label>
-              <Input id="refills" type="number" defaultValue={0} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="instructions">Instructions</Label>
-            <Textarea id="instructions" placeholder="e.g., Take one tablet three times a day for 7 days." />
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="date">Date *</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="date"
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && setDate(d)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Create Prescription</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instructions</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Take one tablet three times a day for 7 days." {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date *</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Create Prescription</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

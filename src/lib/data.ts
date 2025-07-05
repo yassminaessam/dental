@@ -1,9 +1,10 @@
 
+
 // Mock data for the dashboard
 export const overviewStats = [
   {
     title: "Total Patients",
-    value: "0",
+    value: "156",
     change: "+12%",
     icon: "Users",
     changeType: "positive",
@@ -12,7 +13,7 @@ export const overviewStats = [
   },
   {
     title: "Today's Appointments",
-    value: "0",
+    value: "8",
     change: "+5%",
     icon: "CalendarCheck",
     changeType: "positive",
@@ -21,7 +22,7 @@ export const overviewStats = [
   },
   {
     title: "Total Revenue",
-    value: "$0",
+    value: "$45,231",
     change: "+8%",
     icon: "DollarSign",
     changeType: "positive",
@@ -30,7 +31,7 @@ export const overviewStats = [
   },
   {
     title: "Active Staff",
-    value: "0",
+    value: "12",
     change: "100%",
     icon: "UserCheck",
     changeType: "neutral",
@@ -39,7 +40,7 @@ export const overviewStats = [
   },
   {
     title: "Pending Appointments",
-    value: "0",
+    value: "3",
     change: "-2%",
     icon: "Clock",
     changeType: "negative",
@@ -48,7 +49,7 @@ export const overviewStats = [
   },
   {
     title: "Completed Treatments",
-    value: "0",
+    value: "67",
     change: "+15%",
     icon: "CheckCircle",
     changeType: "positive",
@@ -145,7 +146,13 @@ export const availableTimeSlots = [
   "16:00",
 ];
 
-export const patientsData = [];
+export const initialPatientsData = [
+    { id: 'PAT-123', name: 'John Doe', email: 'john.doe@example.com', phone: '(555) 123-4567', age: 45, lastVisit: '12/01/2023', status: 'Active' },
+    { id: 'PAT-124', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '(555) 987-6543', age: 32, lastVisit: '11/15/2023', status: 'Active' },
+];
+
+export const initialAppointmentsData: any[] = [];
+
 
 export const treatmentPageStats = [
   {
@@ -210,7 +217,7 @@ export const treatmentStats = [
   { label: "Follow-up Rate", value: "88%" },
 ];
 
-export const treatmentRecordsData = [];
+export const initialTreatmentsData: any[] = [];
 
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
@@ -283,6 +290,8 @@ export const staffPerformanceData = [
   { metric: "Training Completed", value: "100%" },
 ];
 
+export const initialStaffData: any[] = [];
+
 export const medicalRecordsPageStats = [
   {
     title: "Total Records",
@@ -307,7 +316,7 @@ export const medicalRecordsPageStats = [
   },
 ];
 
-export const medicalRecordsData = [
+export const initialMedicalRecordsData = [
   {
     id: "MR-001",
     patient: "John Smith",
@@ -335,21 +344,21 @@ export const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
 export const financialPageStats = [
   {
     title: "Total Revenue",
-    value: "$0",
+    value: "$45,231",
     change: "+12% from last month",
     icon: "TrendingUp",
     changeType: "positive",
   },
   {
     title: "Total Expenses",
-    value: "$0",
+    value: "$21,500",
     change: "+5% from last month",
     icon: "TrendingDown",
     changeType: "negative",
   },
   {
     title: "Net Profit",
-    value: "$0",
+    value: "$23,731",
     change: "+15% from last month",
     icon: "DollarSign",
     changeType: "positive",
@@ -386,7 +395,7 @@ export const expensesByCategoryData = [
     { name: 'Other', value: 5, color: 'hsl(var(--chart-5))' },
 ];
 
-export const transactionHistoryData: any[] = [];
+export const initialTransactionHistoryData: any[] = [];
 
 export const transactionCategories = ['Patient Payment', 'Insurance Payment', 'Supplies', 'Salary', 'Rent', 'Utilities', 'Marketing', 'Other'];
 export const paymentMethods = ['Credit Card', 'Cash', 'Check', 'Insurance', 'Bank Transfer'];
@@ -428,7 +437,7 @@ export const lowStockItems = [
   },
 ];
 
-export const inventoryItemsData = [
+export const initialInventoryItemsData = [
   {
     id: "INV-001",
     name: "Dental Composite Resin",
@@ -482,7 +491,7 @@ export const inventoryItemsData = [
     location: "Refrigerated Storage",
   },
 ];
-export const inventoryCategories = [...new Set(inventoryItemsData.map(i => i.category))];
+export const inventoryCategories = [...new Set(initialInventoryItemsData.map(i => i.category))];
 
 export const pharmacyPageStats = [
   {
@@ -513,7 +522,7 @@ export const pharmacyPageStats = [
   },
 ];
 
-export const medicationInventoryData = [
+export const initialMedicationInventoryData = [
   {
     id: "MED-001",
     name: "Amoxicillin",
@@ -551,7 +560,7 @@ export const medicationInventoryData = [
     status: "Low Stock",
   },
 ];
-export const medicationCategories = [...new Set(medicationInventoryData.map(i => i.category))];
+export const medicationCategories = [...new Set(initialMedicationInventoryData.map(i => i.category))];
 
 
 export const suppliersPageStats = [
@@ -583,7 +592,7 @@ export const suppliersPageStats = [
   },
 ];
 
-export const suppliersData = [
+export const initialSuppliersData = [
   {
     id: "SUP-001",
     name: "MedPharma Supplies",
@@ -618,7 +627,8 @@ export const suppliersData = [
     status: "active",
   },
 ];
-export const supplierCategories = [...new Set(suppliersData.map(s => s.category))];
+export const suppliersData = initialSuppliersData; // for dialogs
+export const supplierCategories = [...new Set(initialSuppliersData.map(s => s.category))];
 export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
 export const communicationsPageStats = [
@@ -645,7 +655,7 @@ export const communicationsPageStats = [
   },
 ];
 
-export const recentMessagesData = [
+export const initialRecentMessagesData = [
   {
     id: "MSG-001",
     patient: "John Smith",
@@ -747,7 +757,7 @@ export const referralPageStats = [
   },
 ];
 
-export const outgoingReferralsData = [
+export const initialOutgoingReferralsData = [
   {
     id: "REF-001",
     patient: "John Smith",
@@ -774,7 +784,7 @@ export const outgoingReferralsData = [
 
 export const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
 export const referralUrgency = ['Routine', 'Urgent', 'Emergency'];
-export const specialistNetwork = [
+export const initialSpecialistNetwork = [
     { id: 'spec1', name: 'Dr. Robert Chen', specialty: 'Oral Surgery' },
     { id: 'spec2', name: 'Dr. Maria Rodriguez', specialty: 'Periodontics' },
 ];
@@ -805,7 +815,7 @@ export const insurancePageStats = [
   },
 ];
 
-export const insuranceClaimsData = [
+export const initialInsuranceClaimsData = [
   {
     id: "CLM-001",
     patient: "John Smith",
@@ -826,6 +836,7 @@ export const insuranceClaimsData = [
     procedure: "Composite Filling",
     procedureCode: "D2391",
     amount: "$275",
+    approvedAmount: null,
     status: "Processing",
     submitDate: "Dec 11, 2024",
   },
@@ -837,6 +848,7 @@ export const insuranceClaimsData = [
     procedure: "Crown Placement",
     procedureCode: "D2750",
     amount: "$1200",
+    approvedAmount: null,
     status: "Denied",
     statusReason: "Pre-authorization required",
     submitDate: "Dec 9, 2024",
@@ -872,7 +884,7 @@ export const prescriptionPageStats = [
   },
 ];
 
-export const prescriptionRecordsData = [
+export const initialPrescriptionRecordsData = [
   {
     id: "RX-001",
     patient: "John Smith",
@@ -932,14 +944,14 @@ export const commonMedicationsData = [
 export const analyticsPageStats = [
     {
         title: "Total Revenue",
-        value: "$0",
+        value: "$45,231",
         change: "+12.5% from last period",
         icon: "DollarSign",
         changeType: "positive"
     },
     {
         title: "Patient Acquisition",
-        value: "0",
+        value: "12",
         change: "+8.3% from last period",
         icon: "Users",
         changeType: "positive"

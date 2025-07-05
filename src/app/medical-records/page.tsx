@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,13 +33,35 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsData, medicalRecordsPageStats } from "@/lib/data";
+import { medicalRecordsPageStats, initialMedicalRecordsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, Download } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 
+export type MedicalRecord = {
+  id: string;
+  patient: string;
+  type: string;
+  complaint: string;
+  provider: string;
+  date: string;
+  status: 'Final' | 'Draft';
+};
+
 export default function MedicalRecordsPage() {
+  const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
+
+  const handleSaveRecord = (data: Omit<MedicalRecord, 'id' | 'status'>) => {
+    const newRecord: MedicalRecord = {
+      id: `MR-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      ...data,
+      date: new Date(data.date).toLocaleDateString(),
+      status: 'Final',
+    };
+    setRecords(prev => [newRecord, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -44,7 +69,7 @@ export default function MedicalRecordsPage() {
           <h1 className="text-3xl font-bold">Medical Records</h1>
           <div className="flex items-center gap-2">
             <UploadImageDialog />
-            <NewRecordDialog />
+            <NewRecordDialog onSave={handleSaveRecord} />
           </div>
         </div>
 
@@ -114,8 +139,8 @@ export default function MedicalRecordsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {medicalRecordsData.length > 0 ? (
-                      medicalRecordsData.map((record) => (
+                    {records.length > 0 ? (
+                      records.map((record) => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.id}</TableCell>
                           <TableCell>

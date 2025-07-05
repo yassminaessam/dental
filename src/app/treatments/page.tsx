@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,18 +30,48 @@ import {
   treatmentCategories,
   treatmentPageStats,
   treatmentStats,
+  initialTreatmentsData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 
+export type Treatment = {
+  id: string;
+  date: string;
+  patient: string;
+  procedure: string;
+  doctor: string;
+  tooth: string | null;
+  cost: string;
+  status: 'In Progress' | 'Completed' | 'Pending';
+  followUp: string | null;
+};
+
 export default function TreatmentsPage() {
+  const [treatments, setTreatments] = React.useState<Treatment[]>(initialTreatmentsData);
+
+  const handleSavePlan = (data: any) => {
+    const newTreatment: Treatment = {
+      id: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date(data.startDate).toLocaleDateString(),
+      patient: data.patient,
+      procedure: data.treatmentName,
+      doctor: data.doctor,
+      tooth: 'Multiple',
+      cost: '$' + Math.floor(500 + Math.random() * 2000),
+      status: 'Pending',
+      followUp: new Date(data.endDate).toLocaleDateString(),
+    };
+    setTreatments(prev => [newTreatment, ...prev]);
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Treatments</h1>
-          <NewTreatmentPlanDialog />
+          <NewTreatmentPlanDialog onSave={handleSavePlan} />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -125,45 +158,31 @@ export default function TreatmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={9} className="h-24 text-center">
-                        No records found.
-                      </TableCell>
-                    </TableRow>
+                    {treatments.length > 0 ? (
+                      treatments.map((treatment) => (
+                        <TableRow key={treatment.id}>
+                          <TableCell>{treatment.date}</TableCell>
+                          <TableCell>{treatment.patient}</TableCell>
+                          <TableCell>{treatment.procedure}</TableCell>
+                          <TableCell>{treatment.doctor}</TableCell>
+                          <TableCell>{treatment.tooth ?? 'N/A'}</TableCell>
+                          <TableCell>{treatment.cost}</TableCell>
+                          <TableCell>{treatment.status}</TableCell>
+                          <TableCell>{treatment.followUp ?? 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">View</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={9} className="h-24 text-center">
+                          No records found.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Treatments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-48 text-center text-muted-foreground flex items-center justify-center">
-                  No upcoming treatments.
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Treatment Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                {treatmentStats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex justify-between text-sm"
-                  >
-                    <span className="text-muted-foreground">{stat.label}</span>
-                    <span className="font-semibold">{stat.value}</span>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           </div>

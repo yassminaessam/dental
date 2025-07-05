@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,18 +26,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointmentPageStats, availableTimeSlots } from "@/lib/data";
+import { appointmentPageStats, availableTimeSlots, initialAppointmentsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, List, Search } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 
+export type Appointment = {
+  id: string;
+  dateTime: Date;
+  patient: string;
+  doctor: string;
+  type: string;
+  duration: string;
+  status: 'Confirmed' | 'Pending' | 'Cancelled';
+}
+
 export default function AppointmentsPage() {
+  const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
+
+  const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
+    const newAppointment: Appointment = {
+      id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
+      ...data,
+      status: 'Confirmed',
+    };
+    setAppointments(prev => [newAppointment, ...prev].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()));
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Appointments</h1>
-          <ScheduleAppointmentDialog />
+          <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -57,18 +81,20 @@ export default function AppointmentsPage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Calendar className="mr-2 h-4 w-4" />
-            Calendar View
-          </Button>
-          <Button>
-            <List className="mr-2 h-4 w-4" />
-            List View
-          </Button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline">
+              <Calendar className="mr-2 h-4 w-4" />
+              Calendar View
+            </Button>
+            <Button>
+              <List className="mr-2 h-4 w-4" />
+              List View
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6">
           <div className="lg:col-span-3">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
@@ -109,47 +135,27 @@ export default function AppointmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        No appointments scheduled.
-                      </TableCell>
-                    </TableRow>
+                    {appointments.length > 0 ? (
+                      appointments.map(appt => (
+                        <TableRow key={appt.id}>
+                          <TableCell>{appt.dateTime.toLocaleString()}</TableCell>
+                          <TableCell>{appt.patient}</TableCell>
+                          <TableCell>{appt.doctor}</TableCell>
+                          <TableCell>{appt.type}</TableCell>
+                          <TableCell>{appt.duration}</TableCell>
+                          <TableCell>{appt.status}</TableCell>
+                          <TableCell className="text-right"><Button variant="ghost" size="sm">View</Button></TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                       <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          No appointments scheduled.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Today's Schedule</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-48 text-center text-muted-foreground flex items-center justify-center">
-                   No appointments for today.
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Time Slots</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-2">
-                 <div className="grid grid-cols-3 gap-2">
-                    {availableTimeSlots.map((slot) => (
-                    <Button key={slot} variant="outline">
-                        {slot}
-                    </Button>
-                    ))}
-                 </div>
-                <Button className="w-full mt-2">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Book Appointment
-                </Button>
               </CardContent>
             </Card>
           </div>

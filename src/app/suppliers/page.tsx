@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { suppliersData, suppliersPageStats } from "@/lib/data";
+import { initialSuppliersData, suppliersPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -46,6 +49,18 @@ import {
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
 
+export type Supplier = {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  category: string;
+  paymentTerms: string;
+  rating: number;
+  status: 'active' | 'inactive';
+};
+
 const iconMap = {
   Building2,
   FileText,
@@ -56,9 +71,20 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
+  const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
   const supplierCategories = [
-    ...new Set(suppliersData.map((s) => s.category)),
+    ...new Set(suppliers.map((s) => s.category)),
   ];
+
+  const handleSaveSupplier = (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
+    const newSupplier: Supplier = {
+      id: `SUP-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      ...data,
+      rating: 5.0,
+      status: 'active',
+    };
+    setSuppliers(prev => [newSupplier, ...prev]);
+  };
 
   return (
     <DashboardLayout>
@@ -72,7 +98,7 @@ export default function SuppliersPage() {
           </div>
           <div className="flex items-center gap-2">
             <NewPurchaseOrderDialog />
-            <AddSupplierDialog />
+            <AddSupplierDialog onSave={handleSaveSupplier} />
           </div>
         </div>
 
@@ -153,8 +179,8 @@ export default function SuppliersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {suppliersData.length > 0 ? (
-                      suppliersData.map((supplier) => (
+                    {suppliers.length > 0 ? (
+                      suppliers.map((supplier) => (
                         <TableRow key={supplier.id}>
                           <TableCell>
                             <div className="font-medium">{supplier.name}</div>

@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,12 +32,51 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { emergencyContactRelationships } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function AddPatientDialog() {
-  const [date, setDate] = React.useState<Date>();
+const patientSchema = z.object({
+  name: z.string().min(1, { message: 'First name is required' }),
+  lastName: z.string().min(1, { message: 'Last name is required' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  phone: z.string().min(1, { message: 'Phone number is required' }),
+  dob: z.date({ required_error: 'Date of birth is required' }),
+  address: z.string().optional(),
+  ecName: z.string().optional(),
+  ecPhone: z.string().optional(),
+  ecRelationship: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  policyNumber: z.string().optional(),
+});
+
+type PatientFormData = z.infer<typeof patientSchema>;
+
+interface AddPatientDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<PatientFormData>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: {
+      address: '',
+      ecName: '',
+      ecPhone: '',
+      ecRelationship: '',
+      insuranceProvider: '',
+      policyNumber: '',
+    }
+  });
+
+  const onSubmit = (data: PatientFormData) => {
+    const age = new Date().getFullYear() - new Date(data.dob).getFullYear();
+    onSave({ name: `${data.name} ${data.lastName}`, email: data.email, phone: data.phone, age });
+    form.reset();
+    setOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="mr-2 h-4 w-4" />
@@ -48,117 +90,211 @@ export function AddPatientDialog() {
             Enter patient details to create a new record
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="first-name">First Name *</Label>
-              <Input id="first-name" placeholder="John" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="last-name">Last Name *</Label>
-              <Input id="last-name" placeholder="Doe" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input id="email" type="email" placeholder="john.doe@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone *</Label>
-              <Input id="phone" type="tel" placeholder="(555) 123-4567" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="dob"
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>mm/dd/yyyy</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                    captionLayout="dropdown-buttons"
-                    fromYear={1930}
-                    toYear={new Date().getFullYear()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea id="address" placeholder="123 Main St, Anytown, USA" />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="ec-name">Name</Label>
-                <Input id="ec-name" placeholder="Jane Doe" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ec-phone">Phone</Label>
-                <Input id="ec-phone" type="tel" placeholder="(555) 987-6543" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ec-relationship">Relationship</Label>
-                <Select>
-                  <SelectTrigger id="ec-relationship">
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {emergencyContactRelationships.map((rel) => (
-                      <SelectItem key={rel} value={rel.toLowerCase()}>
-                        {rel}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="insurance-provider">Insurance Provider</Label>
-                    <Input id="insurance-provider" placeholder="DentalCare Plus" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="policy-number">Policy Number</Label>
-                    <Input id="policy-number" placeholder="DCP123456789" />
-                </div>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="john.doe@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone *</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date of Birth *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                          initialFocus
+                          captionLayout="dropdown-buttons"
+                          fromYear={1930}
+                          toYear={new Date().getFullYear()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="123 Main St, Anytown, USA" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-          
-           <div>
-            <h3 className="mb-4 text-lg font-medium">Medical History</h3>
-            <Button variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add medical condition
-            </Button>
-          </div>
 
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Save Patient</Button>
-        </DialogFooter>
+            <div>
+              <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="ecName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jane Doe" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="ecPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="(555) 987-6543" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="ecRelationship"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Relationship</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select relationship" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {emergencyContactRelationships.map((rel) => (
+                            <SelectItem key={rel} value={rel.toLowerCase()}>
+                              {rel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="insuranceProvider"
+                    render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Insurance Provider</FormLabel>
+                          <FormControl>
+                            <Input placeholder="DentalCare Plus" {...field} />
+                          </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="policyNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Policy Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="DCP123456789" {...field} />
+                          </FormControl>
+                      </FormItem>
+                    )}
+                  />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="mb-4 text-lg font-medium">Medical History</h3>
+              <Button type="button" variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add medical condition
+              </Button>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline" type="button">Cancel</Button>
+              </DialogClose>
+              <Button type="submit">Save Patient</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
