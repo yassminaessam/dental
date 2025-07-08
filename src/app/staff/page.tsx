@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -23,12 +22,28 @@ import {
 import {
   staffPageStats,
   staffRoles,
-  staffPerformanceData,
   initialStaffData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
+import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type StaffMember = {
   id: string;
@@ -44,6 +59,8 @@ export type StaffMember = {
 
 export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
+  const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
+  const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
 
   const handleSaveEmployee = (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
     const newEmployee: StaffMember = {
@@ -59,6 +76,19 @@ export default function StaffPage() {
     };
     setStaff(prev => [newEmployee, ...prev]);
   };
+  
+  const handleUpdateEmployee = (updatedStaff: StaffMember) => {
+    setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
+    setStaffToEdit(null);
+  };
+
+  const handleDeleteEmployee = () => {
+    if (staffToDelete) {
+      setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
+      setStaffToDelete(null);
+    }
+  };
+
 
   return (
     <DashboardLayout>
@@ -161,7 +191,24 @@ export default function StaffPage() {
                             <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>{member.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">View</Button>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Actions</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setStaffToEdit(member)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setStaffToDelete(member)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -179,6 +226,30 @@ export default function StaffPage() {
           </div>
         </div>
       </main>
+
+       {staffToEdit && (
+        <EditEmployeeDialog
+          staffMember={staffToEdit}
+          onSave={handleUpdateEmployee}
+          open={!!staffToEdit}
+          onOpenChange={(isOpen) => !isOpen && setStaffToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!staffToDelete} onOpenChange={(isOpen) => !isOpen && setStaffToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the staff member's record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEmployee}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

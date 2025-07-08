@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -39,9 +38,21 @@ import {
   AlertTriangle,
   ShoppingCart,
   Pencil,
+  Trash2,
   Package as PackageIcon,
 } from "lucide-react";
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
+import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export type InventoryItem = {
   id: string;
@@ -59,6 +70,8 @@ export type InventoryItem = {
 
 export default function InventoryPage() {
   const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
+  const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
 
   const inventoryCategories = [
     ...new Set(inventory.map((i) => i.category)),
@@ -79,6 +92,18 @@ export default function InventoryPage() {
       location: data.location,
     };
     setInventory(prev => [newItem, ...prev]);
+  };
+
+  const handleUpdateItem = (updatedItem: InventoryItem) => {
+    setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+    setItemToEdit(null);
+  };
+
+  const handleDeleteItem = () => {
+    if (itemToDelete) {
+      setInventory(prev => prev.filter(item => item.id !== itemToDelete.id));
+      setItemToDelete(null);
+    }
   };
 
   return (
@@ -228,13 +253,13 @@ export default function InventoryPage() {
                       <TableCell>{item.location}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => setItemToEdit(item)}>
                             <Pencil className="mr-2 h-3 w-3" />
                             Edit
                           </Button>
-                          <Button variant="outline" size="sm">
-                            <ShoppingCart className="mr-2 h-3 w-3" />
-                            Restock
+                          <Button variant="destructive" size="sm" onClick={() => setItemToDelete(item)}>
+                            <Trash2 className="mr-2 h-3 w-3" />
+                            Delete
                           </Button>
                         </div>
                       </TableCell>
@@ -252,6 +277,31 @@ export default function InventoryPage() {
           </CardContent>
         </Card>
       </main>
+      
+      {itemToEdit && (
+        <EditItemDialog
+          item={itemToEdit}
+          onSave={handleUpdateItem}
+          open={!!itemToEdit}
+          onOpenChange={(isOpen) => !isOpen && setItemToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(isOpen) => !isOpen && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the item
+              from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
