@@ -268,7 +268,7 @@ export default function ReferralsPage() {
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="network">
+          <TabsContent value="network" className="mt-4">
              <Card>
                 <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                     <CardTitle>Specialist Network</CardTitle>
@@ -310,7 +310,7 @@ export default function ReferralsPage() {
                                                 </div>
                                             )}
                                             {specialist.email && (
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                     <Mail className="h-3 w-3" />
                                                     <span>{specialist.email}</span>
                                                 </div>
