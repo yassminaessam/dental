@@ -21,14 +21,32 @@ import {
 } from "@/components/ui/table";
 import { patientPageStats, initialPatientsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Filter, User } from "lucide-react";
+import { Search, Filter, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 
 export type Patient = {
   id: string;
   name: string;
   email: string;
   phone: string;
+  dob: Date;
   age: number;
   lastVisit: string;
   status: 'Active' | 'Inactive';
@@ -37,19 +55,35 @@ export type Patient = {
 
 export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>(initialPatientsData);
+  const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
+  const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
 
-  const handleSavePatient = (data: Omit<Patient, 'id' | 'lastVisit' | 'status'>) => {
+  const handleSavePatient = (data: any) => {
     const newPatient: Patient = {
       id: `PAT-${Math.floor(1000 + Math.random() * 9000)}`,
       name: `${data.name}`,
       email: data.email,
       phone: data.phone,
-      age: data.age,
+      dob: data.dob,
+      age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
       lastVisit: new Date().toLocaleDateString(),
       status: 'Active',
     };
     setPatients(prev => [newPatient, ...prev]);
   };
+  
+  const handleUpdatePatient = (updatedPatient: Patient) => {
+    setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
+    setPatientToEdit(null);
+  };
+
+  const handleDeletePatient = () => {
+    if (patientToDelete) {
+      setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
+      setPatientToDelete(null);
+    }
+  };
+
 
   return (
     <DashboardLayout>
@@ -128,7 +162,24 @@ export default function PatientsPage() {
                       <TableCell>{patient.lastVisit}</TableCell>
                       <TableCell>{patient.status}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">View</Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Actions</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -144,6 +195,30 @@ export default function PatientsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {patientToEdit && (
+        <EditPatientDialog
+          patient={patientToEdit}
+          onSave={handleUpdatePatient}
+          open={!!patientToEdit}
+          onOpenChange={(isOpen) => !isOpen && setPatientToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!patientToDelete} onOpenChange={(isOpen) => !isOpen && setPatientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the patient's record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePatient}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
