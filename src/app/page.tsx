@@ -15,16 +15,44 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
+import { initialAppointmentsData, initialPatientsData } from '@/lib/data';
+import type { Patient } from '@/app/patients/page';
+import type { Appointment } from '@/app/appointments/page';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
+    const { toast } = useToast();
+
+    const handleSavePatient = (newPatient: Patient) => {
+        initialPatientsData.unshift(newPatient);
+        toast({
+            title: "Patient Added",
+            description: `${newPatient.name} has been successfully added.`,
+        });
+    };
+    
+    const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
+        const newAppointment: Appointment = {
+          id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
+          ...data,
+          status: 'Confirmed',
+        };
+        initialAppointmentsData.unshift(newAppointment);
+        initialAppointmentsData.sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
+        toast({
+            title: "Appointment Scheduled",
+            description: `Appointment for ${newAppointment.patient} has been scheduled.`,
+        });
+    };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
-            <ScheduleAppointmentDialog onSave={() => {}} />
-            <AddPatientDialog onSave={() => {}} />
+            <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+            <AddPatientDialog onSave={handleSavePatient} />
           </div>
         </div>
         <OverviewStats />

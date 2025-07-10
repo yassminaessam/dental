@@ -30,6 +30,7 @@ import { appointmentPageStats, availableTimeSlots, initialAppointmentsData } fro
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, List, Search } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Appointment = {
   id: string;
@@ -45,6 +46,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const { toast } = useToast();
 
   const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
     const newAppointment: Appointment = {
@@ -52,7 +54,14 @@ export default function AppointmentsPage() {
       ...data,
       status: 'Confirmed',
     };
-    setAppointments(prev => [newAppointment, ...prev].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()));
+    const updatedAppointments = [newAppointment, ...appointments].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
+    setAppointments(updatedAppointments);
+    // Also update the shared array
+    initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
+    toast({
+        title: "Appointment Scheduled",
+        description: `An appointment for ${newAppointment.patient} has been scheduled.`,
+    });
   };
   
   const filteredAppointments = React.useMemo(() => {
