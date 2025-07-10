@@ -70,6 +70,8 @@ type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactionHistoryData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSaveTransaction = (data: Omit<Transaction, 'id' | 'status'>) => {
@@ -86,6 +88,16 @@ export default function FinancialPage() {
       description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
     });
   };
+  
+  const filteredTransactions = React.useMemo(() => {
+    return transactions
+      .filter(transaction => 
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(transaction => 
+        typeFilter === 'all' || transaction.type.toLowerCase() === typeFilter
+      );
+  }, [transactions, searchTerm, typeFilter]);
 
   return (
     <DashboardLayout>
@@ -173,9 +185,11 @@ export default function FinancialPage() {
                       type="search"
                       placeholder="Search transactions..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
@@ -202,8 +216,8 @@ export default function FinancialPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.length > 0 ? (
-                      transactions.map((transaction: any) => (
+                    {filteredTransactions.length > 0 ? (
+                      filteredTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.date}</TableCell>
                           <TableCell>{transaction.description}</TableCell>

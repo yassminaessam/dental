@@ -43,6 +43,8 @@ export type Appointment = {
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
 
   const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
     const newAppointment: Appointment = {
@@ -52,6 +54,18 @@ export default function AppointmentsPage() {
     };
     setAppointments(prev => [newAppointment, ...prev].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()));
   };
+  
+  const filteredAppointments = React.useMemo(() => {
+    return appointments
+      .filter(appointment =>
+        appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appointment.type.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(appointment =>
+        statusFilter === 'all' || appointment.status.toLowerCase() === statusFilter
+      );
+  }, [appointments, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -106,9 +120,11 @@ export default function AppointmentsPage() {
                       type="search"
                       placeholder="Search appointments..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -135,8 +151,8 @@ export default function AppointmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {appointments.length > 0 ? (
-                      appointments.map(appt => (
+                    {filteredAppointments.length > 0 ? (
+                      filteredAppointments.map(appt => (
                         <TableRow key={appt.id}>
                           <TableCell>{appt.dateTime.toLocaleString()}</TableCell>
                           <TableCell>{appt.patient}</TableCell>
@@ -150,7 +166,7 @@ export default function AppointmentsPage() {
                     ) : (
                        <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                          No appointments scheduled.
+                          No appointments found.
                         </TableCell>
                       </TableRow>
                     )}
