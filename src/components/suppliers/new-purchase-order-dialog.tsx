@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -29,13 +31,52 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { suppliersData } from '@/lib/data';
 import { Input } from '../ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function NewPurchaseOrderDialog() {
-  const [orderDate, setOrderDate] = React.useState<Date>(new Date());
-  const [deliveryDate, setDeliveryDate] = React.useState<Date>();
+const orderItemSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+});
+
+const purchaseOrderSchema = z.object({
+  supplier: z.string({ required_error: 'Supplier is required.' }),
+  orderDate: z.date({ required_error: 'Order date is required.' }),
+  deliveryDate: z.date().optional(),
+  notes: z.string().optional(),
+  items: z.array(orderItemSchema).min(1, "At least one item is required."),
+});
+
+type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
+
+interface NewPurchaseOrderDialogProps {
+  onSave: (data: any) => void;
+}
+
+export function NewPurchaseOrderDialog({ onSave }: NewPurchaseOrderDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<PurchaseOrderFormData>({
+    resolver: zodResolver(purchaseOrderSchema),
+    defaultValues: {
+      orderDate: new Date(),
+      items: [{ description: '', quantity: 1, unitPrice: 0 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
+
+  const onSubmit = (data: PurchaseOrderFormData) => {
+    const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
+    onSave({...data, supplier: supplierName });
+    form.reset();
+    setOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -49,80 +90,144 @@ export function NewPurchaseOrderDialog() {
             Create a new purchase order for a supplier.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier *</Label>
-              <Select>
-                <SelectTrigger id="supplier">
-                  <SelectValue placeholder="Select supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliersData.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="supplier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select supplier" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliersData.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="orderDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Order Date *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="order-date">Order Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="order-date"
-                    variant={"outline"}
-                    className={cn("w-full justify-start text-left font-normal")}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(orderDate, "PPP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={orderDate}
-                    onSelect={(d) => d && setOrderDate(d)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          <div>
-            <h3 className="mb-2 text-sm font-medium">Order Items</h3>
-            <div className="rounded-lg border p-2">
-                <div className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-6"><Label>Item Description</Label></div>
-                    <div className="col-span-2"><Label>Qty</Label></div>
-                    <div className="col-span-3"><Label>Unit Price</Label></div>
-                    <div className="col-span-1"></div>
-                </div>
-                 <div className="grid grid-cols-12 gap-2 items-center mt-2">
-                    <div className="col-span-6"><Input placeholder="Item description" /></div>
-                    <div className="col-span-2"><Input type="number" placeholder="1" /></div>
-                    <div className="col-span-3"><Input type="number" placeholder="$0.00" /></div>
-                    <div className="col-span-1">
-                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            <div>
+              <h3 className="mb-2 text-sm font-medium">Order Items *</h3>
+              <div className="rounded-lg border p-2 space-y-2">
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-6"><Label>Item Description</Label></div>
+                      <div className="col-span-2"><Label>Qty</Label></div>
+                      <div className="col-span-3"><Label>Unit Price</Label></div>
+                      <div className="col-span-1"></div>
+                  </div>
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="grid grid-cols-12 gap-2 items-center">
+                        <FormField
+                            control={form.control}
+                            name={`items.${index}.description`}
+                            render={({ field }) => (
+                                <FormItem className="col-span-6">
+                                    <FormControl>
+                                        <Input placeholder="Item description" {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                                <FormItem className="col-span-2">
+                                    <FormControl>
+                                        <Input type="number" placeholder="1" {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                                <FormItem className="col-span-3">
+                                    <FormControl>
+                                        <Input type="number" placeholder="$0.00" {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <div className="col-span-1">
+                            <Button variant="ghost" size="icon" type="button" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-                <Button variant="outline" size="sm" className="mt-2">
-                    <Plus className="mr-2 h-4 w-4" /> Add Item
-                </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
+                  >
+                      <Plus className="mr-2 h-4 w-4" /> Add Item
+                  </Button>
+                  <Controller
+                    control={form.control}
+                    name="items"
+                    render={({ fieldState }) => fieldState.error && <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p>}
+                  />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" placeholder="Add any special instructions or notes for the supplier." />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Create Purchase Order</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                   <FormControl>
+                    <Textarea id="notes" placeholder="Add any special instructions or notes for the supplier." {...field} />
+                   </FormControl>
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="submit">Create Purchase Order</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

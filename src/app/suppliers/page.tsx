@@ -33,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { initialSuppliersData, suppliersPageStats } from "@/lib/data";
+import { initialSuppliersData, suppliersPageStats, initialPurchaseOrdersData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -45,6 +45,10 @@ import {
   Phone,
   Mail,
   Pencil,
+  Eye,
+  CheckCircle2,
+  Clock,
+  Truck as TruckIcon,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
@@ -62,6 +66,16 @@ export type Supplier = {
   status: 'active' | 'inactive';
 };
 
+export type PurchaseOrder = {
+  id: string;
+  supplier: string;
+  orderDate: string;
+  deliveryDate: string | null;
+  total: string;
+  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+};
+
+
 const iconMap = {
   Building2,
   FileText,
@@ -73,8 +87,13 @@ type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [supplierSearchTerm, setSupplierSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
+
+  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrdersData);
+  const [poSearchTerm, setPoSearchTerm] = React.useState('');
+  const [poStatusFilter, setPoStatusFilter] = React.useState('all');
+
   const { toast } = useToast();
   
   const supplierCategories = [
@@ -95,15 +114,42 @@ export default function SuppliersPage() {
     });
   };
 
+  const handleSavePurchaseOrder = (data: any) => {
+    const newPurchaseOrder: PurchaseOrder = {
+      id: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
+      supplier: data.supplier,
+      orderDate: new Date(data.orderDate).toLocaleDateString(),
+      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
+      total: `$${data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0).toFixed(2)}`,
+      status: 'Pending',
+    };
+    setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
+    toast({
+      title: "Purchase Order Created",
+      description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
+    });
+  };
+
   const filteredSuppliers = React.useMemo(() => {
     return suppliers
       .filter(supplier =>
-        supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
+        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
       )
       .filter(supplier =>
         categoryFilter === 'all' || supplier.category.toLowerCase() === categoryFilter.toLowerCase()
       );
-  }, [suppliers, searchTerm, categoryFilter]);
+  }, [suppliers, supplierSearchTerm, categoryFilter]);
+
+  const filteredPurchaseOrders = React.useMemo(() => {
+    return purchaseOrders
+      .filter(po =>
+        po.supplier.toLowerCase().includes(poSearchTerm.toLowerCase()) ||
+        po.id.toLowerCase().includes(poSearchTerm.toLowerCase())
+      )
+      .filter(po =>
+        poStatusFilter === 'all' || po.status.toLowerCase() === poStatusFilter
+      );
+  }, [purchaseOrders, poSearchTerm, poStatusFilter]);
 
   return (
     <DashboardLayout>
@@ -116,7 +162,7 @@ export default function SuppliersPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NewPurchaseOrderDialog />
+            <NewPurchaseOrderDialog onSave={handleSavePurchaseOrder} />
             <AddSupplierDialog onSave={handleSaveSupplier} />
           </div>
         </div>
@@ -167,8 +213,8 @@ export default function SuppliersPage() {
                       type="search"
                       placeholder="Search suppliers..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={supplierSearchTerm}
+                      onChange={(e) => setSupplierSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -274,10 +320,92 @@ export default function SuppliersPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="purchase-orders">
+          <TabsContent value="purchase-orders" className="mt-4">
             <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-muted-foreground">
-                No purchase orders found.
+              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                <CardTitle>Purchase Orders</CardTitle>
+                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+                  <div className="relative w-full md:w-auto">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search orders..."
+                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={poSearchTerm}
+                      onChange={(e) => setPoSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={poStatusFilter} onValueChange={setPoStatusFilter}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>PO Number</TableHead>
+                      <TableHead>Supplier</TableHead>
+                      <TableHead>Order Date</TableHead>
+                      <TableHead>Expected Delivery</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPurchaseOrders.length > 0 ? (
+                      filteredPurchaseOrders.map((po) => (
+                        <TableRow key={po.id}>
+                          <TableCell className="font-medium">{po.id}</TableCell>
+                          <TableCell>{po.supplier}</TableCell>
+                          <TableCell>{po.orderDate}</TableCell>
+                          <TableCell>{po.deliveryDate || 'N/A'}</TableCell>
+                          <TableCell>{po.total}</TableCell>
+                          <TableCell>
+                             <Badge
+                              variant={
+                                po.status === "Delivered" ? "default" :
+                                po.status === "Cancelled" ? "destructive" : "outline"
+                              }
+                              className={cn(
+                                "capitalize",
+                                po.status === 'Delivered' && 'bg-green-100 text-green-800',
+                                po.status === 'Shipped' && 'bg-blue-100 text-blue-800'
+                              )}
+                            >
+                               {po.status === 'Pending' && <Clock className="mr-1 h-3 w-3" />}
+                               {po.status === 'Shipped' && <TruckIcon className="mr-1 h-3 w-3" />}
+                               {po.status === 'Delivered' && <CheckCircle2 className="mr-1 h-3 w-3" />}
+                               {po.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                             <Button variant="outline" size="sm">
+                                <Eye className="mr-2 h-3 w-3" />
+                                View
+                              </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          No purchase orders found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>

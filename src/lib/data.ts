@@ -2,6 +2,7 @@
 
 
 
+
 // Mock data for the dashboard
 export const overviewStats = [
   {
@@ -654,6 +655,34 @@ export const initialSuppliersData = [
 export const suppliersData = initialSuppliersData; // for dialogs
 export const supplierCategories = [...new Set(initialSuppliersData.map(s => s.category))];
 export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
+
+export const initialPurchaseOrdersData = [
+  {
+    id: "PO-1234",
+    supplier: "MedPharma Supplies",
+    orderDate: "2024-12-15",
+    deliveryDate: "2024-12-22",
+    total: "$1,250.00",
+    status: "Shipped",
+  },
+  {
+    id: "PO-1235",
+    supplier: "Dental Equipment Co.",
+    orderDate: "2024-12-10",
+    deliveryDate: null,
+    total: "$5,500.00",
+    status: "Pending",
+  },
+  {
+    id: "PO-1236",
+    supplier: "Medical Supplies Plus",
+    orderDate: "2024-11-28",
+    deliveryDate: "2024-12-05",
+    total: "$350.50",
+    status: "Delivered",
+  },
+];
+
 
 export const communicationsPageStats = [
   {
