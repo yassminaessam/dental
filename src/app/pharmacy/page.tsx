@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Medication = {
   id: string;
@@ -72,6 +73,7 @@ type IconKey = keyof typeof iconMap;
 
 export default function PharmacyPage() {
     const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
+    const { toast } = useToast();
 
     const medicationCategories = [
         ...new Set(medications.map((i) => i.category)),
@@ -91,6 +93,10 @@ export default function PharmacyPage() {
         status: data.stock > 20 ? 'In Stock' : 'Low Stock',
       };
       setMedications(prev => [newMedication, ...prev]);
+      toast({
+        title: "Medication Added",
+        description: `${newMedication.name} has been added to the inventory.`,
+      });
     };
 
   return (
@@ -104,7 +110,7 @@ export default function PharmacyPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NewPrescriptionDialog />
+            <NewPrescriptionDialog onSave={() => {}} />
             <AddMedicationDialog onSave={handleSaveMedication} />
           </div>
         </div>

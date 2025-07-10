@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -53,6 +54,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type InventoryItem = {
   id: string;
@@ -72,6 +74,7 @@ export default function InventoryPage() {
   const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
+  const { toast } = useToast();
 
   const inventoryCategories = [
     ...new Set(inventory.map((i) => i.category)),
@@ -92,16 +95,29 @@ export default function InventoryPage() {
       location: data.location,
     };
     setInventory(prev => [newItem, ...prev]);
+    toast({
+      title: "Item Added",
+      description: `${newItem.name} has been added to inventory.`,
+    });
   };
 
   const handleUpdateItem = (updatedItem: InventoryItem) => {
     setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
     setItemToEdit(null);
+    toast({
+      title: "Item Updated",
+      description: `${updatedItem.name} has been successfully updated.`,
+    });
   };
 
   const handleDeleteItem = () => {
     if (itemToDelete) {
       setInventory(prev => prev.filter(item => item.id !== itemToDelete.id));
+      toast({
+        title: "Item Deleted",
+        description: `${itemToDelete.name} has been removed from inventory.`,
+        variant: "destructive",
+      });
       setItemToDelete(null);
     }
   };

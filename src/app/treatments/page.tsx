@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Treatment = {
   id: string;
@@ -50,6 +51,7 @@ export type Treatment = {
 
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = React.useState<Treatment[]>(initialTreatmentsData);
+  const { toast } = useToast();
 
   const handleSavePlan = (data: any) => {
     const newTreatment: Treatment = {
@@ -64,6 +66,10 @@ export default function TreatmentsPage() {
       followUp: new Date(data.endDate).toLocaleDateString(),
     };
     setTreatments(prev => [newTreatment, ...prev]);
+    toast({
+      title: "Treatment Plan Created",
+      description: `A new plan for ${newTreatment.patient} has been created.`,
+    });
   };
 
   return (

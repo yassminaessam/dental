@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { Search, Send, Eye } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Referral = {
   id: string;
@@ -60,6 +61,7 @@ export type Specialist = {
 export default function ReferralsPage() {
   const [referrals, setReferrals] = React.useState<Referral[]>(initialOutgoingReferralsData);
   const [specialists, setSpecialists] = React.useState<Specialist[]>(initialSpecialistNetwork);
+  const { toast } = useToast();
 
   const handleSaveReferral = (data: any) => {
     const newReferral: Referral = {
@@ -74,6 +76,10 @@ export default function ReferralsPage() {
       apptDate: null,
     };
     setReferrals(prev => [newReferral, ...prev]);
+    toast({
+      title: "Referral Sent",
+      description: `Referral for ${newReferral.patient} to ${newReferral.specialist} has been sent.`,
+    });
   };
 
   const handleSaveSpecialist = (data: any) => {
@@ -82,6 +88,10 @@ export default function ReferralsPage() {
       ...data,
     };
     setSpecialists(prev => [newSpecialist, ...prev]);
+    toast({
+      title: "Specialist Added",
+      description: `${newSpecialist.name} has been added to your network.`,
+    });
   };
 
   return (

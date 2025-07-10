@@ -46,6 +46,7 @@ import {
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Transaction = {
   id: string;
@@ -69,6 +70,7 @@ type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactionHistoryData);
+  const { toast } = useToast();
 
   const handleSaveTransaction = (data: Omit<Transaction, 'id' | 'status'>) => {
     const newTransaction: Transaction = {
@@ -79,6 +81,10 @@ export default function FinancialPage() {
       status: 'Completed',
     };
     setTransactions(prev => [newTransaction, ...prev]);
+    toast({
+      title: "Transaction Added",
+      description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
+    });
   };
 
   return (

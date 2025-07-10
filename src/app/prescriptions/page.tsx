@@ -44,6 +44,7 @@ import {
   Pill,
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Prescription = {
   id: string;
@@ -60,6 +61,7 @@ export type Prescription = {
 
 export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+  const { toast } = useToast();
 
   const handleSavePrescription = (data: any) => {
     const newPrescription: Prescription = {
@@ -75,6 +77,10 @@ export default function PrescriptionsPage() {
       status: 'Active',
     };
     setPrescriptions(prev => [newPrescription, ...prev]);
+    toast({
+      title: "Prescription Created",
+      description: `A new prescription for ${newPrescription.patient} has been created.`,
+    });
   };
 
   return (

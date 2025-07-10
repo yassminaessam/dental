@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { Search, User, Download } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type MedicalRecord = {
   id: string;
@@ -51,6 +52,7 @@ export type MedicalRecord = {
 
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
+  const { toast } = useToast();
 
   const handleSaveRecord = (data: Omit<MedicalRecord, 'id' | 'status'>) => {
     const newRecord: MedicalRecord = {
@@ -60,6 +62,10 @@ export default function MedicalRecordsPage() {
       status: 'Final',
     };
     setRecords(prev => [newRecord, ...prev]);
+    toast({
+      title: "Medical Record Created",
+      description: `New record for ${newRecord.patient} has been created.`,
+    });
   };
 
   return (

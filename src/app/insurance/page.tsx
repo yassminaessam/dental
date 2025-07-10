@@ -37,6 +37,7 @@ import { initialInsuranceClaimsData, insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Claim = {
   id: string;
@@ -54,6 +55,7 @@ export type Claim = {
 
 export default function InsurancePage() {
   const [claims, setClaims] = React.useState<Claim[]>(initialInsuranceClaimsData);
+  const { toast } = useToast();
 
   const handleSaveClaim = (data: any) => {
     const newClaim: Claim = {
@@ -69,6 +71,10 @@ export default function InsurancePage() {
       submitDate: new Date(data.submitDate).toLocaleDateString(),
     };
     setClaims(prev => [newClaim, ...prev]);
+    toast({
+      title: "Claim Submitted",
+      description: `New claim for ${newClaim.patient} has been submitted for processing.`,
+    });
   };
 
   return (

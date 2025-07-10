@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Supplier = {
   id: string;
@@ -72,6 +73,8 @@ type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
+  const { toast } = useToast();
+  
   const supplierCategories = [
     ...new Set(suppliers.map((s) => s.category)),
   ];
@@ -84,6 +87,10 @@ export default function SuppliersPage() {
       status: 'active',
     };
     setSuppliers(prev => [newSupplier, ...prev]);
+    toast({
+      title: "Supplier Added",
+      description: `${newSupplier.name} has been added to your network.`,
+    });
   };
 
   return (

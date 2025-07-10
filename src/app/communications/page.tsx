@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { NewTemplateDialog } from "@/components/communications/new-template-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export type Message = {
   id: string;
@@ -42,6 +43,7 @@ export type Message = {
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>(initialRecentMessagesData);
+  const { toast } = useToast();
   
   const handleSendMessage = (data: any) => {
     const newMessage: Message = {
@@ -54,6 +56,10 @@ export default function CommunicationsPage() {
       sent: new Date().toLocaleString(),
     };
     setMessages(prev => [newMessage, ...prev]);
+    toast({
+      title: "Message Sent",
+      description: `A new ${newMessage.type} has been sent to ${newMessage.patient}.`,
+    });
   };
 
   return (

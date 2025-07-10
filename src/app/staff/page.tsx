@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -44,6 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from '@/hooks/use-toast';
 
 export type StaffMember = {
   id: string;
@@ -61,6 +63,7 @@ export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
   const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
+  const { toast } = useToast();
 
   const handleSaveEmployee = (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
     const newEmployee: StaffMember = {
@@ -75,16 +78,29 @@ export default function StaffPage() {
       status: 'Active'
     };
     setStaff(prev => [newEmployee, ...prev]);
+    toast({
+      title: "Employee Added",
+      description: `${newEmployee.name} has been added to the staff.`,
+    });
   };
   
   const handleUpdateEmployee = (updatedStaff: StaffMember) => {
     setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
     setStaffToEdit(null);
+    toast({
+      title: "Employee Updated",
+      description: `${updatedStaff.name}'s record has been updated.`,
+    });
   };
 
   const handleDeleteEmployee = () => {
     if (staffToDelete) {
       setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
+      toast({
+        title: "Employee Deleted",
+        description: `${staffToDelete.name}'s record has been deleted.`,
+        variant: "destructive"
+      });
       setStaffToDelete(null);
     }
   };

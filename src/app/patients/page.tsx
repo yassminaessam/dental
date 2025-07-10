@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export type Patient = {
   id: string;
@@ -57,6 +58,7 @@ export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>(initialPatientsData);
   const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
+  const { toast } = useToast();
 
   const handleSavePatient = (data: any) => {
     const newPatient: Patient = {
@@ -70,16 +72,29 @@ export default function PatientsPage() {
       status: 'Active',
     };
     setPatients(prev => [newPatient, ...prev]);
+    toast({
+      title: "Patient Added",
+      description: `${newPatient.name} has been successfully added.`,
+    });
   };
   
   const handleUpdatePatient = (updatedPatient: Patient) => {
     setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
     setPatientToEdit(null);
+    toast({
+      title: "Patient Updated",
+      description: `${updatedPatient.name}'s record has been updated.`,
+    });
   };
 
   const handleDeletePatient = () => {
     if (patientToDelete) {
       setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
+      toast({
+        title: "Patient Deleted",
+        description: `${patientToDelete.name}'s record has been deleted.`,
+        variant: "destructive"
+      });
       setPatientToDelete(null);
     }
   };
