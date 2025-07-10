@@ -28,6 +28,7 @@ import { MessageSquare as MessageSquareIcon } from 'lucide-react';
 import { dentalChartPatients } from '@/lib/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { GenerateMessageAi } from './generate-message-ai';
 
 const messageSchema = z.object({
   patient: z.string({ required_error: 'Please select a patient.' }),
@@ -59,6 +60,11 @@ export function NewMessageDialog({
     }
   });
 
+  const patientId = form.watch('patient');
+  const patientName = React.useMemo(() => {
+    return dentalChartPatients.find(p => p.id === patientId)?.name || '';
+  }, [patientId]);
+
   const onSubmit = (data: MessageFormData) => {
     const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
     onSend({ ...data, patient: patientName });
@@ -81,8 +87,17 @@ export function NewMessageDialog({
             {dialogDescription}
           </DialogDescription>
         </DialogHeader>
+        
+        <GenerateMessageAi
+          patientName={patientName}
+          onGeneration={({ subject, message }) => {
+            form.setValue('subject', subject);
+            form.setValue('message', message);
+          }}
+        />
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
             <FormField
               control={form.control}
               name="patient"
