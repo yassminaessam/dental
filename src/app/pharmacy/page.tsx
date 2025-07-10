@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -33,7 +34,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { initialMedicationInventoryData, pharmacyPageStats } from "@/lib/data";
+import { initialMedicationInventoryData, pharmacyPageStats, initialPrescriptionRecordsData, commonMedicationsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -44,6 +45,11 @@ import {
   ShoppingCart,
   Pencil,
   Trash2,
+  Download,
+  Send,
+  Eye,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
@@ -64,6 +70,19 @@ export type Medication = {
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
 };
 
+export type Prescription = {
+  id: string;
+  patient: string;
+  medication: string;
+  strength: string;
+  dosage: string;
+  duration: string;
+  refills: number;
+  doctor: string;
+  date: string;
+  status: 'Active' | 'Completed';
+};
+
 const iconMap = {
   Pill,
   AlertTriangle,
@@ -78,8 +97,13 @@ export default function PharmacyPage() {
     const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
     const [medicationToEdit, setMedicationToEdit] = React.useState<Medication | null>(null);
     const [medicationToDelete, setMedicationToDelete] = React.useState<Medication | null>(null);
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [categoryFilter, setCategoryFilter] = React.useState('all');
+    const [medicationSearchTerm, setMedicationSearchTerm] = React.useState('');
+    const [medicationCategoryFilter, setMedicationCategoryFilter] = React.useState('all');
+    
+    const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+    const [prescriptionSearchTerm, setPrescriptionSearchTerm] = React.useState('');
+    const [prescriptionStatusFilter, setPrescriptionStatusFilter] = React.useState('all');
+    
     const { toast } = useToast();
 
     const medicationCategories = [
@@ -126,12 +150,41 @@ export default function PharmacyPage() {
         setMedicationToDelete(null);
       }
     };
+    
+    const handleSavePrescription = (data: any) => {
+        const newPrescription: Prescription = {
+          id: `RX-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+          patient: data.patient,
+          medication: data.medication,
+          strength: data.dosage, // Assuming dosage field contains strength
+          dosage: data.instructions,
+          duration: 'As directed',
+          refills: data.refills,
+          doctor: data.doctor,
+          date: new Date(data.date).toLocaleDateString(),
+          status: 'Active',
+        };
+        setPrescriptions(prev => [newPrescription, ...prev]);
+        toast({
+          title: "Prescription Created",
+          description: `A new prescription for ${newPrescription.patient} has been created.`,
+        });
+      };
 
     const filteredMedications = React.useMemo(() => {
         return medications
-          .filter(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .filter(med => categoryFilter === 'all' || med.category === categoryFilter);
-    }, [medications, searchTerm, categoryFilter]);
+          .filter(med => med.name.toLowerCase().includes(medicationSearchTerm.toLowerCase()))
+          .filter(med => medicationCategoryFilter === 'all' || med.category === medicationCategoryFilter);
+    }, [medications, medicationSearchTerm, medicationCategoryFilter]);
+
+    const filteredPrescriptions = React.useMemo(() => {
+        return prescriptions
+          .filter(p => 
+            p.patient.toLowerCase().includes(prescriptionSearchTerm.toLowerCase()) ||
+            p.medication.toLowerCase().includes(prescriptionSearchTerm.toLowerCase())
+          )
+          .filter(p => prescriptionStatusFilter === 'all' || p.status.toLowerCase() === prescriptionStatusFilter);
+      }, [prescriptions, prescriptionSearchTerm, prescriptionStatusFilter]);
 
   return (
     <DashboardLayout>
@@ -144,7 +197,7 @@ export default function PharmacyPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NewPrescriptionDialog onSave={() => {}} />
+            <NewPrescriptionDialog onSave={handleSavePrescription} />
             <AddMedicationDialog onSave={handleSaveMedication} />
           </div>
         </div>
@@ -191,11 +244,11 @@ export default function PharmacyPage() {
                       type="search"
                       placeholder="Search medications..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={medicationSearchTerm}
+                      onChange={(e) => setMedicationSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <Select value={medicationCategoryFilter} onValueChange={setMedicationCategoryFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -284,12 +337,110 @@ export default function PharmacyPage() {
               </CardContent>
             </Card>
           </TabsContent>
-           <TabsContent value="prescriptions">
+           <TabsContent value="prescriptions" className="mt-4">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No prescriptions found.
-                </CardContent>
-             </Card>
+              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                <CardTitle>Prescription Records</CardTitle>
+                <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+                  <div className="relative w-full md:w-auto">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search prescriptions..."
+                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={prescriptionSearchTerm}
+                      onChange={e => setPrescriptionSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={prescriptionStatusFilter} onValueChange={setPrescriptionStatusFilter}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Prescription ID</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Medication</TableHead>
+                      <TableHead>Dosage & Instructions</TableHead>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPrescriptions.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="font-medium">{record.id}</TableCell>
+                        <TableCell>{record.patient}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Pill className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="font-medium">{record.medication}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {record.strength}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>{record.dosage}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {record.duration}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Refills: {record.refills}
+                          </div>
+                        </TableCell>
+                        <TableCell>{record.doctor}</TableCell>
+                        <TableCell>{record.date}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={record.status === 'Active' ? 'default' : 'outline'}
+                            className={cn(
+                                record.status === 'Active' && 'bg-foreground text-background hover:bg-foreground/80',
+                                record.status === 'Completed' && 'bg-green-100 text-green-800 border-transparent'
+                            )}
+                          >
+                            {record.status === 'Active' ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle2 className="mr-1 h-3 w-3" />}
+                            {record.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="mr-2 h-3 w-3" />
+                              View
+                            </Button>
+                            {record.status === 'Active' && (
+                                <Button variant="outline" size="sm">
+                                    <Send className="mr-2 h-3 w-3" />
+                                    Send
+                                </Button>
+                            )}
+                            <Button variant="ghost" size="icon">
+                              <Download className="h-4 w-4" />
+                               <span className="sr-only">Download</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
            <TabsContent value="dispensing">
              <Card>

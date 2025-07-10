@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -23,7 +24,6 @@ import {
   Globe,
   Send,
   FileText,
-  ClipboardPen,
   BarChart,
   FileSpreadsheet,
   Settings,
@@ -151,14 +151,6 @@ export function SidebarNav() {
           <Link href="/insurance">
             <FileText />
             Insurance
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith("/prescriptions")}>
-          <Link href="/prescriptions">
-            <ClipboardPen />
-            Prescriptions
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
