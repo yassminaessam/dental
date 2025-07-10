@@ -29,7 +29,6 @@ import {
 import {
   treatmentCategories,
   treatmentPageStats,
-  treatmentStats,
   initialTreatmentsData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -51,6 +50,8 @@ export type Treatment = {
 
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = React.useState<Treatment[]>(initialTreatmentsData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSavePlan = (data: any) => {
@@ -71,6 +72,17 @@ export default function TreatmentsPage() {
       description: `A new plan for ${newTreatment.patient} has been created.`,
     });
   };
+
+  const filteredTreatments = React.useMemo(() => {
+    return treatments
+      .filter(treatment =>
+        treatment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        treatment.procedure.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(treatment =>
+        statusFilter === 'all' || treatment.status.toLowerCase().replace(' ', '_') === statusFilter
+      );
+  }, [treatments, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -133,9 +145,11 @@ export default function TreatmentsPage() {
                       type="search"
                       placeholder="Search treatments..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -164,8 +178,8 @@ export default function TreatmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {treatments.length > 0 ? (
-                      treatments.map((treatment) => (
+                    {filteredTreatments.length > 0 ? (
+                      filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
                           <TableCell>{treatment.date}</TableCell>
                           <TableCell>{treatment.patient}</TableCell>

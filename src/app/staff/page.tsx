@@ -63,6 +63,7 @@ export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
   const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
 
   const handleSaveEmployee = (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
@@ -104,6 +105,12 @@ export default function StaffPage() {
       setStaffToDelete(null);
     }
   };
+
+  const filteredStaff = React.useMemo(() => {
+    return staff.filter(member =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [staff, searchTerm]);
 
 
   return (
@@ -166,6 +173,8 @@ export default function StaffPage() {
                     type="search"
                     placeholder="Search staff..."
                     className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </CardHeader>
@@ -184,8 +193,8 @@ export default function StaffPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {staff.length > 0 ? (
-                      staff.map((member) => (
+                    {filteredStaff.length > 0 ? (
+                      filteredStaff.map((member) => (
                         <TableRow key={member.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">

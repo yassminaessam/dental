@@ -33,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsPageStats, initialMedicalRecordsData } from "@/lib/data";
+import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, Download } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
@@ -52,6 +52,8 @@ export type MedicalRecord = {
 
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSaveRecord = (data: Omit<MedicalRecord, 'id' | 'status'>) => {
@@ -67,6 +69,17 @@ export default function MedicalRecordsPage() {
       description: `New record for ${newRecord.patient} has been created.`,
     });
   };
+  
+  const filteredRecords = React.useMemo(() => {
+    return records
+      .filter(record => 
+        record.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.complaint.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(record => 
+        typeFilter === 'all' || record.type === typeFilter
+      );
+  }, [records, searchTerm, typeFilter]);
 
   return (
     <DashboardLayout>
@@ -116,16 +129,19 @@ export default function MedicalRecordsPage() {
                       type="search"
                       placeholder="Search records..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="soap">SOAP</SelectItem>
-                      <SelectItem value="clinical">Clinical</SelectItem>
+                      {medicalRecordTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -145,8 +161,8 @@ export default function MedicalRecordsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {records.length > 0 ? (
-                      records.map((record) => (
+                    {filteredRecords.length > 0 ? (
+                      filteredRecords.map((record) => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.id}</TableCell>
                           <TableCell>

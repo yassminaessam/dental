@@ -74,10 +74,12 @@ export default function InventoryPage() {
   const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [categoryFilter, setCategoryFilter] = React.useState('all');
   const { toast } = useToast();
 
   const inventoryCategories = [
-    ...new Set(inventory.map((i) => i.category)),
+    ...new Set(initialInventoryItemsData.map((i) => i.category)),
   ];
 
   const handleSaveItem = (data: any) => {
@@ -121,6 +123,16 @@ export default function InventoryPage() {
       setItemToDelete(null);
     }
   };
+
+  const filteredInventory = React.useMemo(() => {
+    return inventory
+      .filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(item =>
+        categoryFilter === 'all' || item.category === categoryFilter
+      );
+  }, [inventory, searchTerm, categoryFilter]);
 
   return (
     <DashboardLayout>
@@ -194,9 +206,11 @@ export default function InventoryPage() {
                   type="search"
                   placeholder="Search items..."
                   className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
@@ -226,8 +240,8 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory.length > 0 ? (
-                  inventory.map((item) => (
+                {filteredInventory.length > 0 ? (
+                  filteredInventory.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
