@@ -33,6 +33,7 @@ import { NewMessageDialog } from "@/components/communications/new-message-dialog
 import { NewTemplateDialog, Template } from "@/components/communications/new-template-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export type Message = {
   id: string;
@@ -47,6 +48,7 @@ export type Message = {
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>(initialRecentMessagesData);
   const [templates, setTemplates] = React.useState<Template[]>([]);
+  const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
   const { toast } = useToast();
   
   const handleSendMessage = (data: any) => {
@@ -72,6 +74,18 @@ export default function CommunicationsPage() {
       title: "Template Saved",
       description: `The "${data.name}" template has been saved.`,
     });
+  };
+
+  const handleDeleteTemplate = () => {
+    if (templateToDelete) {
+      setTemplates(prev => prev.filter(t => t.name !== templateToDelete.name));
+      toast({
+        title: "Template Deleted",
+        description: `The "${templateToDelete.name}" template has been deleted.`,
+        variant: "destructive",
+      });
+      setTemplateToDelete(null);
+    }
   };
 
   return (
@@ -203,7 +217,7 @@ export default function CommunicationsPage() {
                         <Pencil className="mr-2 h-3 w-3" />
                         Edit
                       </Button>
-                       <Button variant="destructive" size="sm">
+                       <Button variant="destructive" size="sm" onClick={() => setTemplateToDelete(template)}>
                         <Trash2 className="mr-2 h-3 w-3" />
                         Delete
                       </Button>
@@ -228,6 +242,23 @@ export default function CommunicationsPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <AlertDialog open={!!templateToDelete} onOpenChange={(isOpen) => !isOpen && setTemplateToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the template
+              "{templateToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </DashboardLayout>
   );
 }
