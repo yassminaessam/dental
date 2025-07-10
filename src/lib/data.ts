@@ -1,5 +1,6 @@
 
 
+
 // Mock data for the dashboard
 export const overviewStats = [
   {
@@ -221,9 +222,9 @@ export const initialTreatmentsData: any[] = [];
 
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
-    { name: 'Cavities', count: 0, color: 'bg-red-500' },
-    { name: 'Filled', count: 0, color: 'bg-blue-500' },
-    { name: 'Crowned', count: 0, color: 'bg-purple-500' },
+    { name: 'Cavity', count: 0, color: 'bg-red-500' },
+    { name: 'Filling', count: 0, color: 'bg-blue-500' },
+    { name: 'Crown', count: 0, color: 'bg-purple-500' },
     { name: 'Missing', count: 0, color: 'bg-gray-500' },
     { name: 'Root Canal', count: 0, color: 'bg-yellow-500' },
 ];
@@ -234,6 +235,28 @@ export const dentalChartPatients = [
     { id: 'pat3', name: 'Peter Jones' },
     { id: 'pat4', name: 'Mary Williams' },
 ];
+
+export const toothNames: Record<number, string> = {
+    11: 'Upper Right Central Incisor', 12: 'Upper Right Lateral Incisor', 13: 'Upper Right Canine', 14: 'Upper Right First Premolar', 15: 'Upper Right Second Premolar', 16: 'Upper Right First Molar', 17: 'Upper Right Second Molar', 18: 'Upper Right Third Molar',
+    21: 'Upper Left Central Incisor', 22: 'Upper Left Lateral Incisor', 23: 'Upper Left Canine', 24: 'Upper Left First Premolar', 25: 'Upper Left Second Premolar', 26: 'Upper Left First Molar', 27: 'Upper Left Second Molar', 28: 'Upper Left Third Molar',
+    31: 'Lower Left Central Incisor', 32: 'Lower Left Lateral Incisor', 33: 'Lower Left Canine', 34: 'Lower Left First Premolar', 35: 'Lower Left Second Premolar', 36: 'Lower Left First Molar', 37: 'Lower Left Second Molar', 38: 'Lower Left Third Molar',
+    41: 'Lower Right Central Incisor', 42: 'Lower Right Lateral Incisor', 43: 'Lower Right Canine', 44: 'Lower Right First Premolar', 45: 'Lower Right Second Premolar', 46: 'Lower Right First Molar', 47: 'Lower Right Second Molar', 48: 'Lower Right Third Molar',
+};
+
+const allTeethIds = [
+    18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
+    48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38
+];
+
+export const initialDentalChartData = allTeethIds.reduce((acc, id) => {
+    acc[id] = {
+        id,
+        condition: 'healthy',
+        history: [],
+    };
+    return acc;
+}, {} as Record<number, { id: number; condition: 'healthy'; history: any[] }>);
+
 
 export const mockDoctors = [
   { id: 'doc1', name: 'Dr. Emily Wilson' },

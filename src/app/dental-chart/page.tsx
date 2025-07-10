@@ -1,5 +1,7 @@
 
 'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +18,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { dentalChartPatients, dentalChartStats } from "@/lib/data";
+import { initialDentalChartData, dentalChartPatients, dentalChartStats } from "@/lib/data";
 import { Download, Printer, RotateCw, Search, User } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
+import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
+
+export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
+
+export interface Tooth {
+    id: number;
+    condition: ToothCondition;
+    history: { date: string; condition: ToothCondition; notes: string }[];
+}
+
 
 export default function DentalChartPage() {
+    const [chartData, setChartData] = React.useState<Record<number, Tooth>>(initialDentalChartData);
+    const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
+
+    const handleToothSelect = (toothId: number) => {
+        setSelectedTooth(chartData[toothId] || null);
+    };
+
+    const handleUpdateCondition = (toothId: number, condition: ToothCondition) => {
+        const newChartData = { ...chartData };
+        newChartData[toothId] = {
+            ...newChartData[toothId],
+            condition: condition,
+            history: [
+                ...newChartData[toothId].history,
+                { date: new Date().toLocaleDateString(), condition: condition, notes: `Condition changed to ${condition}` }
+            ]
+        };
+        setChartData(newChartData);
+        setSelectedTooth(newChartData[toothId]);
+    };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -77,11 +110,11 @@ export default function DentalChartPage() {
               <SelectContent>
                 <SelectItem value="all">All Conditions</SelectItem>
                 <SelectItem value="healthy">Healthy</SelectItem>
-                <SelectItem value="cavities">Cavities</SelectItem>
-                <SelectItem value="filled">Filled</SelectItem>
-                <SelectItem value="crowned">Crowned</SelectItem>
+                <SelectItem value="cavity">Cavities</SelectItem>
+                <SelectItem value="filling">Filled</SelectItem>
+                <SelectItem value="crown">Crowned</SelectItem>
                 <SelectItem value="missing">Missing</SelectItem>
-                <SelectItem value="root_canal">Root Canal</SelectItem>
+                <SelectItem value="root-canal">Root Canal</SelectItem>
               </SelectContent>
             </Select>
           </CardContent>
@@ -94,7 +127,7 @@ export default function DentalChartPage() {
                 <span className={`h-3 w-3 rounded-full ${stat.color} flex-shrink-0`}></span>
                 <div>
                   <div className="text-sm text-muted-foreground">{stat.name}</div>
-                  <div className="text-lg font-bold">{stat.count}</div>
+                  <div className="text-lg font-bold">{Object.values(chartData).filter(t => t.condition === stat.name.toLowerCase().replace(' ', '-')).length}</div>
                 </div>
               </CardContent>
             </Card>
@@ -103,18 +136,18 @@ export default function DentalChartPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <InteractiveDentalChart />
+            <InteractiveDentalChart
+                chartData={chartData}
+                selectedToothId={selectedTooth?.id || null}
+                onToothSelect={handleToothSelect}
+            />
           </div>
           <div className="lg:col-span-1">
-            <Card className="flex h-full flex-col items-center justify-center p-6">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                    <Search className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">Select a Tooth</h3>
-                <p className="mt-1 text-center text-sm text-muted-foreground">
-                    Click on any tooth in the chart to view details and manage conditions.
-                </p>
-            </Card>
+            <ToothDetailCard 
+                tooth={selectedTooth} 
+                onUpdateCondition={handleUpdateCondition}
+                onClose={() => setSelectedTooth(null)}
+            />
           </div>
         </div>
 
