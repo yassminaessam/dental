@@ -35,10 +35,11 @@ import {
 } from "@/components/ui/tabs";
 import { referralPageStats, initialOutgoingReferralsData, initialSpecialistNetwork } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Send, Eye } from "lucide-react";
+import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export type Referral = {
   id: string;
@@ -56,6 +57,9 @@ export type Specialist = {
   id: string;
   name: string;
   specialty: string;
+  phone?: string;
+  email?: string;
+  clinicName?: string;
 }
 
 export default function ReferralsPage() {
@@ -63,6 +67,7 @@ export default function ReferralsPage() {
   const [specialists, setSpecialists] = React.useState<Specialist[]>(initialSpecialistNetwork);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [specialistSearchTerm, setSpecialistSearchTerm] = React.useState('');
   const { toast } = useToast();
 
   const handleSaveReferral = (data: any) => {
@@ -106,6 +111,14 @@ export default function ReferralsPage() {
         statusFilter === 'all' || referral.status.toLowerCase() === statusFilter
       );
   }, [referrals, searchTerm, statusFilter]);
+
+  const filteredSpecialists = React.useMemo(() => {
+    return specialists.filter(specialist => 
+      specialist.name.toLowerCase().includes(specialistSearchTerm.toLowerCase()) ||
+      specialist.specialty.toLowerCase().includes(specialistSearchTerm.toLowerCase())
+    );
+  }, [specialists, specialistSearchTerm]);
+
 
   return (
     <DashboardLayout>
@@ -257,8 +270,76 @@ export default function ReferralsPage() {
           </TabsContent>
           <TabsContent value="network">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No specialists in network found.
+                <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Specialist Network</CardTitle>
+                    <div className="relative w-full md:w-auto">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Search specialists..."
+                        className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                        value={specialistSearchTerm}
+                        onChange={(e) => setSpecialistSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Specialist</TableHead>
+                                <TableHead>Specialty</TableHead>
+                                <TableHead>Contact Info</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredSpecialists.length > 0 ? (
+                                filteredSpecialists.map((specialist) => (
+                                    <TableRow key={specialist.id}>
+                                        <TableCell>
+                                            <div className="font-medium">{specialist.name}</div>
+                                            {specialist.clinicName && <div className="text-xs text-muted-foreground">{specialist.clinicName}</div>}
+                                        </TableCell>
+                                        <TableCell>{specialist.specialty}</TableCell>
+                                        <TableCell>
+                                            {specialist.phone && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <Phone className="h-3 w-3" />
+                                                    <span>{specialist.phone}</span>
+                                                </div>
+                                            )}
+                                            {specialist.email && (
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <Mail className="h-3 w-3" />
+                                                    <span>{specialist.email}</span>
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No specialists found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
                 </CardContent>
              </Card>
           </TabsContent>
