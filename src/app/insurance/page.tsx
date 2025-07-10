@@ -55,6 +55,8 @@ export type Claim = {
 
 export default function InsurancePage() {
   const [claims, setClaims] = React.useState<Claim[]>(initialInsuranceClaimsData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSaveClaim = (data: any) => {
@@ -76,6 +78,18 @@ export default function InsurancePage() {
       description: `New claim for ${newClaim.patient} has been submitted for processing.`,
     });
   };
+
+  const filteredClaims = React.useMemo(() => {
+    return claims
+      .filter(claim =>
+        claim.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        claim.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        claim.procedure.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(claim =>
+        statusFilter === 'all' || claim.status.toLowerCase() === statusFilter
+      );
+  }, [claims, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -132,9 +146,11 @@ export default function InsurancePage() {
                       type="search"
                       placeholder="Search claims..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -162,8 +178,8 @@ export default function InsurancePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {claims.length > 0 ? (
-                      claims.map((claim) => (
+                    {filteredClaims.length > 0 ? (
+                      filteredClaims.map((claim) => (
                         <TableRow key={claim.id}>
                           <TableCell className="font-medium">
                             {claim.id}

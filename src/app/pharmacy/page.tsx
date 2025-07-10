@@ -73,10 +73,12 @@ type IconKey = keyof typeof iconMap;
 
 export default function PharmacyPage() {
     const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [categoryFilter, setCategoryFilter] = React.useState('all');
     const { toast } = useToast();
 
     const medicationCategories = [
-        ...new Set(medications.map((i) => i.category)),
+        ...new Set(initialMedicationInventoryData.map((i) => i.category)),
     ];
 
     const handleSaveMedication = (data: any) => {
@@ -98,6 +100,12 @@ export default function PharmacyPage() {
         description: `${newMedication.name} has been added to the inventory.`,
       });
     };
+
+    const filteredMedications = React.useMemo(() => {
+        return medications
+          .filter(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          .filter(med => categoryFilter === 'all' || med.category === categoryFilter);
+    }, [medications, searchTerm, categoryFilter]);
 
   return (
     <DashboardLayout>
@@ -157,9 +165,11 @@ export default function PharmacyPage() {
                       type="search"
                       placeholder="Search medications..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -189,8 +199,8 @@ export default function PharmacyPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {medications.length > 0 ? (
-                      medications.map((item) => (
+                    {filteredMedications.length > 0 ? (
+                      filteredMedications.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
                             <div className="font-medium">{item.name}</div>

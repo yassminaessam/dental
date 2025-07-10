@@ -73,10 +73,12 @@ type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [categoryFilter, setCategoryFilter] = React.useState('all');
   const { toast } = useToast();
   
   const supplierCategories = [
-    ...new Set(suppliers.map((s) => s.category)),
+    ...new Set(initialSuppliersData.map((s) => s.category)),
   ];
 
   const handleSaveSupplier = (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
@@ -92,6 +94,16 @@ export default function SuppliersPage() {
       description: `${newSupplier.name} has been added to your network.`,
     });
   };
+
+  const filteredSuppliers = React.useMemo(() => {
+    return suppliers
+      .filter(supplier =>
+        supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(supplier =>
+        categoryFilter === 'all' || supplier.category.toLowerCase() === categoryFilter.toLowerCase()
+      );
+  }, [suppliers, searchTerm, categoryFilter]);
 
   return (
     <DashboardLayout>
@@ -155,9 +167,11 @@ export default function SuppliersPage() {
                       type="search"
                       placeholder="Search suppliers..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -186,8 +200,8 @@ export default function SuppliersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {suppliers.length > 0 ? (
-                      suppliers.map((supplier) => (
+                    {filteredSuppliers.length > 0 ? (
+                      filteredSuppliers.map((supplier) => (
                         <TableRow key={supplier.id}>
                           <TableCell>
                             <div className="font-medium">{supplier.name}</div>

@@ -61,6 +61,8 @@ export type Specialist = {
 export default function ReferralsPage() {
   const [referrals, setReferrals] = React.useState<Referral[]>(initialOutgoingReferralsData);
   const [specialists, setSpecialists] = React.useState<Specialist[]>(initialSpecialistNetwork);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSaveReferral = (data: any) => {
@@ -93,6 +95,17 @@ export default function ReferralsPage() {
       description: `${newSpecialist.name} has been added to your network.`,
     });
   };
+
+  const filteredReferrals = React.useMemo(() => {
+    return referrals
+      .filter(referral =>
+        referral.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        referral.specialist.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(referral =>
+        statusFilter === 'all' || referral.status.toLowerCase() === statusFilter
+      );
+  }, [referrals, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -143,9 +156,11 @@ export default function ReferralsPage() {
                       type="search"
                       placeholder="Search referrals..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -173,8 +188,8 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {referrals.length > 0 ? (
-                      referrals.map((referral) => (
+                    {filteredReferrals.length > 0 ? (
+                      filteredReferrals.map((referral) => (
                         <TableRow key={referral.id}>
                           <TableCell className="font-medium">{referral.patient}</TableCell>
                           <TableCell>

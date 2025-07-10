@@ -61,6 +61,8 @@ export type Prescription = {
 
 export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSavePrescription = (data: any) => {
@@ -82,6 +84,15 @@ export default function PrescriptionsPage() {
       description: `A new prescription for ${newPrescription.patient} has been created.`,
     });
   };
+
+  const filteredPrescriptions = React.useMemo(() => {
+    return prescriptions
+      .filter(p => 
+        p.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.medication.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(p => statusFilter === 'all' || p.status.toLowerCase() === statusFilter);
+  }, [prescriptions, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -127,9 +138,11 @@ export default function PrescriptionsPage() {
                   type="search"
                   placeholder="Search prescriptions..."
                   className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -156,7 +169,7 @@ export default function PrescriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {prescriptions.map((record) => (
+                {filteredPrescriptions.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell className="font-medium">{record.id}</TableCell>
                     <TableCell>{record.patient}</TableCell>
