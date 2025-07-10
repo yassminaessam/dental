@@ -1,6 +1,7 @@
 
 
 
+
 // Mock data for the dashboard
 export const overviewStats = [
   {
@@ -754,6 +755,21 @@ export const patientMessagesData = [
         date: 'Dec 17, 6:00 PM',
         status: 'Read',
     }
+];
+
+export const appointmentRequestsData = [
+    {
+        id: 'REQ-001',
+        patient: 'Peter Jones',
+        requestedDate: 'Next Tuesday afternoon',
+        reason: 'Check-up',
+    },
+    {
+        id: 'REQ-002',
+        patient: 'Mary Williams',
+        requestedDate: 'Thursday, 10:00 AM',
+        reason: 'Toothache, need urgent look',
+    },
 ];
 
 export const referralPageStats = [

@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,12 +26,31 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientMessagesData, patientPortalPageStats } from "@/lib/data";
+import { patientMessagesData, patientPortalPageStats, appointmentRequestsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2 } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export default function PatientPortalPage() {
+  const { toast } = useToast();
+
+  const handleApproveRequest = (patientName: string) => {
+    toast({
+      title: "Request Approved",
+      description: `Appointment request for ${patientName} approved. Please schedule the appointment.`,
+    });
+  };
+
+  const handleDeclineRequest = (patientName: string) => {
+    toast({
+      title: "Request Declined",
+      description: `Appointment request for ${patientName} has been declined.`,
+      variant: "destructive",
+    });
+  };
+
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -70,7 +92,10 @@ export default function PatientPortalPage() {
         <Tabs defaultValue="messages">
           <TabsList>
             <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="requests">Appointment Requests</TabsTrigger>
+            <TabsTrigger value="requests">
+              Appointment Requests
+              <Badge className="ml-2 bg-primary text-primary-foreground">{appointmentRequestsData.length}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="users">Portal Users</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="settings">Portal Settings</TabsTrigger>
@@ -104,7 +129,7 @@ export default function PatientPortalPage() {
                   <TableBody>
                     {patientMessagesData.length > 0 ? (
                       patientMessagesData.map((message) => (
-                        <TableRow key={message.id} className={message.status === 'Unread' ? 'bg-accent' : ''}>
+                        <TableRow key={message.id} className={message.status === 'Unread' ? 'bg-accent/10' : ''}>
                           <TableCell>
                             <div className="flex items-center gap-2 font-medium">
                               <User className="h-4 w-4 text-muted-foreground" />
@@ -130,7 +155,7 @@ export default function PatientPortalPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                                 {message.status === 'Unread' ? 
-                                    <Circle className="h-3 w-3 text-blue-500 fill-blue-500" /> : 
+                                    <Circle className="h-3 w-3 text-primary fill-primary" /> : 
                                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                                 }
                                 <span>{message.status}</span>
@@ -162,10 +187,49 @@ export default function PatientPortalPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="requests">
+          <TabsContent value="requests" className="mt-4">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No appointment requests found.
+                <CardHeader>
+                  <CardTitle>Pending Appointment Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Requested Date</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {appointmentRequestsData.length > 0 ? (
+                        appointmentRequestsData.map(request => (
+                          <TableRow key={request.id}>
+                            <TableCell className="font-medium">{request.patient}</TableCell>
+                            <TableCell>{request.requestedDate}</TableCell>
+                            <TableCell>{request.reason}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleApproveRequest(request.patient)}>
+                                  <Check className="mr-2 h-4 w-4" /> Approve
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => handleDeclineRequest(request.patient)}>
+                                  <X className="mr-2 h-4 w-4" /> Decline
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center">
+                            No appointment requests found.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </CardContent>
              </Card>
           </TabsContent>
