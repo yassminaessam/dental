@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -11,6 +14,7 @@ import AppointmentTypesChart from "@/components/dashboard/appointment-types-char
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
+import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 
 export default function DashboardPage() {
   return (
@@ -19,8 +23,8 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
-            <ScheduleAppointmentDialog />
-            <AddPatientDialog />
+            <ScheduleAppointmentDialog onSave={() => {}} />
+            <AddPatientDialog onSave={() => {}} />
           </div>
         </div>
         <OverviewStats />
@@ -42,6 +46,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        <KpiSuggestions />
       </main>
     </DashboardLayout>
   );

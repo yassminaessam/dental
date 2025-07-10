@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
@@ -112,7 +113,7 @@ export default function KpiSuggestions() {
           {state?.suggestions && (
             <div className="mt-4 w-full rounded-lg border bg-secondary/50 p-4" role="alert">
               <h4 className="mb-2 flex items-center font-semibold">
-                <ListChecks className="mr-2 size-5 text-accent" />
+                <ListChecks className="mr-2 size-5" />
                 Recommendations
               </h4>
               <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
