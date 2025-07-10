@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   Card,
   CardContent,
@@ -39,7 +40,7 @@ function SubmitButton() {
 }
 
 export default function KpiSuggestions() {
-  const [state, formAction] = useFormState(getKpiSuggestionsAction, initialState);
+  const [state, formAction] = useActionState(getKpiSuggestionsAction, initialState);
 
   return (
     <Card>
