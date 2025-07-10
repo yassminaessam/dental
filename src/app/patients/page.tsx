@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { patientPageStats, initialPatientsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Filter, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type Patient = {
   id: string;
@@ -58,6 +59,8 @@ export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>(initialPatientsData);
   const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
   const handleSavePatient = (data: any) => {
@@ -99,6 +102,16 @@ export default function PatientsPage() {
     }
   };
 
+  const filteredPatients = React.useMemo(() => {
+    return patients
+      .filter(patient => 
+        patient.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(patient => 
+        statusFilter === 'all' || patient.status.toLowerCase() === statusFilter
+      );
+  }, [patients, searchTerm, statusFilter]);
+
 
   return (
     <DashboardLayout>
@@ -138,11 +151,20 @@ export default function PatientsPage() {
                   type="search"
                   placeholder="Search patients..."
                   className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
@@ -158,8 +180,8 @@ export default function PatientsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                 {patients.length > 0 ? (
-                  patients.map((patient) => (
+                 {filteredPatients.length > 0 ? (
+                  filteredPatients.map((patient) => (
                     <TableRow key={patient.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
