@@ -43,10 +43,13 @@ import {
   Pill,
   ShoppingCart,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 
 export type Medication = {
   id: string;
@@ -73,6 +76,8 @@ type IconKey = keyof typeof iconMap;
 
 export default function PharmacyPage() {
     const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
+    const [medicationToEdit, setMedicationToEdit] = React.useState<Medication | null>(null);
+    const [medicationToDelete, setMedicationToDelete] = React.useState<Medication | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [categoryFilter, setCategoryFilter] = React.useState('all');
     const { toast } = useToast();
@@ -99,6 +104,27 @@ export default function PharmacyPage() {
         title: "Medication Added",
         description: `${newMedication.name} has been added to the inventory.`,
       });
+    };
+
+    const handleUpdateMedication = (updatedMedication: Medication) => {
+      setMedications(prev => prev.map(med => med.id === updatedMedication.id ? updatedMedication : med));
+      setMedicationToEdit(null);
+      toast({
+        title: "Medication Updated",
+        description: `${updatedMedication.name} has been successfully updated.`,
+      });
+    };
+
+    const handleDeleteMedication = () => {
+      if (medicationToDelete) {
+        setMedications(prev => prev.filter(med => med.id !== medicationToDelete.id));
+        toast({
+          title: "Medication Deleted",
+          description: `${medicationToDelete.name} has been removed from inventory.`,
+          variant: "destructive",
+        });
+        setMedicationToDelete(null);
+      }
     };
 
     const filteredMedications = React.useMemo(() => {
@@ -234,12 +260,13 @@ export default function PharmacyPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => setMedicationToEdit(item)}>
                                 <Pencil className="mr-2 h-3 w-3" />
                                 Edit
                               </Button>
-                              <Button variant="outline" size="icon">
-                                <ShoppingCart className="h-4 w-4" />
+                              <Button variant="destructive" size="sm" onClick={() => setMedicationToDelete(item)}>
+                                <Trash2 className="mr-2 h-3 w-3" />
+                                Delete
                               </Button>
                             </div>
                           </TableCell>
@@ -280,6 +307,31 @@ export default function PharmacyPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {medicationToEdit && (
+        <EditMedicationDialog
+          medication={medicationToEdit}
+          onSave={handleUpdateMedication}
+          open={!!medicationToEdit}
+          onOpenChange={(isOpen) => !isOpen && setMedicationToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!medicationToDelete} onOpenChange={(isOpen) => !isOpen && setMedicationToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the medication
+              "{medicationToDelete?.name}" from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteMedication}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
