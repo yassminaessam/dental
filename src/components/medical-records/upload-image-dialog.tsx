@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,10 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -24,10 +25,36 @@ import {
 } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
 import { dentalChartPatients, clinicalImageTypes } from '@/lib/data';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-export function UploadImageDialog() {
+const imageSchema = z.object({
+  patient: z.string({ required_error: 'Patient is required.' }),
+  type: z.string({ required_error: 'Image type is required.' }),
+  file: z.instanceof(FileList).refine(files => files?.length === 1, 'Image is required.'),
+  caption: z.string().optional(),
+});
+
+type ImageFormData = z.infer<typeof imageSchema>;
+
+interface UploadImageDialogProps {
+  onUpload: (data: any) => void;
+}
+
+export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const form = useForm<ImageFormData>({
+    resolver: zodResolver(imageSchema),
+  });
+
+  const onSubmit = (data: ImageFormData) => {
+    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    onUpload({ ...data, file: data.file[0], patientName });
+    form.reset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Upload className="mr-2 h-4 w-4" />
@@ -41,52 +68,87 @@ export function UploadImageDialog() {
             Select a patient and upload a new clinical image like an X-ray or photo.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient">Patient *</Label>
-            <Select>
-              <SelectTrigger id="patient">
-                <SelectValue placeholder="Select patient" />
-              </SelectTrigger>
-              <SelectContent>
-                {dentalChartPatients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="image-type">Image Type *</Label>
-            <Select>
-              <SelectTrigger id="image-type">
-                <SelectValue placeholder="Select image type" />
-              </SelectTrigger>
-              <SelectContent>
-                {clinicalImageTypes.map((type) => (
-                  <SelectItem key={type.toLowerCase()} value={type.toLowerCase()}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="image-file">Image File *</Label>
-            <Input id="image-file" type="file" />
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="caption">Caption</Label>
-            <Input id="caption" placeholder="e.g., Upper right molar X-ray" />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit">Upload</Button>
-        </DialogFooter>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+            <FormField
+              control={form.control}
+              name="patient"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Patient *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select patient" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {dentalChartPatients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image Type *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select image type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clinicalImageTypes.map((type) => (
+                        <SelectItem key={type.toLowerCase()} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="file"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image File *</FormLabel>
+                   <FormControl>
+                    <Input type="file" accept="image/*" {...form.register("file")} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="caption"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caption</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Upper right molar X-ray" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit">Upload</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

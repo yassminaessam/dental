@@ -10,6 +10,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,10 +37,11 @@ import {
 } from "@/components/ui/tabs";
 import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, Download } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 export type MedicalRecord = {
   id: string;
@@ -50,8 +53,18 @@ export type MedicalRecord = {
   status: 'Final' | 'Draft';
 };
 
+export type ClinicalImage = {
+  id: string;
+  patient: string;
+  type: string;
+  date: string;
+  imageUrl: string;
+  caption?: string;
+};
+
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
+  const [images, setImages] = React.useState<ClinicalImage[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const { toast } = useToast();
@@ -67,6 +80,22 @@ export default function MedicalRecordsPage() {
     toast({
       title: "Medical Record Created",
       description: `New record for ${newRecord.patient} has been created.`,
+    });
+  };
+
+  const handleImageUpload = (data: any) => {
+    const newImage: ClinicalImage = {
+      id: `IMG-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
+      patient: data.patientName,
+      type: data.type,
+      date: new Date().toLocaleDateString(),
+      imageUrl: URL.createObjectURL(data.file),
+      caption: data.caption
+    };
+    setImages(prev => [newImage, ...prev]);
+    toast({
+      title: "Image Uploaded",
+      description: `A new ${data.type} image for ${data.patientName} has been uploaded.`,
     });
   };
   
@@ -87,7 +116,7 @@ export default function MedicalRecordsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Medical Records</h1>
           <div className="flex items-center gap-2">
-            <UploadImageDialog />
+            <UploadImageDialog onUpload={handleImageUpload} />
             <NewRecordDialog onSave={handleSaveRecord} />
           </div>
         </div>
@@ -204,12 +233,40 @@ export default function MedicalRecordsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="clinical-images">
-             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No clinical images found.
+          <TabsContent value="clinical-images" className="mt-4">
+             {images.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {images.map((image) => (
+                  <Card key={image.id} className="overflow-hidden">
+                    <CardHeader className="p-0">
+                      <div className="relative aspect-video">
+                        <Image
+                          src={image.imageUrl}
+                          alt={image.caption || `Clinical image for ${image.patient}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                       <CardTitle className="text-base">{image.caption || image.type}</CardTitle>
+                       <CardDescription>{image.patient}</CardDescription>
+                    </CardContent>
+                    <CardFooter className="flex justify-between p-4 pt-0">
+                        <Badge variant="secondary">{image.type}</Badge>
+                        <span className="text-xs text-muted-foreground">{image.date}</span>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+               <Card>
+                <CardContent className="h-48 text-center text-muted-foreground flex flex-col items-center justify-center p-6 gap-4">
+                    <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                    <span>No clinical images found. Upload one to get started.</span>
                 </CardContent>
-             </Card>
+               </Card>
+            )}
           </TabsContent>
           <TabsContent value="templates">
             <Card>
