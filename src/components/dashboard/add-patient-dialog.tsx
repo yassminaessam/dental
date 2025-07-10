@@ -14,10 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -31,8 +29,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { emergencyContactRelationships } from '@/lib/data';
+import { emergencyContactRelationships, initialPatientsData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import type { Patient } from '@/app/patients/page';
+import { useToast } from '@/hooks/use-toast';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -51,11 +51,12 @@ const patientSchema = z.object({
 type PatientFormData = z.infer<typeof patientSchema>;
 
 interface AddPatientDialogProps {
-  onSave: (data: any) => void;
+  onSave: (patient: Patient) => void;
 }
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
@@ -69,8 +70,25 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   });
 
   const onSubmit = (data: PatientFormData) => {
-    const age = new Date().getFullYear() - new Date(data.dob).getFullYear();
-    onSave({ name: `${data.name} ${data.lastName}`, email: data.email, phone: data.phone, age });
+    const newPatient: Patient = {
+      id: `PAT-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: `${data.name} ${data.lastName}`,
+      email: data.email,
+      phone: data.phone,
+      dob: data.dob,
+      age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
+      lastVisit: new Date().toLocaleDateString(),
+      status: 'Active',
+    };
+    
+    // This will now update the central mock data array
+    initialPatientsData.unshift(newPatient);
+    onSave(newPatient);
+
+    toast({
+      title: "Patient Added",
+      description: `${newPatient.name} has been successfully added.`,
+    });
     form.reset();
     setOpen(false);
   };
@@ -288,9 +306,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
               </Button>
             </div>
             <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" type="button">Cancel</Button>
-              </DialogClose>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Save Patient</Button>
             </DialogFooter>
           </form>

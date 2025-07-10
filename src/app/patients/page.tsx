@@ -63,22 +63,8 @@ export default function PatientsPage() {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
-  const handleSavePatient = (data: any) => {
-    const newPatient: Patient = {
-      id: `PAT-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: `${data.name}`,
-      email: data.email,
-      phone: data.phone,
-      dob: data.dob,
-      age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
-      lastVisit: new Date().toLocaleDateString(),
-      status: 'Active',
-    };
+  const handleSavePatient = (newPatient: Patient) => {
     setPatients(prev => [newPatient, ...prev]);
-    toast({
-      title: "Patient Added",
-      description: `${newPatient.name} has been successfully added.`,
-    });
   };
   
   const handleUpdatePatient = (updatedPatient: Patient) => {
