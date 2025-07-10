@@ -9,6 +9,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter
 } from "@/components/ui/card";
 import {
   Table,
@@ -26,10 +28,11 @@ import {
 } from "@/components/ui/tabs";
 import { communicationsPageStats, initialRecentMessagesData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock } from "lucide-react";
+import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2 } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
-import { NewTemplateDialog } from "@/components/communications/new-template-dialog";
+import { NewTemplateDialog, Template } from "@/components/communications/new-template-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 export type Message = {
   id: string;
@@ -43,6 +46,7 @@ export type Message = {
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>(initialRecentMessagesData);
+  const [templates, setTemplates] = React.useState<Template[]>([]);
   const { toast } = useToast();
   
   const handleSendMessage = (data: any) => {
@@ -62,13 +66,21 @@ export default function CommunicationsPage() {
     });
   };
 
+  const handleSaveTemplate = (data: Template) => {
+    setTemplates(prev => [...prev, data]);
+    toast({
+      title: "Template Saved",
+      description: `The "${data.name}" template has been saved.`,
+    });
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Communications</h1>
           <div className="flex items-center gap-2">
-            <NewTemplateDialog />
+            <NewTemplateDialog onSave={handleSaveTemplate} />
             <NewMessageDialog onSend={handleSendMessage} />
           </div>
         </div>
@@ -169,12 +181,43 @@ export default function CommunicationsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="templates">
-            <Card>
-              <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                No templates found.
-              </CardContent>
-            </Card>
+          <TabsContent value="templates" className="mt-4">
+             {templates.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {templates.map((template) => (
+                  <Card key={template.name} className="flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{template.name}</span>
+                        <Badge variant="outline">{template.type}</Badge>
+                      </CardTitle>
+                      <CardDescription>{template.subject}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        {template.body}
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm">
+                        <Pencil className="mr-2 h-3 w-3" />
+                        Edit
+                      </Button>
+                       <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-2 h-3 w-3" />
+                        Delete
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
+                  No templates found. Create one to get started.
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           <TabsContent value="automated">
             <Card>
