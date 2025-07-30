@@ -33,9 +33,16 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { initialInsuranceClaimsData, insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
@@ -94,6 +101,18 @@ export default function InsurancePage() {
         description: `Claim ${claimId} document is being prepared for download.`,
     });
   }
+
+  const handleStatusChange = (claimId: string, newStatus: Claim['status']) => {
+    setClaims(prev => 
+      prev.map(claim => 
+        claim.id === claimId ? { ...claim, status: newStatus } : claim
+      )
+    );
+    toast({
+      title: "Status Updated",
+      description: `Claim ${claimId} has been marked as ${newStatus}.`,
+    });
+  };
 
   const filteredClaims = React.useMemo(() => {
     return claims
@@ -238,16 +257,32 @@ export default function InsurancePage() {
                           </TableCell>
                           <TableCell>{claim.submitDate}</TableCell>
                           <TableCell className="text-right">
-                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setClaimToView(claim)}>
-                                <Eye className="mr-2 h-3 w-3" />
-                                View
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDownloadClaim(claim.id)}>
-                                <Download className="h-4 w-4" />
-                                <span className="sr-only">Download</span>
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setClaimToView(claim)}>
+                                  <Eye className="mr-2 h-4 w-4" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownloadClaim(claim.id)}>
+                                  <Download className="mr-2 h-4 w-4" /> Download
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleStatusChange(claim.id, 'Approved')}>
+                                  Mark as Approved
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(claim.id, 'Processing')}>
+                                  Mark as Processing
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(claim.id, 'Denied')} className="text-destructive">
+                                  Mark as Denied
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
