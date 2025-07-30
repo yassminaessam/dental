@@ -59,7 +59,7 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
              <div className="grid grid-cols-2 gap-4">
                 <div>
                     <h4 className="font-semibold">Status</h4>
-                    <p><Badge variant="outline">{treatment.status}</Badge></p>
+                    <div><Badge variant="outline">{treatment.status}</Badge></div>
                 </div>
                  <div>
                     <h4 className="font-semibold">Follow-up Date</h4>
