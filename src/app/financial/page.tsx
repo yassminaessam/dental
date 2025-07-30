@@ -274,6 +274,27 @@ export default function FinancialPage() {
               </CardContent>
             </Card>
           </TabsContent>
+          <TabsContent value="revenue" className="mt-4">
+            <Card>
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
+                <p>Revenue-specific information will be available here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="expenses" className="mt-4">
+            <Card>
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
+                <p>Expense-specific information will be available here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="reports" className="mt-4">
+            <Card>
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
+                <p>Financial reports will be available here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
     </DashboardLayout>
