@@ -64,7 +64,7 @@ export type InventoryItem = {
   stock: number;
   min: number;
   max: number;
-  status: 'Normal' | 'Low Stock';
+  status: 'Normal' | 'Low Stock' | 'Out of Stock';
   unitCost: string;
   supplier: string;
   location: string;
@@ -92,7 +92,7 @@ export default function InventoryPage() {
       min: 10,
       max: 50,
       status: data.stock < 10 ? 'Low Stock' : 'Normal',
-      unitCost: `$${parseFloat(data.unitCost).toFixed(2)}`,
+      unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
       supplier: data.supplier,
       location: data.location,
     };
@@ -123,6 +123,20 @@ export default function InventoryPage() {
       setItemToDelete(null);
     }
   };
+  
+  const handleAnalytics = () => {
+    toast({
+        title: "Loading Analytics",
+        description: "Inventory analytics dashboard is being prepared.",
+    });
+  };
+  
+  const handleRestock = (itemName: string) => {
+    toast({
+        title: "Restock Requested",
+        description: `A purchase order for ${itemName} has been initiated.`,
+    });
+  };
 
   const filteredInventory = React.useMemo(() => {
     return inventory
@@ -140,7 +154,7 @@ export default function InventoryPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Inventory Management</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleAnalytics}>
               <BarChart className="mr-2 h-4 w-4" />
               Analytics
             </Button>
@@ -187,7 +201,7 @@ export default function InventoryPage() {
                     {item.stock} / {item.minStock} min
                   </p>
                 </div>
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive" size="sm" onClick={() => handleRestock(item.name)}>
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Restock
                 </Button>
@@ -323,7 +337,7 @@ export default function InventoryPage() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the item
-              from your inventory.
+              "{itemToDelete?.name}" from your inventory.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
