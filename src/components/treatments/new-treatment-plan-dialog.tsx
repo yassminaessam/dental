@@ -53,6 +53,9 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const [endDateOpen, setEndDateOpen] = React.useState(false);
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
+    defaultValues: {
+      notes: '',
+    },
   });
 
   const onSubmit = (data: PlanFormData) => {
