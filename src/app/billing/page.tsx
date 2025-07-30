@@ -93,6 +93,30 @@ export default function BillingPage() {
     });
   };
 
+  const handlePrintInvoice = () => {
+    const printableContent = document.getElementById('printable-invoice');
+    if (printableContent) {
+        const printWindow = window.open('', '', 'height=600,width=800');
+        if (printWindow) {
+            printWindow.document.write('<html><head><title>Print Invoice</title>');
+            // Link to the main stylesheet
+            const styles = Array.from(document.styleSheets)
+                .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
+                .join('');
+            printWindow.document.write(styles);
+            printWindow.document.write('</head><body >');
+            printWindow.document.write(printableContent.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            setTimeout(() => { // Timeout to ensure content is loaded
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+    }
+  };
+
+
   const filteredInvoices = React.useMemo(() => {
     return invoices
       .filter(invoice =>
@@ -195,7 +219,10 @@ export default function BillingPage() {
                              <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
                               <Eye className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
+                            <DropdownMenuItem onClick={() => {
+                                setInvoiceToView(invoice);
+                                setTimeout(handlePrintInvoice, 100); // Allow dialog to render
+                            }}>
                               <Printer className="mr-2 h-4 w-4" /> Print Invoice
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -229,6 +256,7 @@ export default function BillingPage() {
         invoice={invoiceToView}
         open={!!invoiceToView}
         onOpenChange={(isOpen) => !isOpen && setInvoiceToView(null)}
+        onPrint={handlePrintInvoice}
       />
 
     </DashboardLayout>
