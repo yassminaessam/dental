@@ -111,7 +111,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           New Patient
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl flex flex-col h-full md:h-auto">
         <DialogHeader>
           <DialogTitle>Add New Patient</DialogTitle>
           <DialogDescription>
@@ -119,9 +119,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="max-h-[70vh] p-1 pr-6">
-              <div className="space-y-6 px-1 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow overflow-hidden flex flex-col">
+            <div className="flex-grow overflow-y-auto pr-6 pl-1 space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -346,8 +345,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   </div>
                 </div>
               </div>
-            </ScrollArea>
-            <DialogFooter className="border-t pt-4">
+            <DialogFooter className="border-t pt-4 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Save Patient</Button>
             </DialogFooter>
