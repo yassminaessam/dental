@@ -29,10 +29,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { initialInvoicesData, billingPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye } from "lucide-react";
+import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
+import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
 
 export type InvoiceLineItem = {
     id: string;
@@ -57,6 +58,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = React.useState<Invoice[]>(initialInvoicesData);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [invoiceToPay, setInvoiceToPay] = React.useState<Invoice | null>(null);
+  const [invoiceToView, setInvoiceToView] = React.useState<Invoice | null>(null);
   const { toast } = useToast();
   
   const handleSaveInvoice = (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
@@ -190,11 +192,11 @@ export default function BillingPage() {
                             <DropdownMenuItem onClick={() => setInvoiceToPay(invoice)}>
                               <DollarSign className="mr-2 h-4 w-4" /> Record Payment
                             </DropdownMenuItem>
-                             <DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
                               <Eye className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" /> Download PDF
+                            <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
+                              <Printer className="mr-2 h-4 w-4" /> Print Invoice
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -222,6 +224,13 @@ export default function BillingPage() {
           onSave={handleRecordPayment}
         />
       )}
+      
+      <ViewInvoiceDialog
+        invoice={invoiceToView}
+        open={!!invoiceToView}
+        onOpenChange={(isOpen) => !isOpen && setInvoiceToView(null)}
+      />
+
     </DashboardLayout>
   );
 }
