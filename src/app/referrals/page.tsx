@@ -40,6 +40,9 @@ import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialo
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
+import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
 
 export type Referral = {
   id: string;
@@ -68,6 +71,9 @@ export default function ReferralsPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [specialistSearchTerm, setSpecialistSearchTerm] = React.useState('');
+  const [referralToView, setReferralToView] = React.useState<Referral | null>(null);
+  const [specialistToEdit, setSpecialistToEdit] = React.useState<Specialist | null>(null);
+  const [specialistToDelete, setSpecialistToDelete] = React.useState<Specialist | null>(null);
   const { toast } = useToast();
 
   const handleSaveReferral = (data: any) => {
@@ -98,6 +104,34 @@ export default function ReferralsPage() {
     toast({
       title: "Specialist Added",
       description: `${newSpecialist.name} has been added to your network.`,
+    });
+  };
+
+  const handleUpdateSpecialist = (updatedSpecialist: Specialist) => {
+    setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
+    setSpecialistToEdit(null);
+    toast({
+        title: "Specialist Updated",
+        description: `${updatedSpecialist.name}'s details have been updated.`
+    });
+  };
+
+  const handleDeleteSpecialist = () => {
+    if (specialistToDelete) {
+        setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
+        toast({
+            title: "Specialist Deleted",
+            description: `${specialistToDelete.name} has been removed from your network.`,
+            variant: "destructive",
+        });
+        setSpecialistToDelete(null);
+    }
+  };
+  
+  const handleFollowUp = (referral: Referral) => {
+    toast({
+        title: "Follow-up Sent",
+        description: `A follow-up message has been sent regarding the referral for ${referral.patient}.`
     });
   };
 
@@ -237,11 +271,11 @@ export default function ReferralsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => setReferralToView(referral)}>
                                 <Eye className="mr-2 h-3 w-3" />
                                 View
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => handleFollowUp(referral)}>
                                 <Send className="mr-2 h-3 w-3" />
                                 Follow Up
                               </Button>
@@ -324,8 +358,8 @@ export default function ReferralsPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setSpecialistToEdit(specialist)}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setSpecialistToDelete(specialist)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -352,6 +386,37 @@ export default function ReferralsPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+        <ViewReferralDialog 
+            referral={referralToView}
+            open={!!referralToView}
+            onOpenChange={(isOpen) => !isOpen && setReferralToView(null)}
+        />
+        
+        {specialistToEdit && (
+            <EditSpecialistDialog 
+                specialist={specialistToEdit}
+                onSave={handleUpdateSpecialist}
+                open={!!specialistToEdit}
+                onOpenChange={(isOpen) => !isOpen && setSpecialistToEdit(null)}
+            />
+        )}
+
+        <AlertDialog open={!!specialistToDelete} onOpenChange={(isOpen) => !isOpen && setSpecialistToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete "{specialistToDelete?.name}" from your specialist network.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSpecialist}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+      </AlertDialog>
+
     </DashboardLayout>
   );
 }
