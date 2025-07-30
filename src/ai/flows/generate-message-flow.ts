@@ -19,13 +19,13 @@ const MessageContextSchema = z.enum([
   'request-feedback',
 ]);
 
-export const GenerateMessageInputSchema = z.object({
+const GenerateMessageInputSchema = z.object({
   patientName: z.string().describe('The name of the patient.'),
   context: MessageContextSchema.describe('The context for the message.'),
 });
 export type GenerateMessageInput = z.infer<typeof GenerateMessageInputSchema>;
 
-export const GenerateMessageOutputSchema = z.object({
+const GenerateMessageOutputSchema = z.object({
   subject: z.string().describe('A concise subject line for the message.'),
   message: z.string().describe('The full, professionally-written message body.'),
 });
