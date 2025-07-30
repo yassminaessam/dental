@@ -35,9 +35,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { appointmentPageStats, initialAppointmentsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, List, Search, MoreHorizontal } from "lucide-react";
+import { Plus, Calendar, List, Search, MoreHorizontal, Pencil } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
+import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 
 export type Appointment = {
   id: string;
@@ -54,6 +56,8 @@ export default function AppointmentsPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [activeView, setActiveView] = React.useState('list');
+  const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
+  const [appointmentToEdit, setAppointmentToEdit] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
 
   const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
@@ -64,18 +68,19 @@ export default function AppointmentsPage() {
     };
     const updatedAppointments = [newAppointment, ...appointments].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
     setAppointments(updatedAppointments);
-    // Also update the shared array
     initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
     toast({
         title: "Appointment Scheduled",
         description: `An appointment for ${newAppointment.patient} has been scheduled.`,
     });
   };
-  
-  const handleViewAppointment = (appointment: Appointment) => {
+
+  const handleUpdateAppointment = (updatedAppointment: Appointment) => {
+    setAppointments(prev => prev.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt));
+    setAppointmentToEdit(null);
     toast({
-        title: "Viewing Appointment",
-        description: `Details for appointment ${appointment.id} with ${appointment.patient}.`,
+        title: "Appointment Updated",
+        description: `Appointment for ${updatedAppointment.patient} has been updated.`,
     });
   };
 
@@ -205,8 +210,11 @@ export default function AppointmentsPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleViewAppointment(appt)}>
+                                <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
                                   View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
@@ -237,6 +245,22 @@ export default function AppointmentsPage() {
           </div>
         </div>
       </main>
+
+      <ViewAppointmentDialog
+        appointment={appointmentToView}
+        open={!!appointmentToView}
+        onOpenChange={(isOpen) => !isOpen && setAppointmentToView(null)}
+      />
+
+      {appointmentToEdit && (
+        <EditAppointmentDialog
+          appointment={appointmentToEdit}
+          onSave={handleUpdateAppointment}
+          open={!!appointmentToEdit}
+          onOpenChange={(isOpen) => !isOpen && setAppointmentToEdit(null)}
+        />
+      )}
+
     </DashboardLayout>
   );
 }
