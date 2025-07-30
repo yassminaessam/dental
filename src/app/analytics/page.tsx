@@ -29,6 +29,10 @@ import { Download, DollarSign, Users, TrendingUp, Activity } from "lucide-react"
 import RevenueTrendsChart from "@/components/dashboard/revenue-trends-chart";
 import AppointmentAnalyticsChart from "@/components/analytics/appointment-analytics-chart";
 import { useToast } from '@/hooks/use-toast';
+import PatientDemographicsChart from '@/components/analytics/patient-demographics-chart';
+import TreatmentVolumeChart from '@/components/analytics/treatment-volume-chart';
+import StaffPerformanceChart from '@/components/analytics/staff-performance-chart';
+import PatientSatisfactionChart from '@/components/analytics/patient-satisfaction-chart';
 
 const iconMap = {
     DollarSign,
@@ -125,29 +129,41 @@ export default function AnalyticsPage() {
           </TabsContent>
           <TabsContent value="patients">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Patient analytics will be shown here.
+                <CardHeader>
+                    <CardTitle>Patient Demographics</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <PatientDemographicsChart />
                 </CardContent>
              </Card>
           </TabsContent>
           <TabsContent value="treatments">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Treatment analytics will be shown here.
+                <CardHeader>
+                    <CardTitle>Treatment Volume</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <TreatmentVolumeChart />
                 </CardContent>
              </Card>
           </TabsContent>
            <TabsContent value="staff">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Staff analytics will be shown here.
+                <CardHeader>
+                    <CardTitle>Staff Performance</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <StaffPerformanceChart />
                 </CardContent>
              </Card>
           </TabsContent>
            <TabsContent value="satisfaction">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Patient satisfaction analytics will be shown here.
+                <CardHeader>
+                    <CardTitle>Patient Satisfaction</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <PatientSatisfactionChart />
                 </CardContent>
              </Card>
           </TabsContent>

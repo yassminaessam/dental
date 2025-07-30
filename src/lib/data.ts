@@ -1317,3 +1317,36 @@ export const reportsAppointmentDistributionData = [
   { type: 'Crown', count: 100, color: 'hsl(var(--chart-4))' },
   { type: 'Other', count: 50, color: 'hsl(var(--muted))' },
 ];
+
+export const patientDemographicsData = [
+    { ageGroup: '0-18', count: 25 },
+    { ageGroup: '19-35', count: 60 },
+    { ageGroup: '36-50', count: 45 },
+    { ageGroup: '51-65', count: 20 },
+    { ageGroup: '66+', count: 15 },
+];
+
+export const treatmentVolumeData = [
+    { month: 'Jan', count: 80 },
+    { month: 'Feb', count: 85 },
+    { month: 'Mar', count: 95 },
+    { month: 'Apr', count: 90 },
+    { month: 'May', count: 110 },
+    { month: 'Jun', count: 120 },
+];
+
+export const staffPerformanceData = [
+    { name: 'Dr. Nourhan', appointments: 120 },
+    { name: 'Dr. Khaled', appointments: 110 },
+    { name: 'Dr. Mariam', appointments: 100 },
+    { name: 'Khaled Youssef', appointments: 80 },
+];
+
+export const patientSatisfactionData = [
+    { month: 'Jan', score: 4.2 },
+    { month: 'Feb', score: 4.3 },
+    { month: 'Mar', score: 4.5 },
+    { month: 'Apr', score: 4.4 },
+    { month: 'May', score: 4.6 },
+    { month: 'Jun', score: 4.7 },
+];
