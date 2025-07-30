@@ -1,6 +1,7 @@
 
 
 import { InventoryItem } from "@/app/inventory/page";
+import type { Invoice } from "@/app/billing/page";
 
 export type PatientMessage = {
     id: string;
@@ -1342,4 +1343,72 @@ export const patientSatisfactionData = [
     { month: 'Apr', score: 4.4 },
     { month: 'May', score: 4.6 },
     { month: 'Jun', score: 4.7 },
+];
+
+export const billingPageStats = [
+  {
+    title: "Total Outstanding",
+    value: "EGP 5,500",
+    description: "Across 2 invoices",
+    valueClassName: "text-destructive"
+  },
+  {
+    title: "Paid This Month",
+    value: "EGP 2,000",
+    description: "From 1 invoice",
+    valueClassName: "text-green-600"
+  },
+  {
+    title: "Overdue Invoices",
+    value: "0",
+    description: "No invoices are overdue",
+  },
+  {
+    title: "Avg. Invoice Value",
+    value: "EGP 3,750",
+    description: "Based on all invoices",
+  },
+];
+
+export const initialInvoicesData: Invoice[] = [
+    {
+        id: 'INV-001',
+        patient: 'Ahmed Ali',
+        patientId: 'pat1',
+        issueDate: 'Dec 15, 2024',
+        dueDate: 'Jan 14, 2025',
+        totalAmount: 2000,
+        amountPaid: 2000,
+        status: 'Paid',
+        items: [
+            { id: '1', description: 'Root Canal Treatment - Tooth #14', quantity: 1, unitPrice: 2000 },
+        ],
+    },
+    {
+        id: 'INV-002',
+        patient: 'Fatima Mahmoud',
+        patientId: 'pat2',
+        issueDate: 'Dec 10, 2024',
+        dueDate: 'Jan 9, 2025',
+        totalAmount: 4000,
+        amountPaid: 1500,
+        status: 'Partially Paid',
+        items: [
+            { id: '1', description: 'Porcelain Crown - Tooth #25', quantity: 1, unitPrice: 4000 },
+        ],
+    },
+    {
+        id: 'INV-003',
+        patient: 'Youssef Hassan',
+        patientId: 'pat3',
+        issueDate: 'Dec 1, 2024',
+        dueDate: 'Dec 31, 2024',
+        totalAmount: 1500,
+        amountPaid: 0,
+        status: 'Unpaid',
+        items: [
+            { id: '1', description: 'Consultation & X-Rays', quantity: 1, unitPrice: 500 },
+            { id: '2', description: 'Composite Filling - Tooth #36', quantity: 1, unitPrice: 1000 },
+        ],
+    }
 ];

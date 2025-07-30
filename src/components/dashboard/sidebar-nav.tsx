@@ -27,6 +27,7 @@ import {
   BarChart,
   FileSpreadsheet,
   Settings,
+  Receipt,
 } from "lucide-react";
 
 export function SidebarNav() {
@@ -63,6 +64,14 @@ export function SidebarNav() {
           <Link href="/treatments">
             <Stethoscope />
             Treatments
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+       <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/billing")}>
+          <Link href="/billing">
+            <Receipt />
+            Billing
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
