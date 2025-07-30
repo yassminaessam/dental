@@ -106,9 +106,9 @@ export default function PharmacyPage() {
     
     const { toast } = useToast();
 
-    const medicationCategories = [
-        ...new Set(initialMedicationInventoryData.map((i) => i.category)),
-    ];
+    const medicationCategories = React.useMemo(() => {
+        return [...new Set(medications.map((i) => i.category))];
+    }, [medications]);
 
     const handleSaveMedication = (data: any) => {
       const newMedication: Medication = {
