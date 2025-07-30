@@ -107,9 +107,9 @@ export default function SuppliersPage() {
 
   const { toast } = useToast();
   
-  const supplierCategories = [
-    ...new Set(initialSuppliersData.map((s) => s.category)),
-  ];
+  const supplierCategories = React.useMemo(() => {
+    return [...new Set(suppliers.map((s) => s.category))];
+  }, [suppliers]);
 
   const handleSaveSupplier = (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
     const newSupplier: Supplier = {

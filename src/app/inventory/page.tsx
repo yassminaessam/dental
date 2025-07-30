@@ -78,9 +78,9 @@ export default function InventoryPage() {
   const [categoryFilter, setCategoryFilter] = React.useState('all');
   const { toast } = useToast();
 
-  const inventoryCategories = [
-    ...new Set(initialInventoryItemsData.map((i) => i.category)),
-  ];
+  const inventoryCategories = React.useMemo(() => {
+    return [...new Set(inventory.map((i) => i.category))];
+  }, [inventory]);
 
   const handleSaveItem = (data: any) => {
     const newItem: InventoryItem = {

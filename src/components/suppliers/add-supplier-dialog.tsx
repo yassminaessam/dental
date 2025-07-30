@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { supplierCategories, supplierPaymentTerms } from '@/lib/data';
+import { supplierPaymentTerms } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
 const supplierSchema = z.object({
@@ -125,20 +125,9 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {supplierCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="e.g., Medication" {...field} />
+                    </FormControl>
                   </FormItem>
                 )}
               />
