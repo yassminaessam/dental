@@ -26,14 +26,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientMessagesData, patientPortalPageStats, appointmentRequestsData } from "@/lib/data";
+import { patientMessagesData, patientPortalPageStats, appointmentRequestsData, type PatientMessage } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = React.useState('messages');
+  const [selectedMessage, setSelectedMessage] = React.useState<PatientMessage | null>(null);
+  const [isReplyOpen, setIsReplyOpen] = React.useState(false);
+  const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
 
   const handleApproveRequest = (patientName: string) => {
     toast({
@@ -50,6 +55,21 @@ export default function PatientPortalPage() {
     });
   };
 
+  const handleReply = (message: PatientMessage) => {
+    setReplyData({
+      patientName: message.patient,
+      subject: `Re: ${message.subject}`,
+    });
+    setIsReplyOpen(true);
+  };
+  
+  const handleSendMessage = (data: any) => {
+    toast({
+      title: "Message Sent",
+      description: `A new ${data.type} has been sent to ${data.patient}.`,
+    });
+  };
+
 
   return (
     <DashboardLayout>
@@ -57,11 +77,12 @@ export default function PatientPortalPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Patient Portal Management</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setActiveTab('settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Portal Settings
             </Button>
             <NewMessageDialog 
+              onSend={handleSendMessage}
               triggerButtonText="Send Message"
               dialogTitle="Send a New Message"
               dialogDescription="Compose and send a message to a patient."
@@ -89,7 +110,7 @@ export default function PatientPortalPage() {
           ))}
         </div>
 
-        <Tabs defaultValue="messages">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="requests">
@@ -163,11 +184,11 @@ export default function PatientPortalPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => setSelectedMessage(message)}>
                                 <Eye className="mr-2 h-3 w-3" />
                                 View
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => handleReply(message)}>
                                 <Reply className="mr-2 h-3 w-3" />
                                 Reply
                               </Button>
@@ -249,13 +270,34 @@ export default function PatientPortalPage() {
           </TabsContent>
           <TabsContent value="settings">
              <Card>
+                <CardHeader>
+                    <CardTitle>Portal Settings</CardTitle>
+                    <p className="text-muted-foreground">Configure patient portal settings here.</p>
+                </CardHeader>
                 <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Portal settings will be available here.
+                    Portal settings form will be available here.
                 </CardContent>
              </Card>
           </TabsContent>
         </Tabs>
       </main>
+
+      <ViewMessageDialog 
+        message={selectedMessage}
+        open={!!selectedMessage}
+        onOpenChange={(isOpen) => !isOpen && setSelectedMessage(null)}
+      />
+
+      {replyData && (
+        <NewMessageDialog
+          open={isReplyOpen}
+          onOpenChange={setIsReplyOpen}
+          onSend={handleSendMessage}
+          initialData={replyData}
+          isReply
+        />
+      )}
+
     </DashboardLayout>
   );
 }

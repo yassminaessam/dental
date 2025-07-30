@@ -40,19 +40,31 @@ const messageSchema = z.object({
 type MessageFormData = z.infer<typeof messageSchema>;
 
 interface NewMessageDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   triggerButtonText?: string;
   dialogTitle?: string;
   dialogDescription?: string;
   onSend: (data: any) => void;
+  isReply?: boolean;
+  initialData?: { patientName: string; subject: string } | null;
 }
 
 export function NewMessageDialog({ 
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
   triggerButtonText = "New Message",
   dialogTitle = "Create New Message",
   dialogDescription = "Compose and send a new message to a patient.",
-  onSend
+  onSend,
+  isReply = false,
+  initialData = null,
 }: NewMessageDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen || setInternalOpen;
+
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
@@ -60,31 +72,51 @@ export function NewMessageDialog({
     }
   });
 
+  React.useEffect(() => {
+    if (initialData && open) {
+      const patient = dentalChartPatients.find(p => p.name === initialData.patientName);
+      form.reset({
+        patient: patient?.id,
+        subject: initialData.subject,
+        message: `\n\n--- Original Message ---\n`,
+        type: 'Email',
+      });
+    } else if (!isReply) {
+      form.reset({ type: 'Email' });
+    }
+  }, [initialData, open, form, isReply]);
+
+
   const patientId = form.watch('patient');
   const patientName = React.useMemo(() => {
     return dentalChartPatients.find(p => p.id === patientId)?.name || '';
   }, [patientId]);
 
   const onSubmit = (data: MessageFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    onSend({ ...data, patient: patientName });
+    const patientDetails = dentalChartPatients.find(p => p.id === data.patient);
+    onSend({ ...data, patient: patientDetails?.name || 'Unknown Patient' });
     form.reset();
     setOpen(false);
   };
 
+  const dialogTitleText = isReply ? `Reply to ${initialData?.patientName}` : dialogTitle;
+  const dialogDescriptionText = isReply ? `Replying to the message: "${initialData?.subject}"` : dialogDescription;
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <MessageSquareIcon className="mr-2 h-4 w-4" />
-          {triggerButtonText}
-        </Button>
-      </DialogTrigger>
+      {!isReply && (
+        <DialogTrigger asChild>
+          <Button>
+            <MessageSquareIcon className="mr-2 h-4 w-4" />
+            {triggerButtonText}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogTitle>{dialogTitleText}</DialogTitle>
           <DialogDescription>
-            {dialogDescription}
+            {dialogDescriptionText}
           </DialogDescription>
         </DialogHeader>
         
@@ -104,7 +136,7 @@ export function NewMessageDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Patient</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isReply}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a patient" />
@@ -131,7 +163,7 @@ export function NewMessageDialog({
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex gap-4"
                     >
                       <FormItem className="flex items-center space-x-2">

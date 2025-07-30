@@ -1,6 +1,16 @@
 
 
-
+export type PatientMessage = {
+    id: string;
+    patient: string;
+    subject: string;
+    snippet: string;
+    fullMessage: string;
+    category: 'treatment' | 'appointment' | 'billing' | 'other';
+    priority: 'high' | 'normal' | 'low';
+    date: string;
+    status: 'Unread' | 'Read';
+};
 
 
 // Mock data for the dashboard
@@ -763,12 +773,13 @@ export const patientPortalPageStats = [
   },
 ];
 
-export const patientMessagesData = [
+export const patientMessagesData: PatientMessage[] = [
     {
         id: 'MSG-001',
         patient: 'John Smith',
         subject: 'Question about post-treatment care',
         snippet: "Hi, I had my root canal yesterday and I'm experien...",
+        fullMessage: "Hi, I had my root canal yesterday and I'm experiencing some discomfort. Is this normal? The pain is manageable with ibuprofen, but I wanted to check if there's anything else I should be doing. Thanks, John",
         category: 'treatment',
         priority: 'high',
         date: 'Dec 18, 11:15 AM',
@@ -779,6 +790,7 @@ export const patientMessagesData = [
         patient: 'Sarah Johnson',
         subject: 'Your appointment reminder',
         snippet: 'This is a reminder that you have an appointment s...',
+        fullMessage: 'This is a reminder that you have an appointment scheduled for December 20th at 10:30 AM for a routine cleaning. Please confirm by replying YES to this message. Thank you!',
         category: 'appointment',
         priority: 'normal',
         date: 'Dec 17, 6:00 PM',
