@@ -26,7 +26,38 @@ interface ViewInvoiceDialogProps {
 export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDialogProps) {
   
   const handlePrint = () => {
-    window.print();
+    const printableArea = document.getElementById('printable');
+    if (!printableArea) return;
+
+    const originalContent = document.body.innerHTML;
+    const printContent = printableArea.innerHTML;
+    
+    // Create a new window to print
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Print Invoice</title>');
+      // Find all stylesheet links from the parent document and add them to the new window
+      const stylesheets = Array.from(document.styleSheets)
+        .map(sheet => sheet.href ? `<link rel="stylesheet" href="${sheet.href}">` : '')
+        .join('');
+      printWindow.document.write(stylesheets);
+      printWindow.document.write('<style>body { -webkit-print-color-adjust: exact; } @page { size: auto; margin: 0.5in; }</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(printContent);
+      printWindow.document.write('</body></html>');
+      
+      printWindow.document.close();
+      printWindow.focus(); // Necessary for some browsers
+      
+      // Use a timeout to ensure content and styles are loaded before printing
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+
+    } else {
+      alert('Please allow popups for this website to print the invoice.');
+    }
   };
 
   if (!invoice) return null;
