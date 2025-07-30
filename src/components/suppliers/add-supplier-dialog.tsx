@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -86,7 +87,7 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+20 1xx xxx xxxx" {...field} />
+                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
                     </FormControl>
                   </FormItem>
                 )}

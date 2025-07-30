@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -141,7 +142,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
                     </FormControl>
                   </FormItem>
                 )}

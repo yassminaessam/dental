@@ -160,8 +160,8 @@ export const availableTimeSlots = [
 ];
 
 export const initialPatientsData = [
-    { id: 'PAT-123', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', phone: '0100 123 4567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
-    { id: 'PAT-124', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', phone: '0122 987 6543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
+    { id: 'PAT-123', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', phone: '01001234567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
+    { id: 'PAT-124', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', phone: '01229876543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
 ];
 
 export const initialAppointmentsData = [
@@ -416,7 +416,7 @@ export const initialStaffData = [
     name: 'Dr. Nourhan Adel',
     role: 'Dentist',
     email: 'nourhan.adel@cairodental.com',
-    phone: '0100 111 2222',
+    phone: '01001112222',
     schedule: 'Sun-Thu, 9am-5pm',
     salary: 'EGP 500,000',
     hireDate: '2022-08-15',
@@ -427,7 +427,7 @@ export const initialStaffData = [
     name: 'Khaled Youssef',
     role: 'Hygienist',
     email: 'khaled.youssef@cairodental.com',
-    phone: '0122 333 4444',
+    phone: '01223334444',
     schedule: 'Mon-Fri, 10am-6pm',
     salary: 'EGP 250,000',
     hireDate: '2023-01-20',
@@ -740,7 +740,7 @@ export const initialSuppliersData = [
     id: "SUP-001",
     name: "Nile Medical Supplies",
     address: "45 Industrial Zone, 6th of October City",
-    phone: "02 3820 0000",
+    phone: "0238200000",
     email: "sales@nilemedical.com",
     category: "Medication",
     paymentTerms: "Net 30",
@@ -751,7 +751,7 @@ export const initialSuppliersData = [
     id: "SUP-002",
     name: "Egypt Dental Equipment",
     address: "12 Ramses St, Cairo",
-    phone: "02 2575 1111",
+    phone: "0225751111",
     email: "sales@egyptdental.com",
     category: "Equipment",
     paymentTerms: "Net 15",
@@ -762,7 +762,7 @@ export const initialSuppliersData = [
     id: "SUP-003",
     name: "Pharma Misr",
     address: "7 Obour Buildings, Salah Salem",
-    phone: "02 2404 4444",
+    phone: "0224044444",
     email: "contact@pharmamisr.com",
     category: "Supplies",
     paymentTerms: "Net 30",

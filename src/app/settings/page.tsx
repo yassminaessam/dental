@@ -1,4 +1,5 @@
 
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,7 +61,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <Label htmlFor="phone-number">Phone Number</Label>
-                    <Input id="phone-number" defaultValue="+20 2 2555 1234" />
+                    <Input id="phone-number" defaultValue="0225551234" />
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -81,7 +82,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
       phone: data.phone || '',
       role: data.role,
       hireDate: new Date(data.hireDate).toLocaleDateString(),
-      salary: `$${parseInt(data.salary).toLocaleString()}`,
+      salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
       status: data.status,
     };
     onSave(updatedStaffMember);
@@ -147,7 +148,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -221,7 +222,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                     <FormItem>
                         <FormLabel>Salary (per year) *</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="$50,000" {...field} />
+                        <Input type="number" placeholder="EGP 500,000" {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
