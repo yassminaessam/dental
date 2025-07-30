@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { Download, Search, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
 
 export type Claim = {
   id: string;
@@ -57,6 +58,7 @@ export default function InsurancePage() {
   const [claims, setClaims] = React.useState<Claim[]>(initialInsuranceClaimsData);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [claimToView, setClaimToView] = React.useState<Claim | null>(null);
   const { toast } = useToast();
 
   const handleSaveClaim = (data: any) => {
@@ -79,6 +81,20 @@ export default function InsurancePage() {
     });
   };
 
+  const handleExport = () => {
+    toast({
+        title: "Exporting Claims",
+        description: "Your claims report is being generated and will be downloaded shortly.",
+    });
+  };
+  
+  const handleDownloadClaim = (claimId: string) => {
+     toast({
+        title: "Downloading Claim",
+        description: `Claim ${claimId} document is being prepared for download.`,
+    });
+  }
+
   const filteredClaims = React.useMemo(() => {
     return claims
       .filter(claim =>
@@ -97,7 +113,7 @@ export default function InsurancePage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Insurance Claims</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export Claims
             </Button>
@@ -223,11 +239,11 @@ export default function InsurancePage() {
                           <TableCell>{claim.submitDate}</TableCell>
                           <TableCell className="text-right">
                              <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" onClick={() => setClaimToView(claim)}>
                                 <Eye className="mr-2 h-3 w-3" />
                                 View
                               </Button>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" onClick={() => handleDownloadClaim(claim.id)}>
                                 <Download className="h-4 w-4" />
                                 <span className="sr-only">Download</span>
                               </Button>
@@ -263,6 +279,12 @@ export default function InsurancePage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <ViewClaimDialog
+        claim={claimToView}
+        open={!!claimToView}
+        onOpenChange={(isOpen) => !isOpen && setClaimToView(null)}
+      />
     </DashboardLayout>
   );
 }
