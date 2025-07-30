@@ -58,7 +58,7 @@ export function ViewAppointmentDialog({ appointment, open, onOpenChange }: ViewA
             </div>
             <div>
                 <h4 className="font-semibold">Status</h4>
-                <p><Badge variant={appointment.status === 'Cancelled' ? 'destructive' : 'default'}>{appointment.status}</Badge></p>
+                <div><Badge variant={appointment.status === 'Cancelled' ? 'destructive' : 'default'}>{appointment.status}</Badge></div>
             </div>
           </div>
         </div>
