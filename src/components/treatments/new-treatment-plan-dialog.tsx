@@ -54,7 +54,10 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
     defaultValues: {
+      treatmentName: '',
       notes: '',
+      startDate: undefined,
+      endDate: undefined,
     },
   });
 
