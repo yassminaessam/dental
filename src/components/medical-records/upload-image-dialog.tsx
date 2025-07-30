@@ -30,7 +30,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 const imageSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
   type: z.string({ required_error: 'Image type is required.' }),
-  file: z.instanceof(FileList).refine(files => files?.length === 1, 'Image is required.'),
+  file: z.any().refine((files) => files?.length === 1, 'Image is required.'),
   caption: z.string().optional(),
 });
 
