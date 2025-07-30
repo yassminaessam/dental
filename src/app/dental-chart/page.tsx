@@ -22,6 +22,7 @@ import { initialDentalChartData, dentalChartPatients, dentalChartStats } from "@
 import { Download, Printer, RotateCw, Search, User } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
+import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dialog';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
 
@@ -35,6 +36,7 @@ export interface Tooth {
 export default function DentalChartPage() {
     const [chartData, setChartData] = React.useState<Record<number, Tooth>>(initialDentalChartData);
     const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
+    const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
 
     const handleToothSelect = (toothId: number) => {
         setSelectedTooth(chartData[toothId] || null);
@@ -146,12 +148,19 @@ export default function DentalChartPage() {
             <ToothDetailCard 
                 tooth={selectedTooth} 
                 onUpdateCondition={handleUpdateCondition}
+                onViewHistory={(tooth) => setHistoryTooth(tooth)}
                 onClose={() => setSelectedTooth(null)}
             />
           </div>
         </div>
 
       </main>
+
+      <ToothHistoryDialog
+        tooth={historyTooth}
+        open={!!historyTooth}
+        onOpenChange={(isOpen) => !isOpen && setHistoryTooth(null)}
+      />
     </DashboardLayout>
   );
 }

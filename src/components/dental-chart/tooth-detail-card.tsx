@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 import { toothNames } from '@/lib/data';
-import { cn } from '@/lib/utils';
 import { Search, X } from 'lucide-react';
 
 const conditionOptions: { value: ToothCondition, label: string }[] = [
@@ -23,20 +21,11 @@ const conditionOptions: { value: ToothCondition, label: string }[] = [
 interface ToothDetailCardProps {
     tooth: Tooth | null;
     onUpdateCondition: (toothId: number, condition: ToothCondition) => void;
+    onViewHistory: (tooth: Tooth) => void;
     onClose: () => void;
 }
 
-export function ToothDetailCard({ tooth, onUpdateCondition, onClose }: ToothDetailCardProps) {
-    const { toast } = useToast();
-
-    const handleViewHistory = () => {
-        if (tooth) {
-            toast({
-                title: `Full History for Tooth #${tooth.id}`,
-                description: 'This would open a dialog with the complete history.',
-            });
-        }
-    };
+export function ToothDetailCard({ tooth, onUpdateCondition, onViewHistory, onClose }: ToothDetailCardProps) {
 
     if (!tooth) {
         return (
@@ -90,7 +79,7 @@ export function ToothDetailCard({ tooth, onUpdateCondition, onClose }: ToothDeta
                         <h4 className="font-medium">History</h4>
                         <div className="mt-2 space-y-2 text-sm text-muted-foreground">
                             {tooth.history.length > 0 ? (
-                                tooth.history.slice().reverse().map((entry, index) => (
+                                tooth.history.slice(-3).reverse().map((entry, index) => (
                                     <div key={index}>
                                         <p><strong>{entry.date}:</strong> <span className="capitalize">{entry.condition.replace('-', ' ')}</span></p>
                                         <p className="text-xs pl-2">- {entry.notes}</p>
@@ -104,7 +93,7 @@ export function ToothDetailCard({ tooth, onUpdateCondition, onClose }: ToothDeta
                 </div>
             </CardContent>
             <CardFooter>
-                <Button variant="outline" className="w-full" onClick={handleViewHistory}>
+                <Button variant="outline" className="w-full" onClick={() => onViewHistory(tooth)}>
                     View Full History
                 </Button>
             </CardFooter>

@@ -293,6 +293,26 @@ export const initialDentalChartData = allTeethIds.reduce((acc, id) => {
     return acc;
 }, {} as Record<number, { id: number; condition: 'healthy'; history: any[] }>);
 
+// Add some sample history
+initialDentalChartData[14].condition = 'root-canal';
+initialDentalChartData[14].history = [
+    { date: '01/15/2023', condition: 'cavity', notes: 'Initial small cavity detected on buccal surface.' },
+    { date: '07/20/2023', condition: 'filling', notes: 'Placed composite filling (A2 shade).' },
+    { date: '06/10/2024', condition: 'root-canal', notes: 'Patient reported severe pain. Endodontic treatment performed.' }
+];
+
+initialDentalChartData[25].condition = 'crown';
+initialDentalChartData[25].history = [
+    { date: '03/01/2022', condition: 'filling', notes: 'Large amalgam filling placed.' },
+    { date: '09/12/2023', condition: 'crown', notes: 'Fractured cusp. Prepared for and placed porcelain crown.' }
+];
+
+initialDentalChartData[36].condition = 'cavity';
+initialDentalChartData[36].history = [
+    { date: '11/05/2024', condition: 'cavity', notes: 'Occlusal cavity noted during checkup.' }
+];
+
+initialDentalChartData[48].condition = 'missing';
 
 export const mockDoctors = [
   { id: 'doc1', name: 'Dr. Emily Wilson' },
