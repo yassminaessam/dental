@@ -40,6 +40,7 @@ import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appoi
 import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
+import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
 
 export type Appointment = {
   id: string;
@@ -68,6 +69,7 @@ export default function AppointmentsPage() {
     };
     const updatedAppointments = [newAppointment, ...appointments].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
     setAppointments(updatedAppointments);
+    // This is a mock, in a real app you'd likely update a central store or refetch
     initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
     toast({
         title: "Appointment Scheduled",
@@ -149,101 +151,105 @@ export default function AppointmentsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div className="lg:col-span-3">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Appointment Schedule</CardTitle>
-                <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
-                  <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search appointments..."
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+        {activeView === 'list' ? (
+          <div className="grid grid-cols-1 gap-6">
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                  <CardTitle>Appointment Schedule</CardTitle>
+                  <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+                    <div className="relative w-full md:w-auto">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="search"
+                        placeholder="Search appointments..."
+                        className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAppointments.length > 0 ? (
-                      filteredAppointments.map(appt => (
-                        <TableRow key={appt.id}>
-                          <TableCell>{appt.dateTime.toLocaleString()}</TableCell>
-                          <TableCell>{appt.patient}</TableCell>
-                          <TableCell>{appt.doctor}</TableCell>
-                          <TableCell>{appt.type}</TableCell>
-                          <TableCell>{appt.duration}</TableCell>
-                          <TableCell>{appt.status}</TableCell>
-                          <TableCell className="text-right">
-                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
-                                  <Pencil className="mr-2 h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
-                                  Mark as Confirmed
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
-                                  Mark as Pending
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
-                                  Mark as Cancelled
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Doctor</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredAppointments.length > 0 ? (
+                        filteredAppointments.map(appt => (
+                          <TableRow key={appt.id}>
+                            <TableCell>{appt.dateTime.toLocaleString()}</TableCell>
+                            <TableCell>{appt.patient}</TableCell>
+                            <TableCell>{appt.doctor}</TableCell>
+                            <TableCell>{appt.type}</TableCell>
+                            <TableCell>{appt.duration}</TableCell>
+                            <TableCell>{appt.status}</TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Actions</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
+                                    Mark as Confirmed
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
+                                    Mark as Pending
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
+                                    Mark as Cancelled
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-24 text-center">
+                            No appointments found.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          No appointments found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        ) : (
+          <AppointmentCalendarView appointments={appointments} onAppointmentClick={(appt) => setAppointmentToView(appt)} />
+        )}
       </main>
 
       <ViewAppointmentDialog
