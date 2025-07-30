@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
+import { ViewEmployeeDialog } from '@/components/staff/view-employee-dialog';
 
 export type StaffMember = {
   id: string;
@@ -61,6 +62,7 @@ export type StaffMember = {
 
 export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
+  const [staffToView, setStaffToView] = React.useState<StaffMember | null>(null);
   const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -107,8 +109,12 @@ export default function StaffPage() {
   };
 
   const filteredStaff = React.useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
     return staff.filter(member =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase())
+      member.name.toLowerCase().includes(lowercasedTerm) ||
+      member.role.toLowerCase().includes(lowercasedTerm) ||
+      member.email.toLowerCase().includes(lowercasedTerm) ||
+      member.phone.toLowerCase().includes(lowercasedTerm)
     );
   }, [staff, searchTerm]);
 
@@ -224,7 +230,7 @@ export default function StaffPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => alert('Viewing ' + member.name)}>
+                                    <DropdownMenuItem onClick={() => setStaffToView(member)}>
                                         <Eye className="mr-2 h-4 w-4" />
                                         View
                                     </DropdownMenuItem>
@@ -255,6 +261,14 @@ export default function StaffPage() {
           </div>
         </div>
       </main>
+
+       {staffToView && (
+        <ViewEmployeeDialog
+          staffMember={staffToView}
+          open={!!staffToView}
+          onOpenChange={(isOpen) => !isOpen && setStaffToView(null)}
+        />
+      )}
 
        {staffToEdit && (
         <EditEmployeeDialog
