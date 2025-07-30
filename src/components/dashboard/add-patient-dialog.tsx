@@ -34,7 +34,6 @@ import { emergencyContactRelationships, initialPatientsData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { useToast } from '@/hooks/use-toast';
-import { ScrollArea } from '../ui/scroll-area';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -111,16 +110,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           New Patient
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl flex flex-col h-full md:h-auto">
+      <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add New Patient</DialogTitle>
           <DialogDescription>
             Enter patient details to create a new record
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow overflow-hidden flex flex-col">
-            <div className="flex-grow overflow-y-auto pr-6 pl-1 space-y-6">
+        <div className="flex-grow overflow-y-auto pr-6 pl-1">
+          <Form {...form}>
+            <form id="add-patient-form" className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -344,13 +343,13 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     </Button>
                   </div>
                 </div>
-              </div>
-            <DialogFooter className="border-t pt-4 mt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Patient</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
+        <DialogFooter className="border-t pt-4 mt-auto">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button type="submit" form="add-patient-form" onClick={form.handleSubmit(onSubmit)}>Save Patient</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
