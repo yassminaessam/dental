@@ -23,6 +23,7 @@ import { Download, Printer, RotateCw, Search, User } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
 import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
 
@@ -34,9 +35,11 @@ export interface Tooth {
 
 
 export default function DentalChartPage() {
-    const [chartData, setChartData] = React.useState<Record<number, Tooth>>(initialDentalChartData);
+    const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...initialDentalChartData });
     const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
+    const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
+    const { toast } = useToast();
 
     const handleToothSelect = (toothId: number) => {
         setSelectedTooth(chartData[toothId] || null);
@@ -44,16 +47,60 @@ export default function DentalChartPage() {
 
     const handleUpdateCondition = (toothId: number, condition: ToothCondition) => {
         const newChartData = { ...chartData };
-        newChartData[toothId] = {
-            ...newChartData[toothId],
-            condition: condition,
-            history: [
-                ...newChartData[toothId].history,
-                { date: new Date().toLocaleDateString(), condition: condition, notes: `Condition changed to ${condition}` }
-            ]
-        };
+        const toothToUpdate = { ...newChartData[toothId] };
+        
+        toothToUpdate.condition = condition;
+        toothToUpdate.history = [
+            ...toothToUpdate.history,
+            { date: new Date().toLocaleDateString(), condition: condition, notes: `Condition changed to ${condition}` }
+        ];
+
+        newChartData[toothId] = toothToUpdate;
         setChartData(newChartData);
         setSelectedTooth(newChartData[toothId]);
+        toast({
+            title: `Tooth ${toothId} Updated`,
+            description: `Condition set to ${condition.replace('-', ' ')}.`,
+        });
+    };
+    
+    const handleResetChart = () => {
+        setChartData({ ...initialDentalChartData });
+        setSelectedTooth(null);
+        setHighlightedCondition('all');
+        toast({
+            title: 'Chart Reset',
+            description: 'The dental chart has been reset to its initial state.',
+        });
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleExport = () => {
+        toast({
+            title: 'Exporting Chart',
+            description: 'The dental chart is being prepared for export.',
+        });
+    };
+
+    const handlePatientChange = (patientId: string) => {
+        handleResetChart();
+        const patientName = dentalChartPatients.find(p => p.id === patientId)?.name;
+        toast({
+            title: 'Patient Changed',
+            description: `Displaying chart for ${patientName}.`,
+        });
+    };
+
+    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const toothId = parseInt(event.target.value, 10);
+        if (chartData[toothId]) {
+            handleToothSelect(toothId);
+        } else if (event.target.value === '') {
+            setSelectedTooth(null);
+        }
     };
 
   return (
@@ -62,15 +109,15 @@ export default function DentalChartPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Dental Chart</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleResetChart}>
               <RotateCw className="mr-2 h-4 w-4" />
               Reset
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               Print
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
@@ -85,7 +132,7 @@ export default function DentalChartPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Select>
+            <Select onValueChange={handlePatientChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select patient" />
               </SelectTrigger>
@@ -101,11 +148,12 @@ export default function DentalChartPage() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search teeth..."
+                placeholder="Search tooth number..."
                 className="w-full rounded-lg bg-background pl-8"
+                onChange={handleSearch}
               />
             </div>
-            <Select>
+            <Select onValueChange={(value) => setHighlightedCondition(value as ToothCondition | 'all')}>
               <SelectTrigger>
                 <SelectValue placeholder="All Conditions" />
               </SelectTrigger>
@@ -141,6 +189,7 @@ export default function DentalChartPage() {
             <InteractiveDentalChart
                 chartData={chartData}
                 selectedToothId={selectedTooth?.id || null}
+                highlightedCondition={highlightedCondition}
                 onToothSelect={handleToothSelect}
             />
           </div>

@@ -30,10 +30,11 @@ interface ToothProps {
   y: number;
   condition: ToothCondition;
   isSelected: boolean;
+  isHighlighted: boolean;
   onSelect: (id: number) => void;
 }
 
-const ToothComponent = ({ id, x, y, condition, isSelected, onSelect }: ToothProps) => {
+const ToothComponent = ({ id, x, y, condition, isSelected, isHighlighted, onSelect }: ToothProps) => {
     const colorClass = conditionColors[condition] || 'fill-card';
     return (
         <g className="cursor-pointer group" onClick={() => onSelect(id)}>
@@ -42,7 +43,8 @@ const ToothComponent = ({ id, x, y, condition, isSelected, onSelect }: ToothProp
                 className={cn(
                     colorClass, 
                     'stroke-border transition-all',
-                    isSelected ? 'stroke-primary stroke-2' : 'stroke-1'
+                    isSelected ? 'stroke-primary stroke-2' : 'stroke-1',
+                    isHighlighted && !isSelected && 'stroke-yellow-400 stroke-2'
                 )}
             />
             <text x={x} y={y + 3} textAnchor="middle" fontSize="10" 
@@ -60,10 +62,11 @@ const ToothComponent = ({ id, x, y, condition, isSelected, onSelect }: ToothProp
 interface InteractiveDentalChartProps {
     chartData: Record<number, Tooth>;
     selectedToothId: number | null;
+    highlightedCondition: ToothCondition | 'all';
     onToothSelect: (toothId: number) => void;
 }
 
-export default function InteractiveDentalChart({ chartData, selectedToothId, onToothSelect }: InteractiveDentalChartProps) {
+export default function InteractiveDentalChart({ chartData, selectedToothId, highlightedCondition, onToothSelect }: InteractiveDentalChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -73,27 +76,35 @@ export default function InteractiveDentalChart({ chartData, selectedToothId, onT
         <svg viewBox="0 0 550 220" className="w-full">
           <text x="275" y="20" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">Upper Jaw (Maxilla)</text>
           <path d="M 30 60 Q 275 100 520 60" stroke="hsl(var(--border))" fill="none" strokeWidth="1" />
-          {upperJawTeeth.map(tooth => (
-            <ToothComponent 
-                key={tooth.id} 
-                {...tooth} 
-                condition={chartData[tooth.id]?.condition || 'healthy'}
-                isSelected={selectedToothId === tooth.id}
-                onSelect={onToothSelect}
-            />
-          ))}
+          {upperJawTeeth.map(tooth => {
+            const currentCondition = chartData[tooth.id]?.condition || 'healthy';
+            return (
+              <ToothComponent 
+                  key={tooth.id} 
+                  {...tooth} 
+                  condition={currentCondition}
+                  isSelected={selectedToothId === tooth.id}
+                  isHighlighted={highlightedCondition !== 'all' && currentCondition === highlightedCondition}
+                  onSelect={onToothSelect}
+              />
+            )
+          })}
 
           <text x="275" y="195" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">Lower Jaw (Mandible)</text>
           <path d="M 30 140 Q 275 100 520 140" stroke="hsl(var(--border))" fill="none" strokeWidth="1" />
-          {lowerJawTeeth.map(tooth => (
-             <ToothComponent 
-                key={tooth.id} 
-                {...tooth} 
-                condition={chartData[tooth.id]?.condition || 'healthy'}
-                isSelected={selectedToothId === tooth.id}
-                onSelect={onToothSelect}
-            />
-          ))}
+          {lowerJawTeeth.map(tooth => {
+             const currentCondition = chartData[tooth.id]?.condition || 'healthy';
+             return (
+               <ToothComponent 
+                  key={tooth.id} 
+                  {...tooth} 
+                  condition={currentCondition}
+                  isSelected={selectedToothId === tooth.id}
+                  isHighlighted={highlightedCondition !== 'all' && currentCondition === highlightedCondition}
+                  onSelect={onToothSelect}
+              />
+            )
+          })}
         </svg>
       </CardContent>
     </Card>
