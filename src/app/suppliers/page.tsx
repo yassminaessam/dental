@@ -58,6 +58,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
+import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
 
 export type Supplier = {
   id: string;
@@ -71,6 +72,12 @@ export type Supplier = {
   status: 'active' | 'inactive';
 };
 
+export type PurchaseOrderItem = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 export type PurchaseOrder = {
   id: string;
   supplier: string;
@@ -78,6 +85,7 @@ export type PurchaseOrder = {
   deliveryDate: string | null;
   total: string;
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  items: PurchaseOrderItem[];
 };
 
 
@@ -98,6 +106,7 @@ export default function SuppliersPage() {
   const [categoryFilter, setCategoryFilter] = React.useState('all');
 
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrdersData);
+  const [poToView, setPoToView] = React.useState<PurchaseOrder | null>(null);
   const [poSearchTerm, setPoSearchTerm] = React.useState('');
   const [poStatusFilter, setPoStatusFilter] = React.useState('all');
   
@@ -154,6 +163,7 @@ export default function SuppliersPage() {
       deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
       total: `$${data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0).toFixed(2)}`,
       status: 'Pending',
+      items: data.items,
     };
     setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
     toast({
@@ -443,7 +453,7 @@ export default function SuppliersPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                             <Button variant="outline" size="sm">
+                             <Button variant="outline" size="sm" onClick={() => setPoToView(po)}>
                                 <Eye className="mr-2 h-3 w-3" />
                                 View
                               </Button>
@@ -504,6 +514,12 @@ export default function SuppliersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       <ViewPurchaseOrderDialog
+        order={poToView}
+        open={!!poToView}
+        onOpenChange={(isOpen) => !isOpen && setPoToView(null)}
+      />
 
     </DashboardLayout>
   );

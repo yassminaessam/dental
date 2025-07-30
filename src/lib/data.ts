@@ -1,5 +1,6 @@
 
 
+
 export type PatientMessage = {
     id: string;
     patient: string;
@@ -817,7 +818,6 @@ export const initialSuppliersData = [
   },
 ];
 export const suppliersData = initialSuppliersData; // for dialogs
-export const supplierCategories = [...new Set(initialSuppliersData.map(s => s.category))];
 export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
 export const initialPurchaseOrdersData = [
@@ -828,6 +828,10 @@ export const initialPurchaseOrdersData = [
     deliveryDate: "2024-12-22",
     total: "EGP 20,000",
     status: "Shipped",
+    items: [
+      { description: "Amoxicillin 500mg", quantity: 100, unitPrice: 10 },
+      { description: "Ibuprofen 400mg", quantity: 200, unitPrice: 3 },
+    ]
   },
   {
     id: "PO-1235",
@@ -836,6 +840,9 @@ export const initialPurchaseOrdersData = [
     deliveryDate: null,
     total: "EGP 85,000",
     status: "Pending",
+    items: [
+        { description: "Dental Chair Unit", quantity: 1, unitPrice: 85000 }
+    ]
   },
   {
     id: "PO-1236",
@@ -844,6 +851,9 @@ export const initialPurchaseOrdersData = [
     deliveryDate: "2024-12-05",
     total: "EGP 5,500",
     status: "Delivered",
+    items: [
+        { description: "Lidocaine HCl 2%", quantity: 100, unitPrice: 55 }
+    ]
   },
 ];
 
