@@ -89,10 +89,15 @@ export default function PatientsPage() {
   };
 
   const filteredPatients = React.useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
     return patients
-      .filter(patient => 
-        patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      .filter(patient => {
+        return (
+          patient.name.toLowerCase().includes(lowercasedTerm) ||
+          patient.email.toLowerCase().includes(lowercasedTerm) ||
+          patient.phone.includes(lowercasedTerm)
+        );
+      })
       .filter(patient => 
         statusFilter === 'all' || patient.status.toLowerCase() === statusFilter
       );
@@ -135,7 +140,7 @@ export default function PatientsPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search patients..."
+                  placeholder="Search by name, email, phone..."
                   className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -158,7 +163,8 @@ export default function PatientsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">Patient</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Age</TableHead>
                   <TableHead>Last Visit</TableHead>
                   <TableHead>Status</TableHead>
@@ -177,10 +183,8 @@ export default function PatientsPage() {
                           <div className="font-medium">{patient.name}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div>{patient.email}</div>
-                        <div className="text-xs text-muted-foreground">{patient.phone}</div>
-                      </TableCell>
+                      <TableCell>{patient.email}</TableCell>
+                      <TableCell>{patient.phone}</TableCell>
                       <TableCell>{patient.age}</TableCell>
                       <TableCell>{patient.lastVisit}</TableCell>
                       <TableCell>{patient.status}</TableCell>
@@ -208,7 +212,7 @@ export default function PatientsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No patients found.
                     </TableCell>
                   </TableRow>
