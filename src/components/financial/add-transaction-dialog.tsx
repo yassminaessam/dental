@@ -28,7 +28,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { transactionCategories, paymentMethods } from '@/lib/data';
+import { transactionCategories, paymentMethods, dentalChartPatients } from '@/lib/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
@@ -39,6 +39,7 @@ const transactionSchema = z.object({
   category: z.string({ required_error: 'Category is required' }),
   paymentMethod: z.string({ required_error: 'Payment method is required' }),
   type: z.enum(['Revenue', 'Expense'], { required_error: 'Type is required' }),
+  patient: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -59,7 +60,8 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
   });
 
   const onSubmit = (data: TransactionFormData) => {
-    onSave(data);
+    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    onSave({...data, patient: patientName});
     form.reset();
     setOpen(false);
   };
@@ -139,6 +141,29 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
               )}
             />
             <div className="grid grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
+                name="patient"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a patient" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {dentalChartPatients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="category"
@@ -163,61 +188,64 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Method *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {paymentMethods.map((method) => (
-                          <SelectItem key={method} value={method}>
-                            {method}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type *</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2">
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <RadioGroupItem value="Revenue" id="r-revenue" />
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a method" />
+                            </SelectTrigger>
                         </FormControl>
-                        <FormLabel htmlFor="r-revenue">Revenue</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
+                        <SelectContent>
+                            {paymentMethods.map((method) => (
+                            <SelectItem key={method} value={method}>
+                                {method}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Type *</FormLabel>
                         <FormControl>
-                          <RadioGroupItem value="Expense" id="r-expense" />
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex gap-4 items-center pt-2"
+                            >
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl>
+                                <RadioGroupItem value="Revenue" id="r-revenue" />
+                                </FormControl>
+                                <FormLabel htmlFor="r-revenue">Revenue</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl>
+                                <RadioGroupItem value="Expense" id="r-expense" />
+                                </FormControl>
+                                <FormLabel htmlFor="r-expense">Expense</FormLabel>
+                            </FormItem>
+                            </RadioGroup>
                         </FormControl>
-                        <FormLabel htmlFor="r-expense">Expense</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Save Transaction</Button>

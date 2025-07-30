@@ -57,6 +57,7 @@ export type Transaction = {
   amount: string;
   paymentMethod: string;
   status: 'Completed' | 'Pending';
+  patient?: string;
 };
 
 const iconMap = {
@@ -92,7 +93,8 @@ export default function FinancialPage() {
   const filteredTransactions = React.useMemo(() => {
     return transactions
       .filter(transaction => 
-        transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.patient?.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .filter(transaction => 
         typeFilter === 'all' || transaction.type.toLowerCase() === typeFilter
@@ -220,7 +222,10 @@ export default function FinancialPage() {
                       filteredTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.date}</TableCell>
-                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{transaction.description}</div>
+                            {transaction.patient && <div className="text-xs text-muted-foreground">Patient: {transaction.patient}</div>}
+                          </TableCell>
                           <TableCell>{transaction.category}</TableCell>
                           <TableCell>
                             <Badge
