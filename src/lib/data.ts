@@ -443,8 +443,8 @@ export const medicalRecordsPageStats = [
   },
   {
     title: "This Month",
-    value: "0",
-    description: "New records",
+    value: "2",
+    description: "New records created",
   },
   {
     title: "Clinical Images",
@@ -472,12 +472,31 @@ export const initialMedicalRecordsData = [
   {
     id: "MR-002",
     patient: "Fatima Mahmoud",
-    type: "CLINICAL",
+    type: "Clinical Note",
     complaint: "Routine cleaning and checkup",
     provider: "Dr. Khaled Youssef",
     date: "Dec 10, 2024",
     status: "Final",
   },
+];
+
+export const initialClinicalImagesData = [
+    {
+        id: 'IMG-001',
+        patient: 'Ahmed Ali',
+        type: 'X-Ray',
+        date: 'Dec 15, 2024',
+        imageUrl: 'https://placehold.co/600x400.png',
+        caption: 'Periapical X-ray of tooth #14'
+    },
+    {
+        id: 'IMG-002',
+        patient: 'Fatima Mahmoud',
+        type: 'Intraoral Photo',
+        date: 'Dec 10, 2024',
+        imageUrl: 'https://placehold.co/600x400.png',
+        caption: 'Intraoral view of upper arch'
+    }
 ];
 
 export const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];

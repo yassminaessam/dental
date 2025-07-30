@@ -35,13 +35,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes } from "@/lib/data";
+import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes, initialClinicalImagesData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, Download, Image as ImageIcon } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon, Eye, Pencil } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { ViewRecordDialog } from '@/components/medical-records/view-record-dialog';
+import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
 
 export type MedicalRecord = {
   id: string;
@@ -64,9 +66,11 @@ export type ClinicalImage = {
 
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
-  const [images, setImages] = React.useState<ClinicalImage[]>([]);
+  const [images, setImages] = React.useState<ClinicalImage[]>(initialClinicalImagesData);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
+  const [recordToView, setRecordToView] = React.useState<MedicalRecord | null>(null);
+  const [recordToEdit, setRecordToEdit] = React.useState<MedicalRecord | null>(null);
   const { toast } = useToast();
 
   const handleSaveRecord = (data: Omit<MedicalRecord, 'id' | 'status'>) => {
@@ -80,6 +84,15 @@ export default function MedicalRecordsPage() {
     toast({
       title: "Medical Record Created",
       description: `New record for ${newRecord.patient} has been created.`,
+    });
+  };
+
+  const handleUpdateRecord = (updatedRecord: MedicalRecord) => {
+    setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
+    setRecordToEdit(null);
+    toast({
+      title: "Medical Record Updated",
+      description: `Record ${updatedRecord.id} has been updated.`,
     });
   };
 
@@ -99,6 +112,13 @@ export default function MedicalRecordsPage() {
     });
   };
   
+  const handleDownloadRecord = (recordId: string) => {
+    toast({
+      title: "Downloading Record",
+      description: `Record ${recordId} is being prepared for download.`
+    });
+  };
+
   const filteredRecords = React.useMemo(() => {
     return records
       .filter(record => 
@@ -211,9 +231,13 @@ export default function MedicalRecordsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="ghost" size="sm">View</Button>
-                              <Button variant="ghost" size="sm">Edit</Button>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="sm" onClick={() => setRecordToView(record)}>
+                                <Eye className="mr-2 h-3 w-3" /> View
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setRecordToEdit(record)}>
+                                <Pencil className="mr-2 h-3 w-3" /> Edit
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDownloadRecord(record.id)}>
                                 <Download className="h-4 w-4" />
                                 <span className="sr-only">Download</span>
                               </Button>
@@ -277,6 +301,22 @@ export default function MedicalRecordsPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <ViewRecordDialog 
+        record={recordToView}
+        open={!!recordToView}
+        onOpenChange={(isOpen) => !isOpen && setRecordToView(null)}
+      />
+
+      {recordToEdit && (
+        <EditRecordDialog
+          record={recordToEdit}
+          onSave={handleUpdateRecord}
+          open={!!recordToEdit}
+          onOpenChange={(isOpen) => !isOpen && setRecordToEdit(null)}
+        />
+      )}
+
     </DashboardLayout>
   );
 }
