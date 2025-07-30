@@ -33,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { initialSuppliersData, suppliersPageStats, initialPurchaseOrdersData } from "@/lib/data";
+import { initialSuppliersData, suppliersPageStats, initialPurchaseOrdersData, initialInventoryItemsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -51,6 +51,7 @@ import {
   Truck as TruckIcon,
   MoreHorizontal,
   Trash2,
+  Check,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
@@ -59,6 +60,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
+import { InventoryItem } from '../inventory/page';
 
 export type Supplier = {
   id: string;
@@ -73,6 +75,7 @@ export type Supplier = {
 };
 
 export type PurchaseOrderItem = {
+  itemId: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -105,6 +108,7 @@ export default function SuppliersPage() {
   const [supplierSearchTerm, setSupplierSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
 
+  const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrdersData);
   const [poToView, setPoToView] = React.useState<PurchaseOrder | null>(null);
   const [poSearchTerm, setPoSearchTerm] = React.useState('');
@@ -179,6 +183,31 @@ export default function SuppliersPage() {
         description: `Order ${poId} has been marked as ${status}.`
     });
   };
+  
+  const handleReceiveOrder = (order: PurchaseOrder) => {
+    // 1. Update PO status to Delivered
+    handlePoStatusChange(order.id, 'Delivered');
+
+    // 2. Update inventory stock
+    let updatedInventory = [...inventory];
+    order.items.forEach(orderItem => {
+        const inventoryIndex = updatedInventory.findIndex(invItem => invItem.id === orderItem.itemId);
+        if (inventoryIndex !== -1) {
+            updatedInventory[inventoryIndex].stock += orderItem.quantity;
+            // Also update status if it was low/out of stock
+            const item = updatedInventory[inventoryIndex];
+            if (item.stock >= item.min) {
+                item.status = 'Normal';
+            }
+        }
+    });
+    setInventory(updatedInventory);
+
+    toast({
+        title: "Order Received",
+        description: `PO ${order.id} has been marked as delivered and inventory has been updated.`,
+    });
+  };
 
   const openNewPoDialog = (supplierId?: string) => {
     setNewPoSupplier(supplierId);
@@ -188,7 +217,8 @@ export default function SuppliersPage() {
   const filteredSuppliers = React.useMemo(() => {
     return suppliers
       .filter(supplier =>
-        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase()) ||
+        supplier.category.toLowerCase().includes(supplierSearchTerm.toLowerCase())
       )
       .filter(supplier =>
         categoryFilter === 'all' || supplier.category.toLowerCase() === categoryFilter.toLowerCase()
@@ -205,6 +235,10 @@ export default function SuppliersPage() {
         poStatusFilter === 'all' || po.status.toLowerCase() === poStatusFilter
       );
   }, [purchaseOrders, poSearchTerm, poStatusFilter]);
+
+  const receivingOrders = React.useMemo(() => {
+    return purchaseOrders.filter(po => po.status === 'Shipped');
+  }, [purchaseOrders]);
 
   return (
     <DashboardLayout>
@@ -324,9 +358,11 @@ export default function SuppliersPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">
-                              {supplier.category}
-                            </Badge>
+                            <Input
+                              value={supplier.category}
+                              className="w-[150px] border-none bg-transparent p-0"
+                              readOnly
+                            />
                           </TableCell>
                           <TableCell>{supplier.paymentTerms}</TableCell>
                           <TableCell>
@@ -500,11 +536,49 @@ export default function SuppliersPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="receiving">
-            <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-muted-foreground">
-                No receiving records found.
-              </CardContent>
+          <TabsContent value="receiving" className="mt-4">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Receiving</CardTitle>
+                    <p className="text-muted-foreground">
+                        Review and receive shipped orders to update your inventory.
+                    </p>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>PO Number</TableHead>
+                                <TableHead>Supplier</TableHead>
+                                <TableHead>Expected Delivery</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {receivingOrders.length > 0 ? (
+                                receivingOrders.map((order) => (
+                                    <TableRow key={order.id}>
+                                        <TableCell className="font-medium">{order.id}</TableCell>
+                                        <TableCell>{order.supplier}</TableCell>
+                                        <TableCell>{order.deliveryDate || 'N/A'}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="outline" size="sm" onClick={() => handleReceiveOrder(order)}>
+                                                <Check className="mr-2 h-4 w-4" />
+                                                Receive Items
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No orders awaiting receipt.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
@@ -516,6 +590,7 @@ export default function SuppliersPage() {
         onOpenChange={setIsNewPoOpen}
         onSave={handleSavePurchaseOrder}
         initialSupplierId={newPoSupplier}
+        inventoryItems={inventory}
       />
       
       {supplierToEdit && (

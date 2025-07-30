@@ -1,5 +1,6 @@
 
 
+import { InventoryItem } from "@/app/inventory/page";
 
 export type PatientMessage = {
     id: string;
@@ -627,7 +628,7 @@ export const lowStockItems = [
   },
 ];
 
-export const initialInventoryItemsData = [
+export const initialInventoryItemsData: InventoryItem[] = [
   {
     id: "INV-001",
     name: "Dental Composite Resin",
@@ -829,8 +830,8 @@ export const initialPurchaseOrdersData = [
     total: "EGP 20,000",
     status: "Shipped",
     items: [
-      { description: "Amoxicillin 500mg", quantity: 100, unitPrice: 10 },
-      { description: "Ibuprofen 400mg", quantity: 200, unitPrice: 3 },
+      { itemId: "INV-001", description: "Dental Composite Resin", quantity: 10, unitPrice: 750 },
+      { itemId: "INV-003", description: "Dental Impression Material", quantity: 5, unitPrice: 1500 },
     ]
   },
   {
@@ -841,7 +842,7 @@ export const initialPurchaseOrdersData = [
     total: "EGP 85,000",
     status: "Pending",
     items: [
-        { description: "Dental Chair Unit", quantity: 1, unitPrice: 85000 }
+        { itemId: 'none', description: "Dental Chair Unit", quantity: 1, unitPrice: 85000 }
     ]
   },
   {
@@ -852,7 +853,7 @@ export const initialPurchaseOrdersData = [
     total: "EGP 5,500",
     status: "Delivered",
     items: [
-        { description: "Lidocaine HCl 2%", quantity: 100, unitPrice: 55 }
+        { itemId: "INV-004", description: "Anesthetic Cartridges", quantity: 100, unitPrice: 55 }
     ]
   },
 ];

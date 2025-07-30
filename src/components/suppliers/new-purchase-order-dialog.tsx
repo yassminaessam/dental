@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -32,9 +31,10 @@ import { cn } from '@/lib/utils';
 import { suppliersData } from '@/lib/data';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { InventoryItem } from '@/app/inventory/page';
 
 const orderItemSchema = z.object({
-  description: z.string().min(1, "Description is required"),
+  itemId: z.string().min(1, "Item is required"),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.coerce.number().min(0, "Price must be positive"),
 });
@@ -54,16 +54,17 @@ interface NewPurchaseOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialSupplierId?: string;
+  inventoryItems: InventoryItem[];
 }
 
-export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId }: NewPurchaseOrderDialogProps) {
+export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems }: NewPurchaseOrderDialogProps) {
   const [orderDateOpen, setOrderDateOpen] = React.useState(false);
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
       supplier: initialSupplierId,
       orderDate: new Date(),
-      items: [{ description: '', quantity: 1, unitPrice: 0 }],
+      items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
     },
   });
 
@@ -76,13 +77,18 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
     form.reset({
       supplier: initialSupplierId,
       orderDate: new Date(),
-      items: [{ description: '', quantity: 1, unitPrice: 0 }],
+      items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
     });
   }, [initialSupplierId, form]);
 
   const onSubmit = (data: PurchaseOrderFormData) => {
     const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
-    onSave({...data, supplier: supplierName });
+    const itemsWithDesc = data.items.map(item => ({
+        ...item,
+        description: inventoryItems.find(inv => inv.id === item.itemId)?.name || 'Unknown Item'
+    }));
+
+    onSave({ ...data, supplier: supplierName, items: itemsWithDesc });
     form.reset();
     onOpenChange(false);
   };
@@ -166,12 +172,23 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                     <div key={field.id} className="grid grid-cols-12 gap-2 items-center">
                         <FormField
                             control={form.control}
-                            name={`items.${index}.description`}
+                            name={`items.${index}.itemId`}
                             render={({ field }) => (
                                 <FormItem className="col-span-6">
-                                    <FormControl>
-                                        <Input placeholder="Item description" {...field} />
-                                    </FormControl>
+                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                            <SelectValue placeholder="Select item" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {inventoryItems.map((item) => (
+                                            <SelectItem key={item.id} value={item.id}>
+                                                {item.name}
+                                            </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </FormItem>
                             )}
                         />
@@ -208,7 +225,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                     variant="outline"
                     size="sm"
                     type="button"
-                    onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
+                    onClick={() => append({ itemId: '', quantity: 1, unitPrice: 0 })}
                   >
                       <Plus className="mr-2 h-4 w-4" /> Add Item
                   </Button>
