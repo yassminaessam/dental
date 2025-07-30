@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { Download, DollarSign, Users, TrendingUp, Activity } from "lucide-react";
 import RevenueTrendsChart from "@/components/dashboard/revenue-trends-chart";
 import AppointmentAnalyticsChart from "@/components/analytics/appointment-analytics-chart";
+import { useToast } from '@/hooks/use-toast';
 
 const iconMap = {
     DollarSign,
@@ -37,13 +41,23 @@ type IconKey = keyof typeof iconMap;
 
 
 export default function AnalyticsPage() {
+  const [dateRange, setDateRange] = React.useState('30');
+  const { toast } = useToast();
+
+  const handleExport = () => {
+    toast({
+        title: "Exporting Report",
+        description: "Your analytics report is being generated and will be downloaded shortly.",
+    });
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
           <div className="flex items-center gap-2">
-            <Select>
+            <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Last 30 days" />
               </SelectTrigger>
@@ -53,7 +67,7 @@ export default function AnalyticsPage() {
                 <SelectItem value="90">Last 90 days</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export Report
             </Button>
