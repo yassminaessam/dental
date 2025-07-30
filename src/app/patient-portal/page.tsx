@@ -10,6 +10,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,13 +27,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientMessagesData, patientPortalPageStats, initialAppointmentsData, type PatientMessage } from "@/lib/data";
+import { patientMessagesData, patientPortalPageStats, initialAppointmentsData, type PatientMessage, initialPortalUsersData, type PortalUser, initialSharedDocumentsData, type SharedDocument } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
 import type { Appointment } from '@/app/appointments/page';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
@@ -41,6 +44,8 @@ export default function PatientPortalPage() {
   const [isReplyOpen, setIsReplyOpen] = React.useState(false);
   const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
   const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
+  const [portalUsers, setPortalUsers] = React.useState<PortalUser[]>(initialPortalUsersData);
+  const [sharedDocuments, setSharedDocuments] = React.useState<SharedDocument[]>(initialSharedDocumentsData);
 
   const pendingRequests = React.useMemo(() => {
     return appointments.filter(appt => appt.status === 'Pending');
@@ -73,6 +78,45 @@ export default function PatientPortalPage() {
     toast({
       title: "Message Sent",
       description: `A new ${data.type} has been sent to ${data.patient}.`,
+    });
+  };
+
+  const handleUserStatusChange = (userId: string) => {
+    const user = portalUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    const newStatus = user.status === 'Active' ? 'Deactivated' : 'Active';
+    setPortalUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+    toast({
+        title: "User Status Updated",
+        description: `${user.name}'s portal access has been ${newStatus.toLowerCase()}.`,
+        variant: newStatus === 'Deactivated' ? 'destructive' : undefined
+    });
+  };
+
+  const handleResetPassword = (userName: string) => {
+    toast({
+        title: "Password Reset Sent",
+        description: `A password reset link has been sent to ${userName}.`
+    });
+  };
+
+  const handleRevokeDocument = (docId: string) => {
+    const doc = sharedDocuments.find(d => d.id === docId);
+    if (!doc) return;
+
+    setSharedDocuments(prev => prev.filter(d => d.id !== docId));
+    toast({
+        title: "Document Access Revoked",
+        description: `Access to "${doc.name}" has been revoked for ${doc.patient}.`,
+        variant: "destructive",
+    });
+  };
+  
+  const handleSaveChanges = () => {
+    toast({
+        title: "Settings Saved",
+        description: "Your patient portal settings have been successfully updated.",
     });
   };
 
@@ -117,7 +161,7 @@ export default function PatientPortalPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 md:w-auto md:grid-cols-5">
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="requests">
               Appointment Requests
@@ -262,29 +306,155 @@ export default function PatientPortalPage() {
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="users">
+          <TabsContent value="users" className="mt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Portal Users</CardTitle>
+                    <CardDescription>Manage patient access to the portal.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Patient</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Last Login</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {portalUsers.map(user => (
+                                <TableRow key={user.id}>
+                                    <TableCell className="font-medium">{user.name}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>{user.lastLogin}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>{user.status}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => handleUserStatusChange(user.id)}>
+                                                {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                            </Button>
+                                            <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.name)}>
+                                                <KeyRound className="mr-2 h-4 w-4" /> Reset Password
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="documents" className="mt-4">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No portal users found.
+                <CardHeader>
+                    <CardTitle>Shared Documents</CardTitle>
+                    <CardDescription>Manage documents shared with patients via the portal.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Document Name</TableHead>
+                                <TableHead>Patient</TableHead>
+                                <TableHead>Shared On</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sharedDocuments.map(doc => (
+                                <TableRow key={doc.id}>
+                                    <TableCell className="font-medium flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground"/> {doc.name}</TableCell>
+                                    <TableCell>{doc.patient}</TableCell>
+                                    <TableCell>{doc.sharedDate}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary">{doc.type}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="outline" size="sm">
+                                                <Eye className="mr-2 h-4 w-4" /> View Document
+                                            </Button>
+                                            <Button variant="destructive" size="sm" onClick={() => handleRevokeDocument(doc.id)}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Revoke Access
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="documents">
-             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No documents found.
-                </CardContent>
-             </Card>
-          </TabsContent>
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="mt-4">
              <Card>
                 <CardHeader>
                     <CardTitle>Portal Settings</CardTitle>
-                    <p className="text-muted-foreground">Configure patient portal settings here.</p>
+                    <p className="text-muted-foreground">Configure patient portal features and access.</p>
                 </CardHeader>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Portal settings form will be available here.
+                <CardContent className="space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Access & Registration</h3>
+                    <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor="allow-registration">Allow New Patient Registration</Label>
+                        <span className="text-sm text-muted-foreground">
+                          Allow new users to register for the portal directly.
+                        </span>
+                      </div>
+                      <Switch id="allow-registration" defaultChecked />
+                    </div>
+                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor="auto-enroll">Automatically Enroll New Patients</Label>
+                        <span className="text-sm text-muted-foreground">
+                          Send a portal invitation to every new patient added to the system.
+                        </span>
+                      </div>
+                      <Switch id="auto-enroll" />
+                    </div>
+                  </div>
+
+                   <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Features</h3>
+                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor="allow-booking">Online Appointment Booking</Label>
+                        <span className="text-sm text-muted-foreground">
+                          Allow patients to request new appointments through the portal.
+                        </span>
+                      </div>
+                      <Switch id="allow-booking" defaultChecked />
+                    </div>
+                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor="allow-messaging">Secure Messaging</Label>
+                        <span className="text-sm text-muted-foreground">
+                          Enable two-way secure messaging between patients and staff.
+                        </span>
+                      </div>
+                      <Switch id="allow-messaging" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor="show-billing">Show Billing Information</Label>
+                        <span className="text-sm text-muted-foreground">
+                          Allow patients to view their invoices and payment history.
+                        </span>
+                      </div>
+                      <Switch id="show-billing" />
+                    </div>
+                  </div>
                 </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button onClick={handleSaveChanges}>Save Changes</Button>
+                </CardFooter>
              </Card>
           </TabsContent>
         </Tabs>

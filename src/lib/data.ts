@@ -21,6 +21,22 @@ export type MedicalRecordTemplate = {
   content: string;
 };
 
+export type PortalUser = {
+    id: string;
+    name: string;
+    email: string;
+    status: 'Active' | 'Deactivated';
+    lastLogin: string;
+};
+
+export type SharedDocument = {
+    id: string;
+    name: string;
+    patient: string;
+    type: 'Treatment Plan' | 'Invoice' | 'Lab Result';
+    sharedDate: string;
+};
+
 
 // Mock data for the dashboard
 export const overviewStats = [
@@ -970,6 +986,16 @@ export const patientMessagesData: PatientMessage[] = [
         date: 'Dec 17, 6:00 PM',
         status: 'Read',
     }
+];
+
+export const initialPortalUsersData: PortalUser[] = [
+    { id: 'pat1', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', status: 'Active', lastLogin: 'Dec 18, 2024' },
+    { id: 'pat2', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', status: 'Active', lastLogin: 'Dec 17, 2024' },
+];
+
+export const initialSharedDocumentsData: SharedDocument[] = [
+    { id: 'DOC-001', name: 'Treatment Plan - Crown', patient: 'Fatima Mahmoud', type: 'Treatment Plan', sharedDate: 'Dec 10, 2024' },
+    { id: 'DOC-002', name: 'Invoice #1024', patient: 'Ahmed Ali', type: 'Invoice', sharedDate: 'Dec 15, 2024' },
 ];
 
 export const referralPageStats = [
