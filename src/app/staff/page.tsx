@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -114,7 +115,7 @@ export default function StaffPage() {
       member.name.toLowerCase().includes(lowercasedTerm) ||
       member.role.toLowerCase().includes(lowercasedTerm) ||
       member.email.toLowerCase().includes(lowercasedTerm) ||
-      member.phone.toLowerCase().includes(lowercasedTerm)
+      member.phone.includes(lowercasedTerm)
     );
   }, [staff, searchTerm]);
 
