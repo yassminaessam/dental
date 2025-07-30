@@ -160,8 +160,8 @@ export const availableTimeSlots = [
 ];
 
 export const initialPatientsData = [
-    { id: 'PAT-123', name: 'John Doe', email: 'john.doe@example.com', phone: '(555) 123-4567', age: 45, lastVisit: '12/01/2023', status: 'Active' },
-    { id: 'PAT-124', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '(555) 987-6543', age: 32, lastVisit: '11/15/2023', status: 'Active' },
+    { id: 'PAT-123', name: 'John Doe', email: 'john.doe@example.com', phone: '(555) 123-4567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
+    { id: 'PAT-124', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '(555) 987-6543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
 ];
 
 export const initialAppointmentsData: any[] = [];
