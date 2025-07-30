@@ -63,7 +63,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
         category: item.category,
         supplier: suppliersData.find(s => s.name === item.supplier)?.id,
         stock: item.stock,
-        unitCost: parseFloat(item.unitCost.replace('$', '')),
+        unitCost: parseFloat(item.unitCost.replace(/[^0-9.-]+/g,"")),
         location: item.location,
         expires: item.expires !== 'N/A' ? new Date(item.expires) : undefined,
       });
@@ -79,7 +79,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
       supplier: supplierName || item.supplier,
       stock: data.stock,
       status: data.stock < item.min ? 'Low Stock' : 'Normal',
-      unitCost: `$${data.unitCost.toFixed(2)}`,
+      unitCost: `EGP ${data.unitCost.toFixed(2)}`,
       location: data.location || item.location,
       expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
     };
@@ -117,7 +117,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -140,7 +140,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select supplier" />
@@ -179,7 +179,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                   <FormItem>
                     <FormLabel>Unit Cost *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="$0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

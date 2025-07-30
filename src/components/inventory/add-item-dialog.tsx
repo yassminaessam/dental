@@ -98,7 +98,7 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -121,7 +121,7 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select supplier" />
@@ -160,7 +160,7 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
                   <FormItem>
                     <FormLabel>Unit Cost *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="$0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
