@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
 
 export type Treatment = {
   id: string;
@@ -53,6 +54,7 @@ export default function TreatmentsPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
+  const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
 
   const handleSavePlan = (data: any) => {
     const newTreatment: Treatment = {
@@ -190,7 +192,7 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.status}</TableCell>
                           <TableCell>{treatment.followUp ?? 'N/A'}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">View</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setTreatmentToView(treatment)}>View</Button>
                           </TableCell>
                         </TableRow>
                       ))
@@ -208,6 +210,12 @@ export default function TreatmentsPage() {
           </div>
         </div>
       </main>
+
+      <ViewTreatmentDialog
+        treatment={treatmentToView}
+        open={!!treatmentToView}
+        onOpenChange={(isOpen) => !isOpen && setTreatmentToView(null)}
+      />
     </DashboardLayout>
   );
 }
