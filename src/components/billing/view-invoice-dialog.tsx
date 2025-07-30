@@ -27,15 +27,43 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDi
   const invoiceRef = React.useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
-    const printContent = invoiceRef.current;
-    if (printContent) {
-      const originalContents = document.body.innerHTML;
-      const printContents = printContent.innerHTML;
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); // To restore event listeners
-    }
+    const node = invoiceRef.current;
+    if (!node) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) return;
+
+    // Copy styles from the main document to the iframe
+    const styleSheets = Array.from(document.styleSheets);
+    styleSheets.forEach(styleSheet => {
+      try {
+        if (styleSheet.cssRules) { // Check if cssRules is accessible
+          const style = document.createElement('style');
+          style.textContent = Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('');
+          iframeDoc.head.appendChild(style);
+        } else if (styleSheet.href) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = styleSheet.href;
+            iframeDoc.head.appendChild(link);
+        }
+      } catch (e) {
+        console.warn('Could not copy stylesheet to print iframe:', e);
+      }
+    });
+
+    iframeDoc.body.innerHTML = node.innerHTML;
+
+    // Wait for content and styles to load before printing
+    setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        document.body.removeChild(iframe);
+    }, 500);
   };
 
   if (!invoice) return null;
