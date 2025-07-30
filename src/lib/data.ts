@@ -164,7 +164,26 @@ export const initialPatientsData = [
     { id: 'PAT-124', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', phone: '+20 122 987 6543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
 ];
 
-export const initialAppointmentsData: any[] = [];
+export const initialAppointmentsData = [
+    {
+      id: 'APT-001',
+      dateTime: new Date(new Date().setDate(new Date().getDate() + 1)),
+      patient: 'Ahmed Ali',
+      doctor: 'Dr. Nourhan Adel',
+      type: 'Check-up',
+      duration: '30 minutes',
+      status: 'Confirmed'
+    },
+    {
+      id: 'APT-002',
+      dateTime: new Date(new Date().setDate(new Date().getDate() + 2)),
+      patient: 'Fatima Mahmoud',
+      doctor: 'Dr. Khaled Youssef',
+      type: 'Cleaning',
+      duration: '1 hour',
+      status: 'Pending'
+    },
+];
 
 
 export const treatmentPageStats = [
@@ -259,10 +278,10 @@ export const initialTreatmentsData = [
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
     { name: 'Cavity', count: 0, color: 'bg-red-500' },
-    { name: 'Filling', count: 0, color: 'bg-blue-500' },
-    { name: 'Crown', count: 0, color: 'bg-purple-500' },
-    { name: 'Missing', count: 0, color: 'bg-gray-500' },
-    { name: 'Root Canal', count: 0, color: 'bg-yellow-500' },
+    { name: 'Filling', count: 2, color: 'bg-blue-500' },
+    { name: 'Crown', count: 1, color: 'bg-purple-500' },
+    { name: 'Missing', count: 1, color: 'bg-gray-500' },
+    { name: 'Root Canal', count: 1, color: 'bg-yellow-500' },
 ];
 
 export const dentalChartPatients = [
@@ -391,7 +410,30 @@ export const staffPerformanceData = [
   { metric: "Training Completed", value: "100%" },
 ];
 
-export const initialStaffData: any[] = [];
+export const initialStaffData = [
+  {
+    id: 'EMP-001',
+    name: 'Dr. Nourhan Adel',
+    role: 'Dentist',
+    email: 'nourhan.adel@cairodental.com',
+    phone: '+20 100 111 2222',
+    schedule: 'Sun-Thu, 9am-5pm',
+    salary: 'EGP 500,000',
+    hireDate: '2022-08-15',
+    status: 'Active'
+  },
+  {
+    id: 'EMP-002',
+    name: 'Khaled Youssef',
+    role: 'Hygienist',
+    email: 'khaled.youssef@cairodental.com',
+    phone: '+20 122 333 4444',
+    schedule: 'Mon-Fri, 10am-6pm',
+    salary: 'EGP 250,000',
+    hireDate: '2023-01-20',
+    status: 'Active'
+  },
+];
 
 export const medicalRecordsPageStats = [
   {

@@ -26,7 +26,7 @@ import {
   initialStaffData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
 import {
@@ -224,6 +224,10 @@ export default function StaffPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => alert('Viewing ' + member.name)}>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        View
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setStaffToEdit(member)}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Edit
