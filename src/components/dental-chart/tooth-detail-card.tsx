@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import { toothNames } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Search, X } from 'lucide-react';
@@ -26,6 +27,17 @@ interface ToothDetailCardProps {
 }
 
 export function ToothDetailCard({ tooth, onUpdateCondition, onClose }: ToothDetailCardProps) {
+    const { toast } = useToast();
+
+    const handleViewHistory = () => {
+        if (tooth) {
+            toast({
+                title: `Full History for Tooth #${tooth.id}`,
+                description: 'This would open a dialog with the complete history.',
+            });
+        }
+    };
+
     if (!tooth) {
         return (
             <Card className="flex h-full flex-col items-center justify-center p-6">
@@ -92,7 +104,7 @@ export function ToothDetailCard({ tooth, onUpdateCondition, onClose }: ToothDeta
                 </div>
             </CardContent>
             <CardFooter>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handleViewHistory}>
                     View Full History
                 </Button>
             </CardFooter>
