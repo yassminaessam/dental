@@ -57,6 +57,7 @@ interface AddPatientDialogProps {
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [dobOpen, setDobOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -176,7 +177,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date of Birth *</FormLabel>
-                    <Popover>
+                    <Popover open={dobOpen} onOpenChange={setDobOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -195,7 +196,10 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setDobOpen(false);
+                          }}
                           disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                           initialFocus
                           captionLayout="dropdown-buttons"

@@ -48,6 +48,7 @@ interface NewClaimDialogProps {
 
 export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<ClaimFormData>({
     resolver: zodResolver(claimSchema),
     defaultValues: {
@@ -177,7 +178,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Submit Date *</FormLabel>
-                    <Popover>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -190,7 +191,10 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
+                          field.onChange(date)
+                          setDateOpen(false)
+                        }} initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />

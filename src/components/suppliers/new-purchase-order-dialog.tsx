@@ -57,6 +57,7 @@ interface NewPurchaseOrderDialogProps {
 }
 
 export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId }: NewPurchaseOrderDialogProps) {
+  const [orderDateOpen, setOrderDateOpen] = React.useState(false);
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
@@ -128,7 +129,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Order Date *</FormLabel>
-                    <Popover>
+                    <Popover open={orderDateOpen} onOpenChange={setOrderDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -141,7 +142,10 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
+                          field.onChange(date)
+                          setOrderDateOpen(false)
+                        }} initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />

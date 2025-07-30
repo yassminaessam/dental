@@ -56,6 +56,7 @@ interface ScheduleAppointmentDialogProps {
 
 export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
@@ -145,7 +146,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date *</FormLabel>
-                  <Popover>
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -164,7 +165,10 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date)
+                          setDateOpen(false)
+                        }}
                         initialFocus
                       />
                     </PopoverContent>

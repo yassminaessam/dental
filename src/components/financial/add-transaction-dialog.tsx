@@ -49,6 +49,7 @@ interface AddTransactionDialogProps {
 
 export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -87,7 +88,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date *</FormLabel>
-                    <Popover>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -100,7 +101,10 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
+                          field.onChange(date)
+                          setDateOpen(false)
+                        }} initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />

@@ -52,6 +52,7 @@ interface EditEmployeeDialogProps {
 }
 
 export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: EditEmployeeDialogProps) {
+  const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
   });
@@ -183,7 +184,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Hire Date *</FormLabel>
-                    <Popover>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -199,7 +200,10 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date)
+                            setDateOpen(false)
+                          }}
                           initialFocus
                         />
                       </PopoverContent>
