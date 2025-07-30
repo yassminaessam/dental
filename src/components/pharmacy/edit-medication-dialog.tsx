@@ -64,7 +64,7 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
         form: medication.form,
         strength: medication.strength,
         stock: medication.stock,
-        unitPrice: parseFloat(medication.unitPrice.replace('$', '')),
+        unitPrice: parseFloat(medication.unitPrice.replace(/[^0-9.-]+/g, "")),
         expiryDate: medication.expiryDate !== 'N/A' ? new Date(medication.expiryDate) : undefined,
       });
     }
@@ -79,7 +79,7 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
       form: data.form || medication.form,
       strength: data.strength || medication.strength,
       stock: data.stock,
-      unitPrice: `$${data.unitPrice.toFixed(2)}`,
+      unitPrice: `EGP ${data.unitPrice.toFixed(2)}`,
       status: data.stock > 20 ? 'In Stock' : (data.stock > 0 ? 'Low Stock' : 'Out of Stock'),
       expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
     };
@@ -182,7 +182,7 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                   <FormItem>
                     <FormLabel>Unit Price *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="$0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
