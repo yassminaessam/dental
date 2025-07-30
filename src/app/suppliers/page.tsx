@@ -55,7 +55,7 @@ import {
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
@@ -169,6 +169,14 @@ export default function SuppliersPage() {
     toast({
       title: "Purchase Order Created",
       description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
+    });
+  };
+
+  const handlePoStatusChange = (poId: string, status: PurchaseOrder['status']) => {
+    setPurchaseOrders(prev => prev.map(po => po.id === poId ? { ...po, status } : po));
+    toast({
+        title: "Order Status Updated",
+        description: `Order ${poId} has been marked as ${status}.`
     });
   };
 
@@ -453,10 +461,30 @@ export default function SuppliersPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                             <Button variant="outline" size="sm" onClick={() => setPoToView(po)}>
-                                <Eye className="mr-2 h-3 w-3" />
-                                View
-                              </Button>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Actions</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setPoToView(po)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Shipped')}>
+                                    Mark as Shipped
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Delivered')}>
+                                    Mark as Delivered
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Cancelled')} className="text-destructive">
+                                    Cancel Order
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
