@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointmentPageStats, availableTimeSlots, initialAppointmentsData } from "@/lib/data";
+import { appointmentPageStats, initialAppointmentsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, List, Search } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
@@ -46,6 +46,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [activeView, setActiveView] = React.useState('list');
   const { toast } = useToast();
 
   const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
@@ -64,6 +65,13 @@ export default function AppointmentsPage() {
     });
   };
   
+  const handleViewAppointment = (appointment: Appointment) => {
+    toast({
+        title: "Viewing Appointment",
+        description: `Details for appointment ${appointment.id} with ${appointment.patient}.`,
+    });
+  };
+
   const filteredAppointments = React.useMemo(() => {
     return appointments
       .filter(appointment =>
@@ -106,11 +114,11 @@ export default function AppointmentsPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button variant={activeView === 'calendar' ? 'default' : 'outline'} onClick={() => setActiveView('calendar')}>
               <Calendar className="mr-2 h-4 w-4" />
               Calendar View
             </Button>
-            <Button>
+            <Button variant={activeView === 'list' ? 'default' : 'outline'} onClick={() => setActiveView('list')}>
               <List className="mr-2 h-4 w-4" />
               List View
             </Button>
@@ -169,7 +177,11 @@ export default function AppointmentsPage() {
                           <TableCell>{appt.type}</TableCell>
                           <TableCell>{appt.duration}</TableCell>
                           <TableCell>{appt.status}</TableCell>
-                          <TableCell className="text-right"><Button variant="ghost" size="sm">View</Button></TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" onClick={() => handleViewAppointment(appt)}>
+                                View
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
