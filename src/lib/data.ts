@@ -192,6 +192,15 @@ export const initialAppointmentsData = [
       duration: '1 hour',
       status: 'Pending'
     },
+    {
+      id: 'APT-003',
+      dateTime: new Date(new Date().setDate(new Date().getDate() + 3)),
+      patient: 'Youssef Hassan',
+      doctor: 'Dr. Mariam El-Masry',
+      type: 'Consultation',
+      duration: '45 minutes',
+      status: 'Pending'
+    },
 ];
 
 
@@ -913,7 +922,7 @@ export const initialRecentMessagesData = [
   },
 ];
 
-export const patientPortalPageStats = [
+export const patientPortalPageStats = (pendingRequests: number) => [
   {
     title: "Active Portal Users",
     value: "2",
@@ -927,7 +936,7 @@ export const patientPortalPageStats = [
   },
   {
     title: "Pending Requests",
-    value: "1",
+    value: `${pendingRequests}`,
     description: "Appointment requests",
   },
   {
@@ -961,21 +970,6 @@ export const patientMessagesData: PatientMessage[] = [
         date: 'Dec 17, 6:00 PM',
         status: 'Read',
     }
-];
-
-export const appointmentRequestsData = [
-    {
-        id: 'REQ-001',
-        patient: 'Youssef Hassan',
-        requestedDate: 'Next Tuesday afternoon',
-        reason: 'Check-up',
-    },
-    {
-        id: 'REQ-002',
-        patient: 'Hana Ibrahim',
-        requestedDate: 'Thursday, 10:00 AM',
-        reason: 'Toothache, need urgent look',
-    },
 ];
 
 export const referralPageStats = [

@@ -26,12 +26,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientMessagesData, patientPortalPageStats, appointmentRequestsData, type PatientMessage } from "@/lib/data";
+import { patientMessagesData, patientPortalPageStats, initialAppointmentsData, type PatientMessage } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
+import type { Appointment } from '@/app/appointments/page';
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
@@ -39,19 +40,24 @@ export default function PatientPortalPage() {
   const [selectedMessage, setSelectedMessage] = React.useState<PatientMessage | null>(null);
   const [isReplyOpen, setIsReplyOpen] = React.useState(false);
   const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
+  const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
 
-  const handleApproveRequest = (patientName: string) => {
-    toast({
-      title: "Request Approved",
-      description: `Appointment request for ${patientName} approved. Please schedule the appointment.`,
-    });
-  };
+  const pendingRequests = React.useMemo(() => {
+    return appointments.filter(appt => appt.status === 'Pending');
+  }, [appointments]);
 
-  const handleDeclineRequest = (patientName: string) => {
+  const handleRequestStatusChange = (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
+    const updatedAppointments = appointments.map(appt =>
+      appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+    );
+    setAppointments(updatedAppointments);
+    // This is a mock, in a real app you'd likely update a central store or refetch
+    initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
+    
     toast({
-      title: "Request Declined",
-      description: `Appointment request for ${patientName} has been declined.`,
-      variant: "destructive",
+      title: `Request ${newStatus === 'Confirmed' ? 'Approved' : 'Declined'}`,
+      description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
+      variant: newStatus === 'Cancelled' ? 'destructive' : undefined,
     });
   };
 
@@ -91,7 +97,7 @@ export default function PatientPortalPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {patientPortalPageStats.map((stat) => (
+          {patientPortalPageStats(pendingRequests.length).map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -115,7 +121,7 @@ export default function PatientPortalPage() {
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="requests">
               Appointment Requests
-              <Badge className="ml-2 bg-primary text-primary-foreground">{appointmentRequestsData.length}</Badge>
+              {pendingRequests.length > 0 && <Badge className="ml-2 bg-primary text-primary-foreground">{pendingRequests.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="users">Portal Users</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -218,24 +224,26 @@ export default function PatientPortalPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Patient</TableHead>
+                        <TableHead>Doctor</TableHead>
                         <TableHead>Requested Date</TableHead>
-                        <TableHead>Reason</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {appointmentRequestsData.length > 0 ? (
-                        appointmentRequestsData.map(request => (
+                      {pendingRequests.length > 0 ? (
+                        pendingRequests.map(request => (
                           <TableRow key={request.id}>
                             <TableCell className="font-medium">{request.patient}</TableCell>
-                            <TableCell>{request.requestedDate}</TableCell>
-                            <TableCell>{request.reason}</TableCell>
+                            <TableCell>{request.doctor}</TableCell>
+                            <TableCell>{request.dateTime.toLocaleString()}</TableCell>
+                            <TableCell>{request.type}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleApproveRequest(request.patient)}>
+                                <Button variant="outline" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Confirmed')}>
                                   <Check className="mr-2 h-4 w-4" /> Approve
                                 </Button>
-                                <Button variant="destructive" size="sm" onClick={() => handleDeclineRequest(request.patient)}>
+                                <Button variant="destructive" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Cancelled')}>
                                   <X className="mr-2 h-4 w-4" /> Decline
                                 </Button>
                               </div>
@@ -244,8 +252,8 @@ export default function PatientPortalPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="h-24 text-center">
-                            No appointment requests found.
+                          <TableCell colSpan={5} className="h-24 text-center">
+                            No pending appointment requests found.
                           </TableCell>
                         </TableRow>
                       )}
