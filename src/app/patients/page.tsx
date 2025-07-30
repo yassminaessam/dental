@@ -162,20 +162,20 @@ export default function PatientsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">Patient</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Last Visit</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[250px] whitespace-nowrap">Patient</TableHead>
+                  <TableHead className="whitespace-nowrap">Email</TableHead>
+                  <TableHead className="whitespace-nowrap">Phone</TableHead>
+                  <TableHead className="whitespace-nowrap">Age</TableHead>
+                  <TableHead className="whitespace-nowrap">Last Visit</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                  {filteredPatients.length > 0 ? (
                   filteredPatients.map((patient) => (
                     <TableRow key={patient.id}>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
                             <User className="h-5 w-5 text-muted-foreground" />
@@ -183,12 +183,12 @@ export default function PatientsPage() {
                           <div className="font-medium">{patient.name}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{patient.email}</TableCell>
-                      <TableCell>{patient.phone}</TableCell>
-                      <TableCell>{patient.age}</TableCell>
-                      <TableCell>{patient.lastVisit}</TableCell>
-                      <TableCell>{patient.status}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.age}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
