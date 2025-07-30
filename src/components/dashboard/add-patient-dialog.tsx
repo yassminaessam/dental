@@ -34,6 +34,7 @@ import { emergencyContactRelationships, initialPatientsData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '../ui/scroll-area';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -110,7 +111,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           New Patient
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Add New Patient</DialogTitle>
           <DialogDescription>
@@ -118,8 +119,10 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <ScrollArea className="max-h-[70vh] p-1">
+            <div className="space-y-6 px-6 py-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -229,7 +232,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
 
             <div>
               <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="ecName"
@@ -282,7 +285,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
 
             <div>
               <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="insuranceProvider"
@@ -342,7 +345,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </Button>
               </div>
             </div>
-            <DialogFooter>
+            </div>
+            </ScrollArea>
+            <DialogFooter className="px-6 pt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Save Patient</Button>
             </DialogFooter>
