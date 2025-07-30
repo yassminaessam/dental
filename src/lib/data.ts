@@ -437,13 +437,6 @@ export const staffRoles = [
   { name: "Manager", count: 1, color: "bg-red-100 text-red-800" },
 ];
 
-export const staffPerformanceData = [
-  { metric: "Attendance Rate", value: "97%" },
-  { metric: "Patient Satisfaction", value: "95%" },
-  { metric: "Productivity Score", value: "92%" },
-  { metric: "Training Completed", value: "100%" },
-];
-
 export const initialStaffData = [
   {
     id: 'EMP-001',
