@@ -32,10 +32,11 @@ import {
   initialTreatmentsData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Search, Pencil } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
+import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
 
 export type Treatment = {
   id: string;
@@ -55,6 +56,8 @@ export default function TreatmentsPage() {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
+  const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
+
 
   const handleSavePlan = (data: any) => {
     const newTreatment: Treatment = {
@@ -66,12 +69,21 @@ export default function TreatmentsPage() {
       tooth: 'Multiple',
       cost: '$' + Math.floor(500 + Math.random() * 2000),
       status: 'Pending',
-      followUp: new Date(data.endDate).toLocaleDateString(),
+      followUp: data.endDate ? new Date(data.endDate).toLocaleDateString() : null,
     };
     setTreatments(prev => [newTreatment, ...prev]);
     toast({
       title: "Treatment Plan Created",
       description: `A new plan for ${newTreatment.patient} has been created.`,
+    });
+  };
+
+  const handleUpdateTreatment = (updatedTreatment: Treatment) => {
+    setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
+    setTreatmentToEdit(null);
+    toast({
+        title: "Treatment Updated",
+        description: `Treatment for ${updatedTreatment.patient} has been updated.`,
     });
   };
 
@@ -192,7 +204,13 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.status}</TableCell>
                           <TableCell>{treatment.followUp ?? 'N/A'}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => setTreatmentToView(treatment)}>View</Button>
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setTreatmentToView(treatment)}>View</Button>
+                                <Button variant="ghost" size="sm" onClick={() => setTreatmentToEdit(treatment)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -216,6 +234,15 @@ export default function TreatmentsPage() {
         open={!!treatmentToView}
         onOpenChange={(isOpen) => !isOpen && setTreatmentToView(null)}
       />
+
+      {treatmentToEdit && (
+        <EditTreatmentDialog
+            treatment={treatmentToEdit}
+            onSave={handleUpdateTreatment}
+            open={!!treatmentToEdit}
+            onOpenChange={(isOpen) => !isOpen && setTreatmentToEdit(null)}
+        />
+      )}
     </DashboardLayout>
   );
 }

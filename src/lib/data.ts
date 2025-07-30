@@ -230,7 +230,31 @@ export const treatmentStats = [
   { label: "Follow-up Rate", value: "88%" },
 ];
 
-export const initialTreatmentsData: any[] = [];
+export const initialTreatmentsData = [
+  {
+    id: "TRT-001",
+    date: "2024-07-25",
+    patient: "John Doe",
+    procedure: "Root Canal",
+    doctor: "Dr. Emily Wilson",
+    tooth: "14",
+    cost: "$1,200",
+    status: "Completed",
+    followUp: "2024-08-01",
+  },
+  {
+    id: "TRT-002",
+    date: "2024-07-28",
+    patient: "Jane Smith",
+    procedure: "Crown Placement",
+    doctor: "Dr. James Davis",
+    tooth: "25",
+    cost: "$1,500",
+    status: "In Progress",
+    followUp: "2024-08-10",
+  },
+];
+
 
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
