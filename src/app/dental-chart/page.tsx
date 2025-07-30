@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { initialDentalChartData, dentalChartPatients, dentalChartStats } from "@/lib/data";
+import { initialDentalChartData, dentalChartPatients, dentalChartStats, janeSmithDentalChart, johnDoeDentalChart, allHealthyDentalChart } from "@/lib/data";
 import { Download, Printer, RotateCw, Search, User } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
@@ -35,13 +35,22 @@ export interface Tooth {
 
 
 export default function DentalChartPage() {
-    const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...initialDentalChartData });
+    const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...allHealthyDentalChart });
+    const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
     const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
     const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
     const { toast } = useToast();
 
     const handleToothSelect = (toothId: number) => {
+        if (!selectedPatientId) {
+            toast({
+                title: 'No Patient Selected',
+                description: 'Please select a patient to view or edit their dental chart.',
+                variant: 'destructive',
+            });
+            return;
+        }
         setSelectedTooth(chartData[toothId] || null);
     };
 
@@ -65,12 +74,16 @@ export default function DentalChartPage() {
     };
     
     const handleResetChart = () => {
-        setChartData({ ...initialDentalChartData });
+        let chartToResetTo = allHealthyDentalChart;
+        if (selectedPatientId === 'pat1') chartToResetTo = johnDoeDentalChart;
+        if (selectedPatientId === 'pat2') chartToResetTo = janeSmithDentalChart;
+
+        setChartData({ ...chartToResetTo });
         setSelectedTooth(null);
         setHighlightedCondition('all');
         toast({
             title: 'Chart Reset',
-            description: 'The dental chart has been reset to its initial state.',
+            description: 'The dental chart has been reset for the current patient.',
         });
     };
 
@@ -86,8 +99,23 @@ export default function DentalChartPage() {
     };
 
     const handlePatientChange = (patientId: string) => {
-        handleResetChart();
-        const patientName = dentalChartPatients.find(p => p.id === patientId)?.name;
+        setSelectedPatientId(patientId);
+        setSelectedTooth(null);
+        setHighlightedCondition('all');
+        
+        let newChartData = allHealthyDentalChart;
+        let patientName = "None";
+
+        if (patientId === 'pat1') {
+            newChartData = johnDoeDentalChart;
+            patientName = 'John Doe';
+        } else if (patientId === 'pat2') {
+            newChartData = janeSmithDentalChart;
+            patientName = 'Jane Smith';
+        }
+        
+        setChartData({ ...newChartData });
+        
         toast({
             title: 'Patient Changed',
             description: `Displaying chart for ${patientName}.`,
@@ -102,6 +130,14 @@ export default function DentalChartPage() {
             setSelectedTooth(null);
         }
     };
+    
+    const teethCountByCondition = React.useMemo(() => {
+        return Object.values(chartData).reduce((acc, tooth) => {
+            acc[tooth.condition] = (acc[tooth.condition] || 0) + 1;
+            return acc;
+        }, {} as Record<ToothCondition, number>);
+    }, [chartData]);
+
 
   return (
     <DashboardLayout>
@@ -132,7 +168,7 @@ export default function DentalChartPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Select onValueChange={handlePatientChange}>
+            <Select onValueChange={handlePatientChange} value={selectedPatientId || ''}>
               <SelectTrigger>
                 <SelectValue placeholder="Select patient" />
               </SelectTrigger>
@@ -153,7 +189,7 @@ export default function DentalChartPage() {
                 onChange={handleSearch}
               />
             </div>
-            <Select onValueChange={(value) => setHighlightedCondition(value as ToothCondition | 'all')}>
+            <Select onValueChange={(value) => setHighlightedCondition(value as ToothCondition | 'all')} value={highlightedCondition}>
               <SelectTrigger>
                 <SelectValue placeholder="All Conditions" />
               </SelectTrigger>
@@ -177,7 +213,7 @@ export default function DentalChartPage() {
                 <span className={`h-3 w-3 rounded-full ${stat.color} flex-shrink-0`}></span>
                 <div>
                   <div className="text-sm text-muted-foreground">{stat.name}</div>
-                  <div className="text-lg font-bold">{Object.values(chartData).filter(t => t.condition === stat.name.toLowerCase().replace(' ', '-')).length}</div>
+                  <div className="text-lg font-bold">{teethCountByCondition[stat.name.toLowerCase().replace(' ', '-') as ToothCondition] || 0}</div>
                 </div>
               </CardContent>
             </Card>

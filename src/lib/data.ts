@@ -314,6 +314,28 @@ initialDentalChartData[36].history = [
 
 initialDentalChartData[48].condition = 'missing';
 
+export const allHealthyDentalChart = allTeethIds.reduce((acc, id) => {
+    acc[id] = { id, condition: 'healthy', history: [] };
+    return acc;
+}, {} as Record<number, any>);
+
+export const johnDoeDentalChart = (() => {
+    const chart = JSON.parse(JSON.stringify(allHealthyDentalChart)); // Deep copy
+    chart[14] = { id: 14, condition: 'root-canal', history: [{ date: '01/15/2023', condition: 'cavity', notes: 'Initial small cavity detected on buccal surface.' }, { date: '07/20/2023', condition: 'filling', notes: 'Placed composite filling (A2 shade).' }, { date: '06/10/2024', condition: 'root-canal', notes: 'Patient reported severe pain. Endodontic treatment performed.' }] };
+    chart[25] = { id: 25, condition: 'crown', history: [{ date: '03/01/2022', condition: 'filling', notes: 'Large amalgam filling placed.' }, { date: '09/12/2023', condition: 'crown', notes: 'Fractured cusp. Prepared for and placed porcelain crown.' }] };
+    chart[36] = { id: 36, condition: 'cavity', history: [{ date: '11/05/2024', condition: 'cavity', notes: 'Occlusal cavity noted during checkup.' }] };
+    chart[48] = { id: 48, condition: 'missing', history: [{ date: '01/01/2020', condition: 'missing', notes: 'Extracted due to impaction.' }] };
+    return chart;
+})();
+
+export const janeSmithDentalChart = (() => {
+    const chart = JSON.parse(JSON.stringify(allHealthyDentalChart)); // Deep copy
+    chart[11] = { id: 11, condition: 'filling', history: [{ date: '05/10/2023', condition: 'filling', notes: 'Mesial composite filling.' }] };
+    chart[12] = { id: 12, condition: 'filling', history: [{ date: '05/10/2023', condition: 'filling', notes: 'Distal composite filling.' }] };
+    chart[38] = { id: 38, condition: 'cavity', history: [{ date: '11/15/2023', condition: 'cavity', notes: 'Buccal pit cavity observed.' }] };
+    return chart;
+})();
+
 export const mockDoctors = [
   { id: 'doc1', name: 'Dr. Emily Wilson' },
   { id: 'doc2', name: 'Dr. James Davis' },
