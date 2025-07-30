@@ -201,7 +201,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                           mode="single"
                           selected={field.value}
                           onSelect={(date) => {
-                            field.onChange(date);
+                            if (date) field.onChange(date);
                             setDobOpen(false);
                           }}
                           disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
