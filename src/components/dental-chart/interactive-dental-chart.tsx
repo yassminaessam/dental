@@ -44,7 +44,7 @@ const ToothComponent = ({ id, x, y, condition, isSelected, isHighlighted, onSele
                     colorClass, 
                     'stroke-border transition-all',
                     isSelected ? 'stroke-primary stroke-2' : 'stroke-1',
-                    isHighlighted && !isSelected && 'stroke-yellow-400 stroke-2'
+                    isHighlighted && !isSelected && 'stroke-black stroke-2'
                 )}
             />
             <text x={x} y={y + 3} textAnchor="middle" fontSize="10" 
