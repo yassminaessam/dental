@@ -56,6 +56,7 @@ import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
+import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
 
 export type Medication = {
   id: string;
@@ -101,6 +102,7 @@ export default function PharmacyPage() {
     const [medicationCategoryFilter, setMedicationCategoryFilter] = React.useState('all');
     
     const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+    const [prescriptionToView, setPrescriptionToView] = React.useState<Prescription | null>(null);
     const [prescriptionSearchTerm, setPrescriptionSearchTerm] = React.useState('');
     const [prescriptionStatusFilter, setPrescriptionStatusFilter] = React.useState('all');
     
@@ -419,7 +421,7 @@ export default function PharmacyPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => setPrescriptionToView(record)}>
                               <Eye className="mr-2 h-3 w-3" />
                               View
                             </Button>
@@ -483,6 +485,14 @@ export default function PharmacyPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ViewPrescriptionDialog
+        prescription={prescriptionToView}
+        open={!!prescriptionToView}
+        onOpenChange={(isOpen) => !isOpen && setPrescriptionToView(null)}
+      />
+
     </DashboardLayout>
   );
 }
+
