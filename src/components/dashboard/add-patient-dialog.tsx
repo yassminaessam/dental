@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { emergencyContactRelationships, initialPatientsData } from '@/lib/data';
@@ -46,6 +46,7 @@ const patientSchema = z.object({
   ecRelationship: z.string().optional(),
   insuranceProvider: z.string().optional(),
   policyNumber: z.string().optional(),
+  medicalHistory: z.array(z.object({ condition: z.string().min(1, 'Condition cannot be empty') })).optional(),
 });
 
 type PatientFormData = z.infer<typeof patientSchema>;
@@ -66,7 +67,13 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       ecRelationship: '',
       insuranceProvider: '',
       policyNumber: '',
+      medicalHistory: [],
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "medicalHistory",
   });
 
   const onSubmit = (data: PatientFormData) => {
@@ -299,11 +306,36 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
             </div>
             
             <div>
-              <h3 className="mb-4 text-lg font-medium">Medical History</h3>
-              <Button type="button" variant="outline">
+              <h3 className="mb-2 text-lg font-medium">Medical History</h3>
+              <div className="space-y-2">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-center gap-2">
+                     <FormField
+                        control={form.control}
+                        name={`medicalHistory.${index}.condition`}
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                            <FormControl>
+                                <Input placeholder="e.g., Diabetes, Hypertension" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append({ condition: '' })}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Add medical condition
-              </Button>
+                </Button>
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
