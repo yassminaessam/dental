@@ -51,13 +51,16 @@ type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
 
 interface NewPurchaseOrderDialogProps {
   onSave: (data: any) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialSupplierId?: string;
 }
 
-export function NewPurchaseOrderDialog({ onSave }: NewPurchaseOrderDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId }: NewPurchaseOrderDialogProps) {
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
+      supplier: initialSupplierId,
       orderDate: new Date(),
       items: [{ description: '', quantity: 1, unitPrice: 0 }],
     },
@@ -67,22 +70,24 @@ export function NewPurchaseOrderDialog({ onSave }: NewPurchaseOrderDialogProps) 
     control: form.control,
     name: "items",
   });
+  
+  React.useEffect(() => {
+    form.reset({
+      supplier: initialSupplierId,
+      orderDate: new Date(),
+      items: [{ description: '', quantity: 1, unitPrice: 0 }],
+    });
+  }, [initialSupplierId, form]);
 
   const onSubmit = (data: PurchaseOrderFormData) => {
     const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
     onSave({...data, supplier: supplierName });
     form.reset();
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          New Purchase Order
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>Create New Purchase Order</DialogTitle>
@@ -223,7 +228,7 @@ export function NewPurchaseOrderDialog({ onSave }: NewPurchaseOrderDialogProps) 
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                 <Button type="submit">Create Purchase Order</Button>
             </DialogFooter>
           </form>

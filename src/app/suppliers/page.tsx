@@ -49,10 +49,15 @@ import {
   CheckCircle2,
   Clock,
   Truck as TruckIcon,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 
 export type Supplier = {
   id: string;
@@ -87,12 +92,18 @@ type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
+  const [supplierToEdit, setSupplierToEdit] = React.useState<Supplier | null>(null);
+  const [supplierToDelete, setSupplierToDelete] = React.useState<Supplier | null>(null);
   const [supplierSearchTerm, setSupplierSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
 
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrdersData);
   const [poSearchTerm, setPoSearchTerm] = React.useState('');
   const [poStatusFilter, setPoStatusFilter] = React.useState('all');
+  
+  const [isNewPoOpen, setIsNewPoOpen] = React.useState(false);
+  const [newPoSupplier, setNewPoSupplier] = React.useState<string | undefined>(undefined);
+
 
   const { toast } = useToast();
   
@@ -114,6 +125,27 @@ export default function SuppliersPage() {
     });
   };
 
+  const handleUpdateSupplier = (updatedSupplier: Supplier) => {
+    setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+    setSupplierToEdit(null);
+    toast({
+      title: "Supplier Updated",
+      description: `${updatedSupplier.name}'s record has been updated.`,
+    });
+  };
+
+  const handleDeleteSupplier = () => {
+    if (supplierToDelete) {
+      setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete.id));
+      toast({
+        title: "Supplier Deleted",
+        description: `${supplierToDelete.name} has been deleted.`,
+        variant: "destructive"
+      });
+      setSupplierToDelete(null);
+    }
+  };
+
   const handleSavePurchaseOrder = (data: any) => {
     const newPurchaseOrder: PurchaseOrder = {
       id: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -128,6 +160,11 @@ export default function SuppliersPage() {
       title: "Purchase Order Created",
       description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
     });
+  };
+
+  const openNewPoDialog = (supplierId?: string) => {
+    setNewPoSupplier(supplierId);
+    setIsNewPoOpen(true);
   };
 
   const filteredSuppliers = React.useMemo(() => {
@@ -162,7 +199,10 @@ export default function SuppliersPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NewPurchaseOrderDialog onSave={handleSavePurchaseOrder} />
+            <Button variant="outline" onClick={() => openNewPoDialog()}>
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              New Purchase Order
+            </Button>
             <AddSupplierDialog onSave={handleSaveSupplier} />
           </div>
         </div>
@@ -295,16 +335,29 @@ export default function SuppliersPage() {
                               {supplier.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm">
-                                <Pencil className="mr-2 h-3 w-3" />
-                                Edit
-                              </Button>
-                              <Button variant="outline" size="icon">
-                                <ShoppingCart className="h-4 w-4" />
-                              </Button>
-                            </div>
+                           <TableCell className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Actions</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setSupplierToEdit(supplier)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setSupplierToDelete(supplier)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onClick={() => openNewPoDialog(supplier.id)}>
+                                        <ShoppingCart className="mr-2 h-4 w-4" />
+                                        New Purchase Order
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -418,6 +471,40 @@ export default function SuppliersPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <NewPurchaseOrderDialog
+        key={newPoSupplier}
+        open={isNewPoOpen}
+        onOpenChange={setIsNewPoOpen}
+        onSave={handleSavePurchaseOrder}
+        initialSupplierId={newPoSupplier}
+      />
+      
+      {supplierToEdit && (
+        <EditSupplierDialog
+          supplier={supplierToEdit}
+          onSave={handleUpdateSupplier}
+          open={!!supplierToEdit}
+          onOpenChange={(isOpen) => !isOpen && setSupplierToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!supplierToDelete} onOpenChange={(isOpen) => !isOpen && setSupplierToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the supplier
+              "{supplierToDelete?.name}" from your network.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSupplier}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </DashboardLayout>
   );
 }
