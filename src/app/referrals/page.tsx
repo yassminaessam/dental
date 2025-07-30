@@ -295,12 +295,12 @@ export default function ReferralsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="incoming">
-             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No incoming referrals found.
-                </CardContent>
-             </Card>
+          <TabsContent value="incoming" className="mt-4">
+            <Card>
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
+                <p>No incoming referrals found.</p>
+              </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="network" className="mt-4">
              <Card>
@@ -377,12 +377,12 @@ export default function ReferralsPage() {
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="analytics">
-             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    Referral analytics will be available here.
-                </CardContent>
-             </Card>
+          <TabsContent value="analytics" className="mt-4">
+            <Card>
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
+                <p>Referral analytics will be available here.</p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
