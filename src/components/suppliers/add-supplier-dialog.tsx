@@ -72,7 +72,7 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 <FormItem>
                   <FormLabel>Supplier Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., MedPharma Supplies" {...field} />
+                    <Input placeholder="e.g., Nile Medical Supplies" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,7 +86,7 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1-555-0123" {...field} />
+                      <Input type="tel" placeholder="+20 1xx xxx xxxx" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -98,7 +98,7 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="orders@medpharma.com" {...field} />
+                      <Input type="email" placeholder="sales@nilemedical.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -112,7 +112,7 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Medical District" {...field} />
+                    <Input placeholder="45 Industrial Zone, 6th of October City" {...field} />
                   </FormControl>
                 </FormItem>
               )}

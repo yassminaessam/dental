@@ -56,29 +56,29 @@ export default function SettingsPage() {
                 <CardContent className="grid gap-6 md:grid-cols-2">
                   <div>
                     <Label htmlFor="clinic-name">Clinic Name</Label>
-                    <Input id="clinic-name" defaultValue="DentalPro Clinic" />
+                    <Input id="clinic-name" defaultValue="Cairo Dental Clinic" />
                   </div>
                   <div>
                     <Label htmlFor="phone-number">Phone Number</Label>
-                    <Input id="phone-number" defaultValue="(555) 123-4567" />
+                    <Input id="phone-number" defaultValue="+20 2 2555 1234" />
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
-                      defaultValue="info@dentalpro.com"
+                      defaultValue="info@cairodental.com"
                     />
                   </div>
                   <div>
                     <Label htmlFor="website">Website</Label>
-                    <Input id="website" defaultValue="www.dentalpro.com" />
+                    <Input id="website" defaultValue="www.cairodental.com" />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="address">Address</Label>
                     <Input
                       id="address"
-                      defaultValue="123 Main Street, Suite 100 Anytown, State 12345"
+                      defaultValue="123 Tahrir Street, Downtown, Cairo, Egypt"
                     />
                   </div>
                   <div>
@@ -89,10 +89,10 @@ export default function SettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mon-fri-8-6">
-                          Mon-Fri 8AM-6PM
+                          Sun-Thu 9AM-7PM
                         </SelectItem>
                         <SelectItem value="mon-fri-9-5">
-                          Mon-Fri 9AM-5PM
+                          Sun-Thu 10AM-6PM
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -104,8 +104,7 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="eastern">Eastern Time</SelectItem>
-                        <SelectItem value="pacific">Pacific Time</SelectItem>
+                        <SelectItem value="eastern">Egypt Standard Time (EET)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -452,7 +451,7 @@ export default function SettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="spanish">Spanish</SelectItem>
+                      <SelectItem value="spanish">Arabic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

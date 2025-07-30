@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -43,7 +44,7 @@ const prompt = ai.definePrompt({
   name: 'generateMessagePrompt',
   input: { schema: GenerateMessageInputSchema },
   output: { schema: GenerateMessageOutputSchema },
-  prompt: `You are an expert communications assistant for a dental practice called DentalPro. Your task is to draft clear, friendly, and professional messages to patients.
+  prompt: `You are an expert communications assistant for a dental practice called Cairo Dental Clinic. Your task is to draft clear, friendly, and professional messages to patients.
 
 The message should be addressed to {{{patientName}}}.
 

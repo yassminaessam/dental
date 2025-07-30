@@ -85,7 +85,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                   <FormItem>
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" {...field} />
+                      <Input placeholder="Youssef" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -98,7 +98,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                   <FormItem>
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" {...field} />
+                      <Input placeholder="Hassan" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -113,7 +113,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                   <FormItem>
                     <FormLabel>Email *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john.doe@dentalpro.com" {...field} />
+                      <Input type="email" placeholder="youssef.hassan@cairodental.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -126,7 +126,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                      <Input type="tel" placeholder="+20 1xx xxx xxxx" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -199,7 +199,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 <FormItem>
                   <FormLabel>Salary (per year)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="$50,000" {...field} />
+                    <Input type="number" placeholder="EGP 120,000" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

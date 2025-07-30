@@ -35,7 +35,7 @@ export const overviewStats = [
   },
   {
     title: "Total Revenue",
-    value: "$45,231",
+    value: "EGP 750,000",
     change: "+8%",
     icon: "DollarSign",
     changeType: "positive",
@@ -72,18 +72,18 @@ export const overviewStats = [
 ];
 
 export const revenueTrendsData = [
-  { month: "Jan", revenue: 42000, expenses: 20000 },
-  { month: "Feb", revenue: 40000, expenses: 18000 },
-  { month: "Mar", revenue: 45000, expenses: 17000 },
-  { month: "Apr", revenue: 43000, expenses: 22000 },
-  { month: "May", revenue: 52000, expenses: 21000 },
-  { month: "Jun", revenue: 55000, expenses: 24000 },
-  { month: "Jul", revenue: 54000, expenses: 25000 },
-  { month: "Aug", revenue: 57000, expenses: 26000 },
-  { month: "Sep", revenue: 53000, expenses: 23000 },
-  { month: "Oct", revenue: 58000, expenses: 24000 },
-  { month: "Nov", revenue: 56000, expenses: 22000 },
-  { month: "Dec", revenue: 45000, expenses: 21000 },
+  { month: "Jan", revenue: 700000, expenses: 350000 },
+  { month: "Feb", revenue: 680000, expenses: 320000 },
+  { month: "Mar", revenue: 720000, expenses: 300000 },
+  { month: "Apr", revenue: 710000, expenses: 380000 },
+  { month: "May", revenue: 800000, expenses: 370000 },
+  { month: "Jun", revenue: 850000, expenses: 400000 },
+  { month: "Jul", revenue: 830000, expenses: 410000 },
+  { month: "Aug", revenue: 880000, expenses: 420000 },
+  { month: "Sep", revenue: 810000, expenses: 390000 },
+  { month: "Oct", revenue: 900000, expenses: 400000 },
+  { month: "Nov", revenue: 880000, expenses: 380000 },
+  { month: "Dec", revenue: 750000, expenses: 370000 },
 ];
 
 export const appointmentTypesData = [
@@ -95,10 +95,10 @@ export const appointmentTypesData = [
 ];
 
 export const financialSummaryData = {
-  currentRevenue: 45231.89,
+  currentRevenue: 750000,
   patientCount: 2350,
-  newPatientAcquisitionCost: 150,
-  marketingSpend: 5000,
+  newPatientAcquisitionCost: 2500,
+  marketingSpend: 80000,
 };
 
 export const patientPageStats = [
@@ -160,8 +160,8 @@ export const availableTimeSlots = [
 ];
 
 export const initialPatientsData = [
-    { id: 'PAT-123', name: 'John Doe', email: 'john.doe@example.com', phone: '(555) 123-4567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
-    { id: 'PAT-124', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '(555) 987-6543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
+    { id: 'PAT-123', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', phone: '+20 100 123 4567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
+    { id: 'PAT-124', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', phone: '+20 122 987 6543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
 ];
 
 export const initialAppointmentsData: any[] = [];
@@ -185,7 +185,7 @@ export const treatmentPageStats = [
   },
   {
     title: "Revenue",
-    value: "$24,500",
+    value: "EGP 400,000",
     description: "This month",
   },
 ];
@@ -225,7 +225,7 @@ export const treatmentCategories = [
 
 export const treatmentStats = [
   { label: "Success Rate", value: "94%" },
-  { label: "Average Cost", value: "$275" },
+  { label: "Average Cost", value: "EGP 4500" },
   { label: "Average Duration", value: "45 min" },
   { label: "Follow-up Rate", value: "88%" },
 ];
@@ -234,22 +234,22 @@ export const initialTreatmentsData = [
   {
     id: "TRT-001",
     date: "2024-07-25",
-    patient: "John Doe",
+    patient: "Ahmed Ali",
     procedure: "Root Canal",
-    doctor: "Dr. Emily Wilson",
+    doctor: "Dr. Nourhan Adel",
     tooth: "14",
-    cost: "$1,200",
+    cost: "EGP 20,000",
     status: "Completed",
     followUp: "2024-08-01",
   },
   {
     id: "TRT-002",
     date: "2024-07-28",
-    patient: "Jane Smith",
+    patient: "Fatima Mahmoud",
     procedure: "Crown Placement",
-    doctor: "Dr. James Davis",
+    doctor: "Dr. Khaled Youssef",
     tooth: "25",
-    cost: "$1,500",
+    cost: "EGP 25,000",
     status: "In Progress",
     followUp: "2024-08-10",
   },
@@ -266,10 +266,10 @@ export const dentalChartStats = [
 ];
 
 export const dentalChartPatients = [
-    { id: 'pat1', name: 'John Doe' },
-    { id: 'pat2', name: 'Jane Smith' },
-    { id: 'pat3', name: 'Peter Jones' },
-    { id: 'pat4', name: 'Mary Williams' },
+    { id: 'pat1', name: 'Ahmed Ali' },
+    { id: 'pat2', name: 'Fatima Mahmoud' },
+    { id: 'pat3', name: 'Youssef Hassan' },
+    { id: 'pat4', name: 'Hana Ibrahim' },
 ];
 
 export const toothNames: Record<number, string> = {
@@ -337,9 +337,9 @@ export const janeSmithDentalChart = (() => {
 })();
 
 export const mockDoctors = [
-  { id: 'doc1', name: 'Dr. Emily Wilson' },
-  { id: 'doc2', name: 'Dr. James Davis' },
-  { id: 'doc3', name: 'Dr. Sarah Miller' },
+  { id: 'doc1', name: 'Dr. Nourhan Adel' },
+  { id: 'doc2', name: 'Dr. Khaled Youssef' },
+  { id: 'doc3', name: 'Dr. Mariam El-Masry' },
 ];
 
 export const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
@@ -371,7 +371,7 @@ export const staffPageStats = [
   },
   {
     title: "Payroll",
-    value: "$42K",
+    value: "EGP 650K",
     description: "Monthly total",
   },
 ];
@@ -420,19 +420,19 @@ export const medicalRecordsPageStats = [
 export const initialMedicalRecordsData = [
   {
     id: "MR-001",
-    patient: "John Smith",
+    patient: "Ahmed Ali",
     type: "SOAP",
     complaint: "Tooth pain on upper right",
-    provider: "Dr. Emily Wilson",
+    provider: "Dr. Nourhan Adel",
     date: "Dec 15, 2024",
     status: "Final",
   },
   {
     id: "MR-002",
-    patient: "Sarah Johnson",
+    patient: "Fatima Mahmoud",
     type: "CLINICAL",
     complaint: "Routine cleaning and checkup",
-    provider: "Dr. James Davis",
+    provider: "Dr. Khaled Youssef",
     date: "Dec 10, 2024",
     status: "Final",
   },
@@ -445,28 +445,28 @@ export const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
 export const financialPageStats = [
   {
     title: "Total Revenue",
-    value: "$45,231",
+    value: "EGP 750K",
     change: "+12% from last month",
     icon: "TrendingUp",
     changeType: "positive",
   },
   {
     title: "Total Expenses",
-    value: "$21,500",
+    value: "EGP 350K",
     change: "+5% from last month",
     icon: "TrendingDown",
     changeType: "negative",
   },
   {
     title: "Net Profit",
-    value: "$23,731",
+    value: "EGP 400K",
     change: "+15% from last month",
     icon: "DollarSign",
     changeType: "positive",
   },
   {
     title: "Pending Payments",
-    value: "$2,300",
+    value: "EGP 35,000",
     description: "5 invoices pending",
     icon: "Wallet",
     changeType: "neutral",
@@ -474,18 +474,18 @@ export const financialPageStats = [
 ];
 
 export const revenueVsExpensesData = [
-  { month: "Jan", revenue: 42000, expenses: 20000, profit: 22000 },
-  { month: "Feb", revenue: 40000, expenses: 18000, profit: 22000 },
-  { month: "Mar", revenue: 45000, expenses: 17000, profit: 28000 },
-  { month: "Apr", revenue: 43000, expenses: 22000, profit: 21000 },
-  { month: "May", revenue: 52000, expenses: 21000, profit: 31000 },
-  { month: "Jun", revenue: 55000, expenses: 24000, profit: 31000 },
-  { month: "Jul", revenue: 54000, expenses: 25000, profit: 29000 },
-  { month: "Aug", revenue: 57000, expenses: 26000, profit: 31000 },
-  { month: "Sep", revenue: 53000, expenses: 23000, profit: 30000 },
-  { month: "Oct", revenue: 58000, expenses: 24000, profit: 34000 },
-  { month: "Nov", revenue: 56000, expenses: 22000, profit: 34000 },
-  { month: "Dec", revenue: 45000, expenses: 21000, profit: 24000 },
+  { month: "Jan", revenue: 700000, expenses: 350000, profit: 350000 },
+  { month: "Feb", revenue: 680000, expenses: 320000, profit: 360000 },
+  { month: "Mar", revenue: 720000, expenses: 300000, profit: 420000 },
+  { month: "Apr", revenue: 710000, expenses: 380000, profit: 330000 },
+  { month: "May", revenue: 800000, expenses: 370000, profit: 430000 },
+  { month: "Jun", revenue: 850000, expenses: 400000, profit: 450000 },
+  { month: "Jul", revenue: 830000, expenses: 410000, profit: 420000 },
+  { month: "Aug", revenue: 880000, expenses: 420000, profit: 460000 },
+  { month: "Sep", revenue: 810000, expenses: 390000, profit: 420000 },
+  { month: "Oct", revenue: 900000, expenses: 400000, profit: 500000 },
+  { month: "Nov", revenue: 880000, expenses: 380000, profit: 500000 },
+  { month: "Dec", revenue: 750000, expenses: 370000, profit: 380000 },
 ];
 
 export const expensesByCategoryData = [
@@ -499,7 +499,7 @@ export const expensesByCategoryData = [
 export const initialTransactionHistoryData: any[] = [];
 
 export const transactionCategories = ['Patient Payment', 'Insurance Payment', 'Supplies', 'Salary', 'Rent', 'Utilities', 'Marketing', 'Other'];
-export const paymentMethods = ['Credit Card', 'Cash', 'Check', 'Insurance', 'Bank Transfer'];
+export const paymentMethods = ['Credit Card', 'Cash', 'Vodafone Cash', 'Fawry', 'Bank Transfer'];
 
 export const inventoryPageStats = [
   {
@@ -515,7 +515,7 @@ export const inventoryPageStats = [
   },
   {
     title: "Total Value",
-    value: "$22,348.35",
+    value: "EGP 350,000",
     description: "Current inventory",
   },
   {
@@ -548,8 +548,8 @@ export const initialInventoryItemsData = [
     min: 10,
     max: 50,
     status: "Normal",
-    unitCost: "$45.99",
-    supplier: "DentalSupplies Inc.",
+    unitCost: "EGP 750",
+    supplier: "Nile Medical Supplies",
     location: "Storage Room A",
   },
   {
@@ -561,8 +561,8 @@ export const initialInventoryItemsData = [
     min: 20,
     max: 100,
     status: "Low Stock",
-    unitCost: "$12.50",
-    supplier: "MedSafe Corp",
+    unitCost: "EGP 200",
+    supplier: "Egypt Safe Med",
     location: "Supply Closet",
   },
   {
@@ -574,8 +574,8 @@ export const initialInventoryItemsData = [
     min: 15,
     max: 60,
     status: "Normal",
-    unitCost: "$89.99",
-    supplier: "ProDental Materials",
+    unitCost: "EGP 1500",
+    supplier: "Nile Medical Supplies",
     location: "Storage Room A",
   },
   {
@@ -587,8 +587,8 @@ export const initialInventoryItemsData = [
     min: 12,
     max: 40,
     status: "Low Stock",
-    unitCost: "$3.75",
-    supplier: "PharmaSupply Ltd",
+    unitCost: "EGP 60",
+    supplier: "Pharma Misr",
     location: "Refrigerated Storage",
   },
 ];
@@ -632,7 +632,7 @@ export const initialMedicationInventoryData = [
     form: "tablet",
     category: "Antibiotic",
     stock: 150,
-    unitPrice: "$0.75",
+    unitPrice: "EGP 12",
     expiryDate: "2025-12-31",
     status: "In Stock",
   },
@@ -644,7 +644,7 @@ export const initialMedicationInventoryData = [
     form: "tablet",
     category: "Analgesic",
     stock: 200,
-    unitPrice: "$0.25",
+    unitPrice: "EGP 4",
     expiryDate: "2025-06-30",
     status: "In Stock",
   },
@@ -656,7 +656,7 @@ export const initialMedicationInventoryData = [
     form: "injection",
     category: "Anesthetic",
     stock: 25,
-    unitPrice: "$3.50",
+    unitPrice: "EGP 55",
     expiryDate: "2024-08-15",
     status: "Low Stock",
   },
@@ -680,7 +680,7 @@ export const suppliersPageStats = [
   },
   {
     title: "Monthly Spending",
-    value: "$19,220.75",
+    value: "EGP 300,000",
     description: "This month",
     icon: "DollarSign",
   },
@@ -696,10 +696,10 @@ export const suppliersPageStats = [
 export const initialSuppliersData = [
   {
     id: "SUP-001",
-    name: "MedPharma Supplies",
-    address: "123 Medical District",
-    phone: "+1-555-0123",
-    email: "orders@medpharma.com",
+    name: "Nile Medical Supplies",
+    address: "45 Industrial Zone, 6th of October City",
+    phone: "+20 2 3820 0000",
+    email: "sales@nilemedical.com",
     category: "Medication",
     paymentTerms: "Net 30",
     rating: 4.8,
@@ -707,10 +707,10 @@ export const initialSuppliersData = [
   },
   {
     id: "SUP-002",
-    name: "Dental Equipment Co.",
-    address: "456 Equipment Way",
-    phone: "+1-555-0124",
-    email: "sales@dentalequip.com",
+    name: "Egypt Dental Equipment",
+    address: "12 Ramses St, Cairo",
+    phone: "+20 2 2575 1111",
+    email: "sales@egyptdental.com",
     category: "Equipment",
     paymentTerms: "Net 15",
     rating: 4.6,
@@ -718,10 +718,10 @@ export const initialSuppliersData = [
   },
   {
     id: "SUP-003",
-    name: "Medical Supplies Plus",
-    address: "789 Supply Lane",
-    phone: "+1-555-0125",
-    email: "contact@medsupplies.com",
+    name: "Pharma Misr",
+    address: "7 Obour Buildings, Salah Salem",
+    phone: "+20 2 2404 4444",
+    email: "contact@pharmamisr.com",
     category: "Supplies",
     paymentTerms: "Net 30",
     rating: 4.2,
@@ -735,26 +735,26 @@ export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on recei
 export const initialPurchaseOrdersData = [
   {
     id: "PO-1234",
-    supplier: "MedPharma Supplies",
+    supplier: "Nile Medical Supplies",
     orderDate: "2024-12-15",
     deliveryDate: "2024-12-22",
-    total: "$1,250.00",
+    total: "EGP 20,000",
     status: "Shipped",
   },
   {
     id: "PO-1235",
-    supplier: "Dental Equipment Co.",
+    supplier: "Egypt Dental Equipment",
     orderDate: "2024-12-10",
     deliveryDate: null,
-    total: "$5,500.00",
+    total: "EGP 85,000",
     status: "Pending",
   },
   {
     id: "PO-1236",
-    supplier: "Medical Supplies Plus",
+    supplier: "Pharma Misr",
     orderDate: "2024-11-28",
     deliveryDate: "2024-12-05",
-    total: "$350.50",
+    total: "EGP 5,500",
     status: "Delivered",
   },
 ];
@@ -787,7 +787,7 @@ export const communicationsPageStats = [
 export const initialRecentMessagesData = [
   {
     id: "MSG-001",
-    patient: "John Smith",
+    patient: "Ahmed Ali",
     type: "SMS",
     content: "Reminder: Your appointment is tomorrow at 9:00 ...",
     subContent: null,
@@ -796,7 +796,7 @@ export const initialRecentMessagesData = [
   },
   {
     id: "MSG-002",
-    patient: "Sarah Johnson",
+    patient: "Fatima Mahmoud",
     type: "EMAIL",
     content: "Post-Treatment Care Instructions",
     subContent: "Thank you for visiting our clinic today. Please follo...",
@@ -805,7 +805,7 @@ export const initialRecentMessagesData = [
   },
   {
     id: "MSG-003",
-    patient: "Michael Brown",
+    patient: "Youssef Hassan",
     type: "SMS",
     content: "Your dental cleaning is scheduled for next week. R...",
     subContent: null,
@@ -842,10 +842,10 @@ export const patientPortalPageStats = [
 export const patientMessagesData: PatientMessage[] = [
     {
         id: 'MSG-001',
-        patient: 'John Smith',
+        patient: 'Ahmed Ali',
         subject: 'Question about post-treatment care',
         snippet: "Hi, I had my root canal yesterday and I'm experien...",
-        fullMessage: "Hi, I had my root canal yesterday and I'm experiencing some discomfort. Is this normal? The pain is manageable with ibuprofen, but I wanted to check if there's anything else I should be doing. Thanks, John",
+        fullMessage: "Hi, I had my root canal yesterday and I'm experiencing some discomfort. Is this normal? The pain is manageable with ibuprofen, but I wanted to check if there's anything else I should be doing. Thanks, Ahmed",
         category: 'treatment',
         priority: 'high',
         date: 'Dec 18, 11:15 AM',
@@ -853,7 +853,7 @@ export const patientMessagesData: PatientMessage[] = [
     },
     {
         id: 'MSG-002',
-        patient: 'Sarah Johnson',
+        patient: 'Fatima Mahmoud',
         subject: 'Your appointment reminder',
         snippet: 'This is a reminder that you have an appointment s...',
         fullMessage: 'This is a reminder that you have an appointment scheduled for December 20th at 10:30 AM for a routine cleaning. Please confirm by replying YES to this message. Thank you!',
@@ -867,13 +867,13 @@ export const patientMessagesData: PatientMessage[] = [
 export const appointmentRequestsData = [
     {
         id: 'REQ-001',
-        patient: 'Peter Jones',
+        patient: 'Youssef Hassan',
         requestedDate: 'Next Tuesday afternoon',
         reason: 'Check-up',
     },
     {
         id: 'REQ-002',
-        patient: 'Mary Williams',
+        patient: 'Hana Ibrahim',
         requestedDate: 'Thursday, 10:00 AM',
         reason: 'Toothache, need urgent look',
     },
@@ -906,8 +906,8 @@ export const referralPageStats = [
 export const initialOutgoingReferralsData = [
   {
     id: "REF-001",
-    patient: "John Smith",
-    specialist: "Dr. Robert Chen",
+    patient: "Ahmed Ali",
+    specialist: "Dr. Mostafa Ghoneim",
     specialty: "Oral Surgery",
     reason: "Wisdom tooth extraction - impacted #32",
     urgency: "routine",
@@ -917,8 +917,8 @@ export const initialOutgoingReferralsData = [
   },
   {
     id: "REF-002",
-    patient: "Sarah Johnson",
-    specialist: "Dr. Maria Rodriguez",
+    patient: "Fatima Mahmoud",
+    specialist: "Dr. Reem El-Sherif",
     specialty: "Periodontics",
     reason: "Advanced periodontal disease - requires specialist...",
     urgency: "urgent",
@@ -931,8 +931,8 @@ export const initialOutgoingReferralsData = [
 export const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
 export const referralUrgency = ['Routine', 'Urgent', 'Emergency'];
 export const initialSpecialistNetwork = [
-    { id: 'spec1', name: 'Dr. Robert Chen', specialty: 'Oral Surgery' },
-    { id: 'spec2', name: 'Dr. Maria Rodriguez', specialty: 'Periodontics' },
+    { id: 'spec1', name: 'Dr. Mostafa Ghoneim', specialty: 'Oral Surgery' },
+    { id: 'spec2', name: 'Dr. Reem El-Sherif', specialty: 'Periodontics' },
 ];
 
 export const insurancePageStats = [
@@ -955,7 +955,7 @@ export const insurancePageStats = [
   },
   {
     title: "Approved Amount",
-    value: "$120",
+    value: "EGP 2,000",
     description: "Total approved",
     valueClassName: "text-green-600",
   },
@@ -964,36 +964,36 @@ export const insurancePageStats = [
 export const initialInsuranceClaimsData = [
   {
     id: "CLM-001",
-    patient: "John Smith",
+    patient: "Ahmed Ali",
     patientId: "DC123456789",
-    insurance: "DentalCare Plus",
+    insurance: "Misr Insurance",
     procedure: "Routine Cleaning",
     procedureCode: "D1110",
-    amount: "$150",
-    approvedAmount: "$120",
+    amount: "EGP 2,500",
+    approvedAmount: "EGP 2,000",
     status: "Approved",
     submitDate: "Dec 16, 2024",
   },
   {
     id: "CLM-002",
-    patient: "Sarah Johnson",
+    patient: "Fatima Mahmoud",
     patientId: "HF987654321",
-    insurance: "HealthFirst Dental",
+    insurance: "Allianz Egypt",
     procedure: "Composite Filling",
     procedureCode: "D2391",
-    amount: "$275",
+    amount: "EGP 4,500",
     approvedAmount: null,
     status: "Processing",
     submitDate: "Dec 11, 2024",
   },
   {
     id: "CLM-003",
-    patient: "Michael Brown",
+    patient: "Youssef Hassan",
     patientId: "SC456789123",
-    insurance: "SmileCare Insurance",
+    insurance: "AXA Egypt",
     procedure: "Crown Placement",
     procedureCode: "D2750",
-    amount: "$1200",
+    amount: "EGP 20,000",
     approvedAmount: null,
     status: "Denied",
     statusReason: "Pre-authorization required",
@@ -1002,9 +1002,9 @@ export const initialInsuranceClaimsData = [
 ];
 
 export const insuranceProviders = [
-    { id: 'prov1', name: 'DentalCare Plus' },
-    { id: 'prov2', name: 'HealthFirst Dental' },
-    { id: 'prov3', name: 'SmileCare Insurance' },
+    { id: 'prov1', name: 'Misr Insurance' },
+    { id: 'prov2', name: 'Allianz Egypt' },
+    { id: 'prov3', name: 'AXA Egypt' },
 ];
 
 export const prescriptionPageStats = [
@@ -1033,37 +1033,37 @@ export const prescriptionPageStats = [
 export const initialPrescriptionRecordsData = [
   {
     id: "RX-001",
-    patient: "John Smith",
+    patient: "Ahmed Ali",
     medication: "Amoxicillin",
     strength: "500mg",
     dosage: "3 times daily",
     duration: "7 days",
     refills: 0,
-    doctor: "Dr. Emily Wilson",
+    doctor: "Dr. Nourhan Adel",
     date: "Dec 15, 2024",
     status: "Active",
   },
   {
     id: "RX-002",
-    patient: "Sarah Johnson",
+    patient: "Fatima Mahmoud",
     medication: "Ibuprofen",
     strength: "600mg",
     dosage: "Every 6 hours as needed",
     duration: "5 days",
     refills: 1,
-    doctor: "Dr. Emily Wilson",
+    doctor: "Dr. Nourhan Adel",
     date: "Dec 10, 2024",
     status: "Completed",
   },
   {
     id: "RX-003",
-    patient: "Michael Brown",
+    patient: "Youssef Hassan",
     medication: "Chlorhexidine Rinse",
     strength: "0.12%",
     dosage: "Twice daily",
     duration: "14 days",
     refills: 0,
-    doctor: "Dr. James Davis",
+    doctor: "Dr. Khaled Youssef",
     date: "Dec 8, 2024",
     status: "Active",
   },
@@ -1081,8 +1081,8 @@ export const commonMedicationsData = [
         description: 'Pain Relief'
     },
     {
-        name: 'Vicodin',
-        genericName: 'Generic: Hydrocodone/Acetaminophen',
+        name: 'Cataflam',
+        genericName: 'Generic: Diclofenac potassium',
         description: 'Pain Relief'
     }
 ];
@@ -1090,7 +1090,7 @@ export const commonMedicationsData = [
 export const analyticsPageStats = [
     {
         title: "Total Revenue",
-        value: "$45,231",
+        value: "EGP 750,000",
         change: "+12.5% from last period",
         icon: "DollarSign",
         changeType: "positive"
@@ -1111,7 +1111,7 @@ export const analyticsPageStats = [
     },
     {
         title: "Average Treatment Value",
-        value: "$385",
+        value: "EGP 6,250",
         change: "-1.2% from last period",
         icon: "Activity",
         changeType: "negative"
@@ -1134,7 +1134,7 @@ export const appointmentAnalyticsData = [
 export const reportsPageStats = [
     {
         title: "Total Revenue",
-        value: "$578K",
+        value: "EGP 9.5M",
         change: "+12.5% from last period",
         icon: "DollarSign",
     },
@@ -1152,25 +1152,25 @@ export const reportsPageStats = [
     },
     {
         title: "Avg. Treatment Value",
-        value: "$463",
+        value: "EGP 7,500",
         change: "+8.3% increase",
         icon: "TrendingUp",
     }
 ];
 
 export const reportsRevenueTrendData = [
-  { month: "Jan", revenue: 38000, expenses: 28000 },
-  { month: "Feb", revenue: 40000, expenses: 30000 },
-  { month: "Mar", revenue: 37000, expenses: 25000 },
-  { month: "Apr", revenue: 43000, expenses: 33000 },
-  { month: "May", revenue: 48000, expenses: 38000 },
-  { month: "Jun", revenue: 52000, expenses: 42000 },
-  { month: "Jul", revenue: 55000, expenses: 45000 },
-  { month: "Aug", revenue: 58000, expenses: 48000 },
-  { month: "Sep", revenue: 53000, expenses: 43000 },
-  { month: "Oct", revenue: 59000, expenses: 49000 },
-  { month: "Nov", revenue: 61000, expenses: 51000 },
-  { month: "Dec", revenue: 63000, expenses: 53000 },
+  { month: "Jan", revenue: 650000, expenses: 450000 },
+  { month: "Feb", revenue: 680000, expenses: 480000 },
+  { month: "Mar", revenue: 620000, expenses: 400000 },
+  { month: "Apr", revenue: 710000, expenses: 510000 },
+  { month: "May", revenue: 780000, expenses: 580000 },
+  { month: "Jun", revenue: 850000, expenses: 620000 },
+  { month: "Jul", revenue: 880000, expenses: 650000 },
+  { month: "Aug", revenue: 920000, expenses: 680000 },
+  { month: "Sep", revenue: 850000, expenses: 630000 },
+  { month: "Oct", revenue: 950000, expenses: 700000 },
+  { month: "Nov", revenue: 980000, expenses: 720000 },
+  { month: "Dec", revenue: 1000000, expenses: 750000 },
 ];
 
 export const reportsPatientGrowthData = [

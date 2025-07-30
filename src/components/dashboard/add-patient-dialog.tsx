@@ -126,7 +126,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" {...field} />
+                      <Input placeholder="Ahmed" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +139,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" {...field} />
+                      <Input placeholder="Ali" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -152,7 +152,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>Email *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john.doe@example.com" {...field} />
+                      <Input type="email" placeholder="ahmed.ali@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,7 +165,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>Phone *</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                      <Input type="tel" placeholder="+20 1xx xxx xxxx" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -219,7 +219,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="123 Main St, Anytown, USA" {...field} />
+                      <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -236,7 +236,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     <FormItem>
                       <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jane Doe" {...field} />
+                        <Input placeholder="Fatima Ali" {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -248,7 +248,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(555) 987-6543" {...field} />
+                        <Input type="tel" placeholder="+20 1xx xxx xxxx" {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -289,7 +289,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       <FormItem>
                           <FormLabel>Insurance Provider</FormLabel>
                           <FormControl>
-                            <Input placeholder="DentalCare Plus" {...field} />
+                            <Input placeholder="Misr Insurance" {...field} />
                           </FormControl>
                       </FormItem>
                     )}
@@ -301,7 +301,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       <FormItem>
                           <FormLabel>Policy Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="DCP123456789" {...field} />
+                            <Input placeholder="MISR123456789" {...field} />
                           </FormControl>
                       </FormItem>
                     )}

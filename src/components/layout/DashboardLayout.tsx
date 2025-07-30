@@ -31,7 +31,7 @@ export default function DashboardLayout({
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2">
             <DentalProLogo className="size-7 text-primary" />
-            <h1 className="text-xl font-bold text-foreground">DentalPro</h1>
+            <h1 className="text-xl font-bold text-foreground">Cairo Dental</h1>
           </div>
         </SidebarHeader>
         <SidebarContent className="flex flex-col">
