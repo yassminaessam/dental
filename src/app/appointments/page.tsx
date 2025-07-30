@@ -26,9 +26,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { appointmentPageStats, initialAppointmentsData } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, List, Search } from "lucide-react";
+import { Plus, Calendar, List, Search, MoreHorizontal } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
 
@@ -69,6 +76,18 @@ export default function AppointmentsPage() {
     toast({
         title: "Viewing Appointment",
         description: `Details for appointment ${appointment.id} with ${appointment.patient}.`,
+    });
+  };
+
+  const handleStatusChange = (appointmentId: string, newStatus: Appointment['status']) => {
+    setAppointments(prev =>
+      prev.map(appt =>
+        appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+      )
+    );
+    toast({
+      title: "Status Updated",
+      description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
     });
   };
 
@@ -178,9 +197,29 @@ export default function AppointmentsPage() {
                           <TableCell>{appt.duration}</TableCell>
                           <TableCell>{appt.status}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewAppointment(appt)}>
-                                View
-                            </Button>
+                             <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleViewAppointment(appt)}>
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
+                                  Mark as Confirmed
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
+                                  Mark as Pending
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
+                                  Mark as Cancelled
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
