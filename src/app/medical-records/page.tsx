@@ -35,7 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes, initialClinicalImagesData } from "@/lib/data";
+import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes, initialClinicalImagesData, initialMedicalTemplatesData, MedicalRecordTemplate } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, Download, Image as ImageIcon, Eye, Pencil } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
@@ -67,8 +67,14 @@ export type ClinicalImage = {
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
   const [images, setImages] = React.useState<ClinicalImage[]>(initialClinicalImagesData);
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [typeFilter, setTypeFilter] = React.useState('all');
+  const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>(initialMedicalTemplatesData);
+
+  const [recordSearchTerm, setRecordSearchTerm] = React.useState('');
+  const [recordTypeFilter, setRecordTypeFilter] = React.useState('all');
+  
+  const [imageSearchTerm, setImageSearchTerm] = React.useState('');
+  const [templateSearchTerm, setTemplateSearchTerm] = React.useState('');
+
   const [recordToView, setRecordToView] = React.useState<MedicalRecord | null>(null);
   const [recordToEdit, setRecordToEdit] = React.useState<MedicalRecord | null>(null);
   const { toast } = useToast();
@@ -122,13 +128,27 @@ export default function MedicalRecordsPage() {
   const filteredRecords = React.useMemo(() => {
     return records
       .filter(record => 
-        record.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.complaint.toLowerCase().includes(searchTerm.toLowerCase())
+        record.patient.toLowerCase().includes(recordSearchTerm.toLowerCase()) ||
+        record.complaint.toLowerCase().includes(recordSearchTerm.toLowerCase())
       )
       .filter(record => 
-        typeFilter === 'all' || record.type === typeFilter
+        recordTypeFilter === 'all' || record.type === recordTypeFilter
       );
-  }, [records, searchTerm, typeFilter]);
+  }, [records, recordSearchTerm, recordTypeFilter]);
+
+  const filteredImages = React.useMemo(() => {
+    return images.filter(image => 
+      image.patient.toLowerCase().includes(imageSearchTerm.toLowerCase()) ||
+      image.caption?.toLowerCase().includes(imageSearchTerm.toLowerCase())
+    );
+  }, [images, imageSearchTerm]);
+  
+  const filteredTemplates = React.useMemo(() => {
+    return templates.filter(template =>
+      template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+      template.content.toLowerCase().includes(templateSearchTerm.toLowerCase())
+    );
+  }, [templates, templateSearchTerm]);
 
   return (
     <DashboardLayout>
@@ -167,7 +187,7 @@ export default function MedicalRecordsPage() {
             <TabsTrigger value="clinical-images">Clinical Images</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
-          <TabsContent value="medical-records">
+          <TabsContent value="medical-records" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <CardTitle>Patient Medical Records</CardTitle>
@@ -178,11 +198,11 @@ export default function MedicalRecordsPage() {
                       type="search"
                       placeholder="Search records..."
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={recordSearchTerm}
+                      onChange={(e) => setRecordSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <Select value={recordTypeFilter} onValueChange={setRecordTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
@@ -258,44 +278,103 @@ export default function MedicalRecordsPage() {
             </Card>
           </TabsContent>
           <TabsContent value="clinical-images" className="mt-4">
-             {images.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {images.map((image) => (
-                  <Card key={image.id} className="overflow-hidden">
-                    <CardHeader className="p-0">
-                      <div className="relative aspect-video">
-                        <Image
-                          src={image.imageUrl}
-                          alt={image.caption || `Clinical image for ${image.patient}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                       <CardTitle className="text-base">{image.caption || image.type}</CardTitle>
-                       <CardDescription>{image.patient}</CardDescription>
-                    </CardContent>
-                    <CardFooter className="flex justify-between p-4 pt-0">
-                        <Badge variant="secondary">{image.type}</Badge>
-                        <span className="text-xs text-muted-foreground">{image.date}</span>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-               <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex flex-col items-center justify-center p-6 gap-4">
-                    <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
-                    <span>No clinical images found. Upload one to get started.</span>
+             <Card>
+                <CardHeader>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <CardTitle>Clinical Images</CardTitle>
+                        <div className="relative w-full md:w-auto">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                            type="search"
+                            placeholder="Search images..."
+                            className="w-full rounded-lg bg-background pl-8 md:w-[250px] lg:w-[336px]"
+                            value={imageSearchTerm}
+                            onChange={(e) => setImageSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {filteredImages.length > 0 ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {filteredImages.map((image) => (
+                        <Card key={image.id} className="overflow-hidden">
+                            <CardHeader className="p-0">
+                            <div className="relative aspect-video">
+                                <Image
+                                src={image.imageUrl}
+                                alt={image.caption || `Clinical image for ${image.patient}`}
+                                fill
+                                className="object-cover"
+                                />
+                            </div>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                            <CardTitle className="text-base">{image.caption || image.type}</CardTitle>
+                            <CardDescription>{image.patient}</CardDescription>
+                            </CardContent>
+                            <CardFooter className="flex justify-between p-4 pt-0">
+                                <Badge variant="secondary">{image.type}</Badge>
+                                <span className="text-xs text-muted-foreground">{image.date}</span>
+                            </CardFooter>
+                        </Card>
+                        ))}
+                    </div>
+                    ) : (
+                    <div className="h-48 text-center text-muted-foreground flex flex-col items-center justify-center p-6 gap-4">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                        <span>No clinical images found.</span>
+                    </div>
+                    )}
                 </CardContent>
-               </Card>
-            )}
+             </Card>
           </TabsContent>
-          <TabsContent value="templates">
+          <TabsContent value="templates" className="mt-4">
             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    No templates found.
+                <CardHeader>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <CardTitle>Record Templates</CardTitle>
+                        <div className="relative w-full md:w-auto">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                            type="search"
+                            placeholder="Search templates..."
+                            className="w-full rounded-lg bg-background pl-8 md:w-[250px] lg:w-[336px]"
+                            value={templateSearchTerm}
+                            onChange={(e) => setTemplateSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                {filteredTemplates.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredTemplates.map((template) => (
+                    <Card key={template.id} className="flex flex-col">
+                        <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span>{template.name}</span>
+                            <Badge variant="outline">{template.type}</Badge>
+                        </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                            {template.content}
+                        </p>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                            Use Template
+                        </Button>
+                        </CardFooter>
+                    </Card>
+                    ))}
+                </div>
+                ) : (
+                <div className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
+                    <p>No templates found.</p>
+                </div>
+                )}
                 </CardContent>
             </Card>
           </TabsContent>

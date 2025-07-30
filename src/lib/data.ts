@@ -12,6 +12,13 @@ export type PatientMessage = {
     status: 'Unread' | 'Read';
 };
 
+export type MedicalRecordTemplate = {
+  id: string;
+  name: string;
+  type: string;
+  content: string;
+};
+
 
 // Mock data for the dashboard
 export const overviewStats = [
@@ -501,6 +508,26 @@ export const initialClinicalImagesData = [
 
 export const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 export const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
+export const initialMedicalTemplatesData: MedicalRecordTemplate[] = [
+  {
+    id: 'TMPL-001',
+    name: 'Standard SOAP Note',
+    type: 'SOAP',
+    content: 'Subjective: \nObjective: \nAssessment: \nPlan: ',
+  },
+  {
+    id: 'TMPL-002',
+    name: 'New Patient Intake',
+    type: 'Clinical Note',
+    content: 'Chief Complaint: \nHistory of Present Illness: \nPast Medical History: \nMedications: \nAllergies: ',
+  },
+  {
+    id: 'TMPL-003',
+    name: 'Post-Op Instructions (Extraction)',
+    type: 'Instructions',
+    content: '1. Bite on gauze for 30-60 minutes. \n2. Avoid spitting or rinsing for 24 hours. \n3. Apply ice packs to reduce swelling. \n4. Take prescribed pain medication as directed.',
+  },
+];
 
 
 export const financialPageStats = [
