@@ -120,234 +120,234 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-          <ScrollArea className="max-h-[70vh] p-1">
-            <div className="space-y-6 px-6 py-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ahmed" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ali" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="ahmed.ali@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone *</FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dob"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date of Birth *</FormLabel>
-                    <Popover open={dobOpen} onOpenChange={setDobOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={(date) => {
-                            if (date) field.onChange(date);
-                            setDobOpen(false);
-                          }}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                          initialFocus
-                          captionLayout="dropdown-buttons"
-                          fromYear={1930}
-                          toYear={new Date().getFullYear()}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="ecName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Fatima Ali" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="ecPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="ecRelationship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Relationship</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select relationship" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {emergencyContactRelationships.map((rel) => (
-                            <SelectItem key={rel} value={rel.toLowerCase()}>
-                              {rel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <ScrollArea className="max-h-[70vh] p-1 pr-6">
+              <div className="space-y-6 px-1 py-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="insuranceProvider"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Insurance Provider</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Misr Insurance" {...field} />
-                          </FormControl>
+                        <FormLabel>First Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ahmed" {...field} />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="policyNumber"
+                    name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Policy Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="MISR123456789" {...field} />
-                          </FormControl>
+                        <FormLabel>Last Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ali" {...field} />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="mb-2 text-lg font-medium">Medical History</h3>
-              <div className="space-y-2">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                     <FormField
-                        control={form.control}
-                        name={`medicalHistory.${index}.condition`}
-                        render={({ field }) => (
-                          <FormItem className="flex-grow">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email *</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="ahmed.ali@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone *</FormLabel>
+                        <FormControl>
+                          <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth *</FormLabel>
+                        <Popover open={dobOpen} onOpenChange={setDobOpen}>
+                          <PopoverTrigger asChild>
                             <FormControl>
-                                <Input placeholder="e.g., Diabetes, Hypertension" {...field} />
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+                              </Button>
                             </FormControl>
-                            <FormMessage />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                if (date) field.onChange(date);
+                                setDobOpen(false);
+                              }}
+                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              initialFocus
+                              captionLayout="dropdown-buttons"
+                              fromYear={1930}
+                              toYear={new Date().getFullYear()}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="ecName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Fatima Ali" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="ecPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="ecRelationship"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Relationship</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select relationship" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {emergencyContactRelationships.map((rel) => (
+                                <SelectItem key={rel} value={rel.toLowerCase()}>
+                                  {rel}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="insuranceProvider"
+                        render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Insurance Provider</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Misr Insurance" {...field} />
+                              </FormControl>
                           </FormItem>
                         )}
                       />
-                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                      <Trash2 className="h-4 w-4" />
+                      <FormField
+                        control={form.control}
+                        name="policyNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Policy Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="MISR123456789" {...field} />
+                              </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="mb-2 text-lg font-medium">Medical History</h3>
+                  <div className="space-y-2">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                         <FormField
+                            control={form.control}
+                            name={`medicalHistory.${index}.condition`}
+                            render={({ field }) => (
+                              <FormItem className="flex-grow">
+                                <FormControl>
+                                    <Input placeholder="e.g., Diabetes, Hypertension" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => append({ condition: '' })}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add medical condition
                     </Button>
                   </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => append({ condition: '' })}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add medical condition
-                </Button>
+                </div>
               </div>
-            </div>
-            </div>
             </ScrollArea>
-            <DialogFooter className="px-6 pt-4">
+            <DialogFooter className="border-t pt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Save Patient</Button>
             </DialogFooter>
