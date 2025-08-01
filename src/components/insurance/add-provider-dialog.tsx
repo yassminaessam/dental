@@ -36,6 +36,12 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
   const [open, setOpen] = React.useState(false);
   const form = useForm<ProviderFormData>({
     resolver: zodResolver(providerSchema),
+    defaultValues: {
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+    }
   });
 
   const onSubmit = (data: ProviderFormData) => {
