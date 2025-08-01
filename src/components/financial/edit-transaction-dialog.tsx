@@ -25,7 +25,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
@@ -74,10 +74,11 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
   }, [open]);
 
   React.useEffect(() => {
-    if (transaction && patients.length > 0) {
+    if (transaction) {
+      const transactionDate = new Date(transaction.date);
       const patientId = patients.find(p => p.name === transaction.patient)?.id || '';
       form.reset({
-        date: new Date(transaction.date),
+        date: isValid(transactionDate) ? transactionDate : new Date(),
         amount: transaction.amount.replace(/[^0-9.-]+/g, ''),
         description: transaction.description,
         category: transaction.category,
