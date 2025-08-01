@@ -62,6 +62,15 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
+    defaultValues: {
+        patient: '',
+        provider: '',
+        type: '',
+        date: new Date(),
+        complaint: '',
+        notes: '',
+        status: 'Draft',
+    }
   });
 
   React.useEffect(() => {
@@ -79,8 +88,8 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
   React.useEffect(() => {
     if (record && patients.length > 0 && doctors.length > 0) {
       form.reset({
-        patient: patients.find(p => p.name === record.patient)?.id,
-        provider: doctors.find(d => d.name === record.provider)?.id,
+        patient: patients.find(p => p.name === record.patient)?.id || '',
+        provider: doctors.find(d => d.name === record.provider)?.id || '',
         type: record.type,
         date: new Date(record.date),
         complaint: record.complaint,
@@ -216,7 +225,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar mode="single" selected={field.value} onSelect={(date) => {
-                          field.onChange(date)
+                          if(date) field.onChange(date)
                           setDateOpen(false)
                         }} initialFocus />
                       </PopoverContent>
