@@ -2,6 +2,7 @@
 
 
 
+
 export type MedicalRecordTemplate = {
   id: string;
   name: string;
@@ -31,39 +32,6 @@ export const availableTimeSlots = [
   "14:00",
   "15:30",
   "16:00",
-];
-
-export const treatmentCategories = [
-  {
-    name: "Preventive",
-    count: 23,
-    status: "Active",
-    color: "bg-green-100 text-green-700",
-  },
-  {
-    name: "Restorative",
-    count: 18,
-    status: "Active",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    name: "Cosmetic",
-    count: 12,
-    status: "Active",
-    color: "bg-purple-100 text-purple-700",
-  },
-  {
-    name: "Orthodontic",
-    count: 8,
-    status: "Active",
-    color: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    name: "Emergency",
-    count: 4,
-    status: "Active",
-    color: "bg-red-100 text-red-700",
-  },
 ];
 
 export const toothNames: Record<number, string> = {

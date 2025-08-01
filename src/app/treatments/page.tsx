@@ -26,9 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  treatmentCategories,
-} from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, Pencil, Loader2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
@@ -156,29 +153,6 @@ export default function TreatmentsPage() {
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
                 </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-          {treatmentCategories.map((category) => (
-            <Card key={category.name}>
-              <CardContent className="p-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  {category.name}
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{category.count}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-semibold",
-                      category.color
-                    )}
-                  >
-                    {category.status}
-                  </span>
-                </div>
               </CardContent>
             </Card>
           ))}
