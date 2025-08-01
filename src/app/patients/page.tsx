@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck, Eye } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -42,17 +42,27 @@ import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 
 export type Patient = {
   id: string;
   name: string;
+  lastName: string;
   email: string;
   phone: string;
   dob: Date;
   age: number;
   lastVisit: string;
   status: 'Active' | 'Inactive';
+  address?: string;
+  ecName?: string;
+  ecPhone?: string;
+  ecRelationship?: string;
+  insuranceProvider?: string;
+  policyNumber?: string;
+  medicalHistory?: { condition: string }[];
 };
+
 
 const iconMap = {
     User,
@@ -66,6 +76,7 @@ type IconKey = keyof typeof iconMap;
 export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [patientToView, setPatientToView] = React.useState<Patient | null>(null);
   const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -242,7 +253,7 @@ export default function PatientsPage() {
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
                             <User className="h-5 w-5 text-muted-foreground" />
                           </div>
-                          <div className="font-medium">{patient.name}</div>
+                          <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
                         </div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
@@ -259,6 +270,10 @@ export default function PatientsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setPatientToView(patient)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Edit
@@ -284,6 +299,12 @@ export default function PatientsPage() {
           </CardContent>
         </Card>
       </main>
+
+      <ViewPatientDialog
+        patient={patientToView}
+        open={!!patientToView}
+        onOpenChange={(isOpen) => !isOpen && setPatientToView(null)}
+      />
 
       {patientToEdit && (
         <EditPatientDialog
@@ -311,5 +332,3 @@ export default function PatientsPage() {
     </DashboardLayout>
   );
 }
-
-    

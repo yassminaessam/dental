@@ -91,13 +91,21 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
 
   const onSubmit = (data: PatientFormData) => {
     const newPatient: Omit<Patient, 'id'> = {
-      name: `${data.name} ${data.lastName}`,
+      name: data.name,
+      lastName: data.lastName,
       email: data.email,
       phone: data.phone,
       dob: data.dob,
       age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
       lastVisit: new Date().toLocaleDateString(),
       status: 'Active',
+      address: data.address,
+      ecName: data.ecName,
+      ecPhone: data.ecPhone,
+      ecRelationship: data.ecRelationship,
+      insuranceProvider: data.insuranceProvider,
+      policyNumber: data.policyNumber,
+      medicalHistory: data.medicalHistory,
     };
     
     onSave(newPatient);

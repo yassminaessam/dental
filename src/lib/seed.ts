@@ -24,8 +24,18 @@ async function seedCollection(collectionName: string, data: any[]) {
 
 async function seedDatabase() {
     const initialPatientsData = [
-        { id: 'pat1', name: 'John Doe', email: 'john.doe@example.com', phone: '01234567890', dob: new Date('1985-05-20'), age: 39, lastVisit: '2024-05-10', status: 'Active' },
-        { id: 'pat2', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '01123456789', dob: new Date('1992-09-15'), age: 31, lastVisit: '2024-04-22', status: 'Active' },
+        { 
+            id: 'pat1', name: 'John', lastName: 'Doe', email: 'john.doe@example.com', phone: '01234567890', 
+            dob: new Date('1985-05-20'), age: 39, lastVisit: '2024-05-10', status: 'Active',
+            address: '123 Nile St, Zamalek, Cairo', ecName: 'Jane Doe', ecPhone: '01234567891', ecRelationship: 'Spouse',
+            insuranceProvider: 'Misr Insurance', policyNumber: 'MISR123456', medicalHistory: [{condition: 'Pollen Allergy'}]
+        },
+        { 
+            id: 'pat2', name: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', phone: '01123456789', 
+            dob: new Date('1992-09-15'), age: 31, lastVisit: '2024-04-22', status: 'Active',
+            address: '456 Orabi St, Mohandessin, Giza', ecName: 'John Smith', ecPhone: '01123456780', ecRelationship: 'Spouse',
+            insuranceProvider: 'Allianz', policyNumber: 'ALZ789012', medicalHistory: []
+        },
     ];
     
     const initialAppointmentsData = [
