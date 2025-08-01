@@ -62,6 +62,11 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
     defaultValues: {
       date: new Date(),
       type: 'Revenue',
+      amount: '',
+      description: '',
+      category: '',
+      paymentMethod: '',
+      patient: '',
     },
   });
   
