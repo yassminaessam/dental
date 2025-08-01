@@ -83,9 +83,9 @@ export default function AppointmentsPage() {
     const todays = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
 
     return [
-      { title: "Total Appointments", value: total, description: "+5% from last month" },
+      { title: "Total Appointments", value: total, description: "All scheduled appointments" },
       { title: "Pending Appointments", value: pending, description: "Awaiting confirmation", valueClassName: "text-orange-500" },
-      { title: "Confirmed Appointments", value: confirmed, description: "+10% from last month", valueClassName: "text-green-600" },
+      { title: "Confirmed Appointments", value: confirmed, description: "Ready for visit", valueClassName: "text-green-600" },
       { title: "Today's Appointments", value: todays, description: "Scheduled for today" },
     ];
   }, [appointments]);
