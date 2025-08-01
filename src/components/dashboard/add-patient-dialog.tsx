@@ -69,6 +69,11 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
+      name: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      dob: undefined,
       address: '',
       ecName: '',
       ecPhone: '',
