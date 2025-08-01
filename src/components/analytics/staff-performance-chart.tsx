@@ -8,7 +8,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { staffPerformanceData } from "@/lib/data";
+
+const staffPerformanceData = [
+    { name: 'Dr. Nourhan', appointments: 120 },
+    { name: 'Dr. Khaled', appointments: 110 },
+    { name: 'Dr. Mariam', appointments: 95 },
+    { name: 'Dr. Youssef', appointments: 80 },
+];
 
 const chartConfig = {
   appointments: {
