@@ -57,6 +57,11 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const form = useForm<ClaimFormData>({
     resolver: zodResolver(claimSchema),
     defaultValues: {
+      patient: '',
+      insurance: '',
+      procedure: '',
+      procedureCode: '',
+      amount: '',
       submitDate: new Date(),
     }
   });
