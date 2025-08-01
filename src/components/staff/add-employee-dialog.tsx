@@ -60,6 +60,13 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      salary: '',
+    },
   });
 
   const onSubmit = (data: EmployeeFormData) => {
