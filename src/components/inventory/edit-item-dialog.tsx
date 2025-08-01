@@ -27,9 +27,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { suppliersData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { InventoryItem } from '@/app/inventory/page';
+import { getCollection } from '@/services/firestore';
+import { Supplier } from '@/app/suppliers/page';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -52,26 +53,37 @@ interface EditItemDialogProps {
 
 export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
   });
 
   React.useEffect(() => {
-    if (item) {
+    async function fetchSuppliers() {
+      const data = await getCollection<Supplier>('suppliers');
+      setSuppliers(data);
+    }
+    if (open) {
+      fetchSuppliers();
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    if (item && suppliers.length > 0) {
       form.reset({
         name: item.name,
         category: item.category,
-        supplier: suppliersData.find(s => s.name === item.supplier)?.id,
+        supplier: suppliers.find(s => s.name === item.supplier)?.id,
         stock: item.stock,
         unitCost: parseFloat(item.unitCost.replace(/[^0-9.-]+/g,"")),
         location: item.location,
         expires: item.expires !== 'N/A' ? new Date(item.expires) : undefined,
       });
     }
-  }, [item, form]);
+  }, [item, form, suppliers]);
 
   const onSubmit = (data: ItemFormData) => {
-    const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
+    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
     const updatedItem: InventoryItem = {
       ...item,
       name: data.name,
@@ -136,7 +148,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {suppliersData.map((sup) => (
+                        {suppliers.map((sup) => (
                           <SelectItem key={sup.id} value={sup.id}>
                             {sup.name}
                           </SelectItem>

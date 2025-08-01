@@ -107,9 +107,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
             Enter patient details to create a new record
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow overflow-y-auto pr-6 pl-1 -mr-6 -ml-1">
+        <ScrollArea className="flex-grow pr-6 -mr-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6 px-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -335,8 +335,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
             </form>
           </Form>
-        </div>
-        <DialogFooter className="border-t pt-4 mt-auto">
+        </ScrollArea>
+        <DialogFooter className="border-t pt-4">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button type="submit" form="add-patient-form">Save Patient</Button>
         </DialogFooter>

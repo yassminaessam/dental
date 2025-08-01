@@ -28,8 +28,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { suppliersData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Supplier } from '@/app/suppliers/page';
+import { getCollection } from '@/services/firestore';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -50,12 +51,23 @@ interface AddItemDialogProps {
 export function AddItemDialog({ onSave }: AddItemDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
   });
 
+  React.useEffect(() => {
+    async function fetchSuppliers() {
+      const data = await getCollection<Supplier>('suppliers');
+      setSuppliers(data);
+    }
+    if (open) {
+      fetchSuppliers();
+    }
+  }, [open]);
+
   const onSubmit = (data: ItemFormData) => {
-    const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
+    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
     onSave({...data, supplier: supplierName});
     form.reset();
     setOpen(false);
@@ -117,7 +129,7 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {suppliersData.map((sup) => (
+                        {suppliers.map((sup) => (
                           <SelectItem key={sup.id} value={sup.id}>
                             {sup.name}
                           </SelectItem>
