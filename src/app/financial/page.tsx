@@ -176,7 +176,7 @@ export default function FinancialPage() {
     try {
       const newTransaction: Transaction = {
         id: `TRN-${Date.now()}`,
-        date: data.date,
+        date: new Date(data.date),
         description: data.description,
         type: data.type,
         category: data.category,
