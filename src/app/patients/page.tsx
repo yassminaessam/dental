@@ -19,9 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { patientPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -55,6 +54,15 @@ export type Patient = {
   status: 'Active' | 'Inactive';
 };
 
+const iconMap = {
+    User,
+    UserPlus,
+    UserMinus,
+    UserCheck
+}
+
+type IconKey = keyof typeof iconMap;
+
 export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -77,6 +85,26 @@ export default function PatientsPage() {
     }
     fetchPatients();
   }, [toast]);
+  
+  const patientPageStats = React.useMemo(() => {
+    const totalPatients = patients.length;
+    const newPatients = patients.filter(p => {
+        const lastVisitDate = new Date(p.lastVisit);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return lastVisitDate > thirtyDaysAgo;
+    }).length;
+    const inactivePatients = patients.filter(p => p.status === 'Inactive').length;
+    const averageAge = totalPatients > 0 ? Math.round(patients.reduce((acc, p) => acc + p.age, 0) / totalPatients) : 0;
+
+    return [
+       { title: "Total Patients", value: totalPatients, icon: "User", description: "All patients in the system" },
+       { title: "New Patients (30d)", value: newPatients, icon: "UserPlus", description: "Patients with recent visits", valueClassName: "text-green-600" },
+       { title: "Inactive Patients", value: inactivePatients, icon: "UserMinus", description: "Patients marked as inactive", valueClassName: "text-red-600" },
+       { title: "Average Age", value: averageAge, icon: "UserCheck", description: "Average patient age" },
+    ];
+  }, [patients]);
+
 
   const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
     try {
@@ -137,23 +165,27 @@ export default function PatientsPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {patientPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.title === 'Total Patients' ? patients.length : stat.value}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {patientPageStats.map((stat) => {
+            const Icon = iconMap[stat.icon as IconKey];
+            return (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className={cn("text-2xl font-bold", stat.valueClassName)}>
+                    {stat.value}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {stat.description}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Card>
@@ -279,3 +311,5 @@ export default function PatientsPage() {
     </DashboardLayout>
   );
 }
+
+    
