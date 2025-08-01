@@ -113,7 +113,7 @@ export default function InsurancePage() {
     const deniedClaims = claims.filter(c => c.status === 'Denied').length;
 
     return [
-      { title: "Total Claims", value: totalClaims, description: "+15% from last month", valueClassName: "" },
+      { title: "Total Claims", value: totalClaims, description: "All submitted claims", valueClassName: "" },
       { title: "Approved Amount", value: `EGP ${approvedAmount.toLocaleString()}`, description: "Total value of approved claims", valueClassName: "text-green-600" },
       { title: "Pending Claims", value: pendingClaims, description: "Claims currently under review", valueClassName: "text-orange-500" },
       { title: "Denied Claims", value: deniedClaims, description: "Claims that were denied", valueClassName: "text-red-600" },
