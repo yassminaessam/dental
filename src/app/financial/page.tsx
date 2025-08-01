@@ -48,6 +48,7 @@ import ExpensesByCategoryChart from "@/components/financial/expenses-by-category
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
+import { format } from 'date-fns';
 
 export type Transaction = {
   id: string;
@@ -75,6 +76,7 @@ export default function FinancialPage() {
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
+  const [chartData, setChartData] = React.useState<any[]>([]);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -82,6 +84,29 @@ export default function FinancialPage() {
       try {
         const data = await getCollection<Transaction>('transactions');
         setTransactions(data);
+
+        // Process data for charts
+        const monthlyData: Record<string, { revenue: number, expenses: number, profit: number }> = {};
+        data.forEach(t => {
+            const month = format(new Date(t.date), 'yyyy-MM');
+            if (!monthlyData[month]) {
+                monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
+            }
+            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+            if (t.type === 'Revenue') {
+                monthlyData[month].revenue += amount;
+            } else {
+                monthlyData[month].expenses += amount;
+            }
+            monthlyData[month].profit = monthlyData[month].revenue - monthlyData[month].expenses;
+        });
+
+        const sortedChartData = Object.keys(monthlyData).sort().map(month => ({
+            month: format(new Date(month), 'MMM'),
+            ...monthlyData[month]
+        }));
+        setChartData(sortedChartData);
+
       } catch (error) {
         toast({ title: "Error fetching transactions", variant: "destructive" });
       } finally {
@@ -226,7 +251,7 @@ export default function FinancialPage() {
               <CardTitle>Revenue vs Expenses</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <RevenueVsExpensesChart />
+              <RevenueVsExpensesChart data={chartData} />
             </CardContent>
           </Card>
           <Card className="lg:col-span-2">

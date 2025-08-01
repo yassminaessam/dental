@@ -7,7 +7,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { revenueVsExpensesData } from "@/lib/data";
 
 const chartConfig = {
   revenue: {
@@ -24,12 +23,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function RevenueVsExpensesChart() {
+interface RevenueVsExpensesChartProps {
+  data: { month: string; revenue: number; expenses: number; profit: number }[];
+}
+
+export default function RevenueVsExpensesChart({ data }: RevenueVsExpensesChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart
         accessibilityLayer
-        data={revenueVsExpensesData}
+        data={data}
         margin={{
           top: 20,
           left: 12,
@@ -43,13 +46,12 @@ export default function RevenueVsExpensesChart() {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(value) => value.slice(0, 3)}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(value) => `$${value / 1000}k`}
+          tickFormatter={(value) => `EGP ${value / 1000}k`}
         />
         <ChartTooltip
           cursor={false}
