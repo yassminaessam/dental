@@ -1,5 +1,4 @@
 
-
 export type PatientMessage = {
     id: string;
     patient: string;
@@ -238,14 +237,6 @@ export const treatmentCategories = [
   },
 ];
 
-export const treatmentStats = [
-  { label: "Success Rate", value: "94%" },
-  { label: "Average Cost", value: "EGP 4500" },
-  { label: "Average Duration", value: "45 min" },
-  { label: "Follow-up Rate", value: "88%" },
-];
-
-
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
     { name: 'Cavity', count: 0, color: 'bg-red-500' },
@@ -261,33 +252,6 @@ export const toothNames: Record<number, string> = {
     31: 'Lower Left Central Incisor', 32: 'Lower Left Lateral Incisor', 33: 'Lower Left Canine', 34: 'Lower Left First Premolar', 35: 'Lower Left Second Premolar', 36: 'Lower Left First Molar', 37: 'Lower Left Second Molar', 38: 'Lower Left Third Molar',
     41: 'Lower Right Central Incisor', 42: 'Lower Right Lateral Incisor', 43: 'Lower Right Canine', 44: 'Lower Right First Premolar', 45: 'Lower Right Second Premolar', 46: 'Lower Right First Molar', 47: 'Lower Right Second Molar', 48: 'Lower Right Third Molar',
 };
-
-const allTeethIds = [
-    18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
-    48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38
-];
-
-export const allHealthyDentalChart = allTeethIds.reduce((acc, id) => {
-    acc[id] = { id, condition: 'healthy', history: [] };
-    return acc;
-}, {} as Record<number, any>);
-
-export const johnDoeDentalChart = (() => {
-    const chart = JSON.parse(JSON.stringify(allHealthyDentalChart)); // Deep copy
-    chart[14] = { id: 14, condition: 'root-canal', history: [{ date: '01/15/2023', condition: 'cavity', notes: 'Initial small cavity detected on buccal surface.' }, { date: '07/20/2023', condition: 'filling', notes: 'Placed composite filling (A2 shade).' }, { date: '06/10/2024', condition: 'root-canal', notes: 'Patient reported severe pain. Endodontic treatment performed.' }] };
-    chart[25] = { id: 25, condition: 'crown', history: [{ date: '03/01/2022', condition: 'filling', notes: 'Large amalgam filling placed.' }, { date: '09/12/2023', condition: 'crown', notes: 'Fractured cusp. Prepared for and placed porcelain crown.' }] };
-    chart[36] = { id: 36, condition: 'cavity', history: [{ date: '11/05/2024', condition: 'cavity', notes: 'Occlusal cavity noted during checkup.' }] };
-    chart[48] = { id: 48, condition: 'missing', history: [{ date: '01/01/2020', condition: 'missing', notes: 'Extracted due to impaction.' }] };
-    return chart;
-})();
-
-export const janeSmithDentalChart = (() => {
-    const chart = JSON.parse(JSON.stringify(allHealthyDentalChart)); // Deep copy
-    chart[11] = { id: 11, condition: 'filling', history: [{ date: '05/10/2023', condition: 'filling', notes: 'Mesial composite filling.' }] };
-    chart[12] = { id: 12, condition: 'filling', history: [{ date: '05/10/2023', condition: 'filling', notes: 'Distal composite filling.' }] };
-    chart[38] = { id: 38, condition: 'cavity', history: [{ date: '11/15/2023', condition: 'cavity', notes: 'Buccal pit cavity observed.' }] };
-    return chart;
-})();
 
 export const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 

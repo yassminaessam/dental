@@ -122,18 +122,36 @@ export default function BillingPage() {
   };
 
   const handlePrintInvoice = (invoiceId: string) => {
-    const printableContent = document.getElementById(`printable-invoice-${invoiceId}`);
-    if (printableContent) {
-        const printWindow = window.open('', '', 'height=600,width=800');
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (invoice && typeof window !== 'undefined') {
+        const printWindow = window.open('', '', 'height=800,width=800');
         if (printWindow) {
+            const printableContent = document.querySelector(`#view-invoice-${invoice.id}`);
+            
+            const styles = Array.from(document.styleSheets)
+                .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
+                .join('');
+
+            const tailwindStyles = `<style>${Array.from(document.querySelectorAll('style')).map(s => s.innerHTML).join('')}</style>`;
+            
             printWindow.document.write('<html><head><title>Print Invoice</title>');
-            const styles = Array.from(document.styleSheets).map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '').join('');
             printWindow.document.write(styles);
+            printWindow.document.write(tailwindStyles);
             printWindow.document.write('</head><body class="bg-white">');
-            printWindow.document.write(printableContent.innerHTML);
+            if (printableContent) {
+                printWindow.document.write(printableContent.innerHTML);
+            } else {
+                // Fallback for when the dialog isn't rendered
+                const dialog = document.createElement('div');
+                const viewDialog = React.createElement(ViewInvoiceDialog, { invoice, open: true, onOpenChange: () => {} });
+                const ReactDOM = require('react-dom');
+                ReactDOM.render(viewDialog, dialog);
+                printWindow.document.write(dialog.innerHTML);
+            }
             printWindow.document.write('</body></html>');
             printWindow.document.close();
-            setTimeout(() => { 
+            printWindow.focus();
+            setTimeout(() => {
                 printWindow.print();
                 printWindow.close();
             }, 500);
@@ -275,6 +293,15 @@ export default function BillingPage() {
         />
       )}
       
+      <div className="sr-only">
+        {invoices.map(invoice => (
+            <div key={`print-${invoice.id}`} id={`view-invoice-${invoice.id}`}>
+                <ViewInvoiceDialog invoice={invoice} open={false} onOpenChange={() => {}} />
+            </div>
+        ))}
+      </div>
+
+
       <ViewInvoiceDialog
         invoice={invoiceToView}
         open={!!invoiceToView}

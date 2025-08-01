@@ -29,8 +29,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { dentalChartPatients, mockDoctors, medicalRecordTypes } from '@/lib/data';
+import { medicalRecordTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { getCollection } from '@/services/firestore';
+import { Patient } from '@/app/patients/page';
+import { StaffMember } from '@/app/staff/page';
 
 const recordSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
@@ -50,16 +53,31 @@ interface NewRecordDialogProps {
 export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
     defaultValues: {
       date: new Date(),
     },
   });
+  
+  React.useEffect(() => {
+    async function fetchData() {
+        const patientData = await getCollection<Patient>('patients');
+        setPatients(patientData);
+        const staffData = await getCollection<StaffMember>('staff');
+        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+    }
+    if (open) {
+        fetchData();
+    }
+  }, [open]);
 
   const onSubmit = (data: RecordFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    const providerName = mockDoctors.find(d => d.id === data.provider)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const providerName = doctors.find(d => d.id === data.provider)?.name;
     onSave({ ...data, patient: patientName, provider: providerName });
     form.reset();
     setOpen(false);
@@ -96,7 +114,7 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>
@@ -120,7 +138,7 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockDoctors.map((doctor) => (
+                        {doctors.map((doctor) => (
                           <SelectItem key={doctor.id} value={doctor.id}>
                             {doctor.name}
                           </SelectItem>

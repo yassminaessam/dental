@@ -28,9 +28,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { dentalChartPatients, mockDoctors, medicalRecordTypes } from '@/lib/data';
+import { medicalRecordTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { MedicalRecord } from '@/app/medical-records/page';
+import { Patient } from '@/app/patients/page';
+import { StaffMember } from '@/app/staff/page';
+import { getCollection } from '@/services/firestore';
 
 const recordSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
@@ -53,15 +56,30 @@ interface EditRecordDialogProps {
 
 export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRecordDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
   });
 
   React.useEffect(() => {
-    if (record) {
+    async function fetchData() {
+        const patientData = await getCollection<Patient>('patients');
+        setPatients(patientData);
+        const staffData = await getCollection<StaffMember>('staff');
+        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+    }
+    if (open) {
+        fetchData();
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    if (record && patients.length > 0 && doctors.length > 0) {
       form.reset({
-        patient: dentalChartPatients.find(p => p.name === record.patient)?.id,
-        provider: mockDoctors.find(d => d.name === record.provider)?.id,
+        patient: patients.find(p => p.name === record.patient)?.id,
+        provider: doctors.find(d => d.name === record.provider)?.id,
         type: record.type,
         date: new Date(record.date),
         complaint: record.complaint,
@@ -69,13 +87,13 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
         notes: '', // Notes are not stored in the main object, clear for editing
       });
     }
-  }, [record, form]);
+  }, [record, form, patients, doctors]);
 
   const onSubmit = (data: RecordFormData) => {
     if (!record) return;
 
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    const providerName = mockDoctors.find(d => d.id === data.provider)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const providerName = doctors.find(d => d.id === data.provider)?.name;
 
     const updatedRecord: MedicalRecord = {
       ...record,
@@ -116,7 +134,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>
@@ -140,7 +158,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockDoctors.map((doctor) => (
+                        {doctors.map((doctor) => (
                           <SelectItem key={doctor.id} value={doctor.id}>
                             {doctor.name}
                           </SelectItem>

@@ -24,8 +24,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
-import { dentalChartPatients, clinicalImageTypes } from '@/lib/data';
+import { clinicalImageTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { getCollection } from '@/services/firestore';
+import { Patient } from '@/app/patients/page';
 
 const imageSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -42,12 +44,24 @@ interface UploadImageDialogProps {
 
 export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
   const form = useForm<ImageFormData>({
     resolver: zodResolver(imageSchema),
   });
+  
+  React.useEffect(() => {
+    async function fetchPatients() {
+        const data = await getCollection<Patient>('patients');
+        setPatients(data);
+    }
+    if (open) {
+        fetchPatients();
+    }
+  }, [open]);
 
   const onSubmit = (data: ImageFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
     onUpload({ ...data, file: data.file[0], patientName });
     form.reset();
     setOpen(false);
@@ -83,7 +97,7 @@ export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {dentalChartPatients.map((patient) => (
+                      {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           {patient.name}
                         </SelectItem>

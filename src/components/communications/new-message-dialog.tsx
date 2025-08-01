@@ -25,10 +25,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare as MessageSquareIcon } from 'lucide-react';
-import { dentalChartPatients } from '@/lib/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { GenerateMessageAi } from './generate-message-ai';
+import { Patient } from '@/app/patients/page';
+import { getCollection } from '@/services/firestore';
 
 const messageSchema = z.object({
   patient: z.string({ required_error: 'Please select a patient.' }),
@@ -61,6 +62,7 @@ export function NewMessageDialog({
   initialData = null,
 }: NewMessageDialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
   
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen || setInternalOpen;
@@ -73,8 +75,18 @@ export function NewMessageDialog({
   });
 
   React.useEffect(() => {
+    async function fetchPatients() {
+        const data = await getCollection<Patient>('patients');
+        setPatients(data);
+    }
+    if (open) {
+        fetchPatients();
+    }
+  }, [open]);
+
+  React.useEffect(() => {
     if (initialData && open) {
-      const patient = dentalChartPatients.find(p => p.name === initialData.patientName);
+      const patient = patients.find(p => p.name === initialData.patientName);
       form.reset({
         patient: patient?.id,
         subject: initialData.subject,
@@ -84,16 +96,16 @@ export function NewMessageDialog({
     } else if (!isReply) {
       form.reset({ type: 'Email' });
     }
-  }, [initialData, open, form, isReply]);
+  }, [initialData, open, form, isReply, patients]);
 
 
   const patientId = form.watch('patient');
   const patientName = React.useMemo(() => {
-    return dentalChartPatients.find(p => p.id === patientId)?.name || '';
-  }, [patientId]);
+    return patients.find(p => p.id === patientId)?.name || '';
+  }, [patientId, patients]);
 
   const onSubmit = (data: MessageFormData) => {
-    const patientDetails = dentalChartPatients.find(p => p.id === data.patient);
+    const patientDetails = patients.find(p => p.id === data.patient);
     onSend({ ...data, patient: patientDetails?.name || 'Unknown Patient' });
     form.reset();
     setOpen(false);
@@ -143,7 +155,7 @@ export function NewMessageDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {dentalChartPatients.map((patient) => (
+                      {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           {patient.name}
                         </SelectItem>

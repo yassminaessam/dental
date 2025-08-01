@@ -28,9 +28,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { dentalChartPatients, mockDoctors } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Treatment } from '@/app/treatments/page';
+import { getCollection } from '@/services/firestore';
+import { Patient } from '@/app/patients/page';
+import { StaffMember } from '@/app/staff/page';
 
 const planSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
@@ -53,15 +55,30 @@ interface EditTreatmentDialogProps {
 
 export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: EditTreatmentDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
   });
+  
+  React.useEffect(() => {
+    async function fetchData() {
+        const patientData = await getCollection<Patient>('patients');
+        setPatients(patientData);
+        const staffData = await getCollection<StaffMember>('staff');
+        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+    }
+    if (open) {
+        fetchData();
+    }
+  }, [open]);
 
   React.useEffect(() => {
-    if (treatment) {
+    if (treatment && patients.length > 0 && doctors.length > 0) {
         form.reset({
-            patient: dentalChartPatients.find(p => p.name === treatment.patient)?.id,
-            doctor: mockDoctors.find(d => d.name === treatment.doctor)?.id,
+            patient: patients.find(p => p.name === treatment.patient)?.id,
+            doctor: doctors.find(d => d.name === treatment.doctor)?.id,
             procedure: treatment.procedure,
             date: new Date(treatment.date),
             cost: treatment.cost.replace('$', ''),
@@ -69,11 +86,11 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             notes: '', // assuming no notes are passed initially
         });
     }
-  }, [treatment, form]);
+  }, [treatment, form, patients, doctors]);
 
   const onSubmit = (data: PlanFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const doctorName = doctors.find(d => d.id === data.doctor)?.name;
     
     const updatedTreatment: Treatment = {
         ...treatment,
@@ -113,7 +130,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>
@@ -137,7 +154,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockDoctors.map((doctor) => (
+                        {doctors.map((doctor) => (
                           <SelectItem key={doctor.id} value={doctor.id}>
                             {doctor.name}
                           </SelectItem>
