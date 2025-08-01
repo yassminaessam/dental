@@ -104,8 +104,8 @@ export default function MedicalRecordsPage() {
   const medicalRecordsPageStats = React.useMemo(() => {
     const draftRecords = records.filter(r => r.status === 'Draft').length;
     return [
-      { title: "Total Records", value: records.length, description: "+20 from last month" },
-      { title: "Clinical Images", value: images.length, description: "+50 from last week" },
+      { title: "Total Records", value: records.length, description: "All patient records" },
+      { title: "Clinical Images", value: images.length, description: "All uploaded images" },
       { title: "Templates Available", value: templates.length, description: "For faster documentation" },
       { title: "Draft Records", value: draftRecords, description: "Awaiting finalization", valueClassName: "text-orange-500" },
     ];
