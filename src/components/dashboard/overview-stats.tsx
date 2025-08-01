@@ -32,12 +32,12 @@ type IconKey = keyof typeof iconMap;
 
 export default function OverviewStats() {
     const [stats, setStats] = React.useState([
-        { title: "Total Patients", value: "0", change: "+0%", icon: "Users", changeType: "neutral", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-        { title: "Today's Appointments", value: "0", change: "+0%", icon: "CalendarCheck", changeType: "neutral", iconBg: "bg-green-100", iconColor: "text-green-600" },
-        { title: "Total Revenue", value: "EGP 0", change: "+0%", icon: "DollarSign", changeType: "neutral", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-        { title: "Active Staff", value: "0", change: "0%", icon: "UserCheck", changeType: "neutral", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-        { title: "Pending Appointments", value: "0", change: "0%", icon: "Clock", changeType: "neutral", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-        { title: "Completed Treatments", value: "0", change: "+0%", icon: "CheckCircle", changeType: "neutral", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+        { title: "Total Patients", value: "0", description: "All patients in system", icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+        { title: "Today's Appointments", value: "0", description: "Scheduled for today", icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
+        { title: "Total Revenue", value: "EGP 0", description: "All-time revenue", icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
+        { title: "Active Staff", value: "0", description: "Currently on duty", icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+        { title: "Pending Appointments", value: "0", description: "Awaiting confirmation", icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
+        { title: "Completed Treatments", value: "0", description: "Finished treatment plans", icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
     ]);
 
     React.useEffect(() => {
@@ -59,12 +59,12 @@ export default function OverviewStats() {
                 const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
                 
                 setStats([
-                    { title: "Total Patients", value: `${totalPatients}`, change: "+12%", icon: "Users", changeType: "positive", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-                    { title: "Today's Appointments", value: `${todaysAppointments}`, change: "+5%", icon: "CalendarCheck", changeType: "positive", iconBg: "bg-green-100", iconColor: "text-green-600" },
-                    { title: "Total Revenue", value: `EGP ${totalRevenue.toLocaleString()}`, change: "+8%", icon: "DollarSign", changeType: "positive", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-                    { title: "Active Staff", value: `${activeStaff}`, change: "100%", icon: "UserCheck", changeType: "neutral", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-                    { title: "Pending Appointments", value: `${pendingAppointments}`, change: "-2%", icon: "Clock", changeType: "negative", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-                    { title: "Completed Treatments", value: `${completedTreatments}`, change: "+15%", icon: "CheckCircle", changeType: "positive", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+                    { title: "Total Patients", value: `${totalPatients}`, description: "All patients in system", icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+                    { title: "Today's Appointments", value: `${todaysAppointments}`, description: "Scheduled for today", icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
+                    { title: "Total Revenue", value: `EGP ${totalRevenue.toLocaleString()}`, description: "All-time revenue", icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
+                    { title: "Active Staff", value: `${activeStaff}`, description: "Currently on duty", icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+                    { title: "Pending Appointments", value: `${pendingAppointments}`, description: "Awaiting confirmation", icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
+                    { title: "Completed Treatments", value: `${completedTreatments}`, description: "Finished treatment plans", icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
                 ]);
 
             } catch (error) {
@@ -96,22 +96,7 @@ export default function OverviewStats() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center gap-2 text-xs">
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold",
-                    {
-                      "bg-green-100 text-green-800":
-                        stat.changeType === "positive",
-                      "bg-red-100 text-red-800": stat.changeType === "negative",
-                      "bg-gray-100 text-gray-800": stat.changeType === "neutral",
-                    }
-                  )}
-                >
-                  {stat.change}
-                </span>
-                <span className="text-muted-foreground">from last month</span>
-              </div>
+              <p className="text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>
         );
