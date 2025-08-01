@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -7,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { revenueTrendsData } from "@/lib/data";
 
 const chartConfig = {
   revenue: {
@@ -20,12 +20,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function RevenueTrendsChart() {
+interface RevenueTrendsChartProps {
+    data: { month: string; revenue: number; expenses: number }[];
+}
+
+export default function RevenueTrendsChart({ data }: RevenueTrendsChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart
         accessibilityLayer
-        data={revenueTrendsData}
+        data={data}
         margin={{
           top: 20,
           left: 12,

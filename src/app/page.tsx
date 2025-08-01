@@ -16,9 +16,10 @@ import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appoi
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import { useToast } from '@/hooks/use-toast';
-import { setDocument } from '@/services/firestore';
+import { getCollection, setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
+import { revenueVsExpensesData } from '@/lib/data';
 
 export default function DashboardPage() {
     const { toast } = useToast();
@@ -65,7 +66,7 @@ export default function DashboardPage() {
               <CardTitle>Revenue Trend</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <RevenueTrendsChart />
+              <RevenueTrendsChart data={revenueVsExpensesData} />
             </CardContent>
           </Card>
           <Card className="md:col-span-2">

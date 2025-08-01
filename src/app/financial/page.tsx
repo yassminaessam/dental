@@ -33,7 +33,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { financialPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -91,6 +90,47 @@ export default function FinancialPage() {
     }
     fetchTransactions();
   }, [toast]);
+
+  const financialPageStats = React.useMemo(() => {
+    const revenue = transactions.filter(t => t.type === 'Revenue').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
+    const expenses = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
+    const netProfit = revenue - expenses;
+    // Note: Pending payments would likely come from the 'invoices' collection, not transactions.
+    // This is a simplified calculation based on transactions.
+    const pending = transactions.filter(t => t.status === 'Pending').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
+
+    return [
+      {
+        title: "Total Revenue",
+        value: `EGP ${revenue.toLocaleString()}`,
+        change: "+12% from last month",
+        icon: "TrendingUp",
+        changeType: "positive",
+      },
+      {
+        title: "Total Expenses",
+        value: `EGP ${expenses.toLocaleString()}`,
+        change: "+5% from last month",
+        icon: "TrendingDown",
+        changeType: "negative",
+      },
+      {
+        title: "Net Profit",
+        value: `EGP ${netProfit.toLocaleString()}`,
+        change: "+15% from last month",
+        icon: "DollarSign",
+        changeType: "positive",
+      },
+      {
+        title: "Pending Payments",
+        value: `EGP ${pending.toLocaleString()}`,
+        description: "From pending transactions",
+        icon: "Wallet",
+        changeType: "neutral",
+      },
+    ];
+  }, [transactions]);
+
 
   const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
     try {

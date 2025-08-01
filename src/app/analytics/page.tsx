@@ -23,7 +23,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { analyticsPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Download, DollarSign, Users, TrendingUp, Activity } from "lucide-react";
 import RevenueTrendsChart from "@/components/dashboard/revenue-trends-chart";
@@ -33,6 +32,10 @@ import PatientDemographicsChart from '@/components/analytics/patient-demographic
 import TreatmentVolumeChart from '@/components/analytics/treatment-volume-chart';
 import StaffPerformanceChart from '@/components/analytics/staff-performance-chart';
 import PatientSatisfactionChart from '@/components/analytics/patient-satisfaction-chart';
+import { getCollection } from '@/services/firestore';
+import type { Invoice } from '../billing/page';
+import type { Patient } from '../patients/page';
+import type { Appointment } from '../appointments/page';
 
 const iconMap = {
     DollarSign,
@@ -47,6 +50,60 @@ type IconKey = keyof typeof iconMap;
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = React.useState('30');
   const { toast } = useToast();
+  const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [patientCount, setPatientCount] = React.useState(0);
+  const [showRate, setShowRate] = React.useState(0);
+
+
+  React.useEffect(() => {
+    async function fetchData() {
+        const invoices = await getCollection<Invoice>('invoices');
+        const total = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+        setTotalRevenue(total);
+
+        const patients = await getCollection<Patient>('patients');
+        setPatientCount(patients.length);
+
+        const appointments = await getCollection<Appointment>('appointments');
+        const confirmed = appointments.filter(a => a.status === 'Confirmed').length;
+        const totalAppointments = appointments.length;
+        if(totalAppointments > 0) {
+            setShowRate((confirmed / totalAppointments) * 100);
+        }
+    }
+    fetchData();
+  }, [])
+
+  const analyticsPageStats = [
+    {
+        title: "Total Revenue",
+        value: `EGP ${totalRevenue.toLocaleString()}`,
+        change: "+12.5% from last period",
+        icon: "DollarSign",
+        changeType: "positive"
+    },
+    {
+        title: "Patient Acquisition",
+        value: `${patientCount}`,
+        change: "+8.3% from last period",
+        icon: "Users",
+        changeType: "positive"
+    },
+    {
+        title: "Appointment Show Rate",
+        value: `${showRate.toFixed(1)}%`,
+        change: "+2.1% from last period",
+        icon: "TrendingUp",
+        changeType: "positive"
+    },
+    {
+        title: "Average Treatment Value",
+        value: "EGP 6,250",
+        change: "-1.2% from last period",
+        icon: "Activity",
+        changeType: "negative"
+    }
+  ];
 
   const handleExport = () => {
     toast({
