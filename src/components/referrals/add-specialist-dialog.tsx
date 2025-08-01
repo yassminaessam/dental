@@ -40,6 +40,13 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
   const [open, setOpen] = React.useState(false);
   const form = useForm<SpecialistFormData>({
     resolver: zodResolver(specialistSchema),
+    defaultValues: {
+      name: '',
+      specialty: '',
+      phone: '',
+      email: '',
+      clinicName: '',
+    },
   });
 
   const onSubmit = (data: SpecialistFormData) => {
