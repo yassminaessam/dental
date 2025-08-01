@@ -33,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { appointmentPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, List, Search, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
@@ -76,6 +75,20 @@ export default function AppointmentsPage() {
     }
     fetchAppointments();
   }, [toast]);
+
+  const appointmentPageStats = React.useMemo(() => {
+    const total = appointments.length;
+    const pending = appointments.filter(a => a.status === 'Pending').length;
+    const confirmed = appointments.filter(a => a.status === 'Confirmed').length;
+    const todays = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
+
+    return [
+      { title: "Total Appointments", value: total, description: "+5% from last month" },
+      { title: "Pending Appointments", value: pending, description: "Awaiting confirmation", valueClassName: "text-orange-500" },
+      { title: "Confirmed Appointments", value: confirmed, description: "+10% from last month", valueClassName: "text-green-600" },
+      { title: "Today's Appointments", value: todays, description: "Scheduled for today" },
+    ];
+  }, [appointments]);
 
   const handleSaveAppointment = async (data: Omit<Appointment, 'id' | 'status'>) => {
     try {
@@ -147,7 +160,7 @@ export default function AppointmentsPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.title === "Today's Appointments" ? appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length : stat.value}
+                  {stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
