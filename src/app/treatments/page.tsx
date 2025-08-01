@@ -29,14 +29,14 @@ import {
 import {
   treatmentCategories,
   treatmentPageStats,
-  initialTreatmentsData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Pencil } from "lucide-react";
+import { Search, Pencil, Loader2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
 import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
+import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 
 export type Treatment = {
   id: string;
@@ -51,40 +51,64 @@ export type Treatment = {
 };
 
 export default function TreatmentsPage() {
-  const [treatments, setTreatments] = React.useState<Treatment[]>(initialTreatmentsData);
+  const [treatments, setTreatments] = React.useState<Treatment[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
 
+  React.useEffect(() => {
+    async function fetchTreatments() {
+      try {
+        const data = await getCollection<Treatment>('treatments');
+        setTreatments(data);
+      } catch (e) {
+        toast({ title: "Error fetching treatments", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTreatments();
+  }, [toast]);
 
-  const handleSavePlan = (data: any) => {
-    const newTreatment: Treatment = {
-      id: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Date(data.startDate).toLocaleDateString(),
-      patient: data.patient,
-      procedure: data.treatmentName,
-      doctor: data.doctor,
-      tooth: 'Multiple',
-      cost: '$' + Math.floor(500 + Math.random() * 2000),
-      status: 'Pending',
-      followUp: data.endDate ? new Date(data.endDate).toLocaleDateString() : null,
-    };
-    setTreatments(prev => [newTreatment, ...prev]);
-    toast({
-      title: "Treatment Plan Created",
-      description: `A new plan for ${newTreatment.patient} has been created.`,
-    });
+  const handleSavePlan = async (data: any) => {
+    try {
+      const newTreatment: Treatment = {
+        id: `TRT-${Date.now()}`,
+        date: new Date(data.startDate).toLocaleDateString(),
+        patient: data.patient,
+        procedure: data.treatmentName,
+        doctor: data.doctor,
+        tooth: 'Multiple',
+        cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
+        status: 'Pending',
+        followUp: data.endDate ? new Date(data.endDate).toLocaleDateString() : null,
+      };
+      await setDocument('treatments', newTreatment.id, newTreatment);
+      setTreatments(prev => [newTreatment, ...prev]);
+      toast({
+        title: "Treatment Plan Created",
+        description: `A new plan for ${newTreatment.patient} has been created.`,
+      });
+    } catch (e) {
+      toast({ title: "Error creating plan", variant: "destructive" });
+    }
   };
 
-  const handleUpdateTreatment = (updatedTreatment: Treatment) => {
-    setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
-    setTreatmentToEdit(null);
-    toast({
-        title: "Treatment Updated",
-        description: `Treatment for ${updatedTreatment.patient} has been updated.`,
-    });
+  const handleUpdateTreatment = async (updatedTreatment: Treatment) => {
+    try {
+      await updateDocument('treatments', updatedTreatment.id, updatedTreatment);
+      setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
+      setTreatmentToEdit(null);
+      toast({
+          title: "Treatment Updated",
+          description: `Treatment for ${updatedTreatment.patient} has been updated.`,
+      });
+    } catch(e) {
+      toast({ title: "Error updating treatment", variant: "destructive" });
+    }
   };
 
   const filteredTreatments = React.useMemo(() => {
@@ -192,7 +216,9 @@ export default function TreatmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTreatments.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={9} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
                           <TableCell>{treatment.date}</TableCell>

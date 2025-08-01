@@ -40,12 +40,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { initialInsuranceClaimsData, insurancePageStats } from "@/lib/data";
+import { insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2 } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
+import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 
 export type Claim = {
   id: string;
@@ -62,30 +63,50 @@ export type Claim = {
 };
 
 export default function InsurancePage() {
-  const [claims, setClaims] = React.useState<Claim[]>(initialInsuranceClaimsData);
+  const [claims, setClaims] = React.useState<Claim[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [claimToView, setClaimToView] = React.useState<Claim | null>(null);
   const { toast } = useToast();
 
-  const handleSaveClaim = (data: any) => {
-    const newClaim: Claim = {
-      id: `CLM-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      patient: data.patient,
-      patientId: 'DC' + Math.floor(100000000 + Math.random() * 900000000),
-      insurance: data.insurance,
-      procedure: data.procedure,
-      procedureCode: data.procedureCode,
-      amount: `$${parseFloat(data.amount).toFixed(2)}`,
-      approvedAmount: null,
-      status: 'Processing',
-      submitDate: new Date(data.submitDate).toLocaleDateString(),
-    };
-    setClaims(prev => [newClaim, ...prev]);
-    toast({
-      title: "Claim Submitted",
-      description: `New claim for ${newClaim.patient} has been submitted for processing.`,
-    });
+  React.useEffect(() => {
+    async function fetchClaims() {
+      try {
+        const data = await getCollection<Claim>('insurance-claims');
+        setClaims(data);
+      } catch (error) {
+        toast({ title: 'Error fetching claims', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchClaims();
+  }, [toast]);
+
+  const handleSaveClaim = async (data: any) => {
+    try {
+      const newClaim: Claim = {
+        id: `CLM-${Date.now()}`,
+        patient: data.patient,
+        patientId: 'DC' + Math.floor(100000000 + Math.random() * 900000000),
+        insurance: data.insurance,
+        procedure: data.procedure,
+        procedureCode: data.procedureCode,
+        amount: `EGP ${parseFloat(data.amount).toFixed(2)}`,
+        approvedAmount: null,
+        status: 'Processing',
+        submitDate: new Date(data.submitDate).toLocaleDateString(),
+      };
+      await setDocument('insurance-claims', newClaim.id, newClaim);
+      setClaims(prev => [newClaim, ...prev]);
+      toast({
+        title: "Claim Submitted",
+        description: `New claim for ${newClaim.patient} has been submitted for processing.`,
+      });
+    } catch(e) {
+      toast({ title: "Error submitting claim", variant: 'destructive' });
+    }
   };
 
   const handleExport = () => {
@@ -102,16 +123,21 @@ export default function InsurancePage() {
     });
   }
 
-  const handleStatusChange = (claimId: string, newStatus: Claim['status']) => {
-    setClaims(prev => 
-      prev.map(claim => 
-        claim.id === claimId ? { ...claim, status: newStatus } : claim
-      )
-    );
-    toast({
-      title: "Status Updated",
-      description: `Claim ${claimId} has been marked as ${newStatus}.`,
-    });
+  const handleStatusChange = async (claimId: string, newStatus: Claim['status']) => {
+    try {
+      await updateDocument('insurance-claims', claimId, { status: newStatus });
+      setClaims(prev => 
+        prev.map(claim => 
+          claim.id === claimId ? { ...claim, status: newStatus } : claim
+        )
+      );
+      toast({
+        title: "Status Updated",
+        description: `Claim ${claimId} has been marked as ${newStatus}.`,
+      });
+    } catch(e) {
+      toast({ title: "Error updating status", variant: 'destructive' });
+    }
   };
 
   const filteredClaims = React.useMemo(() => {
@@ -213,7 +239,9 @@ export default function InsurancePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredClaims.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredClaims.length > 0 ? (
                       filteredClaims.map((claim) => (
                         <TableRow key={claim.id}>
                           <TableCell className="font-medium">

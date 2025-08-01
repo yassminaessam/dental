@@ -33,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { financialPageStats, initialTransactionHistoryData } from "@/lib/data";
+import { financialPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -42,11 +42,13 @@ import {
   TrendingDown,
   DollarSign,
   Wallet,
+  Loader2,
 } from "lucide-react";
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { getCollection, setDocument } from '@/services/firestore';
 
 export type Transaction = {
   id: string;
@@ -70,24 +72,43 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
-  const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactionHistoryData);
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const { toast } = useToast();
 
-  const handleSaveTransaction = (data: Omit<Transaction, 'id' | 'status'>) => {
-    const newTransaction: Transaction = {
-      id: `TRN-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...data,
-      date: new Date(data.date).toLocaleDateString(),
-      amount: `$${parseFloat(data.amount).toFixed(2)}`,
-      status: 'Completed',
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
-    toast({
-      title: "Transaction Added",
-      description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
-    });
+  React.useEffect(() => {
+    async function fetchTransactions() {
+      try {
+        const data = await getCollection<Transaction>('transactions');
+        setTransactions(data);
+      } catch (error) {
+        toast({ title: "Error fetching transactions", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTransactions();
+  }, [toast]);
+
+  const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
+    try {
+      const newTransaction: Transaction = {
+        id: `TRN-${Date.now()}`,
+        ...data,
+        amount: `EGP ${parseFloat(data.amount).toFixed(2)}`,
+        status: 'Completed',
+      };
+      await setDocument('transactions', newTransaction.id, newTransaction);
+      setTransactions(prev => [newTransaction, ...prev]);
+      toast({
+        title: "Transaction Added",
+        description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
+      });
+    } catch (e) {
+      toast({ title: "Error adding transaction", variant: "destructive" });
+    }
   };
   
   const filteredTransactions = React.useMemo(() => {
@@ -218,7 +239,9 @@ export default function FinancialPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTransactions.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredTransactions.length > 0 ? (
                       filteredTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.date}</TableCell>

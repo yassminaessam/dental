@@ -35,15 +35,16 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsPageStats, initialMedicalRecordsData, medicalRecordTypes, initialClinicalImagesData, initialMedicalTemplatesData, MedicalRecordTemplate } from "@/lib/data";
+import { medicalRecordsPageStats, medicalRecordTypes, MedicalRecordTemplate } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, Download, Image as ImageIcon, Eye, Pencil } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2 } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { ViewRecordDialog } from '@/components/medical-records/view-record-dialog';
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
+import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 
 export type MedicalRecord = {
   id: string;
@@ -65,9 +66,10 @@ export type ClinicalImage = {
 };
 
 export default function MedicalRecordsPage() {
-  const [records, setRecords] = React.useState<MedicalRecord[]>(initialMedicalRecordsData);
-  const [images, setImages] = React.useState<ClinicalImage[]>(initialClinicalImagesData);
-  const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>(initialMedicalTemplatesData);
+  const [records, setRecords] = React.useState<MedicalRecord[]>([]);
+  const [images, setImages] = React.useState<ClinicalImage[]>([]);
+  const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [recordSearchTerm, setRecordSearchTerm] = React.useState('');
   const [recordTypeFilter, setRecordTypeFilter] = React.useState('all');
@@ -78,44 +80,80 @@ export default function MedicalRecordsPage() {
   const [recordToView, setRecordToView] = React.useState<MedicalRecord | null>(null);
   const [recordToEdit, setRecordToEdit] = React.useState<MedicalRecord | null>(null);
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    async function fetchData() {
+        try {
+            const [recordsData, imagesData, templatesData] = await Promise.all([
+                getCollection<MedicalRecord>('medical-records'),
+                getCollection<ClinicalImage>('clinical-images'),
+                getCollection<MedicalRecordTemplate>('templates'),
+            ]);
+            setRecords(recordsData);
+            setImages(imagesData);
+            setTemplates(templatesData);
+        } catch (e) {
+            toast({ title: 'Error fetching data', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
 
-  const handleSaveRecord = (data: Omit<MedicalRecord, 'id' | 'status'>) => {
-    const newRecord: MedicalRecord = {
-      id: `MR-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      ...data,
-      date: new Date(data.date).toLocaleDateString(),
-      status: 'Final',
-    };
-    setRecords(prev => [newRecord, ...prev]);
-    toast({
-      title: "Medical Record Created",
-      description: `New record for ${newRecord.patient} has been created.`,
-    });
+  const handleSaveRecord = async (data: Omit<MedicalRecord, 'id' | 'status'>) => {
+    try {
+      const newRecord: MedicalRecord = {
+        id: `MR-${Date.now()}`,
+        ...data,
+        status: 'Final',
+      };
+      await setDocument('medical-records', newRecord.id, newRecord);
+      setRecords(prev => [newRecord, ...prev]);
+      toast({
+        title: "Medical Record Created",
+        description: `New record for ${newRecord.patient} has been created.`,
+      });
+    } catch(e) {
+      toast({ title: 'Error creating record', variant: 'destructive' });
+    }
   };
 
-  const handleUpdateRecord = (updatedRecord: MedicalRecord) => {
-    setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
-    setRecordToEdit(null);
-    toast({
-      title: "Medical Record Updated",
-      description: `Record ${updatedRecord.id} has been updated.`,
-    });
+  const handleUpdateRecord = async (updatedRecord: MedicalRecord) => {
+    try {
+      await updateDocument('medical-records', updatedRecord.id, updatedRecord);
+      setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
+      setRecordToEdit(null);
+      toast({
+        title: "Medical Record Updated",
+        description: `Record ${updatedRecord.id} has been updated.`,
+      });
+    } catch(e) {
+      toast({ title: 'Error updating record', variant: 'destructive' });
+    }
   };
 
-  const handleImageUpload = (data: any) => {
-    const newImage: ClinicalImage = {
-      id: `IMG-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      patient: data.patientName,
-      type: data.type,
-      date: new Date().toLocaleDateString(),
-      imageUrl: URL.createObjectURL(data.file),
-      caption: data.caption
-    };
-    setImages(prev => [newImage, ...prev]);
-    toast({
-      title: "Image Uploaded",
-      description: `A new ${data.type} image for ${data.patientName} has been uploaded.`,
-    });
+  const handleImageUpload = async (data: any) => {
+     try {
+      const newImage: ClinicalImage = {
+        id: `IMG-${Date.now()}`,
+        patient: data.patientName,
+        type: data.type,
+        date: new Date().toLocaleDateString(),
+        imageUrl: URL.createObjectURL(data.file), // Note: This is a temporary client-side URL
+        caption: data.caption
+      };
+      // In a real app, you would upload the file to a storage service (like Firebase Storage)
+      // and save the permanent URL. For this demo, we'll just add it to the state.
+      // await setDocument('clinical-images', newImage.id, { ...newImage, imageUrl: 'PERMANENT_URL' });
+      setImages(prev => [newImage, ...prev]);
+      toast({
+        title: "Image Uploaded",
+        description: `A new ${data.type} image for ${data.patientName} has been uploaded.`,
+      });
+     } catch(e) {
+        toast({ title: 'Error uploading image', variant: 'destructive' });
+     }
   };
   
   const handleDownloadRecord = (recordId: string) => {
@@ -230,7 +268,9 @@ export default function MedicalRecordsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRecords.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredRecords.length > 0 ? (
                       filteredRecords.map((record) => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.id}</TableCell>
@@ -295,7 +335,9 @@ export default function MedicalRecordsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {filteredImages.length > 0 ? (
+                    {loading ? (
+                      <div className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : filteredImages.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {filteredImages.map((image) => (
                         <Card key={image.id} className="overflow-hidden">
@@ -347,7 +389,9 @@ export default function MedicalRecordsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                {filteredTemplates.length > 0 ? (
+                {loading ? (
+                  <div className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                ) : filteredTemplates.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredTemplates.map((template) => (
                     <Card key={template.id} className="flex flex-col">

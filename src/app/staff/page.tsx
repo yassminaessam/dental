@@ -24,10 +24,9 @@ import {
 import {
   staffPageStats,
   staffRoles,
-  initialStaffData,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
 import {
@@ -48,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { ViewEmployeeDialog } from '@/components/staff/view-employee-dialog';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 
 export type StaffMember = {
   id: string;
@@ -62,50 +62,80 @@ export type StaffMember = {
 };
 
 export default function StaffPage() {
-  const [staff, setStaff] = React.useState<StaffMember[]>(initialStaffData);
+  const [staff, setStaff] = React.useState<StaffMember[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [staffToView, setStaffToView] = React.useState<StaffMember | null>(null);
   const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
 
-  const handleSaveEmployee = (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
-    const newEmployee: StaffMember = {
-      id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: `${data.name}`,
-      role: data.role,
-      email: data.email,
-      phone: data.phone,
-      schedule: 'Mon-Fri, 9-5',
-      salary: `$${parseInt(data.salary).toLocaleString()}`,
-      hireDate: new Date(data.hireDate).toLocaleDateString(),
-      status: 'Active'
-    };
-    setStaff(prev => [newEmployee, ...prev]);
-    toast({
-      title: "Employee Added",
-      description: `${newEmployee.name} has been added to the staff.`,
-    });
+  React.useEffect(() => {
+    async function fetchStaff() {
+      try {
+        const data = await getCollection<StaffMember>('staff');
+        setStaff(data);
+      } catch (error) {
+        toast({ title: "Error fetching staff data", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStaff();
+  }, [toast]);
+
+  const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
+    try {
+      const newEmployee: StaffMember = {
+        id: `EMP-${Date.now()}`,
+        name: `${data.name}`,
+        role: data.role,
+        email: data.email,
+        phone: data.phone,
+        schedule: 'Mon-Fri, 9-5',
+        salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
+        hireDate: new Date(data.hireDate).toLocaleDateString(),
+        status: 'Active'
+      };
+      await setDocument('staff', newEmployee.id, newEmployee);
+      setStaff(prev => [newEmployee, ...prev]);
+      toast({
+        title: "Employee Added",
+        description: `${newEmployee.name} has been added to the staff.`,
+      });
+    } catch (e) {
+      toast({ title: "Error adding employee", variant: "destructive" });
+    }
   };
   
-  const handleUpdateEmployee = (updatedStaff: StaffMember) => {
-    setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
-    setStaffToEdit(null);
-    toast({
-      title: "Employee Updated",
-      description: `${updatedStaff.name}'s record has been updated.`,
-    });
+  const handleUpdateEmployee = async (updatedStaff: StaffMember) => {
+    try {
+      await updateDocument('staff', updatedStaff.id, updatedStaff);
+      setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
+      setStaffToEdit(null);
+      toast({
+        title: "Employee Updated",
+        description: `${updatedStaff.name}'s record has been updated.`,
+      });
+    } catch(e) {
+      toast({ title: "Error updating employee", variant: "destructive" });
+    }
   };
 
-  const handleDeleteEmployee = () => {
+  const handleDeleteEmployee = async () => {
     if (staffToDelete) {
-      setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
-      toast({
-        title: "Employee Deleted",
-        description: `${staffToDelete.name}'s record has been deleted.`,
-        variant: "destructive"
-      });
-      setStaffToDelete(null);
+      try {
+        await deleteDocument('staff', staffToDelete.id);
+        setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
+        toast({
+          title: "Employee Deleted",
+          description: `${staffToDelete.name}'s record has been deleted.`,
+          variant: "destructive"
+        });
+        setStaffToDelete(null);
+      } catch(e) {
+        toast({ title: "Error deleting employee", variant: "destructive" });
+      }
     }
   };
 
@@ -200,7 +230,9 @@ export default function StaffPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStaff.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredStaff.length > 0 ? (
                       filteredStaff.map((member) => (
                         <TableRow key={member.id}>
                           <TableCell>
