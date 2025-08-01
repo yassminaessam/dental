@@ -33,7 +33,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { suppliersPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -146,6 +145,20 @@ export default function SuppliersPage() {
   const supplierCategories = React.useMemo(() => {
     return [...new Set(suppliers.map((s) => s.category))];
   }, [suppliers]);
+  
+  const suppliersPageStats = React.useMemo(() => {
+    const totalSuppliers = suppliers.length;
+    const pendingPOs = purchaseOrders.filter(po => po.status === 'Pending').length;
+    const totalPOValue = purchaseOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
+    const topRatedSuppliers = suppliers.filter(s => s.rating >= 4.5).length;
+    
+    return [
+      { title: "Total Suppliers", value: totalSuppliers, icon: "Building2", description: "All active suppliers", valueClassName: "" },
+      { title: "Pending POs", value: pendingPOs, icon: "FileText", description: "Orders awaiting shipment", valueClassName: "text-orange-500" },
+      { title: "Total PO Value", value: `EGP ${totalPOValue.toLocaleString()}`, icon: "DollarSign", description: "Value of all orders", valueClassName: "" },
+      { title: "Top Rated", value: `${topRatedSuppliers} Suppliers`, icon: "Star", description: "Rating of 4.5 or higher", valueClassName: "text-yellow-500" },
+    ];
+  }, [suppliers, purchaseOrders]);
 
   const handleSaveSupplier = async (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
     try {
@@ -311,7 +324,7 @@ export default function SuppliersPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {suppliersPageStats(suppliers.length, purchaseOrders.filter(p => p.status === "Pending").length).map((stat) => {
+          {suppliersPageStats.map((stat) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (
               <Card key={stat.title}>
