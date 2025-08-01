@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
+import { format } from 'date-fns';
 
 export type Patient = {
   id: string;
@@ -229,9 +230,11 @@ export default function PatientsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px] whitespace-nowrap">Patient</TableHead>
+                  <TableHead className="whitespace-nowrap">Patient</TableHead>
+                  <TableHead className="whitespace-nowrap">Date of Birth</TableHead>
                   <TableHead className="whitespace-nowrap">Contact</TableHead>
                   <TableHead className="whitespace-nowrap">Address</TableHead>
+                  <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
                   <TableHead className="whitespace-nowrap">Insurance</TableHead>
                   <TableHead className="whitespace-nowrap">Last Visit</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
@@ -241,7 +244,7 @@ export default function PatientsPage() {
               <TableBody>
                  {loading ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={9} className="h-24 text-center">
                             <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                         </TableCell>
                     </TableRow>
@@ -260,11 +263,22 @@ export default function PatientsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
+                        {format(patient.dob, 'PPP')}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <div>{patient.email}</div>
                         <div className="text-xs text-muted-foreground">{patient.phone}</div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                          <div>{patient.ecName || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground">{patient.ecPhone}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{patient.ecRelationship}</div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div>{patient.insuranceProvider || 'N/A'}</div>
+                        <div className="text-xs text-muted-foreground">{patient.policyNumber}</div>
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
@@ -295,7 +309,7 @@ export default function PatientsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       No patients found.
                     </TableCell>
                   </TableRow>
