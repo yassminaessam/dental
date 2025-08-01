@@ -33,7 +33,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { referralPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
@@ -102,6 +101,19 @@ export default function ReferralsPage() {
     fetchData();
   }, [toast]);
 
+  const referralPageStats = React.useMemo(() => {
+    const totalReferrals = referrals.length;
+    const pendingReferrals = referrals.filter(r => r.status === 'pending').length;
+    const completedReferrals = referrals.filter(r => r.status === 'completed').length;
+    const specialistCount = specialists.length;
+    
+    return [
+      { title: "Total Referrals", value: totalReferrals, description: "+5 from last month", valueClassName: "text-blue-500" },
+      { title: "Pending Referrals", value: pendingReferrals, description: "Awaiting specialist action", valueClassName: "text-orange-500" },
+      { title: "Completed Referrals", value: completedReferrals, description: "+3 from last month", valueClassName: "text-green-500" },
+      { title: "Specialist Network", value: specialistCount, description: "Total specialists in network", valueClassName: "" },
+    ];
+  }, [referrals, specialists]);
 
   const handleSaveReferral = async (data: Omit<Referral, 'id'|'specialty'|'date'|'apptDate'|'status'>) => {
     const specialistDetails = specialists.find(s => s.id === data.specialist);
@@ -225,7 +237,7 @@ export default function ReferralsPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                   {stat.title === 'Total Referrals' ? referrals.length : stat.value}
+                   {stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
