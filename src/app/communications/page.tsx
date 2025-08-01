@@ -34,16 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
-
-export type Message = {
-  id: string;
-  patient: string;
-  type: 'SMS' | 'Email';
-  content: string;
-  subContent: string | null;
-  status: 'Sent' | 'Delivered' | 'Read';
-  sent: string;
-};
+import type { Message } from '@/lib/types';
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);

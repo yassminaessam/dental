@@ -10,11 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { PatientMessage } from '@/app/patient-portal/page';
 import { Badge } from '../ui/badge';
+import type { Message } from '@/lib/types';
+
 
 interface ViewMessageDialogProps {
-  message: PatientMessage | null;
+  message: Message | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

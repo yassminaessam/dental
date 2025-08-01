@@ -37,7 +37,8 @@ import type { Appointment } from '@/app/appointments/page';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { getCollection, updateDocument, deleteDocument, setDocument } from '@/services/firestore';
-import type { Message } from '@/app/communications/page';
+import type { Message } from '@/lib/types';
+
 
 export type PortalUser = {
     id: string;
@@ -55,26 +56,13 @@ export type SharedDocument = {
     sharedDate: string;
 };
 
-export type PatientMessage = {
-    id: string;
-    patient: string;
-    subject: string;
-    snippet: string;
-    fullMessage: string;
-    category: 'treatment' | 'appointment' | 'billing' | 'other';
-    priority: 'high' | 'normal' | 'low';
-    date: string;
-    status: 'Unread' | 'Read';
-};
-
-
 export default function PatientPortalPage() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
   
-  const [messages, setMessages] = React.useState<PatientMessage[]>([]);
-  const [selectedMessage, setSelectedMessage] = React.useState<PatientMessage | null>(null);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [isReplyOpen, setIsReplyOpen] = React.useState(false);
   const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
 
@@ -87,7 +75,7 @@ export default function PatientPortalPage() {
       setLoading(true);
       try {
         const [msgData, apptData, userData, docData] = await Promise.all([
-          getCollection<PatientMessage>('patient-messages'),
+          getCollection<Message>('patient-messages'),
           getCollection<Appointment>('appointments'),
           getCollection<PortalUser>('portal-users'),
           getCollection<SharedDocument>('shared-documents'),
@@ -137,7 +125,7 @@ export default function PatientPortalPage() {
     }
   };
 
-  const handleReply = (message: PatientMessage) => {
+  const handleReply = (message: Message) => {
     setReplyData({
       patientName: message.patient,
       subject: `Re: ${message.subject}`,
