@@ -48,7 +48,7 @@ import ExpensesByCategoryChart from "@/components/financial/expenses-by-category
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 export type Transaction = {
   id: string;
@@ -89,17 +89,19 @@ export default function FinancialPage() {
         // Process data for charts
         const monthlyData: Record<string, { revenue: number, expenses: number, profit: number }> = {};
         parsedData.forEach(t => {
-            const month = format(t.date, 'yyyy-MM');
-            if (!monthlyData[month]) {
-                monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
+            if (isValid(t.date)) {
+                const month = format(t.date, 'yyyy-MM');
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
+                }
+                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+                if (t.type === 'Revenue') {
+                    monthlyData[month].revenue += amount;
+                } else {
+                    monthlyData[month].expenses += amount;
+                }
+                monthlyData[month].profit = monthlyData[month].revenue - monthlyData[month].expenses;
             }
-            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
-            if (t.type === 'Revenue') {
-                monthlyData[month].revenue += amount;
-            } else {
-                monthlyData[month].expenses += amount;
-            }
-            monthlyData[month].profit = monthlyData[month].revenue - monthlyData[month].expenses;
         });
 
         const sortedChartData = Object.keys(monthlyData).sort().map(month => ({
@@ -322,9 +324,9 @@ export default function FinancialPage() {
                     {loading ? (
                       <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTransactions.length > 0 ? (
-                      filteredTransactions.map((transaction: any) => (
+                      filteredTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{format(transaction.date, 'PPP')}</TableCell>
+                          <TableCell>{isValid(transaction.date) ? format(transaction.date, 'PPP') : 'Invalid Date'}</TableCell>
                           <TableCell>
                             <div className="font-medium">{transaction.description}</div>
                             {transaction.patient && <div className="text-xs text-muted-foreground">Patient: {transaction.patient}</div>}
@@ -402,4 +404,5 @@ export default function FinancialPage() {
       </main>
     </DashboardLayout>
   );
-}
+
+    
