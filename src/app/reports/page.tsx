@@ -24,6 +24,10 @@ import PatientGrowthChart from "@/components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "@/components/reports/treatments-by-type-chart";
 import AppointmentDistributionChart from "@/components/reports/appointment-distribution-chart";
 import { useToast } from '@/hooks/use-toast';
+import { getCollection } from '@/services/firestore';
+import type { Invoice } from '../billing/page';
+import type { Patient } from '../patients/page';
+import type { Appointment } from '../appointments/page';
 
 const iconMap = {
     DollarSign,
@@ -34,38 +38,66 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
-const reportsPageStats = [
-  {
-    title: "Total Revenue",
-    value: "EGP 1,000,000",
-    change: "+15% from last 30d",
-    icon: "DollarSign",
-  },
-  {
-    title: "New Patients",
-    value: "45",
-    change: "+10% from last 30d",
-    icon: "Users",
-  },
-  {
-    title: "Total Appointments",
-    value: "350",
-    change: "+5% from last 30d",
-    icon: "Calendar",
-  },
-  {
-    title: "Appointment Show Rate",
-    value: "92%",
-    change: "+1.2% from last 30d",
-    icon: "TrendingUp",
-  },
-];
-
-
 export default function ReportsPage() {
   const [dateRange, setDateRange] = React.useState('30');
   const [exportFormat, setExportFormat] = React.useState('csv');
   const { toast } = useToast();
+
+  const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [newPatients, setNewPatients] = React.useState(0);
+  const [totalAppointments, setTotalAppointments] = React.useState(0);
+  const [showRate, setShowRate] = React.useState(0);
+
+  React.useEffect(() => {
+    async function fetchData() {
+        const [invoices, patients, appointments] = await Promise.all([
+            getCollection<Invoice>('invoices'),
+            getCollection<Patient>('patients'),
+            getCollection<Appointment>('appointments'),
+        ]);
+        
+        setTotalRevenue(invoices.reduce((acc, inv) => acc + inv.totalAmount, 0));
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        setNewPatients(patients.filter(p => new Date(p.lastVisit) > thirtyDaysAgo).length);
+
+        setTotalAppointments(appointments.length);
+        
+        const confirmedAppointments = appointments.filter(a => a.status === 'Confirmed').length;
+        if (appointments.length > 0) {
+            setShowRate((confirmedAppointments / appointments.length) * 100);
+        }
+    }
+    fetchData();
+  }, []);
+
+  const reportsPageStats = [
+    {
+      title: "Total Revenue",
+      value: `EGP ${totalRevenue.toLocaleString()}`,
+      description: "All time revenue",
+      icon: "DollarSign",
+    },
+    {
+      title: "New Patients",
+      value: `${newPatients}`,
+      description: "In the last 30 days",
+      icon: "Users",
+    },
+    {
+      title: "Total Appointments",
+      value: `${totalAppointments}`,
+      description: "All time",
+      icon: "Calendar",
+    },
+    {
+      title: "Appointment Show Rate",
+      value: `${showRate.toFixed(1)}%`,
+      description: "Confirmed appointments",
+      icon: "TrendingUp",
+    },
+  ];
 
   const handleExport = () => {
     toast({
@@ -114,11 +146,11 @@ export default function ReportsPage() {
                     <Card key={stat.title}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                            <Icon className="h-4 w-4 text-green-500" />
+                            <Icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className="text-xs text-green-600">{stat.change}</p>
+                            <p className="text-xs text-muted-foreground">{stat.description}</p>
                         </CardContent>
                     </Card>
                 );
