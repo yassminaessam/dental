@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -7,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { reportsPatientGrowthData } from "@/lib/data";
 
 const chartConfig = {
   total: {
@@ -20,12 +20,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function PatientGrowthChart() {
+interface PatientGrowthChartProps {
+    data: { month: string; total: number; new: number }[];
+}
+
+export default function PatientGrowthChart({ data }: PatientGrowthChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <LineChart
         accessibilityLayer
-        data={reportsPatientGrowthData}
+        data={data}
         margin={{
           left: 12,
           right: 12,

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Pie, PieChart, Cell } from "recharts";
@@ -7,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "@/components/ui/chart";
-import { reportsAppointmentDistributionData } from "@/lib/data";
 
 const chartConfig = {
   "Check-up": { label: "Check-up", color: "hsl(var(--chart-1))" },
@@ -17,7 +17,11 @@ const chartConfig = {
   Other: { label: "Other", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
-export default function AppointmentDistributionChart() {
+interface AppointmentDistributionChartProps {
+    data: { type: string; count: number; color: string }[];
+}
+
+export default function AppointmentDistributionChart({ data }: AppointmentDistributionChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <PieChart>
@@ -26,14 +30,14 @@ export default function AppointmentDistributionChart() {
           content={<ChartTooltipContent hideLabel />}
         />
         <Pie
-          data={reportsAppointmentDistributionData}
+          data={data}
           dataKey="count"
           nameKey="type"
           innerRadius={50}
           outerRadius={100}
           strokeWidth={2}
         >
-          {reportsAppointmentDistributionData.map((entry) => (
+          {data.map((entry) => (
             <Cell key={`cell-${entry.type}`} fill={entry.color} />
           ))}
         </Pie>

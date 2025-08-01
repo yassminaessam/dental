@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -7,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { reportsTreatmentsByTypeData } from "@/lib/data";
 
 const chartConfig = {
   count: {
@@ -16,12 +16,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function TreatmentsByTypeChart() {
+interface TreatmentsByTypeChartProps {
+    data: { type: string; count: number }[];
+}
+
+export default function TreatmentsByTypeChart({ data }: TreatmentsByTypeChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <BarChart
         accessibilityLayer
-        data={reportsTreatmentsByTypeData}
+        data={data}
         margin={{
           left: 12,
           right: 12,

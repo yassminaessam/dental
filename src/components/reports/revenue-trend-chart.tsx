@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -7,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { reportsRevenueTrendData } from "@/lib/data";
 
 const chartConfig = {
   revenue: {
@@ -20,12 +20,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function RevenueTrendChart() {
+interface RevenueTrendChartProps {
+    data: { month: string; revenue: number; expenses: number }[];
+}
+
+export default function RevenueTrendChart({ data }: RevenueTrendChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <AreaChart
         accessibilityLayer
-        data={reportsRevenueTrendData}
+        data={data}
         margin={{
           left: 12,
           right: 12,
@@ -43,6 +47,7 @@ export default function RevenueTrendChart() {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(value) => `EGP ${value / 1000}k`}
         />
         <ChartTooltip
           cursor={false}

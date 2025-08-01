@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Download, DollarSign, Users, Calendar, TrendingUp } from "lucide-react";
+import { Download, DollarSign, Users, Calendar, TrendingUp, Loader2 } from "lucide-react";
 import RevenueTrendChart from "@/components/reports/revenue-trend-chart";
 import PatientGrowthChart from "@/components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "@/components/reports/treatments-by-type-chart";
@@ -28,6 +28,9 @@ import { getCollection } from '@/services/firestore';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
+import { format, startOfMonth } from 'date-fns';
+import { Treatment } from '../treatments/page';
+import { Transaction } from '../financial/page';
 
 const iconMap = {
     DollarSign,
@@ -39,6 +42,7 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function ReportsPage() {
+  const [loading, setLoading] = React.useState(true);
   const [dateRange, setDateRange] = React.useState('30');
   const [exportFormat, setExportFormat] = React.useState('csv');
   const { toast } = useToast();
@@ -48,14 +52,24 @@ export default function ReportsPage() {
   const [totalAppointments, setTotalAppointments] = React.useState(0);
   const [showRate, setShowRate] = React.useState(0);
 
+  const [revenueTrendData, setRevenueTrendData] = React.useState<any[]>([]);
+  const [patientGrowthData, setPatientGrowthData] = React.useState<any[]>([]);
+  const [treatmentsByTypeData, setTreatmentsByTypeData] = React.useState<any[]>([]);
+  const [appointmentDistributionData, setAppointmentDistributionData] = React.useState<any[]>([]);
+
+
   React.useEffect(() => {
     async function fetchData() {
-        const [invoices, patients, appointments] = await Promise.all([
+        setLoading(true);
+        const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
             getCollection<Invoice>('invoices'),
             getCollection<Patient>('patients'),
-            getCollection<Appointment>('appointments'),
+            getCollection<any>('appointments'),
+            getCollection<Treatment>('treatments'),
+            getCollection<Transaction>('transactions'),
         ]);
         
+        // --- Top Stat Cards ---
         setTotalRevenue(invoices.reduce((acc, inv) => acc + inv.totalAmount, 0));
 
         const thirtyDaysAgo = new Date();
@@ -68,6 +82,57 @@ export default function ReportsPage() {
         if (appointments.length > 0) {
             setShowRate((confirmedAppointments / appointments.length) * 100);
         }
+
+        // --- Chart Data Processing ---
+
+        // Revenue Trend
+        const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
+        transactions.forEach(t => {
+            const month = format(new Date(t.date), 'MMM');
+            if(!monthlyFinancials[month]) monthlyFinancials[month] = { revenue: 0, expenses: 0 };
+            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+            if(t.type === 'Revenue') monthlyFinancials[month].revenue += amount;
+            else monthlyFinancials[month].expenses += amount;
+        });
+        setRevenueTrendData(Object.entries(monthlyFinancials).map(([month, data]) => ({month, ...data})));
+
+        // Patient Growth
+        const monthlyGrowth: Record<string, { total: number, new: number }> = {};
+        let cumulativePatients = 0;
+        patients.sort((a,b) => new Date(a.dob).getTime() - new Date(b.dob).getTime()).forEach(p => {
+             const month = format(startOfMonth(new Date(p.dob)), 'MMM');
+             if(!monthlyGrowth[month]) {
+                 monthlyGrowth[month] = { total: 0, new: 0 };
+             }
+             monthlyGrowth[month].new++;
+        });
+
+        const sortedMonths = Object.keys(monthlyGrowth).sort((a, b) => new Date(`01 ${a} 2000`).getTime() - new Date(`01 ${b} 2000`).getTime());
+        sortedMonths.forEach(month => {
+            cumulativePatients += monthlyGrowth[month].new;
+            monthlyGrowth[month].total = cumulativePatients;
+        })
+        setPatientGrowthData(Object.entries(monthlyGrowth).map(([month, data]) => ({month, ...data})));
+
+
+        // Treatments by Type
+        const treatmentCounts: Record<string, number> = {};
+        treatments.forEach(t => {
+            treatmentCounts[t.procedure] = (treatmentCounts[t.procedure] || 0) + 1;
+        });
+        setTreatmentsByTypeData(Object.entries(treatmentCounts).map(([type, count]) => ({type, count})));
+
+
+        // Appointment Distribution
+        const appointmentTypeCounts: Record<string, number> = {};
+        appointments.forEach(a => {
+            appointmentTypeCounts[a.type] = (appointmentTypeCounts[a.type] || 0) + 1;
+        });
+        const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--muted))"];
+        setAppointmentDistributionData(Object.entries(appointmentTypeCounts).map(([type, count], i) => ({type, count, color: colors[i % colors.length]})));
+
+
+        setLoading(false);
     }
     fetchData();
   }, []);
@@ -105,6 +170,17 @@ export default function ReportsPage() {
         description: `Your report for the last ${dateRange} days is being generated as a ${exportFormat.toUpperCase()} file.`,
     });
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin" />
+            <p className="text-muted-foreground">Generating reports...</p>
+        </main>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout>
@@ -163,7 +239,7 @@ export default function ReportsPage() {
                     <CardTitle>Revenue Trend</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <RevenueTrendChart />
+                    <RevenueTrendChart data={revenueTrendData} />
                 </CardContent>
             </Card>
             <Card>
@@ -171,7 +247,7 @@ export default function ReportsPage() {
                     <CardTitle>Patient Growth</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <PatientGrowthChart />
+                    <PatientGrowthChart data={patientGrowthData} />
                 </CardContent>
             </Card>
             <Card>
@@ -179,7 +255,7 @@ export default function ReportsPage() {
                     <CardTitle>Treatments by Type</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <TreatmentsByTypeChart />
+                    <TreatmentsByTypeChart data={treatmentsByTypeData} />
                 </CardContent>
             </Card>
             <Card>
@@ -187,7 +263,7 @@ export default function ReportsPage() {
                     <CardTitle>Appointment Distribution</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <AppointmentDistributionChart />
+                    <AppointmentDistributionChart data={appointmentDistributionData} />
                 </CardContent>
             </Card>
         </div>
