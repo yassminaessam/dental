@@ -28,7 +28,7 @@ import { getCollection } from '@/services/firestore';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
-import { format, startOfMonth } from 'date-fns';
+import { format, startOfMonth, isValid } from 'date-fns';
 import { Treatment } from '../treatments/page';
 import { Transaction } from '../financial/page';
 
@@ -61,22 +61,28 @@ export default function ReportsPage() {
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
-        const [invoices, patients, appointments, treatments, rawTransactions] = await Promise.all([
+        const [invoices, rawPatients, appointments, treatments, rawTransactions] = await Promise.all([
             getCollection<Invoice>('invoices'),
-            getCollection<Patient>('patients'),
+            getCollection<any>('patients'),
             getCollection<any>('appointments'),
             getCollection<Treatment>('treatments'),
             getCollection<any>('transactions'),
         ]);
 
         const transactions: Transaction[] = rawTransactions.map((t: any) => ({ ...t, date: new Date(t.date) }));
+        const patients: Patient[] = rawPatients.map((p: any) => ({
+            ...p,
+            dob: new Date(p.dob),
+            lastVisit: p.lastVisit ? new Date(p.lastVisit) : new Date(0), // handle case where lastVisit might be null
+        }));
+
         
         // --- Top Stat Cards ---
         setTotalRevenue(invoices.reduce((acc, inv) => acc + inv.totalAmount, 0));
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        setNewPatients(patients.filter(p => new Date(p.lastVisit) > thirtyDaysAgo).length);
+        setNewPatients(patients.filter(p => isValid(p.lastVisit) && p.lastVisit > thirtyDaysAgo).length);
 
         setTotalAppointments(appointments.length);
         
@@ -90,23 +96,27 @@ export default function ReportsPage() {
         // Revenue Trend
         const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
         transactions.forEach(t => {
-            const month = format(t.date, 'MMM');
-            if(!monthlyFinancials[month]) monthlyFinancials[month] = { revenue: 0, expenses: 0 };
-            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
-            if(t.type === 'Revenue') monthlyFinancials[month].revenue += amount;
-            else monthlyFinancials[month].expenses += amount;
+            if (isValid(t.date)) {
+                const month = format(t.date, 'MMM');
+                if(!monthlyFinancials[month]) monthlyFinancials[month] = { revenue: 0, expenses: 0 };
+                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+                if(t.type === 'Revenue') monthlyFinancials[month].revenue += amount;
+                else monthlyFinancials[month].expenses += amount;
+            }
         });
         setRevenueTrendData(Object.entries(monthlyFinancials).map(([month, data]) => ({month, ...data})));
 
         // Patient Growth
         const monthlyGrowth: Record<string, { total: number, new: number }> = {};
         let cumulativePatients = 0;
-        patients.sort((a,b) => new Date(a.dob).getTime() - new Date(b.dob).getTime()).forEach(p => {
-             const month = format(startOfMonth(new Date(p.dob)), 'MMM');
-             if(!monthlyGrowth[month]) {
-                 monthlyGrowth[month] = { total: 0, new: 0 };
+        patients.sort((a,b) => a.dob.getTime() - b.dob.getTime()).forEach(p => {
+             if (isValid(p.dob)) {
+                const month = format(startOfMonth(p.dob), 'MMM');
+                if(!monthlyGrowth[month]) {
+                    monthlyGrowth[month] = { total: 0, new: 0 };
+                }
+                monthlyGrowth[month].new++;
              }
-             monthlyGrowth[month].new++;
         });
 
         const sortedMonths = Object.keys(monthlyGrowth).sort((a, b) => new Date(`01 ${a} 2000`).getTime() - new Date(`01 ${b} 2000`).getTime());
