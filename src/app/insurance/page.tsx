@@ -40,7 +40,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { insurancePageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2 } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
@@ -83,6 +82,22 @@ export default function InsurancePage() {
     }
     fetchClaims();
   }, [toast]);
+
+  const insurancePageStats = React.useMemo(() => {
+    const totalClaims = claims.length;
+    const approvedAmount = claims
+      .filter(c => c.status === 'Approved' && c.approvedAmount)
+      .reduce((acc, c) => acc + parseFloat(c.approvedAmount!.replace(/[^0-9.-]+/g, '')), 0);
+    const pendingClaims = claims.filter(c => c.status === 'Processing').length;
+    const deniedClaims = claims.filter(c => c.status === 'Denied').length;
+
+    return [
+      { title: "Total Claims", value: totalClaims, description: "+15% from last month", valueClassName: "" },
+      { title: "Approved Amount", value: `EGP ${approvedAmount.toLocaleString()}`, description: "Total value of approved claims", valueClassName: "text-green-600" },
+      { title: "Pending Claims", value: pendingClaims, description: "Claims currently under review", valueClassName: "text-orange-500" },
+      { title: "Denied Claims", value: deniedClaims, description: "Claims that were denied", valueClassName: "text-red-600" },
+    ];
+  }, [claims]);
 
   const handleSaveClaim = async (data: any) => {
     try {
