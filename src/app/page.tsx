@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
-import type { Invoice } from '@/app/billing/page';
+import type { Transaction } from '@/app/financial/page';
 
 export default function DashboardPage() {
     const { toast } = useToast();
@@ -28,24 +28,29 @@ export default function DashboardPage() {
 
     React.useEffect(() => {
         async function fetchData() {
-            const [invoices, appointments] = await Promise.all([
-                getCollection<Invoice>('invoices'),
+            const [transactions, appointments] = await Promise.all([
+                getCollection<Transaction>('transactions'),
                 getCollection<Appointment>('appointments'),
             ]);
 
             // Process revenue data for chart
-            const monthlyRevenue: Record<string, number> = {};
-            invoices.forEach(invoice => {
-                const month = new Date(invoice.issueDate).toLocaleString('default', { month: 'short' });
-                if (!monthlyRevenue[month]) {
-                    monthlyRevenue[month] = 0;
+            const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
+            transactions.forEach(t => {
+                const month = new Date(t.date).toLocaleString('default', { month: 'short' });
+                if (!monthlyFinancials[month]) {
+                    monthlyFinancials[month] = { revenue: 0, expenses: 0 };
                 }
-                monthlyRevenue[month] += invoice.totalAmount;
+                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+                if (t.type === 'Revenue') {
+                    monthlyFinancials[month].revenue += amount;
+                } else {
+                    monthlyFinancials[month].expenses += amount;
+                }
             });
-            const chartData = Object.keys(monthlyRevenue).map(month => ({
+            const chartData = Object.keys(monthlyFinancials).map(month => ({
                 month,
-                revenue: monthlyRevenue[month],
-                expenses: monthlyRevenue[month] * (Math.random() * 0.4 + 0.3) // mock expenses
+                revenue: monthlyFinancials[month].revenue,
+                expenses: monthlyFinancials[month].expenses
             }));
             setRevenueData(chartData);
 
