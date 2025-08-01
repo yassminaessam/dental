@@ -29,7 +29,6 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
-  mockDoctors,
   appointmentTypesData,
   availableTimeSlots,
   appointmentDurations
@@ -37,6 +36,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
+import { StaffMember } from '@/app/staff/page';
 
 
 const appointmentSchema = z.object({
@@ -59,17 +59,22 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
 
   React.useEffect(() => {
-    async function fetchPatients() {
-        const data = await getCollection<Patient>('patients');
-        setPatients(data);
+    async function fetchData() {
+        const patientData = await getCollection<Patient>('patients');
+        setPatients(patientData);
+        const staffData = await getCollection<StaffMember>('staff');
+        setDoctors(staffData.filter(s => s.role === 'Dentist'));
     }
-    fetchPatients();
-  }, []);
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
 
   const onSubmit = (data: AppointmentFormData) => {
     const [hours, minutes] = data.time.split(':');
@@ -78,7 +83,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
     dateTime.setMinutes(parseInt(minutes, 10));
 
     const patientName = patients.find(p => p.id === data.patient)?.name;
-    const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
+    const doctorName = doctors.find(d => d.id === data.doctor)?.name;
 
     onSave({ ...data, dateTime, patient: patientName, doctor: doctorName });
     form.reset();
@@ -139,7 +144,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockDoctors.map((doctor) => (
+                      {doctors.map((doctor) => (
                         <SelectItem key={doctor.id} value={doctor.id}>
                           {doctor.name}
                         </SelectItem>

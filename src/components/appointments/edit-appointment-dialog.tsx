@@ -28,14 +28,15 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
-  dentalChartPatients, 
-  mockDoctors,
   appointmentTypesData,
   availableTimeSlots,
   appointmentDurations
 } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Appointment } from '@/app/appointments/page';
+import { getCollection } from '@/services/firestore';
+import { Patient } from '@/app/patients/page';
+import { StaffMember } from '@/app/staff/page';
 
 
 const appointmentSchema = z.object({
@@ -59,14 +60,28 @@ interface EditAppointmentDialogProps {
 
 export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange }: EditAppointmentDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
 
   React.useEffect(() => {
-    if (appointment) {
-        const patientId = dentalChartPatients.find(p => p.name === appointment.patient)?.id;
-        const doctorId = mockDoctors.find(d => d.name === appointment.doctor)?.id;
+    async function fetchData() {
+        const patientData = await getCollection<Patient>('patients');
+        setPatients(patientData);
+        const staffData = await getCollection<StaffMember>('staff');
+        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+    }
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    if (appointment && patients.length > 0 && doctors.length > 0) {
+        const patientId = patients.find(p => p.name === appointment.patient)?.id;
+        const doctorId = doctors.find(d => d.name === appointment.doctor)?.id;
         
         form.reset({
             patient: patientId,
@@ -78,7 +93,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
             notes: '',
         });
     }
-  }, [appointment, form]);
+  }, [appointment, form, patients, doctors]);
 
 
   const onSubmit = (data: AppointmentFormData) => {
@@ -87,8 +102,8 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
     dateTime.setHours(parseInt(hours, 10));
     dateTime.setMinutes(parseInt(minutes, 10));
 
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const doctorName = doctors.find(d => d.id === data.doctor)?.name;
 
     const updatedAppointment: Appointment = {
       ...appointment,
@@ -125,7 +140,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {dentalChartPatients.map((patient) => (
+                      {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           {patient.name}
                         </SelectItem>
@@ -149,7 +164,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockDoctors.map((doctor) => (
+                      {doctors.map((doctor) => (
                         <SelectItem key={doctor.id} value={doctor.id}>
                           {doctor.name}
                         </SelectItem>

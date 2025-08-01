@@ -1,8 +1,5 @@
 
 
-import { InventoryItem } from "@/app/inventory/page";
-import type { Invoice } from "@/app/billing/page";
-
 export type PatientMessage = {
     id: string;
     patient: string;
@@ -258,13 +255,6 @@ export const dentalChartStats = [
     { name: 'Root Canal', count: 1, color: 'bg-yellow-500' },
 ];
 
-export const dentalChartPatients = [
-    { id: 'pat1', name: 'Ahmed Ali' },
-    { id: 'pat2', name: 'Fatima Mahmoud' },
-    { id: 'pat3', name: 'Youssef Hassan' },
-    { id: 'pat4', name: 'Hana Ibrahim' },
-];
-
 export const toothNames: Record<number, string> = {
     11: 'Upper Right Central Incisor', 12: 'Upper Right Lateral Incisor', 13: 'Upper Right Canine', 14: 'Upper Right First Premolar', 15: 'Upper Right Second Premolar', 16: 'Upper Right First Molar', 17: 'Upper Right Second Molar', 18: 'Upper Right Third Molar',
     21: 'Upper Left Central Incisor', 22: 'Upper Left Lateral Incisor', 23: 'Upper Left Canine', 24: 'Upper Left First Premolar', 25: 'Upper Left Second Premolar', 26: 'Upper Left First Molar', 27: 'Upper Left Second Molar', 28: 'Upper Left Third Molar',
@@ -298,12 +288,6 @@ export const janeSmithDentalChart = (() => {
     chart[38] = { id: 38, condition: 'cavity', history: [{ date: '11/15/2023', condition: 'cavity', notes: 'Buccal pit cavity observed.' }] };
     return chart;
 })();
-
-export const mockDoctors = [
-  { id: 'doc1', name: 'Dr. Nourhan Adel' },
-  { id: 'doc2', name: 'Dr. Khaled Youssef' },
-  { id: 'doc3', name: 'Dr. Mariam El-Masry' },
-];
 
 export const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
@@ -562,41 +546,6 @@ export const patientPortalPageStats = (pendingRequests: number) => [
     description: "Available to patients",
     valueClassName: "text-green-600"
   },
-];
-
-export const patientMessagesData: PatientMessage[] = [
-    {
-        id: 'MSG-001',
-        patient: 'Ahmed Ali',
-        subject: 'Question about post-treatment care',
-        snippet: "Hi, I had my root canal yesterday and I'm experien...",
-        fullMessage: "Hi, I had my root canal yesterday and I'm experiencing some discomfort. Is this normal? The pain is manageable with ibuprofen, but I wanted to check if there's anything else I should be doing. Thanks, Ahmed",
-        category: 'treatment',
-        priority: 'high',
-        date: 'Dec 18, 11:15 AM',
-        status: 'Unread',
-    },
-    {
-        id: 'MSG-002',
-        patient: 'Fatima Mahmoud',
-        subject: 'Your appointment reminder',
-        snippet: 'This is a reminder that you have an appointment s...',
-        fullMessage: 'This is a reminder that you have an appointment scheduled for December 20th at 10:30 AM for a routine cleaning. Please confirm by replying YES to this message. Thank you!',
-        category: 'appointment',
-        priority: 'normal',
-        date: 'Dec 17, 6:00 PM',
-        status: 'Read',
-    }
-];
-
-export const initialPortalUsersData: PortalUser[] = [
-    { id: 'pat1', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', status: 'Active', lastLogin: 'Dec 18, 2024' },
-    { id: 'pat2', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', status: 'Active', lastLogin: 'Dec 17, 2024' },
-];
-
-export const initialSharedDocumentsData: SharedDocument[] = [
-    { id: 'DOC-001', name: 'Treatment Plan - Crown', patient: 'Fatima Mahmoud', type: 'Treatment Plan', sharedDate: 'Dec 10, 2024' },
-    { id: 'DOC-002', name: 'Invoice #1024', patient: 'Ahmed Ali', type: 'Invoice', sharedDate: 'Dec 15, 2024' },
 ];
 
 export const referralPageStats = [
