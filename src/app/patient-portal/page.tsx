@@ -28,7 +28,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientPortalPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2 } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
@@ -110,6 +109,17 @@ export default function PatientPortalPage() {
   const pendingRequests = React.useMemo(() => {
     return appointments.filter(appt => appt.status === 'Pending');
   }, [appointments]);
+
+  const patientPortalPageStats = React.useMemo(() => {
+    const unreadMessages = messages.filter(m => m.status === 'Unread').length;
+    return [
+      { title: "Active Portal Users", value: portalUsers.length, description: "Patients with portal access" },
+      { title: "Unread Messages", value: unreadMessages, description: "New messages from patients", valueClassName: "text-orange-500" },
+      { title: "Pending Requests", value: pendingRequests.length, description: "Appointment requests to review", valueClassName: "text-red-500" },
+      { title: "Shared Documents", value: sharedDocuments.length, description: "Documents available to patients" },
+    ];
+  }, [messages, portalUsers, pendingRequests, sharedDocuments]);
+
 
   const handleRequestStatusChange = async (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
     try {
@@ -225,7 +235,7 @@ export default function PatientPortalPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {patientPortalPageStats(pendingRequests.length).map((stat) => (
+          {patientPortalPageStats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -234,7 +244,7 @@ export default function PatientPortalPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.title === 'Active Portal Users' ? portalUsers.length : stat.value}
+                  {stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
