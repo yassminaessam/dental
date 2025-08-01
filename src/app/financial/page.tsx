@@ -172,16 +172,21 @@ export default function FinancialPage() {
   }, [transactions]);
 
 
-  const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
+  const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status' | 'date'> & { date: Date }) => {
     try {
       const newTransaction: Transaction = {
         id: `TRN-${Date.now()}`,
-        ...data,
+        date: data.date,
+        description: data.description,
+        type: data.type,
+        category: data.category,
+        paymentMethod: data.paymentMethod,
+        patient: data.patient,
         amount: `EGP ${parseFloat(data.amount as string).toFixed(2)}`,
         status: 'Completed',
       };
-      await setDocument('transactions', newTransaction.id, { ...newTransaction, date: (newTransaction.date as Date).toISOString() });
-      setTransactions(prev => [{...newTransaction, date: new Date(newTransaction.date)}, ...prev]);
+      await setDocument('transactions', newTransaction.id, { ...newTransaction, date: newTransaction.date.toISOString() });
+      setTransactions(prev => [newTransaction, ...prev]);
       toast({
         title: "Transaction Added",
         description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
