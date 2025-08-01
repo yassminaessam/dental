@@ -49,6 +49,12 @@ export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
 
   const form = useForm<ImageFormData>({
     resolver: zodResolver(imageSchema),
+    defaultValues: {
+      patient: '',
+      type: '',
+      file: undefined,
+      caption: '',
+    },
   });
   
   React.useEffect(() => {
