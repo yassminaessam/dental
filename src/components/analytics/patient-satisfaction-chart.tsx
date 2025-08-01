@@ -8,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { patientSatisfactionData } from "@/lib/data";
 
 const chartConfig = {
   score: {
@@ -16,6 +15,16 @@ const chartConfig = {
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
+
+const patientSatisfactionData = [
+    { month: "January", score: 4.2 },
+    { month: "February", score: 4.4 },
+    { month: "March", score: 4.3 },
+    { month: "April", score: 4.6 },
+    { month: "May", score: 4.5 },
+    { month: "June", score: 4.7 },
+    { month: "July", score: 4.8 },
+];
 
 export default function PatientSatisfactionChart() {
   return (
