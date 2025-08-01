@@ -61,13 +61,15 @@ export default function ReportsPage() {
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
-        const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
+        const [invoices, patients, appointments, treatments, rawTransactions] = await Promise.all([
             getCollection<Invoice>('invoices'),
             getCollection<Patient>('patients'),
             getCollection<any>('appointments'),
             getCollection<Treatment>('treatments'),
-            getCollection<Transaction>('transactions'),
+            getCollection<any>('transactions'),
         ]);
+
+        const transactions: Transaction[] = rawTransactions.map((t: any) => ({ ...t, date: new Date(t.date) }));
         
         // --- Top Stat Cards ---
         setTotalRevenue(invoices.reduce((acc, inv) => acc + inv.totalAmount, 0));
@@ -88,7 +90,7 @@ export default function ReportsPage() {
         // Revenue Trend
         const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
         transactions.forEach(t => {
-            const month = format(new Date(t.date), 'MMM');
+            const month = format(t.date, 'MMM');
             if(!monthlyFinancials[month]) monthlyFinancials[month] = { revenue: 0, expenses: 0 };
             const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
             if(t.type === 'Revenue') monthlyFinancials[month].revenue += amount;
