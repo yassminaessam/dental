@@ -54,6 +54,15 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
+    defaultValues: {
+      name: '',
+      category: '',
+      supplier: '',
+      stock: 0,
+      unitCost: 0,
+      location: '',
+      expires: undefined,
+    }
   });
 
   React.useEffect(() => {
