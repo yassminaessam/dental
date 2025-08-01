@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { PatientMessage } from '@/lib/data';
+import type { PatientMessage } from '@/app/patient-portal/page';
 import { Badge } from '../ui/badge';
 
 interface ViewMessageDialogProps {
