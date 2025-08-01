@@ -75,12 +75,12 @@ export default function PatientPortalPage() {
       setLoading(true);
       try {
         const [msgData, apptData, userData, docData] = await Promise.all([
-          getCollection<Message>('patient-messages'),
+          getCollection<Message>('messages'),
           getCollection<Appointment>('appointments'),
           getCollection<PortalUser>('portal-users'),
           getCollection<SharedDocument>('shared-documents'),
         ]);
-        setMessages(msgData);
+        setMessages(msgData.filter(m => m.category === 'billing' || m.category === 'other'));
         setAppointments(apptData.map(a => ({...a, dateTime: new Date(a.dateTime) })));
         setPortalUsers(userData);
         setSharedDocuments(docData);

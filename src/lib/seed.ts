@@ -103,8 +103,8 @@ async function seedDatabase() {
     ];
     
     const initialRecentMessagesData = [
-        { id: 'msg1', patient: 'John Doe', type: 'Email', content: 'Appointment Reminder', subContent: 'This is a reminder for your appointment on 2024-07-29.', status: 'Sent', sent: '2024-07-28 10:00 AM' },
-        { id: 'msg2', patient: 'Jane Smith', type: 'SMS', content: 'Billing Inquiry', subContent: 'Patient asked about the remaining balance on INV-002.', status: 'Delivered', sent: '2024-07-27 03:30 PM' },
+        { id: 'msg1', patient: 'John Doe', type: 'Email', content: 'Appointment Reminder', subContent: 'This is a reminder for your appointment on 2024-07-29.', status: 'Sent', sent: '2024-07-28 10:00 AM', category: 'appointment', priority: 'normal', date: '2024-07-28', subject: 'Appointment Reminder', snippet: 'Your appointment is tomorrow...', fullMessage: 'Dear John, This is a friendly reminder for your appointment with Dr. Nourhan tomorrow at 10:00 AM. We look forward to seeing you.' },
+        { id: 'msg2', patient: 'Jane Smith', type: 'SMS', content: 'Billing Inquiry', subContent: 'Patient asked about the remaining balance on INV-002.', status: 'Unread', sent: '2024-07-27 03:30 PM', category: 'billing', priority: 'high', date: '2024-07-27', subject: 'Billing Inquiry', snippet: 'What is my remaining balance?', fullMessage: 'Hello, I was wondering what the remaining balance is on my invoice INV-002. Can you please let me know? Thanks, Jane.' },
     ];
     
     const initialPortalUsersData = [
