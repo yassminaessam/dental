@@ -52,7 +52,7 @@ import { format } from 'date-fns';
 
 export type Transaction = {
   id: string;
-  date: string;
+  date: string | Date;
   description: string;
   category: string;
   type: 'Revenue' | 'Expense';
@@ -83,12 +83,13 @@ export default function FinancialPage() {
     async function fetchTransactions() {
       try {
         const data = await getCollection<Transaction>('transactions');
-        setTransactions(data);
+        const parsedData = data.map(t => ({ ...t, date: new Date(t.date) }));
+        setTransactions(parsedData);
 
         // Process data for charts
         const monthlyData: Record<string, { revenue: number, expenses: number, profit: number }> = {};
-        data.forEach(t => {
-            const month = format(new Date(t.date), 'yyyy-MM');
+        parsedData.forEach(t => {
+            const month = format(t.date as Date, 'yyyy-MM');
             if (!monthlyData[month]) {
                 monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
             }
@@ -176,10 +177,10 @@ export default function FinancialPage() {
       const newTransaction: Transaction = {
         id: `TRN-${Date.now()}`,
         ...data,
-        amount: `EGP ${parseFloat(data.amount).toFixed(2)}`,
+        amount: `EGP ${parseFloat(data.amount as string).toFixed(2)}`,
         status: 'Completed',
       };
-      await setDocument('transactions', newTransaction.id, newTransaction);
+      await setDocument('transactions', newTransaction.id, { ...newTransaction, date: (newTransaction.date as Date).toISOString() });
       setTransactions(prev => [newTransaction, ...prev]);
       toast({
         title: "Transaction Added",
