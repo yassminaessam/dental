@@ -1,5 +1,7 @@
 
+'use client';
 
+import * as React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +26,108 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Building, Users, Bell, Shield, Database, Palette } from "lucide-react";
+import { Building, Users, Bell, Shield, Database, Palette, Loader2 } from "lucide-react";
+import { getCollection, setDocument } from '@/services/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+type ClinicSettings = {
+  id: string;
+  clinicName: string;
+  phoneNumber: string;
+  email: string;
+  website: string;
+  address: string;
+  businessHours: string;
+  timezone: string;
+  appointmentDuration: string;
+  bookingLimit: string;
+  allowOnlineBooking: boolean;
+};
+
+const initialSettings: ClinicSettings = {
+  id: 'main',
+  clinicName: '',
+  phoneNumber: '',
+  email: '',
+  website: '',
+  address: '',
+  businessHours: 'mon-fri-8-6',
+  timezone: 'eastern',
+  appointmentDuration: '60',
+  bookingLimit: '90',
+  allowOnlineBooking: true
+};
 
 export default function SettingsPage() {
+  const [settings, setSettings] = React.useState<ClinicSettings>(initialSettings);
+  const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const docRef = doc(db, "clinic-settings", "main");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSettings(docSnap.data() as ClinicSettings);
+        } else {
+          console.log("No such document! Using initial settings.");
+          // Optionally, create the document if it doesn't exist
+          await setDocument('clinic-settings', 'main', initialSettings);
+        }
+      } catch (error) {
+        toast({ title: "Error fetching settings", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSettings();
+  }, [toast]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setSettings(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleSelectChange = (id: string, value: string) => {
+    setSettings(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSwitchChange = (id: string, checked: boolean) => {
+    setSettings(prev => ({ ...prev, [id]: checked }));
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      await setDocument('clinic-settings', 'main', settings);
+      toast({
+        title: "Settings Saved",
+        description: "Your clinic settings have been successfully updated.",
+      });
+    } catch (error) {
+      toast({ title: "Error saving settings", variant: "destructive" });
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground">Loading settings...</p>
+        </main>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Settings</h1>
-          <Button>Save Changes</Button>
+          <Button onClick={handleSaveChanges}>Save Changes</Button>
         </div>
 
         <Tabs defaultValue="clinic">
@@ -56,36 +151,29 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="clinic-name">Clinic Name</Label>
-                    <Input id="clinic-name" defaultValue="Cairo Dental Clinic" />
+                    <Label htmlFor="clinicName">Clinic Name</Label>
+                    <Input id="clinicName" value={settings.clinicName} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="phone-number">Phone Number</Label>
-                    <Input id="phone-number" defaultValue="0225551234" />
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Input id="phoneNumber" value={settings.phoneNumber} onChange={handleInputChange} />
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      defaultValue="info@cairodental.com"
-                    />
+                    <Input id="email" type="email" value={settings.email} onChange={handleInputChange} />
                   </div>
                   <div>
                     <Label htmlFor="website">Website</Label>
-                    <Input id="website" defaultValue="www.cairodental.com" />
+                    <Input id="website" value={settings.website} onChange={handleInputChange} />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      defaultValue="123 Tahrir Street, Downtown, Cairo, Egypt"
-                    />
+                    <Input id="address" value={settings.address} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="business-hours">Business Hours</Label>
-                    <Select defaultValue="mon-fri-8-6">
-                      <SelectTrigger id="business-hours">
+                    <Label htmlFor="businessHours">Business Hours</Label>
+                    <Select value={settings.businessHours} onValueChange={(value) => handleSelectChange('businessHours', value)}>
+                      <SelectTrigger id="businessHours">
                         <SelectValue placeholder="Select hours" />
                       </SelectTrigger>
                       <SelectContent>
@@ -100,7 +188,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <Label htmlFor="timezone">Timezone</Label>
-                    <Select defaultValue="eastern">
+                    <Select value={settings.timezone} onValueChange={(value) => handleSelectChange('timezone', value)}>
                       <SelectTrigger id="timezone">
                         <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
@@ -118,11 +206,11 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="appointment-duration">
+                    <Label htmlFor="appointmentDuration">
                       Default Appointment Duration
                     </Label>
-                    <Select defaultValue="60">
-                      <SelectTrigger id="appointment-duration">
+                    <Select value={settings.appointmentDuration} onValueChange={(value) => handleSelectChange('appointmentDuration', value)}>
+                      <SelectTrigger id="appointmentDuration">
                         <SelectValue placeholder="Select duration" />
                       </SelectTrigger>
                       <SelectContent>
@@ -133,11 +221,11 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="booking-limit">
+                    <Label htmlFor="bookingLimit">
                       Advance Booking Limit
                     </Label>
-                    <Select defaultValue="90">
-                      <SelectTrigger id="booking-limit">
+                    <Select value={settings.bookingLimit} onValueChange={(value) => handleSelectChange('bookingLimit', value)}>
+                      <SelectTrigger id="bookingLimit">
                         <SelectValue placeholder="Select limit" />
                       </SelectTrigger>
                       <SelectContent>
@@ -148,9 +236,9 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                   <div className="flex items-center space-x-4 rounded-md border p-4 md:col-span-2">
-                    <Switch id="online-booking" defaultChecked />
+                    <Switch id="allowOnlineBooking" checked={settings.allowOnlineBooking} onCheckedChange={(checked) => handleSwitchChange('allowOnlineBooking', checked)} />
                     <div className="flex flex-col">
-                      <Label htmlFor="online-booking">
+                      <Label htmlFor="allowOnlineBooking">
                         Allow Online Booking
                       </Label>
                       <span className="text-sm text-muted-foreground">

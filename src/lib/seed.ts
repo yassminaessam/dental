@@ -117,6 +117,22 @@ async function seedDatabase() {
         { id: 'doc2', name: 'Invoice INV-002', patient: 'Jane Smith', type: 'Invoice', sharedDate: '2024-04-22' },
     ];
 
+    const initialClinicSettingsData = [
+      { 
+        id: 'main', 
+        clinicName: 'Cairo Dental Clinic',
+        phoneNumber: '0225551234',
+        email: 'info@cairodental.com',
+        website: 'www.cairodental.com',
+        address: '123 Tahrir Street, Downtown, Cairo, Egypt',
+        businessHours: 'mon-fri-8-6',
+        timezone: 'eastern',
+        appointmentDuration: '60',
+        bookingLimit: '90',
+        allowOnlineBooking: true
+      }
+    ];
+
   console.log('Starting database seed...');
 
   await seedCollection('patients', initialPatientsData.map(p => ({...p, dob: p.dob.toISOString() })));
@@ -138,6 +154,7 @@ async function seedDatabase() {
   await seedCollection('messages', initialRecentMessagesData);
   await seedCollection('portal-users', initialPortalUsersData);
   await seedCollection('shared-documents', initialSharedDocumentsData);
+  await seedCollection('clinic-settings', initialClinicSettingsData);
 
   console.log('Database seeding completed successfully!');
 }
