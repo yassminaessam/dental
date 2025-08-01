@@ -61,6 +61,11 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
     resolver: zodResolver(recordSchema),
     defaultValues: {
       date: new Date(),
+      patient: '',
+      provider: '',
+      type: '',
+      complaint: '',
+      notes: '',
     },
   });
   
