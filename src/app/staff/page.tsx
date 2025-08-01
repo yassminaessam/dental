@@ -22,11 +22,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  staffPageStats,
   staffRoles,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2, UserPlus, Clock } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
 import {
@@ -83,6 +82,25 @@ export default function StaffPage() {
     }
     fetchStaff();
   }, [toast]);
+  
+  const staffPageStats = React.useMemo(() => {
+    const totalStaff = staff.length;
+    const activeStaff = staff.filter(s => s.status === 'Active').length;
+    const newHires = staff.filter(s => {
+      const hireDate = new Date(s.hireDate);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return hireDate > thirtyDaysAgo;
+    }).length;
+
+    return [
+      { title: "Total Staff", value: totalStaff, description: "All clinic employees" },
+      { title: "Active Staff", value: activeStaff, description: "Currently working employees" },
+      { title: "New Hires (30d)", value: newHires, description: "Joined in the last month" },
+      { title: "On Leave", value: "2", description: "Currently on approved leave" },
+    ];
+  }, [staff]);
+
 
   const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
     try {
@@ -184,7 +202,7 @@ export default function StaffPage() {
                   {role.name}
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{role.count}</span>
+                  <span className="text-2xl font-bold">{staff.filter(s => s.role === role.name).length}</span>
                   <Badge
                     className={cn(
                       "text-xs font-semibold",
