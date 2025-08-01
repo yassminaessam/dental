@@ -42,13 +42,19 @@ import {
   DollarSign,
   Wallet,
   Loader2,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { format, isValid } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { EditTransactionDialog } from '@/components/financial/edit-transaction-dialog';
 
 export type Transaction = {
   id: string;
@@ -78,6 +84,9 @@ export default function FinancialPage() {
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [chartData, setChartData] = React.useState<any[]>([]);
   const { toast } = useToast();
+  const [transactionToEdit, setTransactionToEdit] = React.useState<Transaction | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = React.useState<Transaction | null>(null);
+
 
   React.useEffect(() => {
     async function fetchTransactions() {
@@ -198,6 +207,37 @@ export default function FinancialPage() {
     }
   };
   
+  const handleUpdateTransaction = async (updatedTransaction: Transaction) => {
+    try {
+      await updateDocument('transactions', updatedTransaction.id, { ...updatedTransaction, date: updatedTransaction.date.toISOString() });
+      setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+      setTransactionToEdit(null);
+      toast({
+        title: "Transaction Updated",
+        description: `Transaction ${updatedTransaction.id} has been successfully updated.`,
+      });
+    } catch (e) {
+      toast({ title: 'Error updating transaction', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteTransaction = async () => {
+    if (transactionToDelete) {
+      try {
+        await deleteDocument('transactions', transactionToDelete.id);
+        setTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id));
+        toast({
+          title: "Transaction Deleted",
+          description: `Transaction ${transactionToDelete.id} has been deleted.`,
+          variant: "destructive",
+        });
+        setTransactionToDelete(null);
+      } catch (e) {
+        toast({ title: 'Error deleting transaction', variant: 'destructive' });
+      }
+    }
+  };
+
   const filteredTransactions = React.useMemo(() => {
     return transactions
       .filter(transaction => 
@@ -361,9 +401,23 @@ export default function FinancialPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              View
-                            </Button>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setTransactionToEdit(transaction)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setTransactionToDelete(transaction)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -402,6 +456,31 @@ export default function FinancialPage() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {transactionToEdit && (
+        <EditTransactionDialog
+            transaction={transactionToEdit}
+            onSave={handleUpdateTransaction}
+            open={!!transactionToEdit}
+            onOpenChange={(isOpen) => !isOpen && setTransactionToEdit(null)}
+        />
+      )}
+
+      <AlertDialog open={!!transactionToDelete} onOpenChange={(isOpen) => !isOpen && setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the transaction.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTransaction}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </DashboardLayout>
   );
 
