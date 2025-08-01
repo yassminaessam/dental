@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { dentalChartStats, allHealthyDentalChart } from "@/lib/data";
+import { allHealthyDentalChart } from "@/lib/data";
 import { Download, Printer, RotateCw, Search, User, Loader2 } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
@@ -36,6 +36,15 @@ export interface Tooth {
     condition: ToothCondition;
     history: { date: string; condition: ToothCondition; notes: string }[];
 }
+
+const dentalChartStats = [
+  { name: 'Healthy', color: 'bg-green-200' },
+  { name: 'Cavity', color: 'bg-red-500' },
+  { name: 'Filling', color: 'bg-blue-500' },
+  { name: 'Crown', color: 'bg-purple-500' },
+  { name: 'Missing', color: 'bg-gray-400' },
+  { name: 'Root Canal', color: 'bg-yellow-500' },
+];
 
 export default function DentalChartPage() {
     const [loading, setLoading] = React.useState(false);
