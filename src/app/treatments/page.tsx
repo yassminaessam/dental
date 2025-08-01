@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/table";
 import {
   treatmentCategories,
-  treatmentPageStats,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, Pencil, Loader2 } from "lucide-react";
@@ -72,6 +71,20 @@ export default function TreatmentsPage() {
     }
     fetchTreatments();
   }, [toast]);
+  
+  const treatmentPageStats = React.useMemo(() => {
+    const total = treatments.length;
+    const completed = treatments.filter(t => t.status === 'Completed').length;
+    const inProgress = treatments.filter(t => t.status === 'In Progress').length;
+    const pending = treatments.filter(t => t.status === 'Pending').length;
+
+    return [
+      { title: "Total Treatments", value: total, description: "All recorded treatments" },
+      { title: "Completed Treatments", value: completed, description: "Finished treatment plans" },
+      { title: "In Progress", value: inProgress, description: "Ongoing treatments" },
+      { title: "Pending Treatments", value: pending, description: "Awaiting start" },
+    ];
+  }, [treatments]);
 
   const handleSavePlan = async (data: any) => {
     try {
