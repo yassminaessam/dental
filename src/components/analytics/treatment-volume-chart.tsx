@@ -8,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { treatmentVolumeData } from "@/lib/data";
 
 const chartConfig = {
   count: {
@@ -17,12 +16,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function TreatmentVolumeChart() {
+interface TreatmentVolumeChartProps {
+    data: { month: string; count: number }[];
+}
+
+export default function TreatmentVolumeChart({ data }: TreatmentVolumeChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart
         accessibilityLayer
-        data={treatmentVolumeData}
+        data={data}
         margin={{
           top: 20,
           left: 12,
@@ -36,7 +39,6 @@ export default function TreatmentVolumeChart() {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(value) => value.slice(0, 3)}
         />
         <YAxis
           tickLine={false}
@@ -58,3 +60,5 @@ export default function TreatmentVolumeChart() {
     </ChartContainer>
   );
 }
+
+    

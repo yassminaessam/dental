@@ -58,6 +58,7 @@ export default function AnalyticsPage() {
   const [avgTreatmentValue, setAvgTreatmentValue] = React.useState(0);
   const [appointmentAnalyticsData, setAppointmentAnalyticsData] = React.useState<any[]>([]);
   const [patientDemographicsData, setPatientDemographicsData] = React.useState<any[]>([]);
+  const [treatmentVolumeData, setTreatmentVolumeData] = React.useState<any[]>([]);
 
 
   React.useEffect(() => {
@@ -142,6 +143,21 @@ export default function AnalyticsPage() {
         setPatientDemographicsData(
             Object.entries(ageGroups).map(([ageGroup, count]) => ({ ageGroup, count }))
         );
+
+        // Process data for treatment volume chart
+        const monthlyTreatments: Record<string, number> = {};
+        treatments.forEach(treatment => {
+            const month = format(new Date(treatment.date), 'MMM');
+            if (!monthlyTreatments[month]) {
+                monthlyTreatments[month] = 0;
+            }
+            monthlyTreatments[month]++;
+        });
+        
+        setTreatmentVolumeData(
+            Object.entries(monthlyTreatments).map(([month, count]) => ({ month, count }))
+        );
+
     }
     fetchData();
   }, [])
@@ -265,7 +281,7 @@ export default function AnalyticsPage() {
                     <CardTitle>Treatment Volume</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <TreatmentVolumeChart />
+                    <TreatmentVolumeChart data={treatmentVolumeData} />
                 </CardContent>
              </Card>
           </TabsContent>
@@ -294,3 +310,5 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
+
+    
