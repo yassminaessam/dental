@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { toothNames } from '@/lib/data';
+import { toothNames } from '@/lib/data/dental-chart-data';
 import { Search, X } from 'lucide-react';
 
 const conditionOptions: { value: ToothCondition, label: string }[] = [

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { allHealthyDentalChart } from "@/lib/data";
+import { allHealthyDentalChart } from "@/lib/data/dental-chart-data";
 import { Download, Printer, RotateCw, Search, User, Loader2 } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';

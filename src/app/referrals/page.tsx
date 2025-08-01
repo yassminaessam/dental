@@ -42,7 +42,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
 import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
-import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, deleteDocument, updateDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 
 export type Referral = {
@@ -108,9 +108,9 @@ export default function ReferralsPage() {
     const specialistCount = specialists.length;
     
     return [
-      { title: "Total Referrals", value: totalReferrals, description: "+5 from last month", valueClassName: "text-blue-500" },
+      { title: "Total Referrals", value: totalReferrals, description: "All outgoing referrals", valueClassName: "text-blue-500" },
       { title: "Pending Referrals", value: pendingReferrals, description: "Awaiting specialist action", valueClassName: "text-orange-500" },
-      { title: "Completed Referrals", value: completedReferrals, description: "+3 from last month", valueClassName: "text-green-500" },
+      { title: "Completed Referrals", value: completedReferrals, description: "Finished referral cases", valueClassName: "text-green-500" },
       { title: "Specialist Network", value: specialistCount, description: "Total specialists in network", valueClassName: "" },
     ];
   }, [referrals, specialists]);
@@ -161,7 +161,7 @@ export default function ReferralsPage() {
 
   const handleUpdateSpecialist = async (updatedSpecialist: Specialist) => {
     try {
-        await setDocument('specialists', updatedSpecialist.id, updatedSpecialist);
+        await updateDocument('specialists', updatedSpecialist.id, updatedSpecialist);
         setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
         setSpecialistToEdit(null);
         toast({

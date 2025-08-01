@@ -28,7 +28,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { medicalRecordTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { MedicalRecord } from '@/app/medical-records/page';
 import { Patient } from '@/app/patients/page';
@@ -46,6 +45,8 @@ const recordSchema = z.object({
 });
 
 type RecordFormData = z.infer<typeof recordSchema>;
+
+const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
 interface EditRecordDialogProps {
   record: MedicalRecord | null;

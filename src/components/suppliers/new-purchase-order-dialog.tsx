@@ -30,7 +30,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { InventoryItem, Supplier } from '@/app/suppliers/page';
+import type { InventoryItem } from '@/app/inventory/page';
+import type { Supplier } from '@/app/suppliers/page';
 
 const orderItemSchema = z.object({
   itemId: z.string().min(1, "Item is required"),
@@ -209,7 +210,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                             render={({ field }) => (
                                 <FormItem className="col-span-3">
                                     <FormControl>
-                                        <Input type="number" placeholder="$0.00" {...field} />
+                                        <Input type="number" placeholder="EGP 0.00" {...field} />
                                     </FormControl>
                                 </FormItem>
                             )}

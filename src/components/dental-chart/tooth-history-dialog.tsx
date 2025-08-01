@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Tooth } from '@/app/dental-chart/page';
-import { toothNames } from '@/lib/data';
+import { toothNames } from '@/lib/data/dental-chart-data';
 import { ScrollArea } from '../ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 

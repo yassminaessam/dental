@@ -75,8 +75,8 @@ export function ViewPurchaseOrderDialog({ order, open, onOpenChange }: ViewPurch
                             <TableRow key={index}>
                                 <TableCell className="font-medium">{item.description}</TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>
-                                <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">${(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                                <TableCell className="text-right">EGP {item.unitPrice.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">EGP {(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

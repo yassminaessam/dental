@@ -81,7 +81,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             doctor: doctors.find(d => d.name === treatment.doctor)?.id,
             procedure: treatment.procedure,
             date: new Date(treatment.date),
-            cost: treatment.cost.replace('$', ''),
+            cost: treatment.cost.replace(/[^0-9.-]+/g,""),
             status: treatment.status,
             notes: '', // assuming no notes are passed initially
         });
@@ -98,7 +98,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
         doctor: doctorName || treatment.doctor,
         procedure: data.procedure,
         date: new Date(data.date).toLocaleDateString(),
-        cost: `$${data.cost}`,
+        cost: `EGP ${data.cost}`,
         status: data.status,
     };
     onSave(updatedTreatment);
@@ -239,7 +239,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     <FormItem>
                     <FormLabel>Cost *</FormLabel>
                     <FormControl>
-                        <Input type="text" placeholder="$0.00" {...field} />
+                        <Input type="text" placeholder="EGP 0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

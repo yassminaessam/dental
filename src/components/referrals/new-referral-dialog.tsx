@@ -25,7 +25,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { Specialist, Patient } from '@/app/referrals/page';
+import type { Specialist } from '@/app/referrals/page';
+import type { Patient } from '@/app/patients/page';
 
 const referralSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
