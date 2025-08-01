@@ -19,10 +19,52 @@ import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
-import { revenueVsExpensesData } from '@/lib/data';
+import type { Invoice } from '@/app/billing/page';
 
 export default function DashboardPage() {
     const { toast } = useToast();
+    const [revenueData, setRevenueData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
+    const [appointmentTypes, setAppointmentTypes] = React.useState<{ name: string; value: number; color: string }[]>([]);
+
+    React.useEffect(() => {
+        async function fetchData() {
+            const [invoices, appointments] = await Promise.all([
+                getCollection<Invoice>('invoices'),
+                getCollection<Appointment>('appointments'),
+            ]);
+
+            // Process revenue data for chart
+            const monthlyRevenue: Record<string, number> = {};
+            invoices.forEach(invoice => {
+                const month = new Date(invoice.issueDate).toLocaleString('default', { month: 'short' });
+                if (!monthlyRevenue[month]) {
+                    monthlyRevenue[month] = 0;
+                }
+                monthlyRevenue[month] += invoice.totalAmount;
+            });
+            const chartData = Object.keys(monthlyRevenue).map(month => ({
+                month,
+                revenue: monthlyRevenue[month],
+                expenses: monthlyRevenue[month] * (Math.random() * 0.4 + 0.3) // mock expenses
+            }));
+            setRevenueData(chartData);
+
+            // Process appointment types
+            const typeCounts = appointments.reduce((acc, appt) => {
+                acc[appt.type] = (acc[appt.type] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+            
+            const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+            const appointmentTypeData = Object.entries(typeCounts).map(([name, value], index) => ({
+                name,
+                value,
+                color: colors[index % colors.length]
+            }));
+            setAppointmentTypes(appointmentTypeData);
+        }
+        fetchData();
+    }, []);
 
     const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
         try {
@@ -66,7 +108,7 @@ export default function DashboardPage() {
               <CardTitle>Revenue Trend</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <RevenueTrendsChart data={revenueVsExpensesData} />
+              <RevenueTrendsChart data={revenueData} />
             </CardContent>
           </Card>
           <Card className="md:col-span-2">
@@ -74,7 +116,7 @@ export default function DashboardPage() {
               <CardTitle>Appointments by Type</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <AppointmentTypesChart />
+              <AppointmentTypesChart data={appointmentTypes} />
             </CardContent>
           </Card>
         </div>

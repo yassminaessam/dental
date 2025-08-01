@@ -19,7 +19,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { supplierPaymentTerms } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
 const supplierSchema = z.object({
@@ -32,6 +31,8 @@ const supplierSchema = z.object({
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
+
+const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
 interface AddSupplierDialogProps {
   onSave: (data: any) => void;

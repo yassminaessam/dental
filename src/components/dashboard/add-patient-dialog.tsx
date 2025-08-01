@@ -29,7 +29,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { emergencyContactRelationships } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { ScrollArea } from '../ui/scroll-area';
@@ -54,6 +53,15 @@ type PatientFormData = z.infer<typeof patientSchema>;
 interface AddPatientDialogProps {
   onSave: (patient: Omit<Patient, 'id'>) => void;
 }
+
+const emergencyContactRelationships = [
+    'Spouse',
+    'Parent',
+    'Child',
+    'Sibling',
+    'Friend',
+    'Other',
+];
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const [open, setOpen] = React.useState(false);

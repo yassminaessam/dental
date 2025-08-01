@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { UserPlus } from 'lucide-react';
-import { specialistTypes } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
@@ -30,6 +29,8 @@ const specialistSchema = z.object({
 });
 
 type SpecialistFormData = z.infer<typeof specialistSchema>;
+
+const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
 
 interface AddSpecialistDialogProps {
   onSave: (data: any) => void;

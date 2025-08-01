@@ -28,7 +28,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { staffRoles } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { StaffMember } from '@/app/staff/page';
 
@@ -44,6 +43,14 @@ const employeeSchema = z.object({
 });
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
+
+const staffRoles = [
+  { name: "Dentist" },
+  { name: "Hygienist" },
+  { name: "Assistant" },
+  { name: "Receptionist" },
+  { name: "Manager" },
+];
 
 interface EditEmployeeDialogProps {
   staffMember: StaffMember;

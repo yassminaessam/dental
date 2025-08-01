@@ -38,7 +38,7 @@ const planSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
   doctor: z.string({ required_error: "Doctor is required." }),
   treatmentName: z.string().min(1, "Treatment name is required."),
-  startDate: z.date().optional(),
+  startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date().optional(),
   notes: z.string().optional(),
 });
@@ -61,7 +61,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
     defaultValues: {
       treatmentName: '',
       notes: '',
-      startDate: undefined,
+      startDate: new Date(),
       endDate: undefined,
     },
   });
@@ -172,7 +172,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 name="startDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
+                    <FormLabel>Start Date *</FormLabel>
                     <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>

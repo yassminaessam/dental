@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import { referralUrgency } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Specialist, Patient } from '@/app/referrals/page';
 
@@ -36,6 +35,8 @@ const referralSchema = z.object({
 });
 
 type ReferralFormData = z.infer<typeof referralSchema>;
+
+const referralUrgency = ['Routine', 'Urgent', 'Emergency'];
 
 interface NewReferralDialogProps {
   onSave: (data: any) => void;

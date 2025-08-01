@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   Card,
@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getKpiSuggestionsAction, type KpiSuggestionsState } from "@/lib/actions";
-import { financialSummaryData } from "@/lib/data";
 import { Lightbulb, ListChecks, Loader2 } from "lucide-react";
+import { getCollection } from "@/services/firestore";
+import type { Invoice } from "@/app/billing/page";
+import type { Patient } from "@/app/patients/page";
 
 const initialState: KpiSuggestionsState = {};
 
@@ -41,6 +43,25 @@ function SubmitButton() {
 
 export default function KpiSuggestions() {
   const [state, formAction] = useActionState(getKpiSuggestionsAction, initialState);
+  const [kpiData, setKpiData] = useState({
+    currentRevenue: 0,
+    patientCount: 0,
+    newPatientAcquisitionCost: 150, // Mock value, as this is hard to calculate
+    marketingSpend: 5000, // Mock value
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      const [invoices, patients] = await Promise.all([
+        getCollection<Invoice>('invoices'),
+        getCollection<Patient>('patients'),
+      ]);
+      const totalRevenue = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+      const patientCount = patients.length;
+      setKpiData(prev => ({...prev, currentRevenue: totalRevenue, patientCount }));
+    }
+    fetchData();
+  }, [])
 
   return (
     <Card>
@@ -60,7 +81,8 @@ export default function KpiSuggestions() {
               name="currentRevenue"
               type="number"
               placeholder="e.g., 45000"
-              defaultValue={financialSummaryData.currentRevenue}
+              defaultValue={kpiData.currentRevenue}
+              key={kpiData.currentRevenue} // Re-render when value changes
               aria-invalid={!!state?.fieldErrors?.currentRevenue}
               aria-describedby="currentRevenue-error"
             />
@@ -73,7 +95,8 @@ export default function KpiSuggestions() {
               name="patientCount"
               type="number"
               placeholder="e.g., 2350"
-              defaultValue={financialSummaryData.patientCount}
+              defaultValue={kpiData.patientCount}
+              key={kpiData.patientCount} // Re-render when value changes
               aria-invalid={!!state?.fieldErrors?.patientCount}
               aria-describedby="patientCount-error"
             />
@@ -88,7 +111,7 @@ export default function KpiSuggestions() {
               name="newPatientAcquisitionCost"
               type="number"
               placeholder="e.g., 150"
-              defaultValue={financialSummaryData.newPatientAcquisitionCost}
+              defaultValue={kpiData.newPatientAcquisitionCost}
               aria-invalid={!!state?.fieldErrors?.newPatientAcquisitionCost}
               aria-describedby="newPatientAcquisitionCost-error"
             />
@@ -101,7 +124,7 @@ export default function KpiSuggestions() {
               name="marketingSpend"
               type="number"
               placeholder="e.g., 5000"
-              defaultValue={financialSummaryData.marketingSpend}
+              defaultValue={kpiData.marketingSpend}
               aria-invalid={!!state?.fieldErrors?.marketingSpend}
               aria-describedby="marketingSpend-error"
             />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Pie, PieChart, Cell } from "recharts";
@@ -5,7 +6,6 @@ import {
   ChartConfig,
   ChartContainer,
 } from "@/components/ui/chart";
-import { appointmentTypesData } from "@/lib/data";
 
 const chartConfig = {
   "Check-up": { label: "Check-up", color: "hsl(var(--chart-1))" },
@@ -24,6 +24,7 @@ const renderCustomizedLabel = ({
   outerRadius,
   percent,
   index,
+  name
 }: any) => {
   const radius = outerRadius * 1.25;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -38,12 +39,16 @@ const renderCustomizedLabel = ({
       textAnchor={x > cx ? "start" : "end"}
       dominantBaseline="central"
     >
-      {`${index} ${Math.round(percent * 100)}%`}
+      {`${name} ${Math.round(percent * 100)}%`}
     </text>
   );
 };
 
-export default function AppointmentTypesChart() {
+interface AppointmentTypesChartProps {
+    data: { name: string; value: number; color: string }[];
+}
+
+export default function AppointmentTypesChart({ data }: AppointmentTypesChartProps) {
   return (
     <ChartContainer
       config={chartConfig}
@@ -51,14 +56,14 @@ export default function AppointmentTypesChart() {
     >
       <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <Pie
-          data={appointmentTypesData}
+          data={data}
           dataKey="value"
           nameKey="name"
           labelLine={false}
           label={renderCustomizedLabel}
           outerRadius={100}
         >
-          {appointmentTypesData.map((entry) => (
+          {data.map((entry) => (
             <Cell key={`cell-${entry.name}`} fill={entry.color} />
           ))}
         </Pie>

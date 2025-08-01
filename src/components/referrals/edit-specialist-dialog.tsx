@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { specialistTypes } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Specialist } from '@/app/referrals/page';
@@ -29,6 +28,8 @@ const specialistSchema = z.object({
 });
 
 type SpecialistFormData = z.infer<typeof specialistSchema>;
+
+const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
 
 interface EditSpecialistDialogProps {
   onSave: (data: Specialist) => void;

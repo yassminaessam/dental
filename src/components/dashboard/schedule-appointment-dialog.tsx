@@ -28,11 +28,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { 
-  appointmentTypesData,
-  availableTimeSlots,
-  appointmentDurations
-} from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
@@ -50,6 +45,25 @@ const appointmentSchema = z.object({
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
+
+const appointmentTypesData = [
+  { name: "Check-up" },
+  { name: "Cleaning" },
+  { name: "Filling" },
+  { name: "Crown" },
+  { name: "Root Canal" },
+];
+
+const availableTimeSlots = [
+  "09:00",
+  "10:30",
+  "11:00",
+  "14:00",
+  "15:30",
+  "16:00",
+];
+
+const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
 interface ScheduleAppointmentDialogProps {
   onSave: (data: any) => void;

@@ -29,7 +29,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { medicalRecordTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
@@ -45,6 +44,8 @@ const recordSchema = z.object({
 });
 
 type RecordFormData = z.infer<typeof recordSchema>;
+
+const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
 interface NewRecordDialogProps {
   onSave: (data: any) => void;
@@ -78,7 +79,7 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
   const onSubmit = (data: RecordFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const providerName = doctors.find(d => d.id === data.provider)?.name;
-    onSave({ ...data, patient: patientName, provider: providerName });
+    onSave({ ...data, patient: patientName, provider: providerName, date: data.date.toLocaleDateString() });
     form.reset();
     setOpen(false);
   };

@@ -21,9 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  staffRoles,
-} from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2, UserPlus, Clock } from "lucide-react";
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
@@ -59,6 +56,14 @@ export type StaffMember = {
   hireDate: string;
   status: 'Active' | 'Inactive';
 };
+
+const staffRoles = [
+  { name: "Dentist", color: "bg-blue-100 text-blue-800" },
+  { name: "Hygienist", color: "bg-green-100 text-green-800" },
+  { name: "Assistant", color: "bg-purple-100 text-purple-800" },
+  { name: "Receptionist", color: "bg-yellow-100 text-yellow-800" },
+  { name: "Manager", color: "bg-red-100 text-red-800" },
+];
 
 export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>([]);

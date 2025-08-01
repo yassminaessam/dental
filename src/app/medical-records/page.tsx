@@ -35,7 +35,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordTypes, type MedicalRecordTemplate } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2 } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
@@ -56,6 +55,13 @@ export type MedicalRecord = {
   status: 'Final' | 'Draft';
 };
 
+export type MedicalRecordTemplate = {
+  id: string;
+  name: string;
+  type: string;
+  content: string;
+};
+
 export type ClinicalImage = {
   id: string;
   patient: string;
@@ -64,6 +70,8 @@ export type ClinicalImage = {
   imageUrl: string;
   caption?: string;
 };
+
+const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
 export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>([]);

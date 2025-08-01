@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
-import { clinicalImageTypes } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
@@ -37,6 +36,8 @@ const imageSchema = z.object({
 });
 
 type ImageFormData = z.infer<typeof imageSchema>;
+
+const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
 
 interface UploadImageDialogProps {
   onUpload: (data: any) => void;

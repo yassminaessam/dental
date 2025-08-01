@@ -29,7 +29,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { staffRoles } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
 const employeeSchema = z.object({
@@ -43,6 +42,14 @@ const employeeSchema = z.object({
 });
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
+
+const staffRoles = [
+  { name: "Dentist" },
+  { name: "Hygienist" },
+  { name: "Assistant" },
+  { name: "Receptionist" },
+  { name: "Manager" },
+];
 
 interface AddEmployeeDialogProps {
   onSave: (data: any) => void;
