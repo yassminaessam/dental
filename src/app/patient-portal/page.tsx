@@ -64,7 +64,7 @@ export default function PatientPortalPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [isReplyOpen, setIsReplyOpen] = React.useState(false);
-  const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
+  const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string, originalMessage: string } | null>(null);
 
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [portalUsers, setPortalUsers] = React.useState<PortalUser[]>([]);
@@ -129,6 +129,7 @@ export default function PatientPortalPage() {
     setReplyData({
       patientName: message.patient,
       subject: `Re: ${message.subject}`,
+      originalMessage: message.fullMessage || '',
     });
     setIsReplyOpen(true);
   };
@@ -139,10 +140,16 @@ export default function PatientPortalPage() {
         id: `MSG-${Date.now()}`,
         patient: data.patient,
         type: data.type,
+        status: 'Sent',
+        sent: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+        subject: data.subject,
         content: data.subject,
         subContent: data.message,
-        status: 'Sent',
-        sent: new Date().toLocaleString(),
+        snippet: data.message.substring(0, 50) + '...',
+        fullMessage: data.message,
+        category: 'other', // Default category for staff-initiated messages
+        priority: 'normal',
       };
       await setDocument('messages', newMessage.id, newMessage);
       toast({

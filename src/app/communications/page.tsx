@@ -82,10 +82,16 @@ export default function CommunicationsPage() {
         id: `MSG-${Date.now()}`,
         patient: data.patient,
         type: data.type,
+        status: 'Sent',
+        sent: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+        subject: data.subject,
         content: data.subject,
         subContent: data.message,
-        status: 'Sent',
-        sent: new Date().toLocaleString(),
+        snippet: data.message.substring(0, 50) + '...',
+        fullMessage: data.message,
+        category: 'other', // Default category for staff-initiated messages
+        priority: 'normal',
       };
       await setDocument('messages', newMessage.id, newMessage);
       setMessages(prev => [newMessage, ...prev]);
@@ -226,7 +232,7 @@ export default function CommunicationsPage() {
                               {message.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{message.sent}</TableCell>
+                          <TableCell>{new Date(message.sent).toLocaleString()}</TableCell>
                         </TableRow>
                       ))
                     ) : (

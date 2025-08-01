@@ -48,7 +48,7 @@ interface NewMessageDialogProps {
   dialogDescription?: string;
   onSend: (data: any) => void;
   isReply?: boolean;
-  initialData?: { patientName: string; subject: string } | null;
+  initialData?: { patientName: string; subject: string, originalMessage?: string } | null;
 }
 
 export function NewMessageDialog({ 
@@ -90,7 +90,9 @@ export function NewMessageDialog({
       form.reset({
         patient: patient?.id,
         subject: initialData.subject,
-        message: `\n\n--- Original Message ---\n`,
+        message: initialData.originalMessage 
+            ? `\n\n--- Original Message ---\n${initialData.originalMessage}`
+            : '',
         type: 'Email',
       });
     } else if (!isReply) {
