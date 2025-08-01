@@ -41,11 +41,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2 } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2, UserPlus, Pencil, Trash2 } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
-import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { AddProviderDialog } from '@/components/insurance/add-provider-dialog';
+import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export type Claim = {
   id: string;
@@ -61,26 +64,44 @@ export type Claim = {
   submitDate: string;
 };
 
+export type InsuranceProvider = {
+    id: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+}
+
 export default function InsurancePage() {
   const [claims, setClaims] = React.useState<Claim[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [claimToView, setClaimToView] = React.useState<Claim | null>(null);
+  
+  const [providers, setProviders] = React.useState<InsuranceProvider[]>([]);
+  const [providerToEdit, setProviderToEdit] = React.useState<InsuranceProvider | null>(null);
+  const [providerToDelete, setProviderToDelete] = React.useState<InsuranceProvider | null>(null);
+  const [providerSearchTerm, setProviderSearchTerm] = React.useState('');
+
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchClaims() {
+    async function fetchData() {
       try {
-        const data = await getCollection<Claim>('insurance-claims');
-        setClaims(data);
+        const [claimsData, providersData] = await Promise.all([
+          getCollection<Claim>('insurance-claims'),
+          getCollection<InsuranceProvider>('insurance-providers'),
+        ]);
+        setClaims(claimsData);
+        setProviders(providersData);
       } catch (error) {
-        toast({ title: 'Error fetching claims', variant: 'destructive' });
+        toast({ title: 'Error fetching data', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     }
-    fetchClaims();
+    fetchData();
   }, [toast]);
 
   const insurancePageStats = React.useMemo(() => {
@@ -121,6 +142,41 @@ export default function InsurancePage() {
       });
     } catch(e) {
       toast({ title: "Error submitting claim", variant: 'destructive' });
+    }
+  };
+  
+   const handleSaveProvider = async (data: Omit<InsuranceProvider, 'id'>) => {
+    try {
+        const newProvider = { ...data, id: `PROV-${Date.now()}` };
+        await setDocument('insurance-providers', newProvider.id, newProvider);
+        setProviders(prev => [newProvider, ...prev]);
+        toast({ title: 'Provider Added', description: `${newProvider.name} has been added.`});
+    } catch(e) {
+        toast({ title: 'Error adding provider', variant: 'destructive'});
+    }
+  };
+
+  const handleUpdateProvider = async (updatedProvider: InsuranceProvider) => {
+    try {
+        await updateDocument('insurance-providers', updatedProvider.id, updatedProvider);
+        setProviders(prev => prev.map(p => p.id === updatedProvider.id ? updatedProvider : p));
+        setProviderToEdit(null);
+        toast({ title: 'Provider Updated', description: `${updatedProvider.name} has been updated.`});
+    } catch(e) {
+        toast({ title: 'Error updating provider', variant: 'destructive'});
+    }
+  };
+
+  const handleDeleteProvider = async () => {
+    if (providerToDelete) {
+        try {
+            await deleteDocument('insurance-providers', providerToDelete.id);
+            setProviders(prev => prev.filter(p => p.id !== providerToDelete.id));
+            setProviderToDelete(null);
+            toast({ title: 'Provider Deleted', description: `${providerToDelete.name} has been deleted.`, variant: 'destructive'});
+        } catch(e) {
+            toast({ title: 'Error deleting provider', variant: 'destructive'});
+        }
     }
   };
 
@@ -166,6 +222,10 @@ export default function InsurancePage() {
         statusFilter === 'all' || claim.status.toLowerCase() === statusFilter
       );
   }, [claims, searchTerm, statusFilter]);
+
+  const filteredProviders = React.useMemo(() => {
+    return providers.filter(provider => provider.name.toLowerCase().includes(providerSearchTerm.toLowerCase()));
+  }, [providers, providerSearchTerm]);
 
   return (
     <DashboardLayout>
@@ -341,12 +401,77 @@ export default function InsurancePage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="insurance-providers">
-            <Card>
-              <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                Insurance provider information will be available here.
-              </CardContent>
-            </Card>
+          <TabsContent value="insurance-providers" className="mt-4">
+             <Card>
+                <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Insurance Providers</CardTitle>
+                    <div className='flex items-center gap-2'>
+                        <div className="relative w-full md:w-auto">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                            type="search"
+                            placeholder="Search providers..."
+                            className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                            value={providerSearchTerm}
+                            onChange={(e) => setProviderSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <AddProviderDialog onSave={handleSaveProvider} />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Provider Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredProviders.length > 0 ? (
+                      filteredProviders.map((provider) => (
+                        <TableRow key={provider.id}>
+                          <TableCell className="font-medium">{provider.name}</TableCell>
+                          <TableCell>{provider.phone || 'N/A'}</TableCell>
+                          <TableCell>{provider.email || 'N/A'}</TableCell>
+                          <TableCell>{provider.address || 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => setProviderToEdit(provider)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setProviderToDelete(provider)} className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                          No providers found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                </CardContent>
+             </Card>
           </TabsContent>
           <TabsContent value="claims-reports">
             <Card>
@@ -363,6 +488,32 @@ export default function InsurancePage() {
         open={!!claimToView}
         onOpenChange={(isOpen) => !isOpen && setClaimToView(null)}
       />
+
+      {providerToEdit && (
+        <EditProviderDialog
+          provider={providerToEdit}
+          open={!!providerToEdit}
+          onOpenChange={(isOpen) => !isOpen && setProviderToEdit(null)}
+          onSave={handleUpdateProvider}
+        />
+      )}
+
+       <AlertDialog open={!!providerToDelete} onOpenChange={(isOpen) => !isOpen && setProviderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the provider
+              "{providerToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProvider}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </DashboardLayout>
   );
 }

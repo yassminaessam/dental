@@ -5,6 +5,7 @@
 
 import { db } from './firebase';
 import { collection, setDoc, doc } from 'firebase/firestore';
+import { insuranceProviders } from './data/insurance-providers';
 
 async function seedCollection(collectionName: string, data: any[]) {
   console.log(`Seeding ${collectionName}...`);
@@ -127,6 +128,7 @@ async function seedDatabase() {
   await seedCollection('medical-records', initialMedicalRecordsData);
   await seedCollection('clinical-images', initialClinicalImagesData);
   await seedCollection('insurance-claims', initialInsuranceClaimsData);
+  await seedCollection('insurance-providers', insuranceProviders);
   await seedCollection('referrals', initialOutgoingReferralsData);
   await seedCollection('specialists', initialSpecialistNetwork);
   await seedCollection('purchase-orders', initialPurchaseOrdersData);

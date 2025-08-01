@@ -28,10 +28,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { insuranceProviders } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
+import type { InsuranceProvider } from '@/app/insurance/page';
 
 const claimSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -52,6 +52,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [providers, setProviders] = React.useState<InsuranceProvider[]>([]);
 
   const form = useForm<ClaimFormData>({
     resolver: zodResolver(claimSchema),
@@ -61,18 +62,22 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   });
 
   React.useEffect(() => {
-    async function fetchPatients() {
+    async function fetchData() {
         if (open) {
-            const patientData = await getCollection<any>('patients');
+            const [patientData, providerData] = await Promise.all([
+                getCollection<any>('patients'),
+                getCollection<InsuranceProvider>('insurance-providers')
+            ]);
             setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
+            setProviders(providerData);
         }
     }
-    fetchPatients();
+    fetchData();
   }, [open]);
 
   const onSubmit = (data: ClaimFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
-    const providerName = insuranceProviders.find(p => p.id === data.insurance)?.name;
+    const providerName = providers.find(p => p.id === data.insurance)?.name;
     onSave({ ...data, patient: patientName, insurance: providerName });
     form.reset();
     setOpen(false);
@@ -133,7 +138,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {insuranceProviders.map((provider) => (
+                        {providers.map((provider) => (
                           <SelectItem key={provider.id} value={provider.id}>
                             {provider.name}
                           </SelectItem>

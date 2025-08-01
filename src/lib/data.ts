@@ -1,6 +1,7 @@
 
 
 
+
 export type MedicalRecordTemplate = {
   id: string;
   name: string;
