@@ -36,6 +36,7 @@ import { getCollection } from '@/services/firestore';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
+import type { Treatment } from '../treatments/page';
 
 const iconMap = {
     DollarSign,
@@ -53,22 +54,35 @@ export default function AnalyticsPage() {
   const [totalRevenue, setTotalRevenue] = React.useState(0);
   const [patientCount, setPatientCount] = React.useState(0);
   const [showRate, setShowRate] = React.useState(0);
+  const [avgTreatmentValue, setAvgTreatmentValue] = React.useState(0);
 
 
   React.useEffect(() => {
     async function fetchData() {
-        const invoices = await getCollection<Invoice>('invoices');
+        const [invoices, patients, appointments, treatments] = await Promise.all([
+          getCollection<Invoice>('invoices'),
+          getCollection<Patient>('patients'),
+          getCollection<Appointment>('appointments'),
+          getCollection<Treatment>('treatments')
+        ]);
+        
         const total = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
         setTotalRevenue(total);
 
-        const patients = await getCollection<Patient>('patients');
         setPatientCount(patients.length);
 
-        const appointments = await getCollection<Appointment>('appointments');
         const confirmed = appointments.filter(a => a.status === 'Confirmed').length;
         const totalAppointments = appointments.length;
         if(totalAppointments > 0) {
             setShowRate((confirmed / totalAppointments) * 100);
+        }
+
+        const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
+        if (completedTreatments > 0) {
+            const totalTreatmentRevenue = treatments
+                .filter(t => t.status === 'Completed')
+                .reduce((acc, t) => acc + parseFloat(t.cost.replace(/[^0-9.-]+/g, '')), 0);
+            setAvgTreatmentValue(totalTreatmentRevenue / completedTreatments);
         }
     }
     fetchData();
@@ -78,30 +92,26 @@ export default function AnalyticsPage() {
     {
         title: "Total Revenue",
         value: `EGP ${totalRevenue.toLocaleString()}`,
-        change: "+12.5% from last period",
-        icon: "DollarSign",
-        changeType: "positive"
+        description: "All time revenue",
+        icon: "DollarSign"
     },
     {
         title: "Patient Acquisition",
         value: `${patientCount}`,
-        change: "+8.3% from last period",
-        icon: "Users",
-        changeType: "positive"
+        description: "Total patients in system",
+        icon: "Users"
     },
     {
         title: "Appointment Show Rate",
         value: `${showRate.toFixed(1)}%`,
-        change: "+2.1% from last period",
-        icon: "TrendingUp",
-        changeType: "positive"
+        description: "Confirmed / Total appointments",
+        icon: "TrendingUp"
     },
     {
         title: "Average Treatment Value",
-        value: "EGP 6,250",
-        change: "-1.2% from last period",
-        icon: "Activity",
-        changeType: "negative"
+        value: `EGP ${avgTreatmentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        description: "Based on completed treatments",
+        icon: "Activity"
     }
   ];
 
@@ -146,10 +156,7 @@ export default function AnalyticsPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className={cn(
-                                "text-xs text-muted-foreground",
-                                stat.changeType === "positive" ? "text-green-600" : "text-red-600"
-                            )}>{stat.change}</p>
+                            <p className="text-xs text-muted-foreground">{stat.description}</p>
                         </CardContent>
                     </Card>
                 );
