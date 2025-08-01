@@ -82,7 +82,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
 
   const onSubmit = (data: TransactionFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
-    onSave({...data, patient: patientName, date: data.date });
+    onSave({...data, patient: patientName });
     form.reset();
     setOpen(false);
   };
