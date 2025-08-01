@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -17,16 +20,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, ChevronDown } from "lucide-react";
+import { Bell, Search, ChevronDown, Package, Clock } from "lucide-react";
 import { DentalProLogo } from "@/components/icons";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import Link from "next/link";
+import { getCollection } from '@/services/firestore';
+import { Appointment } from '@/app/appointments/page';
+import { InventoryItem } from '@/app/inventory/page';
+import { Button } from '../ui/button';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+    const [pendingAppointments, setPendingAppointments] = React.useState<Appointment[]>([]);
+    const [lowStockItems, setLowStockItems] = React.useState<InventoryItem[]>([]);
+
+    React.useEffect(() => {
+        async function fetchNotifications() {
+            const [appointments, inventory] = await Promise.all([
+                getCollection<Appointment>('appointments'),
+                getCollection<InventoryItem>('inventory')
+            ]);
+            setPendingAppointments(appointments.filter(a => a.status === 'Pending'));
+            setLowStockItems(inventory.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock'));
+        }
+        fetchNotifications();
+    }, []);
+
+    const notificationCount = pendingAppointments.length + lowStockItems.length;
+
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -90,12 +115,56 @@ export default function DashboardLayout({
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Bell className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                2
-              </span>
-            </div>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="h-6 w-6" />
+                        {notificationCount > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                {notificationCount}
+                            </span>
+                        )}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {pendingAppointments.length > 0 && (
+                        <>
+                            {pendingAppointments.map(appt => (
+                                <DropdownMenuItem key={appt.id} asChild>
+                                    <Link href="/appointments" className="flex items-start gap-2">
+                                        <Clock className="mt-1 h-4 w-4" />
+                                        <div>
+                                            <p className="font-semibold">Pending Appointment</p>
+                                            <p className="text-xs text-muted-foreground">{appt.patient} - {appt.type}</p>
+                                        </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                    )}
+                    {lowStockItems.length > 0 && (
+                         <>
+                            {lowStockItems.map(item => (
+                                <DropdownMenuItem key={item.id} asChild>
+                                    <Link href="/inventory" className="flex items-start gap-2">
+                                        <Package className="mt-1 h-4 w-4" />
+                                        <div>
+                                            <p className="font-semibold">Low Stock Alert</p>
+                                            <p className="text-xs text-muted-foreground">{item.name} - Stock: {item.stock}</p>
+                                        </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                    )}
+                    {notificationCount === 0 && (
+                        <DropdownMenuItem disabled>No new notifications</DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
