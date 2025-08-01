@@ -141,7 +141,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                   <FormItem>
                     <FormLabel>Amount *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="$0.00" {...field} />
+                      <Input type="number" placeholder="EGP 0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -168,7 +168,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Patient (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a patient" />
@@ -191,7 +191,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -217,7 +217,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Payment Method *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Select a method" />

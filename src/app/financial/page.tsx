@@ -103,7 +103,7 @@ export default function FinancialPage() {
         });
 
         const sortedChartData = Object.keys(monthlyData).sort().map(month => ({
-            month: format(new Date(month), 'MMM'),
+            month: format(new Date(month + '-02'), 'MMM'),
             ...monthlyData[month]
         }));
         setChartData(sortedChartData);
@@ -181,7 +181,7 @@ export default function FinancialPage() {
         status: 'Completed',
       };
       await setDocument('transactions', newTransaction.id, { ...newTransaction, date: (newTransaction.date as Date).toISOString() });
-      setTransactions(prev => [newTransaction, ...prev]);
+      setTransactions(prev => [{...newTransaction, date: new Date(newTransaction.date)}, ...prev]);
       toast({
         title: "Transaction Added",
         description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
@@ -319,7 +319,7 @@ export default function FinancialPage() {
                     ) : filteredTransactions.length > 0 ? (
                       filteredTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{format(new Date(transaction.date), 'PPP')}</TableCell>
+                          <TableCell>{format(transaction.date, 'PPP')}</TableCell>
                           <TableCell>
                             <div className="font-medium">{transaction.description}</div>
                             {transaction.patient && <div className="text-xs text-muted-foreground">Patient: {transaction.patient}</div>}
