@@ -42,6 +42,14 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
   const [open, setOpen] = React.useState(false);
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
+    defaultValues: {
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      category: '',
+      paymentTerms: '',
+    },
   });
 
   const onSubmit = (data: SupplierFormData) => {
