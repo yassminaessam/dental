@@ -231,11 +231,13 @@ export default function PatientsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="whitespace-nowrap">Patient</TableHead>
+                  <TableHead className="whitespace-nowrap">Email</TableHead>
+                  <TableHead className="whitespace-nowrap">Phone</TableHead>
                   <TableHead className="whitespace-nowrap">Date of Birth</TableHead>
-                  <TableHead className="whitespace-nowrap">Contact</TableHead>
                   <TableHead className="whitespace-nowrap">Address</TableHead>
                   <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
-                  <TableHead className="whitespace-nowrap">Insurance</TableHead>
+                  <TableHead className="whitespace-nowrap">Insurance Provider</TableHead>
+                  <TableHead className="whitespace-nowrap">Policy Number</TableHead>
                   <TableHead className="whitespace-nowrap">Last Visit</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
@@ -244,7 +246,7 @@ export default function PatientsPage() {
               <TableBody>
                  {loading ? (
                     <TableRow>
-                        <TableCell colSpan={9} className="h-24 text-center">
+                        <TableCell colSpan={11} className="h-24 text-center">
                             <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                         </TableCell>
                     </TableRow>
@@ -262,23 +264,18 @@ export default function PatientsPage() {
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {format(patient.dob, 'PPP')}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <div>{patient.email}</div>
-                        <div className="text-xs text-muted-foreground">{patient.phone}</div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
                       <TableCell className="whitespace-nowrap">
                           <div>{patient.ecName || 'N/A'}</div>
-                          <div className="text-xs text-muted-foreground">{patient.ecPhone}</div>
-                          <div className="text-xs text-muted-foreground capitalize">{patient.ecRelationship}</div>
+                          <div className="text-xs text-muted-foreground">{patient.ecPhone} ({patient.ecRelationship})</div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <div>{patient.insuranceProvider || 'N/A'}</div>
-                        <div className="text-xs text-muted-foreground">{patient.policyNumber}</div>
-                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.policyNumber || 'N/A'}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
@@ -309,7 +306,7 @@ export default function PatientsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center">
+                    <TableCell colSpan={11} className="h-24 text-center">
                       No patients found.
                     </TableCell>
                   </TableRow>
