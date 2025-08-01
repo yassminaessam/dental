@@ -33,9 +33,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { referralPageStats, initialOutgoingReferralsData, initialSpecialistNetwork } from "@/lib/data";
+import { referralPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
 import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
+import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
+import type { Patient } from '@/app/patients/page';
 
 export type Referral = {
   id: string;
@@ -66,8 +68,11 @@ export type Specialist = {
 }
 
 export default function ReferralsPage() {
-  const [referrals, setReferrals] = React.useState<Referral[]>(initialOutgoingReferralsData);
-  const [specialists, setSpecialists] = React.useState<Specialist[]>(initialSpecialistNetwork);
+  const [loading, setLoading] = React.useState(true);
+  const [referrals, setReferrals] = React.useState<Referral[]>([]);
+  const [specialists, setSpecialists] = React.useState<Specialist[]>([]);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [specialistSearchTerm, setSpecialistSearchTerm] = React.useState('');
@@ -76,55 +81,100 @@ export default function ReferralsPage() {
   const [specialistToDelete, setSpecialistToDelete] = React.useState<Specialist | null>(null);
   const { toast } = useToast();
 
-  const handleSaveReferral = (data: any) => {
+  React.useEffect(() => {
+    async function fetchData() {
+        setLoading(true);
+        try {
+            const [referralsData, specialistsData, patientsData] = await Promise.all([
+                getCollection<Referral>('referrals'),
+                getCollection<Specialist>('specialists'),
+                getCollection<Patient>('patients'),
+            ]);
+            setReferrals(referralsData);
+            setSpecialists(specialistsData);
+            setPatients(patientsData);
+        } catch (e) {
+            toast({ title: 'Error fetching data', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+
+
+  const handleSaveReferral = async (data: Omit<Referral, 'id'|'specialty'|'date'|'apptDate'|'status'>) => {
+    const specialistDetails = specialists.find(s => s.id === data.specialist);
+    const patientName = patients.find(p => p.id === data.patient)?.name;
+
     const newReferral: Referral = {
-      id: `REF-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      patient: data.patient,
-      specialist: data.specialist,
-      specialty: specialists.find(s => s.name === data.specialist)?.specialty || 'Unknown',
+      id: `REF-${Date.now()}`,
+      patient: patientName || 'Unknown Patient',
+      specialist: specialistDetails?.name || 'Unknown Specialist',
+      specialty: specialistDetails?.specialty || 'Unknown',
       reason: data.reason,
       urgency: data.urgency,
       status: 'pending',
       date: new Date().toLocaleDateString(),
       apptDate: null,
     };
-    setReferrals(prev => [newReferral, ...prev]);
-    toast({
-      title: "Referral Sent",
-      description: `Referral for ${newReferral.patient} to ${newReferral.specialist} has been sent.`,
-    });
+    try {
+        await setDocument('referrals', newReferral.id, newReferral);
+        setReferrals(prev => [newReferral, ...prev]);
+        toast({
+          title: "Referral Sent",
+          description: `Referral for ${newReferral.patient} to ${newReferral.specialist} has been sent.`,
+        });
+    } catch(e) {
+        toast({ title: 'Error sending referral', variant: 'destructive' });
+    }
   };
 
-  const handleSaveSpecialist = (data: any) => {
+  const handleSaveSpecialist = async (data: Omit<Specialist, 'id'>) => {
     const newSpecialist: Specialist = {
-      id: `SPEC-${Math.floor(100 + Math.random() * 900)}`,
+      id: `SPEC-${Date.now()}`,
       ...data,
     };
-    setSpecialists(prev => [newSpecialist, ...prev]);
-    toast({
-      title: "Specialist Added",
-      description: `${newSpecialist.name} has been added to your network.`,
-    });
-  };
-
-  const handleUpdateSpecialist = (updatedSpecialist: Specialist) => {
-    setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
-    setSpecialistToEdit(null);
-    toast({
-        title: "Specialist Updated",
-        description: `${updatedSpecialist.name}'s details have been updated.`
-    });
-  };
-
-  const handleDeleteSpecialist = () => {
-    if (specialistToDelete) {
-        setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
+    try {
+        await setDocument('specialists', newSpecialist.id, newSpecialist);
+        setSpecialists(prev => [newSpecialist, ...prev]);
         toast({
-            title: "Specialist Deleted",
-            description: `${specialistToDelete.name} has been removed from your network.`,
-            variant: "destructive",
+          title: "Specialist Added",
+          description: `${newSpecialist.name} has been added to your network.`,
         });
-        setSpecialistToDelete(null);
+    } catch(e) {
+        toast({ title: 'Error adding specialist', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateSpecialist = async (updatedSpecialist: Specialist) => {
+    try {
+        await setDocument('specialists', updatedSpecialist.id, updatedSpecialist);
+        setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
+        setSpecialistToEdit(null);
+        toast({
+            title: "Specialist Updated",
+            description: `${updatedSpecialist.name}'s details have been updated.`
+        });
+    } catch(e) {
+        toast({ title: 'Error updating specialist', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteSpecialist = async () => {
+    if (specialistToDelete) {
+        try {
+            await deleteDocument('specialists', specialistToDelete.id);
+            setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
+            toast({
+                title: "Specialist Deleted",
+                description: `${specialistToDelete.name} has been removed from your network.`,
+                variant: "destructive",
+            });
+            setSpecialistToDelete(null);
+        } catch(e) {
+            toast({ title: 'Error deleting specialist', variant: 'destructive' });
+        }
     }
   };
   
@@ -161,7 +211,7 @@ export default function ReferralsPage() {
           <h1 className="text-3xl font-bold">Referral Management</h1>
           <div className="flex items-center gap-2">
             <AddSpecialistDialog onSave={handleSaveSpecialist} />
-            <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} />
+            <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} patients={patients} />
           </div>
         </div>
 
@@ -175,7 +225,7 @@ export default function ReferralsPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
+                   {stat.title === 'Total Referrals' ? referrals.length : stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
@@ -235,7 +285,9 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredReferrals.length > 0 ? (
+                    {loading ? (
+                        <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredReferrals.length > 0 ? (
                       filteredReferrals.map((referral) => (
                         <TableRow key={referral.id}>
                           <TableCell className="font-medium">{referral.patient}</TableCell>
@@ -328,7 +380,9 @@ export default function ReferralsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredSpecialists.length > 0 ? (
+                            {loading ? (
+                                <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                            ) : filteredSpecialists.length > 0 ? (
                                 filteredSpecialists.map((specialist) => (
                                     <TableRow key={specialist.id}>
                                         <TableCell>

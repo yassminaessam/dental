@@ -24,9 +24,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import { dentalChartPatients, referralUrgency } from '@/lib/data';
+import { referralUrgency } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { Specialist } from '@/app/referrals/page';
+import type { Specialist, Patient } from '@/app/referrals/page';
 
 const referralSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -40,18 +40,17 @@ type ReferralFormData = z.infer<typeof referralSchema>;
 interface NewReferralDialogProps {
   onSave: (data: any) => void;
   specialists: Specialist[];
+  patients: Patient[];
 }
 
-export function NewReferralDialog({ onSave, specialists }: NewReferralDialogProps) {
+export function NewReferralDialog({ onSave, specialists, patients }: NewReferralDialogProps) {
   const [open, setOpen] = React.useState(false);
   const form = useForm<ReferralFormData>({
     resolver: zodResolver(referralSchema),
   });
 
   const onSubmit = (data: ReferralFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
-    const specialistName = specialists.find(s => s.id === data.specialist)?.name;
-    onSave({ ...data, patient: patientName, specialist: specialistName });
+    onSave(data);
     form.reset();
     setOpen(false);
   };
@@ -87,7 +86,7 @@ export function NewReferralDialog({ onSave, specialists }: NewReferralDialogProp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>

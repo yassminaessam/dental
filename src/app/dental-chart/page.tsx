@@ -18,12 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { initialDentalChartData, dentalChartPatients, dentalChartStats, janeSmithDentalChart, johnDoeDentalChart, allHealthyDentalChart } from "@/lib/data";
-import { Download, Printer, RotateCw, Search, User } from "lucide-react";
+import { dentalChartStats, allHealthyDentalChart } from "@/lib/data";
+import { Download, Printer, RotateCw, Search, User, Loader2 } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
 import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dialog';
 import { useToast } from '@/hooks/use-toast';
+import type { Patient } from '@/app/patients/page';
+import { getCollection, setDocument } from '@/services/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
 
@@ -33,14 +37,41 @@ export interface Tooth {
     history: { date: string; condition: ToothCondition; notes: string }[];
 }
 
-
 export default function DentalChartPage() {
+    const [loading, setLoading] = React.useState(false);
+    const [patients, setPatients] = React.useState<Patient[]>([]);
     const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...allHealthyDentalChart });
     const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
     const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
     const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
     const { toast } = useToast();
+
+    React.useEffect(() => {
+        async function fetchPatients() {
+            const patientData = await getCollection<Patient>('patients');
+            setPatients(patientData);
+        }
+        fetchPatients();
+    }, []);
+
+    const fetchChartData = async (patientId: string) => {
+        setLoading(true);
+        try {
+            const docRef = doc(db, 'dental-charts', patientId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setChartData(docSnap.data().chart);
+            } else {
+                setChartData({ ...allHealthyDentalChart });
+            }
+        } catch (error) {
+            toast({ title: 'Error fetching chart data', variant: 'destructive' });
+            setChartData({ ...allHealthyDentalChart });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleToothSelect = (toothId: number) => {
         if (!selectedPatientId) {
@@ -54,37 +85,44 @@ export default function DentalChartPage() {
         setSelectedTooth(chartData[toothId] || null);
     };
 
-    const handleUpdateCondition = (toothId: number, condition: ToothCondition) => {
+    const handleUpdateCondition = async (toothId: number, condition: ToothCondition) => {
+        if (!selectedPatientId) return;
+
         const newChartData = { ...chartData };
-        const toothToUpdate = { ...newChartData[toothId] };
+        const toothToUpdate = { ...(newChartData[toothId] || { id: toothId, condition: 'healthy', history: [] }) };
         
         toothToUpdate.condition = condition;
-        toothToUpdate.history = [
-            ...toothToUpdate.history,
-            { date: new Date().toLocaleDateString(), condition: condition, notes: `Condition changed to ${condition}` }
-        ];
+        toothToUpdate.history.push({ date: new Date().toLocaleDateString(), condition: condition, notes: `Condition changed to ${condition}` });
 
         newChartData[toothId] = toothToUpdate;
-        setChartData(newChartData);
-        setSelectedTooth(newChartData[toothId]);
-        toast({
-            title: `Tooth ${toothId} Updated`,
-            description: `Condition set to ${condition.replace('-', ' ')}.`,
-        });
+        
+        try {
+            await setDocument('dental-charts', selectedPatientId, { chart: newChartData });
+            setChartData(newChartData);
+            setSelectedTooth(newChartData[toothId]);
+            toast({
+                title: `Tooth ${toothId} Updated`,
+                description: `Condition set to ${condition.replace('-', ' ')}.`,
+            });
+        } catch (error) {
+            toast({ title: 'Error updating chart', variant: 'destructive' });
+        }
     };
     
-    const handleResetChart = () => {
-        let chartToResetTo = allHealthyDentalChart;
-        if (selectedPatientId === 'pat1') chartToResetTo = johnDoeDentalChart;
-        if (selectedPatientId === 'pat2') chartToResetTo = janeSmithDentalChart;
-
-        setChartData({ ...chartToResetTo });
-        setSelectedTooth(null);
-        setHighlightedCondition('all');
-        toast({
-            title: 'Chart Reset',
-            description: 'The dental chart has been reset for the current patient.',
-        });
+    const handleResetChart = async () => {
+        if (!selectedPatientId) return;
+        try {
+            await setDocument('dental-charts', selectedPatientId, { chart: allHealthyDentalChart });
+            setChartData({ ...allHealthyDentalChart });
+            setSelectedTooth(null);
+            setHighlightedCondition('all');
+            toast({
+                title: 'Chart Reset',
+                description: 'The dental chart has been reset to a healthy state.',
+            });
+        } catch (error) {
+            toast({ title: 'Error resetting chart', variant: 'destructive' });
+        }
     };
 
     const handlePrint = () => {
@@ -102,20 +140,8 @@ export default function DentalChartPage() {
         setSelectedPatientId(patientId);
         setSelectedTooth(null);
         setHighlightedCondition('all');
-        
-        let newChartData = allHealthyDentalChart;
-        let patientName = "None";
-
-        if (patientId === 'pat1') {
-            newChartData = johnDoeDentalChart;
-            patientName = 'John Doe';
-        } else if (patientId === 'pat2') {
-            newChartData = janeSmithDentalChart;
-            patientName = 'Jane Smith';
-        }
-        
-        setChartData({ ...newChartData });
-        
+        fetchChartData(patientId);
+        const patientName = patients.find(p => p.id === patientId)?.name || "Selected Patient";
         toast({
             title: 'Patient Changed',
             description: `Displaying chart for ${patientName}.`,
@@ -145,7 +171,7 @@ export default function DentalChartPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Dental Chart</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleResetChart}>
+            <Button variant="outline" onClick={handleResetChart} disabled={!selectedPatientId}>
               <RotateCw className="mr-2 h-4 w-4" />
               Reset
             </Button>
@@ -173,7 +199,7 @@ export default function DentalChartPage() {
                 <SelectValue placeholder="Select patient" />
               </SelectTrigger>
               <SelectContent>
-                {dentalChartPatients.map((patient) => (
+                {patients.map((patient) => (
                   <SelectItem key={patient.id} value={patient.id}>
                     {patient.name}
                   </SelectItem>
@@ -222,12 +248,18 @@ export default function DentalChartPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <InteractiveDentalChart
-                chartData={chartData}
-                selectedToothId={selectedTooth?.id || null}
-                highlightedCondition={highlightedCondition}
-                onToothSelect={handleToothSelect}
-            />
+            {loading ? (
+                <Card className="flex h-[500px] items-center justify-center">
+                    <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+                </Card>
+            ) : (
+                <InteractiveDentalChart
+                    chartData={chartData}
+                    selectedToothId={selectedTooth?.id || null}
+                    highlightedCondition={highlightedCondition}
+                    onToothSelect={handleToothSelect}
+                />
+            )}
           </div>
           <div className="lg:col-span-1">
             <ToothDetailCard 

@@ -28,43 +28,103 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { patientMessagesData, patientPortalPageStats, initialAppointmentsData, type PatientMessage, initialPortalUsersData, type PortalUser, initialSharedDocumentsData, type SharedDocument } from "@/lib/data";
+import { patientPortalPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2 } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
 import type { Appointment } from '@/app/appointments/page';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { getCollection, updateDocument, deleteDocument, setDocument } from '@/services/firestore';
+import type { Message } from '@/app/communications/page';
+
+export type PortalUser = {
+    id: string;
+    name: string;
+    email: string;
+    status: 'Active' | 'Deactivated';
+    lastLogin: string;
+};
+
+export type SharedDocument = {
+    id: string;
+    name: string;
+    patient: string;
+    type: 'Treatment Plan' | 'Invoice' | 'Lab Result';
+    sharedDate: string;
+};
+
+export type PatientMessage = {
+    id: string;
+    patient: string;
+    subject: string;
+    snippet: string;
+    fullMessage: string;
+    category: 'treatment' | 'appointment' | 'billing' | 'other';
+    priority: 'high' | 'normal' | 'low';
+    date: string;
+    status: 'Unread' | 'Read';
+};
+
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
+  const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
+  
+  const [messages, setMessages] = React.useState<PatientMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = React.useState<PatientMessage | null>(null);
   const [isReplyOpen, setIsReplyOpen] = React.useState(false);
   const [replyData, setReplyData] = React.useState<{ patientName: string; subject: string } | null>(null);
-  const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
-  const [portalUsers, setPortalUsers] = React.useState<PortalUser[]>(initialPortalUsersData);
-  const [sharedDocuments, setSharedDocuments] = React.useState<SharedDocument[]>(initialSharedDocumentsData);
+
+  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
+  const [portalUsers, setPortalUsers] = React.useState<PortalUser[]>([]);
+  const [sharedDocuments, setSharedDocuments] = React.useState<SharedDocument[]>([]);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [msgData, apptData, userData, docData] = await Promise.all([
+          getCollection<PatientMessage>('patient-messages'),
+          getCollection<Appointment>('appointments'),
+          getCollection<PortalUser>('portal-users'),
+          getCollection<SharedDocument>('shared-documents'),
+        ]);
+        setMessages(msgData);
+        setAppointments(apptData.map(a => ({...a, dateTime: new Date(a.dateTime) })));
+        setPortalUsers(userData);
+        setSharedDocuments(docData);
+      } catch (error) {
+        toast({ title: 'Error fetching portal data', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
+
 
   const pendingRequests = React.useMemo(() => {
     return appointments.filter(appt => appt.status === 'Pending');
   }, [appointments]);
 
-  const handleRequestStatusChange = (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
-    const updatedAppointments = appointments.map(appt =>
-      appt.id === appointmentId ? { ...appt, status: newStatus } : appt
-    );
-    setAppointments(updatedAppointments);
-    // This is a mock, in a real app you'd likely update a central store or refetch
-    initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
-    
-    toast({
-      title: `Request ${newStatus === 'Confirmed' ? 'Approved' : 'Declined'}`,
-      description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
-      variant: newStatus === 'Cancelled' ? 'destructive' : undefined,
-    });
+  const handleRequestStatusChange = async (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
+    try {
+        await updateDocument('appointments', appointmentId, { status: newStatus });
+        setAppointments(prev => prev.map(appt =>
+          appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+        ));
+        toast({
+          title: `Request ${newStatus === 'Confirmed' ? 'Approved' : 'Declined'}`,
+          description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
+          variant: newStatus === 'Cancelled' ? 'destructive' : undefined,
+        });
+    } catch (error) {
+        toast({ title: 'Error updating request status', variant: 'destructive' });
+    }
   };
 
   const handleReply = (message: PatientMessage) => {
@@ -75,24 +135,43 @@ export default function PatientPortalPage() {
     setIsReplyOpen(true);
   };
   
-  const handleSendMessage = (data: any) => {
-    toast({
-      title: "Message Sent",
-      description: `A new ${data.type} has been sent to ${data.patient}.`,
-    });
+  const handleSendMessage = async (data: any) => {
+    try {
+      const newMessage: Message = {
+        id: `MSG-${Date.now()}`,
+        patient: data.patient,
+        type: data.type,
+        content: data.subject,
+        subContent: data.message,
+        status: 'Sent',
+        sent: new Date().toLocaleString(),
+      };
+      await setDocument('messages', newMessage.id, newMessage);
+      toast({
+        title: "Message Sent",
+        description: `A new ${data.type} has been sent to ${data.patient}.`,
+      });
+    } catch(e) {
+        toast({ title: 'Error sending message', variant: 'destructive' });
+    }
   };
 
-  const handleUserStatusChange = (userId: string) => {
+  const handleUserStatusChange = async (userId: string) => {
     const user = portalUsers.find(u => u.id === userId);
     if (!user) return;
     
     const newStatus = user.status === 'Active' ? 'Deactivated' : 'Active';
-    setPortalUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-    toast({
-        title: "User Status Updated",
-        description: `${user.name}'s portal access has been ${newStatus.toLowerCase()}.`,
-        variant: newStatus === 'Deactivated' ? 'destructive' : undefined
-    });
+    try {
+        await updateDocument('portal-users', userId, { status: newStatus });
+        setPortalUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+        toast({
+            title: "User Status Updated",
+            description: `${user.name}'s portal access has been ${newStatus.toLowerCase()}.`,
+            variant: newStatus === 'Deactivated' ? 'destructive' : undefined
+        });
+    } catch (e) {
+        toast({ title: 'Error updating user status', variant: 'destructive' });
+    }
   };
 
   const handleResetPassword = (userName: string) => {
@@ -102,16 +181,20 @@ export default function PatientPortalPage() {
     });
   };
 
-  const handleRevokeDocument = (docId: string) => {
+  const handleRevokeDocument = async (docId: string) => {
     const doc = sharedDocuments.find(d => d.id === docId);
     if (!doc) return;
-
-    setSharedDocuments(prev => prev.filter(d => d.id !== docId));
-    toast({
-        title: "Document Access Revoked",
-        description: `Access to "${doc.name}" has been revoked for ${doc.patient}.`,
-        variant: "destructive",
-    });
+    try {
+        await deleteDocument('shared-documents', docId);
+        setSharedDocuments(prev => prev.filter(d => d.id !== docId));
+        toast({
+            title: "Document Access Revoked",
+            description: `Access to "${doc.name}" has been revoked for ${doc.patient}.`,
+            variant: "destructive",
+        });
+    } catch (e) {
+        toast({ title: 'Error revoking document', variant: 'destructive' });
+    }
   };
   
   const handleSaveChanges = () => {
@@ -151,7 +234,7 @@ export default function PatientPortalPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
+                  {stat.title === 'Active Portal Users' ? portalUsers.length : stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
@@ -199,8 +282,10 @@ export default function PatientPortalPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {patientMessagesData.length > 0 ? (
-                      patientMessagesData.map((message) => (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : messages.length > 0 ? (
+                      messages.map((message) => (
                         <TableRow key={message.id} className={message.status === 'Unread' ? 'bg-accent/10' : ''}>
                           <TableCell>
                             <div className="flex items-center gap-2 font-medium">
@@ -276,7 +361,9 @@ export default function PatientPortalPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingRequests.length > 0 ? (
+                       {loading ? (
+                          <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                        ) : pendingRequests.length > 0 ? (
                         pendingRequests.map(request => (
                           <TableRow key={request.id}>
                             <TableCell className="font-medium">{request.patient}</TableCell>
@@ -325,7 +412,9 @@ export default function PatientPortalPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {portalUsers.map(user => (
+                            {loading ? (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                            ) : portalUsers.map(user => (
                                 <TableRow key={user.id}>
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.email}</TableCell>
@@ -368,7 +457,9 @@ export default function PatientPortalPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sharedDocuments.map(doc => (
+                             {loading ? (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                             ) : sharedDocuments.map(doc => (
                                 <TableRow key={doc.id}>
                                     <TableCell className="font-medium flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground"/> {doc.name}</TableCell>
                                     <TableCell>{doc.patient}</TableCell>

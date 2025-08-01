@@ -1,15 +1,4 @@
 
-export type PatientMessage = {
-    id: string;
-    patient: string;
-    subject: string;
-    snippet: string;
-    fullMessage: string;
-    category: 'treatment' | 'appointment' | 'billing' | 'other';
-    priority: 'high' | 'normal' | 'low';
-    date: string;
-    status: 'Unread' | 'Read';
-};
 
 export type MedicalRecordTemplate = {
   id: string;
@@ -17,23 +6,6 @@ export type MedicalRecordTemplate = {
   type: string;
   content: string;
 };
-
-export type PortalUser = {
-    id: string;
-    name: string;
-    email: string;
-    status: 'Active' | 'Deactivated';
-    lastLogin: string;
-};
-
-export type SharedDocument = {
-    id: string;
-    name: string;
-    patient: string;
-    type: 'Treatment Plan' | 'Invoice' | 'Lab Result';
-    sharedDate: string;
-};
-
 
 // Mock data for the dashboard
 export const overviewStats = [
@@ -758,3 +730,10 @@ export const billingPageStats = [
     description: "Based on all invoices",
   },
 ];
+
+export const allHealthyDentalChart = {
+    18: { id: 18, condition: 'healthy', history: [] }, 17: { id: 17, condition: 'healthy', history: [] }, 16: { id: 16, condition: 'healthy', history: [] }, 15: { id: 15, condition: 'healthy', history: [] }, 14: { id: 14, condition: 'healthy', history: [] }, 13: { id: 13, condition: 'healthy', history: [] }, 12: { id: 12, condition: 'healthy', history: [] }, 11: { id: 11, condition: 'healthy', history: [] },
+    21: { id: 21, condition: 'healthy', history: [] }, 22: { id: 22, condition: 'healthy', history: [] }, 23: { id: 23, condition: 'healthy', history: [] }, 24: { id: 24, condition: 'healthy', history: [] }, 25: { id: 25, condition: 'healthy', history: [] }, 26: { id: 26, condition: 'healthy', history: [] }, 27: { id: 27, condition: 'healthy', history: [] }, 28: { id: 28, condition: 'healthy', history: [] },
+    48: { id: 48, condition: 'healthy', history: [] }, 47: { id: 47, condition: 'healthy', history: [] }, 46: { id: 46, condition: 'healthy', history: [] }, 45: { id: 45, condition: 'healthy', history: [] }, 44: { id: 44, condition: 'healthy', history: [] }, 43: { id: 43, condition: 'healthy', history: [] }, 42: { id: 42, condition: 'healthy', history: [] }, 41: { id: 41, condition: 'healthy', history: [] },
+    31: { id: 31, condition: 'healthy', history: [] }, 32: { id: 32, condition: 'healthy', history: [] }, 33: { id: 33, condition: 'healthy', history: [] }, 34: { id: 34, condition: 'healthy', history: [] }, 35: { id: 35, condition: 'healthy', history: [] }, 36: { id: 36, condition: 'healthy', history: [] }, 37: { id: 37, condition: 'healthy', history: [] }, 38: { id: 38, condition: 'healthy', history: [] },
+};
