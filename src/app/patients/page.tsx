@@ -230,9 +230,9 @@ export default function PatientsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px] whitespace-nowrap">Patient</TableHead>
-                  <TableHead className="whitespace-nowrap">Email</TableHead>
-                  <TableHead className="whitespace-nowrap">Phone</TableHead>
-                  <TableHead className="whitespace-nowrap">Age</TableHead>
+                  <TableHead className="whitespace-nowrap">Contact</TableHead>
+                  <TableHead className="whitespace-nowrap">Address</TableHead>
+                  <TableHead className="whitespace-nowrap">Insurance</TableHead>
                   <TableHead className="whitespace-nowrap">Last Visit</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
@@ -253,12 +253,18 @@ export default function PatientsPage() {
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
                             <User className="h-5 w-5 text-muted-foreground" />
                           </div>
-                          <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
+                          <div>
+                            <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
+                             <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.age}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div>{patient.email}</div>
+                        <div className="text-xs text-muted-foreground">{patient.phone}</div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
+                      <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
