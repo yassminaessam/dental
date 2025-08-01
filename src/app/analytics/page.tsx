@@ -38,6 +38,7 @@ import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
 import type { Treatment } from '../treatments/page';
 import { format, isToday } from 'date-fns';
+import { Transaction } from '../financial/page';
 
 const iconMap = {
     DollarSign,
@@ -59,15 +60,17 @@ export default function AnalyticsPage() {
   const [appointmentAnalyticsData, setAppointmentAnalyticsData] = React.useState<any[]>([]);
   const [patientDemographicsData, setPatientDemographicsData] = React.useState<any[]>([]);
   const [treatmentVolumeData, setTreatmentVolumeData] = React.useState<any[]>([]);
+  const [revenueTrendData, setRevenueTrendData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
 
 
   React.useEffect(() => {
     async function fetchData() {
-        const [invoices, patients, appointments, treatments] = await Promise.all([
+        const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
           getCollection<Invoice>('invoices'),
           getCollection<Patient>('patients'),
           getCollection<any>('appointments'),
-          getCollection<Treatment>('treatments')
+          getCollection<Treatment>('treatments'),
+          getCollection<Transaction>('transactions'),
         ]);
         
         const total = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
@@ -157,6 +160,27 @@ export default function AnalyticsPage() {
         setTreatmentVolumeData(
             Object.entries(monthlyTreatments).map(([month, count]) => ({ month, count }))
         );
+
+        // Process revenue data for chart
+        const monthlyRevenue: Record<string, { revenue: number, expenses: number }> = {};
+        transactions.forEach(t => {
+            const month = new Date(t.date).toLocaleString('default', { month: 'short' });
+            if (!monthlyRevenue[month]) {
+                monthlyRevenue[month] = { revenue: 0, expenses: 0 };
+            }
+            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g, ''));
+            if (t.type === 'Revenue') {
+                monthlyRevenue[month].revenue += amount;
+            } else {
+                monthlyRevenue[month].expenses += amount;
+            }
+        });
+        const chartData = Object.keys(monthlyRevenue).map(month => ({
+            month,
+            revenue: monthlyRevenue[month].revenue,
+            expenses: monthlyRevenue[month].expenses
+        }));
+        setRevenueTrendData(chartData);
 
     }
     fetchData();
@@ -252,7 +276,7 @@ export default function AnalyticsPage() {
                         <CardTitle>Revenue Trend</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <RevenueTrendsChart data={[]} />
+                        <RevenueTrendsChart data={revenueTrendData} />
                     </CardContent>
                 </Card>
                 <Card className="lg:col-span-2">
@@ -291,7 +315,7 @@ export default function AnalyticsPage() {
                     <CardTitle>Staff Performance</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <StaffPerformanceChart />
+                    <StaffPerformanceChart data={[]} />
                 </CardContent>
              </Card>
           </TabsContent>
@@ -301,7 +325,7 @@ export default function AnalyticsPage() {
                     <CardTitle>Patient Satisfaction</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <PatientSatisfactionChart />
+                    <PatientSatisfactionChart data={[]} />
                 </CardContent>
              </Card>
           </TabsContent>
@@ -310,5 +334,3 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
-
-    

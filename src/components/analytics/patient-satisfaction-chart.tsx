@@ -16,22 +16,24 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const patientSatisfactionData = [
-    { month: "January", score: 4.2 },
-    { month: "February", score: 4.4 },
-    { month: "March", score: 4.3 },
-    { month: "April", score: 4.6 },
-    { month: "May", score: 4.5 },
-    { month: "June", score: 4.7 },
-    { month: "July", score: 4.8 },
-];
+interface PatientSatisfactionChartProps {
+    data: { month: string; score: number; }[]
+}
 
-export default function PatientSatisfactionChart() {
+export default function PatientSatisfactionChart({ data }: PatientSatisfactionChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
+                No patient satisfaction data available.
+            </div>
+        );
+    }
+    
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <AreaChart
         accessibilityLayer
-        data={patientSatisfactionData}
+        data={data}
         margin={{
           top: 20,
           left: 12,

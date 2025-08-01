@@ -9,13 +9,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const staffPerformanceData = [
-    { name: 'Dr. Nourhan', appointments: 120 },
-    { name: 'Dr. Khaled', appointments: 110 },
-    { name: 'Dr. Mariam', appointments: 95 },
-    { name: 'Dr. Youssef', appointments: 80 },
-];
-
 const chartConfig = {
   appointments: {
     label: "Appointments",
@@ -23,12 +16,24 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function StaffPerformanceChart() {
+interface StaffPerformanceChartProps {
+    data: { name: string; appointments: number; }[]
+}
+
+export default function StaffPerformanceChart({ data }: StaffPerformanceChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
+                No staff performance data available.
+            </div>
+        );
+    }
+
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
         accessibilityLayer
-        data={staffPerformanceData}
+        data={data}
         layout="vertical"
         margin={{
           top: 20,
