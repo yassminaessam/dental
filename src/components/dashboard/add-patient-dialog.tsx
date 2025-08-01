@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { emergencyContactRelationships } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
+import { ScrollArea } from '../ui/scroll-area';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -106,9 +107,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
             Enter patient details to create a new record
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow overflow-y-auto pr-6 pl-1">
+        <div className="flex-grow overflow-y-auto pr-6 pl-1 -mr-6 -ml-1">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6 px-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}

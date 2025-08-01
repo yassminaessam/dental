@@ -41,8 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
-import { getCollection, addDocument, updateDocument } from '@/services/firestore';
-import type { Patient } from '@/app/patients/page';
+import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 
 export type Appointment = {
   id: string;

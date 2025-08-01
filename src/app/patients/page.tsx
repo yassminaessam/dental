@@ -42,7 +42,7 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCollection, addDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 
 export type Patient = {
   id: string;
@@ -67,7 +67,7 @@ export default function PatientsPage() {
   React.useEffect(() => {
     async function fetchPatients() {
       try {
-        const data = await getCollection<Patient>('patients');
+        const data = await getCollection<any>('patients');
         setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
       } catch (error) {
         toast({ title: 'Error fetching patients', description: 'Could not load patient data from the database.', variant: 'destructive' });
@@ -81,7 +81,7 @@ export default function PatientsPage() {
   const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
     try {
         const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
-        await addDocument('patients', newPatient);
+        await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
         setPatients(prev => [newPatient, ...prev]);
         toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
     } catch (error) {
@@ -91,7 +91,7 @@ export default function PatientsPage() {
 
   const handleUpdatePatient = async (updatedPatient: Patient) => {
     try {
-        await updateDocument('patients', updatedPatient.id, updatedPatient);
+        await updateDocument('patients', updatedPatient.id, { ...updatedPatient, dob: updatedPatient.dob.toISOString() });
         setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
         setPatientToEdit(null);
         toast({ title: "Patient Updated", description: `${updatedPatient.name}'s record has been updated.` });

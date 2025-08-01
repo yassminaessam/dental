@@ -16,7 +16,7 @@ import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appoi
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import { useToast } from '@/hooks/use-toast';
-import { addDocument } from '@/services/firestore';
+import { setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 
@@ -26,7 +26,7 @@ export default function DashboardPage() {
     const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
         try {
             const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
-            await addDocument('patients', newPatient);
+            await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
             toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
         } catch (error) {
             toast({ title: "Error adding patient", variant: "destructive" });
@@ -41,7 +41,7 @@ export default function DashboardPage() {
                 dateTime: data.dateTime,
                 status: 'Confirmed',
             };
-            await addDocument('appointments', { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
+            await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
             toast({ title: "Appointment Scheduled", description: `Appointment for ${newAppointment.patient} has been scheduled.` });
         } catch (error) {
             toast({ title: "Error scheduling appointment", variant: "destructive" });
