@@ -39,7 +39,10 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
   const form = useForm<Omit<Template, 'id'>>({
     resolver: zodResolver(templateSchema),
     defaultValues: {
+      name: '',
       type: 'Email',
+      subject: '',
+      body: '',
     },
   });
 
