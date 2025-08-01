@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { reportsPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Download, DollarSign, Users, Calendar, TrendingUp } from "lucide-react";
 import RevenueTrendChart from "@/components/reports/revenue-trend-chart";
@@ -34,6 +33,34 @@ const iconMap = {
 }
 
 type IconKey = keyof typeof iconMap;
+
+const reportsPageStats = [
+  {
+    title: "Total Revenue",
+    value: "EGP 1,000,000",
+    change: "+15% from last 30d",
+    icon: "DollarSign",
+  },
+  {
+    title: "New Patients",
+    value: "45",
+    change: "+10% from last 30d",
+    icon: "Users",
+  },
+  {
+    title: "Total Appointments",
+    value: "350",
+    change: "+5% from last 30d",
+    icon: "Calendar",
+  },
+  {
+    title: "Appointment Show Rate",
+    value: "92%",
+    change: "+1.2% from last 30d",
+    icon: "TrendingUp",
+  },
+];
+
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = React.useState('30');
