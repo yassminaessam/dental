@@ -238,6 +238,7 @@ export default function PatientsPage() {
                   <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
                   <TableHead className="whitespace-nowrap">Insurance Provider</TableHead>
                   <TableHead className="whitespace-nowrap">Policy Number</TableHead>
+                  <TableHead className="whitespace-nowrap">Medical History</TableHead>
                   <TableHead className="whitespace-nowrap">Last Visit</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
@@ -246,7 +247,7 @@ export default function PatientsPage() {
               <TableBody>
                  {loading ? (
                     <TableRow>
-                        <TableCell colSpan={11} className="h-24 text-center">
+                        <TableCell colSpan={12} className="h-24 text-center">
                             <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                         </TableCell>
                     </TableRow>
@@ -276,6 +277,11 @@ export default function PatientsPage() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.policyNumber || 'N/A'}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {patient.medicalHistory && patient.medicalHistory.length > 0
+                            ? patient.medicalHistory.map(h => h.condition).join(', ')
+                            : 'N/A'}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
                       <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
@@ -306,7 +312,7 @@ export default function PatientsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={11} className="h-24 text-center">
+                    <TableCell colSpan={12} className="h-24 text-center">
                       No patients found.
                     </TableCell>
                   </TableRow>
