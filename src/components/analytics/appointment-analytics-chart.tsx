@@ -8,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { appointmentAnalyticsData } from "@/lib/data";
 
 const chartConfig = {
   appointments: {
@@ -25,12 +24,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function AppointmentAnalyticsChart() {
+interface AppointmentAnalyticsChartProps {
+    data: { time: string; appointments: number; noShows: number; cancellations: number; }[]
+}
+
+export default function AppointmentAnalyticsChart({ data }: AppointmentAnalyticsChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
         accessibilityLayer
-        data={appointmentAnalyticsData}
+        data={data}
         margin={{
           top: 20,
           left: 12,

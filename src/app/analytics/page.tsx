@@ -37,6 +37,7 @@ import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
 import type { Treatment } from '../treatments/page';
+import { format, isToday } from 'date-fns';
 
 const iconMap = {
     DollarSign,
@@ -55,6 +56,7 @@ export default function AnalyticsPage() {
   const [patientCount, setPatientCount] = React.useState(0);
   const [showRate, setShowRate] = React.useState(0);
   const [avgTreatmentValue, setAvgTreatmentValue] = React.useState(0);
+  const [appointmentAnalyticsData, setAppointmentAnalyticsData] = React.useState<any[]>([]);
 
 
   React.useEffect(() => {
@@ -62,7 +64,7 @@ export default function AnalyticsPage() {
         const [invoices, patients, appointments, treatments] = await Promise.all([
           getCollection<Invoice>('invoices'),
           getCollection<Patient>('patients'),
-          getCollection<Appointment>('appointments'),
+          getCollection<any>('appointments'),
           getCollection<Treatment>('treatments')
         ]);
         
@@ -71,8 +73,10 @@ export default function AnalyticsPage() {
 
         setPatientCount(patients.length);
 
-        const confirmed = appointments.filter(a => a.status === 'Confirmed').length;
-        const totalAppointments = appointments.length;
+        const parsedAppointments = appointments.map(a => ({...a, dateTime: new Date(a.dateTime) }));
+
+        const confirmed = parsedAppointments.filter(a => a.status === 'Confirmed').length;
+        const totalAppointments = parsedAppointments.length;
         if(totalAppointments > 0) {
             setShowRate((confirmed / totalAppointments) * 100);
         }
@@ -84,6 +88,41 @@ export default function AnalyticsPage() {
                 .reduce((acc, t) => acc + parseFloat(t.cost.replace(/[^0-9.-]+/g, '')), 0);
             setAvgTreatmentValue(totalTreatmentRevenue / completedTreatments);
         }
+
+        // Process data for appointment analytics chart
+        const today = new Date();
+        const hourlyStats: Record<string, { appointments: number, noShows: number, cancellations: number }> = {};
+
+        parsedAppointments
+            .filter(a => isToday(a.dateTime))
+            .forEach(appt => {
+                const hour = format(appt.dateTime, 'ha').toLowerCase(); // e.g., "8am", "1pm"
+                if (!hourlyStats[hour]) {
+                    hourlyStats[hour] = { appointments: 0, noShows: 0, cancellations: 0 };
+                }
+                hourlyStats[hour].appointments++;
+                if (appt.status === 'Cancelled') {
+                    hourlyStats[hour].cancellations++;
+                }
+                if (appt.status === 'Pending' && appt.dateTime < today) { // Assuming past pending are no-shows
+                    hourlyStats[hour].noShows++;
+                }
+            });
+
+        const analyticsData = Object.entries(hourlyStats).map(([time, data]) => ({
+            time,
+            ...data
+        })).sort((a,b) => { // Sort by time of day
+            const aHour = parseInt(a.time.replace(/(am|pm)/, ''));
+            const bHour = parseInt(b.time.replace(/(am|pm)/, ''));
+            const aIsAm = a.time.includes('am');
+            const bIsAm = b.time.includes('am');
+            if (aIsAm && !bIsAm) return -1;
+            if (!aIsAm && bIsAm) return 1;
+            return aHour - bHour;
+        });
+
+        setAppointmentAnalyticsData(analyticsData);
     }
     fetchData();
   }, [])
@@ -178,7 +217,7 @@ export default function AnalyticsPage() {
                         <CardTitle>Revenue Trend</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <RevenueTrendsChart />
+                        <RevenueTrendsChart data={[]} />
                     </CardContent>
                 </Card>
                 <Card className="lg:col-span-2">
@@ -186,7 +225,7 @@ export default function AnalyticsPage() {
                         <CardTitle>Appointment Analytics</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <AppointmentAnalyticsChart />
+                        <AppointmentAnalyticsChart data={appointmentAnalyticsData} />
                     </CardContent>
                 </Card>
             </div>
