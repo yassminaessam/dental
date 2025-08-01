@@ -33,14 +33,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { appointmentPageStats, initialAppointmentsData } from "@/lib/data";
+import { appointmentPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, List, Search, MoreHorizontal, Pencil } from "lucide-react";
+import { Plus, Calendar, List, Search, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
+import { getCollection, addDocument, updateDocument } from '@/services/firestore';
+import type { Patient } from '@/app/patients/page';
 
 export type Appointment = {
   id: string;
@@ -53,7 +55,8 @@ export type Appointment = {
 }
 
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointmentsData);
+  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [activeView, setActiveView] = React.useState('list');
@@ -61,41 +64,58 @@ export default function AppointmentsPage() {
   const [appointmentToEdit, setAppointmentToEdit] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
 
-  const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
-    const newAppointment: Appointment = {
-      id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...data,
-      status: 'Confirmed',
-    };
-    const updatedAppointments = [newAppointment, ...appointments].sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
-    setAppointments(updatedAppointments);
-    // This is a mock, in a real app you'd likely update a central store or refetch
-    initialAppointmentsData.splice(0, initialAppointmentsData.length, ...updatedAppointments);
-    toast({
-        title: "Appointment Scheduled",
-        description: `An appointment for ${newAppointment.patient} has been scheduled.`,
-    });
+  React.useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        const data = await getCollection<any>('appointments');
+        setAppointments(data.map(a => ({...a, dateTime: new Date(a.dateTime) })).sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()));
+      } catch (error) {
+        toast({ title: 'Error fetching appointments', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAppointments();
+  }, [toast]);
+
+  const handleSaveAppointment = async (data: Omit<Appointment, 'id' | 'status'>) => {
+    try {
+      const newAppointment: Appointment = {
+        id: `APT-${Date.now()}`,
+        ...data,
+        status: 'Confirmed',
+      };
+      await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
+      setAppointments(prev => [newAppointment, ...prev].sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()));
+      toast({ title: "Appointment Scheduled", description: `An appointment for ${newAppointment.patient} has been scheduled.` });
+    } catch (error) {
+        toast({ title: "Error scheduling appointment", variant: "destructive" });
+    }
   };
 
-  const handleUpdateAppointment = (updatedAppointment: Appointment) => {
-    setAppointments(prev => prev.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt));
-    setAppointmentToEdit(null);
-    toast({
-        title: "Appointment Updated",
-        description: `Appointment for ${updatedAppointment.patient} has been updated.`,
-    });
+  const handleUpdateAppointment = async (updatedAppointment: Appointment) => {
+    try {
+      await updateDocument('appointments', updatedAppointment.id, { ...updatedAppointment, dateTime: updatedAppointment.dateTime.toISOString() });
+      setAppointments(prev => prev.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt));
+      setAppointmentToEdit(null);
+      toast({ title: "Appointment Updated", description: `Appointment for ${updatedAppointment.patient} has been updated.` });
+    } catch (error) {
+        toast({ title: "Error updating appointment", variant: "destructive" });
+    }
   };
 
-  const handleStatusChange = (appointmentId: string, newStatus: Appointment['status']) => {
-    setAppointments(prev =>
-      prev.map(appt =>
-        appt.id === appointmentId ? { ...appt, status: newStatus } : appt
-      )
-    );
-    toast({
-      title: "Status Updated",
-      description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
-    });
+  const handleStatusChange = async (appointmentId: string, newStatus: Appointment['status']) => {
+    try {
+      await updateDocument('appointments', appointmentId, { status: newStatus });
+      setAppointments(prev =>
+        prev.map(appt =>
+          appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+        )
+      );
+      toast({ title: "Status Updated", description: `Appointment ${appointmentId} has been marked as ${newStatus}.` });
+    } catch (error) {
+        toast({ title: "Error updating status", variant: "destructive" });
+    }
   };
 
   const filteredAppointments = React.useMemo(() => {
@@ -128,7 +148,7 @@ export default function AppointmentsPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
+                  {stat.title === "Today's Appointments" ? appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length : stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
@@ -195,7 +215,9 @@ export default function AppointmentsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAppointments.length > 0 ? (
+                      {loading ? (
+                        <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      ) : filteredAppointments.length > 0 ? (
                         filteredAppointments.map(appt => (
                           <TableRow key={appt.id}>
                             <TableCell>{appt.dateTime.toLocaleString()}</TableCell>

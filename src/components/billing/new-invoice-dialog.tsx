@@ -27,9 +27,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { dentalChartPatients } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
+import type { Patient } from '@/app/patients/page';
 
 const lineItemSchema = z.object({
   id: z.string(),
@@ -49,9 +49,10 @@ type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 interface NewInvoiceDialogProps {
   onSave: (data: any) => void;
+  patients: Patient[];
 }
 
-export function NewInvoiceDialog({ onSave }: NewInvoiceDialogProps) {
+export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
   const [open, setOpen] = React.useState(false);
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
@@ -68,15 +69,15 @@ export function NewInvoiceDialog({ onSave }: NewInvoiceDialogProps) {
   });
 
   const onSubmit = (data: InvoiceFormData) => {
-    const patientDetails = dentalChartPatients.find(p => p.id === data.patient);
+    const patientDetails = patients.find(p => p.id === data.patient);
     const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     onSave({
-        ...data,
         patient: patientDetails?.name || 'Unknown Patient',
         patientId: patientDetails?.id || 'N/A',
         issueDate: format(data.issueDate, "MMM d, yyyy"),
         dueDate: format(data.dueDate, "MMM d, yyyy"),
         totalAmount,
+        items: data.items,
     });
     form.reset();
     setOpen(false);
@@ -111,7 +112,7 @@ export function NewInvoiceDialog({ onSave }: NewInvoiceDialogProps) {
                         <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        {patients.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -30,10 +29,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { emergencyContactRelationships, initialPatientsData } from '@/lib/data';
+import { emergencyContactRelationships } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
-import { useToast } from '@/hooks/use-toast';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -53,13 +51,12 @@ const patientSchema = z.object({
 type PatientFormData = z.infer<typeof patientSchema>;
 
 interface AddPatientDialogProps {
-  onSave: (patient: Patient) => void;
+  onSave: (patient: Omit<Patient, 'id'>) => void;
 }
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dobOpen, setDobOpen] = React.useState(false);
-  const { toast } = useToast();
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
@@ -79,8 +76,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   });
 
   const onSubmit = (data: PatientFormData) => {
-    const newPatient: Patient = {
-      id: `PAT-${Math.floor(1000 + Math.random() * 9000)}`,
+    const newPatient: Omit<Patient, 'id'> = {
       name: `${data.name} ${data.lastName}`,
       email: data.email,
       phone: data.phone,
@@ -90,14 +86,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       status: 'Active',
     };
     
-    // This will now update the central mock data array
-    initialPatientsData.unshift(newPatient);
     onSave(newPatient);
-
-    toast({
-      title: "Patient Added",
-      description: `${newPatient.name} has been successfully added.`,
-    });
     form.reset();
     setOpen(false);
   };
@@ -119,7 +108,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-6 pl-1">
           <Form {...form}>
-            <form id="add-patient-form" className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -348,7 +337,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
         </div>
         <DialogFooter className="border-t pt-4 mt-auto">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="submit" form="add-patient-form" onClick={form.handleSubmit(onSubmit)}>Save Patient</Button>
+          <Button type="submit" form="add-patient-form">Save Patient</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

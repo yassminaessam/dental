@@ -19,9 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { patientPageStats, initialPatientsData } from "@/lib/data";
+import { patientPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -42,6 +42,7 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getCollection, addDocument, updateDocument, deleteDocument } from '@/services/firestore';
 
 export type Patient = {
   id: string;
@@ -54,37 +55,61 @@ export type Patient = {
   status: 'Active' | 'Inactive';
 };
 
-
 export default function PatientsPage() {
-  const [patients, setPatients] = React.useState<Patient[]>(initialPatientsData);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const { toast } = useToast();
 
-  const handleSavePatient = (newPatient: Patient) => {
-    setPatients(prev => [newPatient, ...prev]);
-  };
-  
-  const handleUpdatePatient = (updatedPatient: Patient) => {
-    setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
-    setPatientToEdit(null);
-    toast({
-      title: "Patient Updated",
-      description: `${updatedPatient.name}'s record has been updated.`,
-    });
+  React.useEffect(() => {
+    async function fetchPatients() {
+      try {
+        const data = await getCollection<Patient>('patients');
+        setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
+      } catch (error) {
+        toast({ title: 'Error fetching patients', description: 'Could not load patient data from the database.', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPatients();
+  }, [toast]);
+
+  const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
+    try {
+        const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
+        await addDocument('patients', newPatient);
+        setPatients(prev => [newPatient, ...prev]);
+        toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
+    } catch (error) {
+        toast({ title: "Error adding patient", variant: "destructive" });
+    }
   };
 
-  const handleDeletePatient = () => {
+  const handleUpdatePatient = async (updatedPatient: Patient) => {
+    try {
+        await updateDocument('patients', updatedPatient.id, updatedPatient);
+        setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
+        setPatientToEdit(null);
+        toast({ title: "Patient Updated", description: `${updatedPatient.name}'s record has been updated.` });
+    } catch (error) {
+        toast({ title: "Error updating patient", variant: "destructive" });
+    }
+  };
+
+  const handleDeletePatient = async () => {
     if (patientToDelete) {
-      setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
-      toast({
-        title: "Patient Deleted",
-        description: `${patientToDelete.name}'s record has been deleted.`,
-        variant: "destructive"
-      });
-      setPatientToDelete(null);
+      try {
+        await deleteDocument('patients', patientToDelete.id);
+        setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
+        toast({ title: "Patient Deleted", description: `${patientToDelete.name}'s record has been deleted.`, variant: "destructive" });
+        setPatientToDelete(null);
+      } catch (error) {
+        toast({ title: "Error deleting patient", variant: "destructive" });
+      }
     }
   };
 
@@ -102,7 +127,6 @@ export default function PatientsPage() {
         statusFilter === 'all' || patient.status.toLowerCase() === statusFilter
       );
   }, [patients, searchTerm, statusFilter]);
-
 
   return (
     <DashboardLayout>
@@ -122,7 +146,7 @@ export default function PatientsPage() {
               </CardHeader>
               <CardContent>
                 <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
+                  {stat.title === 'Total Patients' ? patients.length : stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
@@ -172,7 +196,13 @@ export default function PatientsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                 {filteredPatients.length > 0 ? (
+                 {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                            <Loader2 className="mx-auto h-8 w-8 animate-spin" />
+                        </TableCell>
+                    </TableRow>
+                 ) : filteredPatients.length > 0 ? (
                   filteredPatients.map((patient) => (
                     <TableRow key={patient.id}>
                       <TableCell className="whitespace-nowrap">

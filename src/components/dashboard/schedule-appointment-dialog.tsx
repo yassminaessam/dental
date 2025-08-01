@@ -29,13 +29,14 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
-  dentalChartPatients, 
   mockDoctors,
   appointmentTypesData,
   availableTimeSlots,
   appointmentDurations
 } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import type { Patient } from '@/app/patients/page';
+import { getCollection } from '@/services/firestore';
 
 
 const appointmentSchema = z.object({
@@ -57,9 +58,18 @@ interface ScheduleAppointmentDialogProps {
 export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
+
+  React.useEffect(() => {
+    async function fetchPatients() {
+        const data = await getCollection<Patient>('patients');
+        setPatients(data);
+    }
+    fetchPatients();
+  }, []);
 
   const onSubmit = (data: AppointmentFormData) => {
     const [hours, minutes] = data.time.split(':');
@@ -67,7 +77,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
     dateTime.setHours(parseInt(hours, 10));
     dateTime.setMinutes(parseInt(minutes, 10));
 
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
     const doctorName = mockDoctors.find(d => d.id === data.doctor)?.name;
 
     onSave({ ...data, dateTime, patient: patientName, doctor: doctorName });
@@ -105,7 +115,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {dentalChartPatients.map((patient) => (
+                      {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           {patient.name}
                         </SelectItem>

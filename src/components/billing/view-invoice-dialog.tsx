@@ -21,19 +21,42 @@ interface ViewInvoiceDialogProps {
   invoice: Invoice | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPrint: () => void;
 }
 
-export function ViewInvoiceDialog({ invoice, open, onOpenChange, onPrint }: ViewInvoiceDialogProps) {
+export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDialogProps) {
   
   if (!invoice) return null;
+
+  const handlePrint = () => {
+    const content = document.getElementById(`printable-invoice-${invoice.id}`);
+    if (content) {
+      const printWindow = window.open('', '', 'height=800,width=800');
+      printWindow?.document.write('<html><head><title>Print Invoice</title>');
+
+      // copy styles from parent window
+      const styles = Array.from(document.styleSheets)
+        .map((style) => style.href ? `<link rel="stylesheet" href="${style.href}">` : `<style>${Array.from(style.cssRules).map(rule => rule.cssText).join('')}</style>`)
+        .join('\n');
+      
+      printWindow?.document.write(styles);
+      printWindow?.document.write('</head><body class="bg-white">');
+      printWindow?.document.write(content.innerHTML);
+      printWindow?.document.write('</body></html>');
+      printWindow?.document.close();
+      printWindow?.focus();
+      setTimeout(() => {
+        printWindow?.print();
+        printWindow?.close();
+      }, 250);
+    }
+  }
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
-        <div id="printable-invoice">
+        <div id={`printable-invoice-${invoice.id}`}>
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center justify-between">
               <span>Invoice {invoice.id}</span>
@@ -99,7 +122,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, onPrint }: View
           </div>
         </div>
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onPrint}>
+          <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print Invoice
           </Button>

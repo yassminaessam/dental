@@ -15,34 +15,37 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
-import { initialAppointmentsData, initialPatientsData } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
+import { addDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
-import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
     const { toast } = useToast();
 
-    const handleSavePatient = (newPatient: Patient) => {
-        initialPatientsData.unshift(newPatient);
-        toast({
-            title: "Patient Added",
-            description: `${newPatient.name} has been successfully added.`,
-        });
+    const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
+        try {
+            const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
+            await addDocument('patients', newPatient);
+            toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
+        } catch (error) {
+            toast({ title: "Error adding patient", variant: "destructive" });
+        }
     };
     
-    const handleSaveAppointment = (data: Omit<Appointment, 'id' | 'status'>) => {
-        const newAppointment: Appointment = {
-          id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
-          ...data,
-          status: 'Confirmed',
-        };
-        initialAppointmentsData.unshift(newAppointment);
-        initialAppointmentsData.sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
-        toast({
-            title: "Appointment Scheduled",
-            description: `Appointment for ${newAppointment.patient} has been scheduled.`,
-        });
+    const handleSaveAppointment = async (data: Omit<Appointment, 'id' | 'status' | 'dateTime'> & { dateTime: Date }) => {
+        try {
+            const newAppointment: Appointment = {
+                id: `APT-${Date.now()}`,
+                ...data,
+                dateTime: data.dateTime,
+                status: 'Confirmed',
+            };
+            await addDocument('appointments', { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
+            toast({ title: "Appointment Scheduled", description: `Appointment for ${newAppointment.patient} has been scheduled.` });
+        } catch (error) {
+            toast({ title: "Error scheduling appointment", variant: "destructive" });
+        }
     };
 
   return (

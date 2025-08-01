@@ -27,13 +27,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { initialInvoicesData, billingPageStats } from "@/lib/data";
+import { billingPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer } from "lucide-react";
+import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
 import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
+import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import type { Patient } from '@/app/patients/page';
 
 export type InvoiceLineItem = {
     id: string;
@@ -55,67 +57,89 @@ export type Invoice = {
 };
 
 export default function BillingPage() {
-  const [invoices, setInvoices] = React.useState<Invoice[]>(initialInvoicesData);
+  const [invoices, setInvoices] = React.useState<Invoice[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [invoiceToPay, setInvoiceToPay] = React.useState<Invoice | null>(null);
   const [invoiceToView, setInvoiceToView] = React.useState<Invoice | null>(null);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
   const { toast } = useToast();
   
-  const handleSaveInvoice = (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
-    const newInvoice: Invoice = {
-      id: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...data,
-      status: 'Unpaid',
-      amountPaid: 0,
-    };
-    setInvoices(prev => [newInvoice, ...prev]);
-    toast({
-        title: "Invoice Created",
-        description: `New invoice for ${newInvoice.patient} has been created.`,
-    });
-  };
-
-  const handleRecordPayment = (invoiceId: string, paymentAmount: number) => {
-    setInvoices(prev => 
-      prev.map(invoice => {
-        if (invoice.id === invoiceId) {
-          const newAmountPaid = invoice.amountPaid + paymentAmount;
-          const newStatus = newAmountPaid >= invoice.totalAmount ? 'Paid' : 'Partially Paid';
-          return { ...invoice, amountPaid: newAmountPaid, status: newStatus };
+  React.useEffect(() => {
+    async function fetchData() {
+        try {
+            const [invoiceData, patientData] = await Promise.all([
+                getCollection<Invoice>('invoices'),
+                getCollection<Patient>('patients'),
+            ]);
+            setInvoices(invoiceData);
+            setPatients(patientData);
+        } catch (error) {
+            toast({ title: 'Error fetching data', variant: 'destructive' });
+        } finally {
+            setLoading(false);
         }
-        return invoice;
-      })
-    );
-    setInvoiceToPay(null);
-    toast({
-        title: "Payment Recorded",
-        description: `Payment of EGP ${paymentAmount.toFixed(2)} recorded for invoice ${invoiceId}.`,
-    });
+    }
+    fetchData();
+  }, [toast]);
+
+
+  const handleSaveInvoice = async (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
+    try {
+        const newInvoice: Invoice = {
+          id: `INV-${Date.now()}`,
+          ...data,
+          status: 'Unpaid',
+          amountPaid: 0,
+        };
+        await setDocument('invoices', newInvoice.id, newInvoice);
+        setInvoices(prev => [newInvoice, ...prev]);
+        toast({ title: "Invoice Created", description: `New invoice for ${newInvoice.patient} has been created.` });
+    } catch(e) {
+        toast({ title: "Error creating invoice", variant: 'destructive' });
+    }
   };
 
-  const handlePrintInvoice = () => {
-    const printableContent = document.getElementById('printable-invoice');
+  const handleRecordPayment = async (invoiceId: string, paymentAmount: number) => {
+    try {
+      const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId);
+      if (!invoiceToUpdate) return;
+
+      const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
+      const newStatus = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
+      const updatedData = { amountPaid: newAmountPaid, status: newStatus };
+
+      await updateDocument('invoices', invoiceId, updatedData);
+      
+      setInvoices(prev => 
+        prev.map(invoice => invoice.id === invoiceId ? { ...invoice, ...updatedData } : invoice)
+      );
+      setInvoiceToPay(null);
+      toast({ title: "Payment Recorded", description: `Payment of EGP ${paymentAmount.toFixed(2)} recorded for invoice ${invoiceId}.` });
+    } catch (e) {
+        toast({ title: "Error recording payment", variant: 'destructive' });
+    }
+  };
+
+  const handlePrintInvoice = (invoiceId: string) => {
+    const printableContent = document.getElementById(`printable-invoice-${invoiceId}`);
     if (printableContent) {
         const printWindow = window.open('', '', 'height=600,width=800');
         if (printWindow) {
             printWindow.document.write('<html><head><title>Print Invoice</title>');
-            // Link to the main stylesheet
-            const styles = Array.from(document.styleSheets)
-                .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
-                .join('');
+            const styles = Array.from(document.styleSheets).map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '').join('');
             printWindow.document.write(styles);
-            printWindow.document.write('</head><body >');
+            printWindow.document.write('</head><body class="bg-white">');
             printWindow.document.write(printableContent.innerHTML);
             printWindow.document.write('</body></html>');
             printWindow.document.close();
-            setTimeout(() => { // Timeout to ensure content is loaded
+            setTimeout(() => { 
                 printWindow.print();
                 printWindow.close();
             }, 500);
         }
     }
   };
-
 
   const filteredInvoices = React.useMemo(() => {
     return invoices
@@ -130,7 +154,7 @@ export default function BillingPage() {
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Billing & Invoices</h1>
-          <NewInvoiceDialog onSave={handleSaveInvoice} />
+          <NewInvoiceDialog onSave={handleSaveInvoice} patients={patients} />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -182,7 +206,9 @@ export default function BillingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.length > 0 ? (
+                {loading ? (
+                    <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.id}</TableCell>
@@ -219,10 +245,7 @@ export default function BillingPage() {
                              <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
                               <Eye className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                                setInvoiceToView(invoice);
-                                setTimeout(handlePrintInvoice, 100); // Allow dialog to render
-                            }}>
+                            <DropdownMenuItem onClick={() => handlePrintInvoice(invoice.id)}>
                               <Printer className="mr-2 h-4 w-4" /> Print Invoice
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -256,7 +279,6 @@ export default function BillingPage() {
         invoice={invoiceToView}
         open={!!invoiceToView}
         onOpenChange={(isOpen) => !isOpen && setInvoiceToView(null)}
-        onPrint={handlePrintInvoice}
       />
 
     </DashboardLayout>
