@@ -89,7 +89,7 @@ export default function FinancialPage() {
         // Process data for charts
         const monthlyData: Record<string, { revenue: number, expenses: number, profit: number }> = {};
         parsedData.forEach(t => {
-            const month = format(t.date as Date, 'yyyy-MM');
+            const month = format(t.date, 'yyyy-MM');
             if (!monthlyData[month]) {
                 monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
             }
@@ -172,7 +172,7 @@ export default function FinancialPage() {
   }, [transactions]);
 
 
-  const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status' | 'date'> & { date: Date }) => {
+  const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
     try {
       const newTransaction: Transaction = {
         id: `TRN-${Date.now()}`,
@@ -186,7 +186,7 @@ export default function FinancialPage() {
         status: 'Completed',
       };
       await setDocument('transactions', newTransaction.id, { ...newTransaction, date: newTransaction.date.toISOString() });
-      setTransactions(prev => [...prev.map(t => ({...t, date: new Date(t.date)})), newTransaction]);
+      setTransactions(prev => [...prev, newTransaction]);
       toast({
         title: "Transaction Added",
         description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
