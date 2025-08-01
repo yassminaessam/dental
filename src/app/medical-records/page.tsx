@@ -35,7 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { medicalRecordsPageStats, medicalRecordTypes, MedicalRecordTemplate } from "@/lib/data";
+import { medicalRecordTypes, type MedicalRecordTemplate } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2 } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
@@ -100,6 +100,16 @@ export default function MedicalRecordsPage() {
     }
     fetchData();
   }, [toast]);
+
+  const medicalRecordsPageStats = React.useMemo(() => {
+    const draftRecords = records.filter(r => r.status === 'Draft').length;
+    return [
+      { title: "Total Records", value: records.length, description: "+20 from last month" },
+      { title: "Clinical Images", value: images.length, description: "+50 from last week" },
+      { title: "Templates Available", value: templates.length, description: "For faster documentation" },
+      { title: "Draft Records", value: draftRecords, description: "Awaiting finalization", valueClassName: "text-orange-500" },
+    ];
+  }, [records, images, templates]);
 
   const handleSaveRecord = async (data: Omit<MedicalRecord, 'id' | 'status'>) => {
     try {
