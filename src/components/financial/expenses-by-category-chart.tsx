@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Pie, PieChart, Cell } from "recharts";
@@ -9,17 +10,23 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "@/components/ui/chart";
-import { expensesByCategoryData } from "@/lib/data";
 
 const chartConfig = {
   Salaries: { label: "Salaries", color: "hsl(var(--chart-1))" },
   Supplies: { label: "Supplies", color: "hsl(var(--chart-2))" },
   Rent: { label: "Rent", color: "hsl(var(--chart-3))" },
   Marketing: { label: "Marketing", color: "hsl(var(--chart-4))" },
-  Other: { label: "Other", color: "hsl(var(--chart-5))" },
+  Utilities: { label: "Utilities", color: "hsl(var(--chart-5))" },
+  Other: { label: "Other", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
-export default function ExpensesByCategoryChart() {
+interface ExpensesByCategoryChartProps {
+    data: { name: string; value: number; color: string }[];
+}
+
+export default function ExpensesByCategoryChart({ data }: ExpensesByCategoryChartProps) {
+  const chartData = data.length > 0 ? data : [{ name: "No Data", value: 1, color: "hsl(var(--muted))" }];
+  
   return (
     <ChartContainer
       config={chartConfig}
@@ -31,13 +38,13 @@ export default function ExpensesByCategoryChart() {
           content={<ChartTooltipContent hideLabel />}
         />
         <Pie
-          data={expensesByCategoryData}
+          data={chartData}
           dataKey="value"
           nameKey="name"
           innerRadius={60}
           strokeWidth={5}
         >
-          {expensesByCategoryData.map((entry) => (
+          {chartData.map((entry) => (
              <Cell key={`cell-${entry.name}`} fill={entry.color} />
           ))}
         </Pie>

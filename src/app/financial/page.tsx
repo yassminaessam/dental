@@ -95,8 +95,6 @@ export default function FinancialPage() {
     const revenue = transactions.filter(t => t.type === 'Revenue').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
     const expenses = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
     const netProfit = revenue - expenses;
-    // Note: Pending payments would likely come from the 'invoices' collection, not transactions.
-    // This is a simplified calculation based on transactions.
     const pending = transactions.filter(t => t.status === 'Pending').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
 
     return [
@@ -105,30 +103,46 @@ export default function FinancialPage() {
         value: `EGP ${revenue.toLocaleString()}`,
         description: "Total revenue recorded",
         icon: "TrendingUp",
-        changeType: "positive",
       },
       {
         title: "Total Expenses",
         value: `EGP ${expenses.toLocaleString()}`,
         description: "Total expenses recorded",
         icon: "TrendingDown",
-        changeType: "negative",
       },
       {
         title: "Net Profit",
         value: `EGP ${netProfit.toLocaleString()}`,
         description: "Revenue minus expenses",
         icon: "DollarSign",
-        changeType: "positive",
       },
       {
         title: "Pending Payments",
         value: `EGP ${pending.toLocaleString()}`,
         description: "From pending transactions",
         icon: "Wallet",
-        changeType: "neutral",
       },
     ];
+  }, [transactions]);
+  
+  const expensesByCategory = React.useMemo(() => {
+    const categoryTotals: Record<string, number> = {};
+    transactions
+      .filter(t => t.type === 'Expense')
+      .forEach(t => {
+        const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+        if (!categoryTotals[t.category]) {
+          categoryTotals[t.category] = 0;
+        }
+        categoryTotals[t.category] += amount;
+      });
+
+    const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--muted))"];
+    return Object.entries(categoryTotals).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length],
+    }));
   }, [transactions]);
 
 
@@ -188,8 +202,8 @@ export default function FinancialPage() {
                   <Icon
                     className={cn(
                       "h-4 w-4 text-muted-foreground",
-                      stat.changeType === "positive" && "text-green-500",
-                      stat.changeType === "negative" && "text-red-500"
+                      stat.icon === "TrendingUp" && "text-green-500",
+                      stat.icon === "TrendingDown" && "text-red-500"
                     )}
                   />
                 </CardHeader>
@@ -220,7 +234,7 @@ export default function FinancialPage() {
               <CardTitle>Expenses by Category</CardTitle>
             </CardHeader>
             <CardContent className="h-[350px]">
-              <ExpensesByCategoryChart />
+              <ExpensesByCategoryChart data={expensesByCategory} />
             </CardContent>
           </Card>
         </div>
