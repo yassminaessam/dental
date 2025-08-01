@@ -28,9 +28,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { transactionCategories, paymentMethods, dentalChartPatients } from '@/lib/data';
+import { transactionCategories, paymentMethods } from '@/lib/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { getCollection } from '@/services/firestore';
+import { Patient } from '@/app/patients/page';
 
 const transactionSchema = z.object({
   date: z.date({ required_error: 'Date is required' }),
@@ -51,6 +53,8 @@ interface AddTransactionDialogProps {
 export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -58,9 +62,19 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
       type: 'Revenue',
     },
   });
+  
+  React.useEffect(() => {
+    async function fetchPatients() {
+        if(open) {
+            const patientData = await getCollection<any>('patients');
+            setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
+        }
+    }
+    fetchPatients();
+  }, [open]);
 
   const onSubmit = (data: TransactionFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
     onSave({...data, patient: patientName});
     form.reset();
     setOpen(false);
@@ -154,7 +168,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>

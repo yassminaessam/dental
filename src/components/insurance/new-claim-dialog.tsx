@@ -28,8 +28,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { dentalChartPatients, insuranceProviders } from '@/lib/data';
+import { insuranceProviders } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Patient } from '@/app/patients/page';
+import { getCollection } from '@/services/firestore';
 
 const claimSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -49,6 +51,8 @@ interface NewClaimDialogProps {
 export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
+
   const form = useForm<ClaimFormData>({
     resolver: zodResolver(claimSchema),
     defaultValues: {
@@ -56,8 +60,18 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
     }
   });
 
+  React.useEffect(() => {
+    async function fetchPatients() {
+        if (open) {
+            const patientData = await getCollection<any>('patients');
+            setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
+        }
+    }
+    fetchPatients();
+  }, [open]);
+
   const onSubmit = (data: ClaimFormData) => {
-    const patientName = dentalChartPatients.find(p => p.id === data.patient)?.name;
+    const patientName = patients.find(p => p.id === data.patient)?.name;
     const providerName = insuranceProviders.find(p => p.id === data.insurance)?.name;
     onSave({ ...data, patient: patientName, insurance: providerName });
     form.reset();
@@ -95,7 +109,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dentalChartPatients.map((patient) => (
+                        {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
                             {patient.name}
                           </SelectItem>
