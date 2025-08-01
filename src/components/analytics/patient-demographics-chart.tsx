@@ -8,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { patientDemographicsData } from "@/lib/data";
 
 const chartConfig = {
   count: {
@@ -17,12 +16,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function PatientDemographicsChart() {
+interface PatientDemographicsChartProps {
+  data: { ageGroup: string; count: number }[];
+}
+
+export default function PatientDemographicsChart({ data }: PatientDemographicsChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
         accessibilityLayer
-        data={patientDemographicsData}
+        data={data}
         margin={{
           top: 20,
           left: 12,

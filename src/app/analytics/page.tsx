@@ -57,6 +57,7 @@ export default function AnalyticsPage() {
   const [showRate, setShowRate] = React.useState(0);
   const [avgTreatmentValue, setAvgTreatmentValue] = React.useState(0);
   const [appointmentAnalyticsData, setAppointmentAnalyticsData] = React.useState<any[]>([]);
+  const [patientDemographicsData, setPatientDemographicsData] = React.useState<any[]>([]);
 
 
   React.useEffect(() => {
@@ -123,6 +124,24 @@ export default function AnalyticsPage() {
         });
 
         setAppointmentAnalyticsData(analyticsData);
+
+        // Process data for patient demographics chart
+        const ageGroups: { [key: string]: number } = {
+            '0-18': 0, '19-35': 0, '36-50': 0, '51-65': 0, '66+': 0
+        };
+
+        patients.forEach(patient => {
+            const age = patient.age;
+            if (age <= 18) ageGroups['0-18']++;
+            else if (age <= 35) ageGroups['19-35']++;
+            else if (age <= 50) ageGroups['36-50']++;
+            else if (age <= 65) ageGroups['51-65']++;
+            else ageGroups['66+']++;
+        });
+
+        setPatientDemographicsData(
+            Object.entries(ageGroups).map(([ageGroup, count]) => ({ ageGroup, count }))
+        );
     }
     fetchData();
   }, [])
@@ -236,7 +255,7 @@ export default function AnalyticsPage() {
                     <CardTitle>Patient Demographics</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <PatientDemographicsChart />
+                    <PatientDemographicsChart data={patientDemographicsData} />
                 </CardContent>
              </Card>
           </TabsContent>
