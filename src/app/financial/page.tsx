@@ -318,7 +318,7 @@ export default function FinancialPage() {
                     ) : filteredTransactions.length > 0 ? (
                       filteredTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{transaction.date}</TableCell>
+                          <TableCell>{format(new Date(transaction.date), 'PPP')}</TableCell>
                           <TableCell>
                             <div className="font-medium">{transaction.description}</div>
                             {transaction.patient && <div className="text-xs text-muted-foreground">Patient: {transaction.patient}</div>}
