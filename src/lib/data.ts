@@ -185,42 +185,6 @@ export const availableTimeSlots = [
   "16:00",
 ];
 
-export const initialPatientsData = [
-    { id: 'PAT-123', name: 'Ahmed Ali', email: 'ahmed.ali@example.com', phone: '01001234567', dob: new Date('1979-01-15'), age: 45, lastVisit: '12/01/2023', status: 'Active' },
-    { id: 'PAT-124', name: 'Fatima Mahmoud', email: 'fatima.mahmoud@example.com', phone: '01229876543', dob: new Date('1992-05-22'), age: 32, lastVisit: '11/15/2023', status: 'Active' },
-];
-
-export const initialAppointmentsData = [
-    {
-      id: 'APT-001',
-      dateTime: new Date(new Date().setDate(new Date().getDate() + 1)),
-      patient: 'Ahmed Ali',
-      doctor: 'Dr. Nourhan Adel',
-      type: 'Check-up',
-      duration: '30 minutes',
-      status: 'Confirmed'
-    },
-    {
-      id: 'APT-002',
-      dateTime: new Date(new Date().setDate(new Date().getDate() + 2)),
-      patient: 'Fatima Mahmoud',
-      doctor: 'Dr. Khaled Youssef',
-      type: 'Cleaning',
-      duration: '1 hour',
-      status: 'Pending'
-    },
-    {
-      id: 'APT-003',
-      dateTime: new Date(new Date().setDate(new Date().getDate() + 3)),
-      patient: 'Youssef Hassan',
-      doctor: 'Dr. Mariam El-Masry',
-      type: 'Consultation',
-      duration: '45 minutes',
-      status: 'Pending'
-    },
-];
-
-
 export const treatmentPageStats = [
   {
     title: "Total Treatments",
@@ -284,31 +248,6 @@ export const treatmentStats = [
   { label: "Follow-up Rate", value: "88%" },
 ];
 
-export const initialTreatmentsData = [
-  {
-    id: "TRT-001",
-    date: "2024-07-25",
-    patient: "Ahmed Ali",
-    procedure: "Root Canal",
-    doctor: "Dr. Nourhan Adel",
-    tooth: "14",
-    cost: "EGP 20,000",
-    status: "Completed",
-    followUp: "2024-08-01",
-  },
-  {
-    id: "TRT-002",
-    date: "2024-07-28",
-    patient: "Fatima Mahmoud",
-    procedure: "Crown Placement",
-    doctor: "Dr. Khaled Youssef",
-    tooth: "25",
-    cost: "EGP 25,000",
-    status: "In Progress",
-    followUp: "2024-08-10",
-  },
-];
-
 
 export const dentalChartStats = [
     { name: 'Healthy', count: 0, color: 'bg-green-500' },
@@ -337,36 +276,6 @@ const allTeethIds = [
     18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
     48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38
 ];
-
-export const initialDentalChartData = allTeethIds.reduce((acc, id) => {
-    acc[id] = {
-        id,
-        condition: 'healthy',
-        history: [],
-    };
-    return acc;
-}, {} as Record<number, { id: number; condition: 'healthy'; history: any[] }>);
-
-// Add some sample history
-initialDentalChartData[14].condition = 'root-canal';
-initialDentalChartData[14].history = [
-    { date: '01/15/2023', condition: 'cavity', notes: 'Initial small cavity detected on buccal surface.' },
-    { date: '07/20/2023', condition: 'filling', notes: 'Placed composite filling (A2 shade).' },
-    { date: '06/10/2024', condition: 'root-canal', notes: 'Patient reported severe pain. Endodontic treatment performed.' }
-];
-
-initialDentalChartData[25].condition = 'crown';
-initialDentalChartData[25].history = [
-    { date: '03/01/2022', condition: 'filling', notes: 'Large amalgam filling placed.' },
-    { date: '09/12/2023', condition: 'crown', notes: 'Fractured cusp. Prepared for and placed porcelain crown.' }
-];
-
-initialDentalChartData[36].condition = 'cavity';
-initialDentalChartData[36].history = [
-    { date: '11/05/2024', condition: 'cavity', notes: 'Occlusal cavity noted during checkup.' }
-];
-
-initialDentalChartData[48].condition = 'missing';
 
 export const allHealthyDentalChart = allTeethIds.reduce((acc, id) => {
     acc[id] = { id, condition: 'healthy', history: [] };
@@ -438,31 +347,6 @@ export const staffRoles = [
   { name: "Manager", count: 1, color: "bg-red-100 text-red-800" },
 ];
 
-export const initialStaffData = [
-  {
-    id: 'EMP-001',
-    name: 'Dr. Nourhan Adel',
-    role: 'Dentist',
-    email: 'nourhan.adel@cairodental.com',
-    phone: '01001112222',
-    schedule: 'Sun-Thu, 9am-5pm',
-    salary: 'EGP 500,000',
-    hireDate: '2022-08-15',
-    status: 'Active'
-  },
-  {
-    id: 'EMP-002',
-    name: 'Khaled Youssef',
-    role: 'Hygienist',
-    email: 'khaled.youssef@cairodental.com',
-    phone: '01223334444',
-    schedule: 'Mon-Fri, 10am-6pm',
-    salary: 'EGP 250,000',
-    hireDate: '2023-01-20',
-    status: 'Active'
-  },
-];
-
 export const medicalRecordsPageStats = [
   {
     title: "Total Records",
@@ -487,69 +371,8 @@ export const medicalRecordsPageStats = [
   },
 ];
 
-export const initialMedicalRecordsData = [
-  {
-    id: "MR-001",
-    patient: "Ahmed Ali",
-    type: "SOAP",
-    complaint: "Tooth pain on upper right",
-    provider: "Dr. Nourhan Adel",
-    date: "Dec 15, 2024",
-    status: "Final",
-  },
-  {
-    id: "MR-002",
-    patient: "Fatima Mahmoud",
-    type: "Clinical Note",
-    complaint: "Routine cleaning and checkup",
-    provider: "Dr. Khaled Youssef",
-    date: "Dec 10, 2024",
-    status: "Final",
-  },
-];
-
-export const initialClinicalImagesData = [
-    {
-        id: 'IMG-001',
-        patient: 'Ahmed Ali',
-        type: 'X-Ray',
-        date: 'Dec 15, 2024',
-        imageUrl: 'https://placehold.co/600x400.png',
-        caption: 'Periapical X-ray of tooth #14'
-    },
-    {
-        id: 'IMG-002',
-        patient: 'Fatima Mahmoud',
-        type: 'Intraoral Photo',
-        date: 'Dec 10, 2024',
-        imageUrl: 'https://placehold.co/600x400.png',
-        caption: 'Intraoral view of upper arch'
-    }
-];
-
 export const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 export const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
-export const initialMedicalTemplatesData: MedicalRecordTemplate[] = [
-  {
-    id: 'TMPL-001',
-    name: 'Standard SOAP Note',
-    type: 'SOAP',
-    content: 'Subjective: \nObjective: \nAssessment: \nPlan: ',
-  },
-  {
-    id: 'TMPL-002',
-    name: 'New Patient Intake',
-    type: 'Clinical Note',
-    content: 'Chief Complaint: \nHistory of Present Illness: \nPast Medical History: \nMedications: \nAllergies: ',
-  },
-  {
-    id: 'TMPL-003',
-    name: 'Post-Op Instructions (Extraction)',
-    type: 'Instructions',
-    content: '1. Bite on gauze for 30-60 minutes. \n2. Avoid spitting or rinsing for 24 hours. \n3. Apply ice packs to reduce swelling. \n4. Take prescribed pain medication as directed.',
-  },
-];
-
 
 export const financialPageStats = [
   {
@@ -605,20 +428,18 @@ export const expensesByCategoryData = [
     { name: 'Other', value: 5, color: 'hsl(var(--chart-5))' },
 ];
 
-export const initialTransactionHistoryData: any[] = [];
-
 export const transactionCategories = ['Patient Payment', 'Insurance Payment', 'Supplies', 'Salary', 'Rent', 'Utilities', 'Marketing', 'Other'];
 export const paymentMethods = ['Credit Card', 'Cash', 'Vodafone Cash', 'Fawry', 'Bank Transfer'];
 
-export const inventoryPageStats = [
+export const inventoryPageStats = (totalItems: number, lowStock: number) => [
   {
     title: "Total Items",
-    value: "10",
+    value: totalItems,
     description: "Active inventory",
   },
   {
     title: "Low Stock",
-    value: "2",
+    value: lowStock,
     description: "Items need restocking",
     valueClassName: "text-destructive",
   },
@@ -634,79 +455,10 @@ export const inventoryPageStats = [
   },
 ];
 
-export const lowStockItems = [
-  {
-    name: "Disposable Gloves (Box)",
-    stock: 8,
-    minStock: 20,
-  },
-  {
-    name: "Anesthetic Cartridges",
-    stock: 5,
-    minStock: 12,
-  },
-];
-
-export const initialInventoryItemsData: InventoryItem[] = [
-  {
-    id: "INV-001",
-    name: "Dental Composite Resin",
-    expires: "2025-06-15",
-    category: "Restorative Materials",
-    stock: 15,
-    min: 10,
-    max: 50,
-    status: "Normal",
-    unitCost: "EGP 750",
-    supplier: "Nile Medical Supplies",
-    location: "Storage Room A",
-  },
-  {
-    id: "INV-002",
-    name: "Disposable Gloves (Box)",
-    expires: "N/A",
-    category: "Safety Equipment",
-    stock: 8,
-    min: 20,
-    max: 100,
-    status: "Low Stock",
-    unitCost: "EGP 200",
-    supplier: "Egypt Safe Med",
-    location: "Supply Closet",
-  },
-  {
-    id: "INV-003",
-    name: "Dental Impression Material",
-    expires: "2025-03-20",
-    category: "Impression Materials",
-    stock: 25,
-    min: 15,
-    max: 60,
-    status: "Normal",
-    unitCost: "EGP 1500",
-    supplier: "Nile Medical Supplies",
-    location: "Storage Room A",
-  },
-  {
-    id: "INV-004",
-    name: "Anesthetic Cartridges",
-    expires: "2025-08-30",
-    category: "Anesthetics",
-    stock: 5,
-    min: 12,
-    max: 40,
-    status: "Low Stock",
-    unitCost: "EGP 60",
-    supplier: "Pharma Misr",
-    location: "Refrigerated Storage",
-  },
-];
-export const inventoryCategories = [...new Set(initialInventoryItemsData.map(i => i.category))];
-
-export const pharmacyPageStats = [
+export const pharmacyPageStats = (medications: number, prescriptions: number) => [
   {
     title: "Total Medications",
-    value: "3",
+    value: medications,
     description: "Active inventory items",
     icon: "Pill",
   },
@@ -726,63 +478,22 @@ export const pharmacyPageStats = [
   },
   {
     title: "Pending Prescriptions",
-    value: "1",
+    value: prescriptions,
     description: "Awaiting dispensing",
     icon: "ClipboardList",
   },
 ];
 
-export const initialMedicationInventoryData = [
-  {
-    id: "MED-001",
-    name: "Amoxicillin",
-    fullName: "Amoxicillin",
-    strength: "500mg",
-    form: "tablet",
-    category: "Antibiotic",
-    stock: 150,
-    unitPrice: "EGP 12",
-    expiryDate: "2025-12-31",
-    status: "In Stock",
-  },
-  {
-    id: "MED-002",
-    name: "Ibuprofen",
-    fullName: "Ibuprofen",
-    strength: "400mg",
-    form: "tablet",
-    category: "Analgesic",
-    stock: 200,
-    unitPrice: "EGP 4",
-    expiryDate: "2025-06-30",
-    status: "In Stock",
-  },
-  {
-    id: "MED-003",
-    name: "Lidocaine",
-    fullName: "Lidocaine HCl",
-    strength: "2%",
-    form: "injection",
-    category: "Anesthetic",
-    stock: 25,
-    unitPrice: "EGP 55",
-    expiryDate: "2024-08-15",
-    status: "Low Stock",
-  },
-];
-export const medicationCategories = [...new Set(initialMedicationInventoryData.map(i => i.category))];
-
-
-export const suppliersPageStats = [
+export const suppliersPageStats = (suppliers: number, pendingOrders: number) => [
   {
     title: "Active Suppliers",
-    value: "3",
+    value: suppliers,
     description: "Verified and approved",
     icon: "Building2",
   },
   {
     title: "Pending Orders",
-    value: "1",
+    value: pendingOrders,
     description: "Awaiting delivery",
     icon: "FileText",
     valueClassName: "text-destructive",
@@ -802,86 +513,12 @@ export const suppliersPageStats = [
   },
 ];
 
-export const initialSuppliersData = [
-  {
-    id: "SUP-001",
-    name: "Nile Medical Supplies",
-    address: "45 Industrial Zone, 6th of October City",
-    phone: "0238200000",
-    email: "sales@nilemedical.com",
-    category: "Medication",
-    paymentTerms: "Net 30",
-    rating: 4.8,
-    status: "active",
-  },
-  {
-    id: "SUP-002",
-    name: "Egypt Dental Equipment",
-    address: "12 Ramses St, Cairo",
-    phone: "0225751111",
-    email: "sales@egyptdental.com",
-    category: "Equipment",
-    paymentTerms: "Net 15",
-    rating: 4.6,
-    status: "active",
-  },
-  {
-    id: "SUP-003",
-    name: "Pharma Misr",
-    address: "7 Obour Buildings, Salah Salem",
-    phone: "0224044444",
-    email: "contact@pharmamisr.com",
-    category: "Supplies",
-    paymentTerms: "Net 30",
-    rating: 4.2,
-    status: "active",
-  },
-];
-export const suppliersData = initialSuppliersData; // for dialogs
 export const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
-export const initialPurchaseOrdersData = [
-  {
-    id: "PO-1234",
-    supplier: "Nile Medical Supplies",
-    orderDate: "2024-12-15",
-    deliveryDate: "2024-12-22",
-    total: "EGP 20,000",
-    status: "Shipped",
-    items: [
-      { itemId: "INV-001", description: "Dental Composite Resin", quantity: 10, unitPrice: 750 },
-      { itemId: "INV-003", description: "Dental Impression Material", quantity: 5, unitPrice: 1500 },
-    ]
-  },
-  {
-    id: "PO-1235",
-    supplier: "Egypt Dental Equipment",
-    orderDate: "2024-12-10",
-    deliveryDate: null,
-    total: "EGP 85,000",
-    status: "Pending",
-    items: [
-        { itemId: 'none', description: "Dental Chair Unit", quantity: 1, unitPrice: 85000 }
-    ]
-  },
-  {
-    id: "PO-1236",
-    supplier: "Pharma Misr",
-    orderDate: "2024-11-28",
-    deliveryDate: "2024-12-05",
-    total: "EGP 5,500",
-    status: "Delivered",
-    items: [
-        { itemId: "INV-004", description: "Anesthetic Cartridges", quantity: 100, unitPrice: 55 }
-    ]
-  },
-];
-
-
-export const communicationsPageStats = [
+export const communicationsPageStats = (messages: number, templates: number) => [
   {
     title: "Messages Sent",
-    value: "3",
+    value: messages,
     description: "Total messages",
   },
   {
@@ -897,38 +534,8 @@ export const communicationsPageStats = [
   },
   {
     title: "Templates",
-    value: "3",
+    value: templates,
     description: "Message templates",
-  },
-];
-
-export const initialRecentMessagesData = [
-  {
-    id: "MSG-001",
-    patient: "Ahmed Ali",
-    type: "SMS",
-    content: "Reminder: Your appointment is tomorrow at 9:00 ...",
-    subContent: null,
-    status: "Delivered",
-    sent: "Dec 19, 12:00 PM",
-  },
-  {
-    id: "MSG-002",
-    patient: "Fatima Mahmoud",
-    type: "EMAIL",
-    content: "Post-Treatment Care Instructions",
-    subContent: "Thank you for visiting our clinic today. Please follo...",
-    status: "Read",
-    sent: "Dec 18, 5:30 PM",
-  },
-  {
-    id: "MSG-003",
-    patient: "Youssef Hassan",
-    type: "SMS",
-    content: "Your dental cleaning is scheduled for next week. R...",
-    subContent: null,
-    status: "Sent",
-    sent: "Dec 17, 2:00 PM",
   },
 ];
 
@@ -1016,37 +623,8 @@ export const referralPageStats = [
   },
 ];
 
-export const initialOutgoingReferralsData = [
-  {
-    id: "REF-001",
-    patient: "Ahmed Ali",
-    specialist: "Dr. Mostafa Ghoneim",
-    specialty: "Oral Surgery",
-    reason: "Wisdom tooth extraction - impacted #32",
-    urgency: "routine",
-    status: "scheduled",
-    date: "Dec 15, 2024",
-    apptDate: "Appt: Dec 22"
-  },
-  {
-    id: "REF-002",
-    patient: "Fatima Mahmoud",
-    specialist: "Dr. Reem El-Sherif",
-    specialty: "Periodontics",
-    reason: "Advanced periodontal disease - requires specialist...",
-    urgency: "urgent",
-    status: "completed",
-    date: "Dec 5, 2024",
-    apptDate: "Appt: Dec 12"
-  }
-];
-
 export const specialistTypes = ['Oral Surgery', 'Periodontics', 'Orthodontics', 'Endodontics', 'Prosthodontics'];
 export const referralUrgency = ['Routine', 'Urgent', 'Emergency'];
-export const initialSpecialistNetwork = [
-    { id: 'spec1', name: 'Dr. Mostafa Ghoneim', specialty: 'Oral Surgery' },
-    { id: 'spec2', name: 'Dr. Reem El-Sherif', specialty: 'Periodontics' },
-];
 
 export const insurancePageStats = [
   {
@@ -1074,112 +652,10 @@ export const insurancePageStats = [
   },
 ];
 
-export const initialInsuranceClaimsData = [
-  {
-    id: "CLM-001",
-    patient: "Ahmed Ali",
-    patientId: "DC123456789",
-    insurance: "Misr Insurance",
-    procedure: "Routine Cleaning",
-    procedureCode: "D1110",
-    amount: "EGP 2,500",
-    approvedAmount: "EGP 2,000",
-    status: "Approved",
-    submitDate: "Dec 16, 2024",
-  },
-  {
-    id: "CLM-002",
-    patient: "Fatima Mahmoud",
-    patientId: "HF987654321",
-    insurance: "Allianz Egypt",
-    procedure: "Composite Filling",
-    procedureCode: "D2391",
-    amount: "EGP 4,500",
-    approvedAmount: null,
-    status: "Processing",
-    submitDate: "Dec 11, 2024",
-  },
-  {
-    id: "CLM-003",
-    patient: "Youssef Hassan",
-    patientId: "SC456789123",
-    insurance: "AXA Egypt",
-    procedure: "Crown Placement",
-    procedureCode: "D2750",
-    amount: "EGP 20,000",
-    approvedAmount: null,
-    status: "Denied",
-    statusReason: "Pre-authorization required",
-    submitDate: "Dec 9, 2024",
-  },
-];
-
 export const insuranceProviders = [
     { id: 'prov1', name: 'Misr Insurance' },
     { id: 'prov2', name: 'Allianz Egypt' },
     { id: 'prov3', name: 'AXA Egypt' },
-];
-
-export const prescriptionPageStats = [
-  {
-    title: "Total Prescriptions",
-    value: "3",
-    description: "All time",
-  },
-  {
-    title: "Active Prescriptions",
-    value: "2",
-    description: "Currently active",
-  },
-  {
-    title: "Completed This Month",
-    value: "1",
-    description: "Successfully filled",
-  },
-  {
-    title: "Common Medications",
-    value: "3",
-    description: "In database",
-  },
-];
-
-export const initialPrescriptionRecordsData = [
-  {
-    id: "RX-001",
-    patient: "Ahmed Ali",
-    medication: "Amoxicillin",
-    strength: "500mg",
-    dosage: "3 times daily",
-    duration: "7 days",
-    refills: 0,
-    doctor: "Dr. Nourhan Adel",
-    date: "Dec 15, 2024",
-    status: "Active",
-  },
-  {
-    id: "RX-002",
-    patient: "Fatima Mahmoud",
-    medication: "Ibuprofen",
-    strength: "600mg",
-    dosage: "Every 6 hours as needed",
-    duration: "5 days",
-    refills: 1,
-    doctor: "Dr. Nourhan Adel",
-    date: "Dec 10, 2024",
-    status: "Completed",
-  },
-  {
-    id: "RX-003",
-    patient: "Youssef Hassan",
-    medication: "Chlorhexidine Rinse",
-    strength: "0.12%",
-    dosage: "Twice daily",
-    duration: "14 days",
-    refills: 0,
-    doctor: "Dr. Khaled Youssef",
-    date: "Dec 8, 2024",
-    status: "Active",
-  },
 ];
 
 export const commonMedicationsData = [
@@ -1368,47 +844,4 @@ export const billingPageStats = [
     value: "EGP 3,750",
     description: "Based on all invoices",
   },
-];
-
-export const initialInvoicesData: Invoice[] = [
-    {
-        id: 'INV-001',
-        patient: 'Ahmed Ali',
-        patientId: 'pat1',
-        issueDate: 'Dec 15, 2024',
-        dueDate: 'Jan 14, 2025',
-        totalAmount: 2000,
-        amountPaid: 2000,
-        status: 'Paid',
-        items: [
-            { id: '1', description: 'Root Canal Treatment - Tooth #14', quantity: 1, unitPrice: 2000 },
-        ],
-    },
-    {
-        id: 'INV-002',
-        patient: 'Fatima Mahmoud',
-        patientId: 'pat2',
-        issueDate: 'Dec 10, 2024',
-        dueDate: 'Jan 9, 2025',
-        totalAmount: 4000,
-        amountPaid: 1500,
-        status: 'Partially Paid',
-        items: [
-            { id: '1', description: 'Porcelain Crown - Tooth #25', quantity: 1, unitPrice: 4000 },
-        ],
-    },
-    {
-        id: 'INV-003',
-        patient: 'Youssef Hassan',
-        patientId: 'pat3',
-        issueDate: 'Dec 1, 2024',
-        dueDate: 'Dec 31, 2024',
-        totalAmount: 1500,
-        amountPaid: 0,
-        status: 'Unpaid',
-        items: [
-            { id: '1', description: 'Consultation & X-Rays', quantity: 1, unitPrice: 500 },
-            { id: '2', description: 'Composite Filling - Tooth #36', quantity: 1, unitPrice: 1000 },
-        ],
-    }
 ];

@@ -34,7 +34,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { initialMedicationInventoryData, pharmacyPageStats, initialPrescriptionRecordsData, commonMedicationsData } from "@/lib/data";
+import { pharmacyPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -50,6 +50,7 @@ import {
   Eye,
   CheckCircle2,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
@@ -57,6 +58,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
+import { getCollection, setDocument, deleteDocument, updateDocument } from '@/services/firestore';
 
 export type Medication = {
   id: string;
@@ -95,82 +97,121 @@ type IconKey = keyof typeof iconMap;
 
 
 export default function PharmacyPage() {
-    const [medications, setMedications] = React.useState<Medication[]>(initialMedicationInventoryData);
+    const [medications, setMedications] = React.useState<Medication[]>([]);
+    const [loading, setLoading] = React.useState(true);
     const [medicationToEdit, setMedicationToEdit] = React.useState<Medication | null>(null);
     const [medicationToDelete, setMedicationToDelete] = React.useState<Medication | null>(null);
     const [medicationSearchTerm, setMedicationSearchTerm] = React.useState('');
     const [medicationCategoryFilter, setMedicationCategoryFilter] = React.useState('all');
     
-    const [prescriptions, setPrescriptions] = React.useState<Prescription[]>(initialPrescriptionRecordsData);
+    const [prescriptions, setPrescriptions] = React.useState<Prescription[]>([]);
     const [prescriptionToView, setPrescriptionToView] = React.useState<Prescription | null>(null);
     const [prescriptionSearchTerm, setPrescriptionSearchTerm] = React.useState('');
     const [prescriptionStatusFilter, setPrescriptionStatusFilter] = React.useState('all');
     
     const { toast } = useToast();
+    
+    React.useEffect(() => {
+        async function fetchData() {
+            try {
+                const [medicationData, prescriptionData] = await Promise.all([
+                    getCollection<Medication>('medications'),
+                    getCollection<Prescription>('prescriptions'),
+                ]);
+                setMedications(medicationData);
+                setPrescriptions(prescriptionData);
+            } catch (error) {
+                toast({ title: "Error fetching data", variant: 'destructive'});
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, [toast]);
 
     const medicationCategories = React.useMemo(() => {
         return [...new Set(medications.map((i) => i.category))];
     }, [medications]);
 
-    const handleSaveMedication = (data: any) => {
-      const newMedication: Medication = {
-        id: `MED-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-        name: data.name,
-        fullName: data.name,
-        strength: data.strength,
-        form: data.form,
-        category: data.category,
-        stock: data.stock,
-        unitPrice: `$${parseFloat(data.unitPrice).toFixed(2)}`,
-        expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
-        status: data.stock > 20 ? 'In Stock' : 'Low Stock',
-      };
-      setMedications(prev => [newMedication, ...prev]);
-      toast({
-        title: "Medication Added",
-        description: `${newMedication.name} has been added to the inventory.`,
-      });
+    const handleSaveMedication = async (data: any) => {
+      try {
+          const newMedication: Medication = {
+            id: `MED-${Date.now()}`,
+            name: data.name,
+            fullName: data.name,
+            strength: data.strength,
+            form: data.form,
+            category: data.category,
+            stock: data.stock,
+            unitPrice: `$${parseFloat(data.unitPrice).toFixed(2)}`,
+            expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
+            status: data.stock > 20 ? 'In Stock' : 'Low Stock',
+          };
+          await setDocument('medications', newMedication.id, newMedication);
+          setMedications(prev => [newMedication, ...prev]);
+          toast({
+            title: "Medication Added",
+            description: `${newMedication.name} has been added to the inventory.`,
+          });
+      } catch(e) {
+         toast({ title: 'Error adding medication', variant: 'destructive'});
+      }
     };
 
-    const handleUpdateMedication = (updatedMedication: Medication) => {
-      setMedications(prev => prev.map(med => med.id === updatedMedication.id ? updatedMedication : med));
-      setMedicationToEdit(null);
-      toast({
-        title: "Medication Updated",
-        description: `${updatedMedication.name} has been successfully updated.`,
-      });
+    const handleUpdateMedication = async (updatedMedication: Medication) => {
+      try {
+          await updateDocument('medications', updatedMedication.id, updatedMedication);
+          setMedications(prev => prev.map(med => med.id === updatedMedication.id ? updatedMedication : med));
+          setMedicationToEdit(null);
+          toast({
+            title: "Medication Updated",
+            description: `${updatedMedication.name} has been successfully updated.`,
+          });
+      } catch(e) {
+          toast({ title: 'Error updating medication', variant: 'destructive'});
+      }
     };
 
-    const handleDeleteMedication = () => {
+    const handleDeleteMedication = async () => {
       if (medicationToDelete) {
-        setMedications(prev => prev.filter(med => med.id !== medicationToDelete.id));
-        toast({
-          title: "Medication Deleted",
-          description: `${medicationToDelete.name} has been removed from inventory.`,
-          variant: "destructive",
-        });
-        setMedicationToDelete(null);
+        try {
+            await deleteDocument('medications', medicationToDelete.id);
+            setMedications(prev => prev.filter(med => med.id !== medicationToDelete.id));
+            toast({
+              title: "Medication Deleted",
+              description: `${medicationToDelete.name} has been removed from inventory.`,
+              variant: "destructive",
+            });
+            setMedicationToDelete(null);
+        } catch(e) {
+            toast({ title: 'Error deleting medication', variant: 'destructive'});
+        }
       }
     };
     
-    const handleSavePrescription = (data: any) => {
-        const newPrescription: Prescription = {
-          id: `RX-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-          patient: data.patient,
-          medication: data.medication,
-          strength: data.dosage, // Assuming dosage field contains strength
-          dosage: data.instructions,
-          duration: 'As directed',
-          refills: data.refills,
-          doctor: data.doctor,
-          date: new Date(data.date).toLocaleDateString(),
-          status: 'Active',
-        };
-        setPrescriptions(prev => [newPrescription, ...prev]);
-        toast({
-          title: "Prescription Created",
-          description: `A new prescription for ${newPrescription.patient} has been created.`,
-        });
+    const handleSavePrescription = async (data: any) => {
+        try {
+            const newPrescription: Prescription = {
+              id: `RX-${Date.now()}`,
+              patient: data.patient,
+              medication: data.medication,
+              strength: data.dosage,
+              dosage: data.instructions,
+              duration: 'As directed',
+              refills: data.refills,
+              doctor: data.doctor,
+              date: new Date(data.date).toLocaleDateString(),
+              status: 'Active',
+            };
+            await setDocument('prescriptions', newPrescription.id, newPrescription);
+            setPrescriptions(prev => [newPrescription, ...prev]);
+            toast({
+              title: "Prescription Created",
+              description: `A new prescription for ${newPrescription.patient} has been created.`,
+            });
+        } catch(e) {
+            toast({ title: 'Error creating prescription', variant: 'destructive'});
+        }
       };
 
     const filteredMedications = React.useMemo(() => {
@@ -205,7 +246,7 @@ export default function PharmacyPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {pharmacyPageStats.map((stat) => {
+          {pharmacyPageStats(medications.length, prescriptions.length).map((stat) => {
              const Icon = iconMap[stat.icon as IconKey];
              return (
             <Card key={stat.title}>
@@ -280,7 +321,9 @@ export default function PharmacyPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredMedications.length > 0 ? (
+                    {loading ? (
+                        <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredMedications.length > 0 ? (
                       filteredMedications.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
@@ -381,64 +424,74 @@ export default function PharmacyPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPrescriptions.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.id}</TableCell>
-                        <TableCell>{record.patient}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Pill className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">{record.medication}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {record.strength}
-                              </div>
+                    {loading ? (
+                        <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredPrescriptions.length > 0 ? (
+                        filteredPrescriptions.map((record) => (
+                        <TableRow key={record.id}>
+                            <TableCell className="font-medium">{record.id}</TableCell>
+                            <TableCell>{record.patient}</TableCell>
+                            <TableCell>
+                            <div className="flex items-center gap-2">
+                                <Pill className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                <div className="font-medium">{record.medication}</div>
+                                <div className="text-xs text-muted-foreground">
+                                    {record.strength}
+                                </div>
+                                </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>{record.dosage}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {record.duration}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Refills: {record.refills}
-                          </div>
-                        </TableCell>
-                        <TableCell>{record.doctor}</TableCell>
-                        <TableCell>{record.date}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={record.status === 'Active' ? 'default' : 'outline'}
-                            className={cn(
-                                record.status === 'Active' && 'bg-foreground text-background hover:bg-foreground/80',
-                                record.status === 'Completed' && 'bg-green-100 text-green-800 border-transparent'
-                            )}
-                          >
-                            {record.status === 'Active' ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle2 className="mr-1 h-3 w-3" />}
-                            {record.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setPrescriptionToView(record)}>
-                              <Eye className="mr-2 h-3 w-3" />
-                              View
-                            </Button>
-                            {record.status === 'Active' && (
-                                <Button variant="outline" size="sm">
-                                    <Send className="mr-2 h-3 w-3" />
-                                    Send
+                            </TableCell>
+                            <TableCell>
+                            <div>{record.dosage}</div>
+                            <div className="text-xs text-muted-foreground">
+                                {record.duration}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Refills: {record.refills}
+                            </div>
+                            </TableCell>
+                            <TableCell>{record.doctor}</TableCell>
+                            <TableCell>{record.date}</TableCell>
+                            <TableCell>
+                            <Badge
+                                variant={record.status === 'Active' ? 'default' : 'outline'}
+                                className={cn(
+                                    record.status === 'Active' && 'bg-foreground text-background hover:bg-foreground/80',
+                                    record.status === 'Completed' && 'bg-green-100 text-green-800 border-transparent'
+                                )}
+                            >
+                                {record.status === 'Active' ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle2 className="mr-1 h-3 w-3" />}
+                                {record.status}
+                            </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setPrescriptionToView(record)}>
+                                <Eye className="mr-2 h-3 w-3" />
+                                View
                                 </Button>
-                            )}
-                            <Button variant="ghost" size="icon">
-                              <Download className="h-4 w-4" />
-                               <span className="sr-only">Download</span>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                {record.status === 'Active' && (
+                                    <Button variant="outline" size="sm" disabled>
+                                        <Send className="mr-2 h-3 w-3" />
+                                        Send
+                                    </Button>
+                                )}
+                                <Button variant="ghost" size="icon" disabled>
+                                <Download className="h-4 w-4" />
+                                <span className="sr-only">Download</span>
+                                </Button>
+                            </div>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={8} className="h-24 text-center">
+                            No prescriptions found.
+                            </TableCell>
+                        </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -495,4 +548,3 @@ export default function PharmacyPage() {
     </DashboardLayout>
   );
 }
-

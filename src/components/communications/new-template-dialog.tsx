@@ -28,22 +28,22 @@ const templateSchema = z.object({
   body: z.string().min(1, 'Template body is required.'),
 });
 
-export type Template = z.infer<typeof templateSchema>;
+export type Template = z.infer<typeof templateSchema> & { id: string };
 
 interface NewTemplateDialogProps {
-  onSave: (data: Template) => void;
+  onSave: (data: Omit<Template, 'id'>) => void;
 }
 
 export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const form = useForm<Template>({
+  const form = useForm<Omit<Template, 'id'>>({
     resolver: zodResolver(templateSchema),
     defaultValues: {
       type: 'Email',
     },
   });
 
-  const onSubmit = (data: Template) => {
+  const onSubmit = (data: Omit<Template, 'id'>) => {
     onSave(data);
     form.reset();
     setOpen(false);

@@ -28,10 +28,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, ShoppingCart, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { suppliersData } from '@/lib/data';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { InventoryItem } from '@/app/inventory/page';
+import { InventoryItem, Supplier } from '@/app/suppliers/page';
 
 const orderItemSchema = z.object({
   itemId: z.string().min(1, "Item is required"),
@@ -55,9 +54,10 @@ interface NewPurchaseOrderDialogProps {
   onOpenChange: (open: boolean) => void;
   initialSupplierId?: string;
   inventoryItems: InventoryItem[];
+  suppliers: Supplier[];
 }
 
-export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems }: NewPurchaseOrderDialogProps) {
+export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems, suppliers }: NewPurchaseOrderDialogProps) {
   const [orderDateOpen, setOrderDateOpen] = React.useState(false);
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -82,7 +82,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
   }, [initialSupplierId, form]);
 
   const onSubmit = (data: PurchaseOrderFormData) => {
-    const supplierName = suppliersData.find(s => s.id === data.supplier)?.name;
+    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
     const itemsWithDesc = data.items.map(item => ({
         ...item,
         description: inventoryItems.find(inv => inv.id === item.itemId)?.name || 'Unknown Item'
@@ -118,7 +118,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {suppliersData.map((supplier) => (
+                        {suppliers.map((supplier) => (
                           <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name}
                           </SelectItem>

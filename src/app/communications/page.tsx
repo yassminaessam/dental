@@ -26,14 +26,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { communicationsPageStats, initialRecentMessagesData } from "@/lib/data";
+import { communicationsPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2 } from "lucide-react";
+import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2 } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { NewTemplateDialog, Template } from "@/components/communications/new-template-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
 
 export type Message = {
   id: string;
@@ -46,45 +47,83 @@ export type Message = {
 };
 
 export default function CommunicationsPage() {
-  const [messages, setMessages] = React.useState<Message[]>(initialRecentMessagesData);
+  const [messages, setMessages] = React.useState<Message[]>([]);
   const [templates, setTemplates] = React.useState<Template[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const [messageData, templateData] = await Promise.all([
+          getCollection<Message>('messages'),
+          getCollection<Template>('templates'),
+        ]);
+        setMessages(messageData);
+        setTemplates(templateData);
+      } catch (error) {
+        toast({ title: 'Error fetching data', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
   
-  const handleSendMessage = (data: any) => {
-    const newMessage: Message = {
-      id: `MSG-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      patient: data.patient,
-      type: data.type,
-      content: data.subject,
-      subContent: data.message,
-      status: 'Sent',
-      sent: new Date().toLocaleString(),
-    };
-    setMessages(prev => [newMessage, ...prev]);
-    toast({
-      title: "Message Sent",
-      description: `A new ${newMessage.type} has been sent to ${newMessage.patient}.`,
-    });
-  };
-
-  const handleSaveTemplate = (data: Template) => {
-    setTemplates(prev => [...prev, data]);
-    toast({
-      title: "Template Saved",
-      description: `The "${data.name}" template has been saved.`,
-    });
-  };
-
-  const handleDeleteTemplate = () => {
-    if (templateToDelete) {
-      setTemplates(prev => prev.filter(t => t.name !== templateToDelete.name));
+  const handleSendMessage = async (data: any) => {
+    try {
+      const newMessage: Message = {
+        id: `MSG-${Date.now()}`,
+        patient: data.patient,
+        type: data.type,
+        content: data.subject,
+        subContent: data.message,
+        status: 'Sent',
+        sent: new Date().toLocaleString(),
+      };
+      await setDocument('messages', newMessage.id, newMessage);
+      setMessages(prev => [newMessage, ...prev]);
       toast({
-        title: "Template Deleted",
-        description: `The "${templateToDelete.name}" template has been deleted.`,
-        variant: "destructive",
+        title: "Message Sent",
+        description: `A new ${newMessage.type} has been sent to ${newMessage.patient}.`,
       });
-      setTemplateToDelete(null);
+    } catch (error) {
+      toast({ title: 'Error sending message', variant: 'destructive' });
+    }
+  };
+
+  const handleSaveTemplate = async (data: Omit<Template, 'id'>) => {
+    try {
+      const newTemplate: Template = {
+        ...data,
+        id: `TMPL-${Date.now()}`,
+      };
+      await setDocument('templates', newTemplate.id, newTemplate);
+      setTemplates(prev => [...prev, newTemplate]);
+      toast({
+        title: "Template Saved",
+        description: `The "${data.name}" template has been saved.`,
+      });
+    } catch (error) {
+       toast({ title: 'Error saving template', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (templateToDelete) {
+      try {
+        await deleteDocument('templates', templateToDelete.id);
+        setTemplates(prev => prev.filter(t => t.id !== templateToDelete.id));
+        toast({
+          title: "Template Deleted",
+          description: `The "${templateToDelete.name}" template has been deleted.`,
+          variant: "destructive",
+        });
+        setTemplateToDelete(null);
+      } catch(e) {
+        toast({ title: 'Error deleting template', variant: 'destructive' });
+      }
     }
   };
 
@@ -100,7 +139,7 @@ export default function CommunicationsPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {communicationsPageStats.map((stat) => (
+          {communicationsPageStats(messages.length, templates.length).map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -142,7 +181,9 @@ export default function CommunicationsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {messages.length > 0 ? (
+                    {loading ? (
+                      <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : messages.length > 0 ? (
                       messages.map((message: any) => (
                         <TableRow key={message.id}>
                           <TableCell className="font-medium">{message.patient}</TableCell>
@@ -213,7 +254,7 @@ export default function CommunicationsPage() {
                       </p>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" disabled>
                         <Pencil className="mr-2 h-3 w-3" />
                         Edit
                       </Button>
@@ -228,7 +269,7 @@ export default function CommunicationsPage() {
             ) : (
               <Card>
                 <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                  No templates found. Create one to get started.
+                  {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : 'No templates found. Create one to get started.'}
                 </CardContent>
               </Card>
             )}

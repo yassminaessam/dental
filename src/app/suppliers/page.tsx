@@ -33,7 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { initialSuppliersData, suppliersPageStats, initialPurchaseOrdersData, initialInventoryItemsData } from "@/lib/data";
+import { suppliersPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -52,6 +52,7 @@ import {
   MoreHorizontal,
   Trash2,
   Check,
+  Loader2,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
@@ -61,6 +62,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
 import { InventoryItem } from '../inventory/page';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 
 export type Supplier = {
   id: string;
@@ -102,14 +104,15 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliersData);
+  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [supplierToEdit, setSupplierToEdit] = React.useState<Supplier | null>(null);
   const [supplierToDelete, setSupplierToDelete] = React.useState<Supplier | null>(null);
   const [supplierSearchTerm, setSupplierSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
 
-  const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
-  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrdersData);
+  const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>([]);
   const [poToView, setPoToView] = React.useState<PurchaseOrder | null>(null);
   const [poSearchTerm, setPoSearchTerm] = React.useState('');
   const [poStatusFilter, setPoStatusFilter] = React.useState('all');
@@ -120,93 +123,141 @@ export default function SuppliersPage() {
 
   const { toast } = useToast();
   
+  React.useEffect(() => {
+    async function fetchData() {
+        try {
+            const [suppliersData, poData, inventoryData] = await Promise.all([
+                getCollection<Supplier>('suppliers'),
+                getCollection<PurchaseOrder>('purchase-orders'),
+                getCollection<InventoryItem>('inventory'),
+            ]);
+            setSuppliers(suppliersData);
+            setPurchaseOrders(poData);
+            setInventory(inventoryData);
+        } catch(e) {
+            toast({ title: "Error fetching data", variant: 'destructive'});
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+  
   const supplierCategories = React.useMemo(() => {
     return [...new Set(suppliers.map((s) => s.category))];
   }, [suppliers]);
 
-  const handleSaveSupplier = (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
-    const newSupplier: Supplier = {
-      id: `SUP-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      ...data,
-      rating: 5.0,
-      status: 'active',
-    };
-    setSuppliers(prev => [newSupplier, ...prev]);
-    toast({
-      title: "Supplier Added",
-      description: `${newSupplier.name} has been added to your network.`,
-    });
-  };
-
-  const handleUpdateSupplier = (updatedSupplier: Supplier) => {
-    setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
-    setSupplierToEdit(null);
-    toast({
-      title: "Supplier Updated",
-      description: `${updatedSupplier.name}'s record has been updated.`,
-    });
-  };
-
-  const handleDeleteSupplier = () => {
-    if (supplierToDelete) {
-      setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete.id));
-      toast({
-        title: "Supplier Deleted",
-        description: `${supplierToDelete.name} has been deleted.`,
-        variant: "destructive"
-      });
-      setSupplierToDelete(null);
+  const handleSaveSupplier = async (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
+    try {
+        const newSupplier: Supplier = {
+          id: `SUP-${Date.now()}`,
+          ...data,
+          rating: 5.0,
+          status: 'active',
+        };
+        await setDocument('suppliers', newSupplier.id, newSupplier);
+        setSuppliers(prev => [newSupplier, ...prev]);
+        toast({
+          title: "Supplier Added",
+          description: `${newSupplier.name} has been added to your network.`,
+        });
+    } catch(e) {
+        toast({ title: "Error adding supplier", variant: 'destructive'});
     }
   };
 
-  const handleSavePurchaseOrder = (data: any) => {
-    const newPurchaseOrder: PurchaseOrder = {
-      id: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
-      supplier: data.supplier,
-      orderDate: new Date(data.orderDate).toLocaleDateString(),
-      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
-      total: `$${data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0).toFixed(2)}`,
-      status: 'Pending',
-      items: data.items,
-    };
-    setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
-    toast({
-      title: "Purchase Order Created",
-      description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
-    });
+  const handleUpdateSupplier = async (updatedSupplier: Supplier) => {
+    try {
+        await updateDocument('suppliers', updatedSupplier.id, updatedSupplier);
+        setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+        setSupplierToEdit(null);
+        toast({
+          title: "Supplier Updated",
+          description: `${updatedSupplier.name}'s record has been updated.`,
+        });
+    } catch(e) {
+        toast({ title: "Error updating supplier", variant: 'destructive'});
+    }
   };
 
-  const handlePoStatusChange = (poId: string, status: PurchaseOrder['status']) => {
-    setPurchaseOrders(prev => prev.map(po => po.id === poId ? { ...po, status } : po));
-    toast({
-        title: "Order Status Updated",
-        description: `Order ${poId} has been marked as ${status}.`
-    });
+  const handleDeleteSupplier = async () => {
+    if (supplierToDelete) {
+      try {
+          await deleteDocument('suppliers', supplierToDelete.id);
+          setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete.id));
+          toast({
+            title: "Supplier Deleted",
+            description: `${supplierToDelete.name} has been deleted.`,
+            variant: "destructive"
+          });
+          setSupplierToDelete(null);
+      } catch(e) {
+          toast({ title: "Error deleting supplier", variant: 'destructive'});
+      }
+    }
+  };
+
+  const handleSavePurchaseOrder = async (data: any) => {
+    try {
+        const newPurchaseOrder: PurchaseOrder = {
+          id: `PO-${Date.now()}`,
+          supplier: data.supplier,
+          orderDate: new Date(data.orderDate).toLocaleDateString(),
+          deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
+          total: `$${data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0).toFixed(2)}`,
+          status: 'Pending',
+          items: data.items,
+        };
+        await setDocument('purchase-orders', newPurchaseOrder.id, newPurchaseOrder);
+        setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
+        toast({
+          title: "Purchase Order Created",
+          description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
+        });
+    } catch(e) {
+        toast({ title: "Error creating PO", variant: 'destructive'});
+    }
+  };
+
+  const handlePoStatusChange = async (poId: string, status: PurchaseOrder['status']) => {
+    try {
+        await updateDocument('purchase-orders', poId, { status });
+        setPurchaseOrders(prev => prev.map(po => po.id === poId ? { ...po, status } : po));
+        toast({
+            title: "Order Status Updated",
+            description: `Order ${poId} has been marked as ${status}.`
+        });
+    } catch (e) {
+        toast({ title: "Error updating status", variant: 'destructive'});
+    }
   };
   
-  const handleReceiveOrder = (order: PurchaseOrder) => {
-    // 1. Update PO status to Delivered
-    handlePoStatusChange(order.id, 'Delivered');
+  const handleReceiveOrder = async (order: PurchaseOrder) => {
+    try {
+        // 1. Update PO status to Delivered
+        await handlePoStatusChange(order.id, 'Delivered');
 
-    // 2. Update inventory stock
-    let updatedInventory = [...inventory];
-    order.items.forEach(orderItem => {
-        const inventoryIndex = updatedInventory.findIndex(invItem => invItem.id === orderItem.itemId);
-        if (inventoryIndex !== -1) {
-            updatedInventory[inventoryIndex].stock += orderItem.quantity;
-            // Also update status if it was low/out of stock
-            const item = updatedInventory[inventoryIndex];
-            if (item.stock >= item.min) {
-                item.status = 'Normal';
+        // 2. Update inventory stock
+        for (const orderItem of order.items) {
+            const inventoryItem = inventory.find(invItem => invItem.id === orderItem.itemId);
+            if (inventoryItem) {
+                const newStock = inventoryItem.stock + orderItem.quantity;
+                const newStatus = newStock >= inventoryItem.min ? 'Normal' : inventoryItem.status;
+                await updateDocument('inventory', inventoryItem.id, { stock: newStock, status: newStatus });
             }
         }
-    });
-    setInventory(updatedInventory);
+        
+        // Refetch inventory to show updated stock
+        const updatedInventory = await getCollection<InventoryItem>('inventory');
+        setInventory(updatedInventory);
 
-    toast({
-        title: "Order Received",
-        description: `PO ${order.id} has been marked as delivered and inventory has been updated.`,
-    });
+        toast({
+            title: "Order Received",
+            description: `PO ${order.id} has been marked as delivered and inventory has been updated.`,
+        });
+    } catch (e) {
+        toast({ title: "Error receiving order", variant: 'destructive'});
+    }
   };
 
   const openNewPoDialog = (supplierId?: string) => {
@@ -260,7 +311,7 @@ export default function SuppliersPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {suppliersPageStats.map((stat) => {
+          {suppliersPageStats(suppliers.length, purchaseOrders.filter(p => p.status === "Pending").length).map((stat) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (
               <Card key={stat.title}>
@@ -338,7 +389,9 @@ export default function SuppliersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSuppliers.length > 0 ? (
+                    {loading ? (
+                        <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredSuppliers.length > 0 ? (
                       filteredSuppliers.map((supplier) => (
                         <TableRow key={supplier.id}>
                           <TableCell>
@@ -358,11 +411,7 @@ export default function SuppliersPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Input
-                              value={supplier.category}
-                              className="w-[150px] border-none bg-transparent p-0"
-                              readOnly
-                            />
+                            <Badge variant="outline">{supplier.category}</Badge>
                           </TableCell>
                           <TableCell>{supplier.paymentTerms}</TableCell>
                           <TableCell>
@@ -470,7 +519,9 @@ export default function SuppliersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPurchaseOrders.length > 0 ? (
+                     {loading ? (
+                        <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredPurchaseOrders.length > 0 ? (
                       filteredPurchaseOrders.map((po) => (
                         <TableRow key={po.id}>
                           <TableCell className="font-medium">{po.id}</TableCell>
@@ -513,7 +564,7 @@ export default function SuppliersPage() {
                                   <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Shipped')}>
                                     Mark as Shipped
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Delivered')}>
+                                  <DropdownMenuItem onClick={() => handleReceiveOrder(po)} disabled={po.status !== 'Shipped'}>
                                     Mark as Delivered
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Cancelled')} className="text-destructive">
@@ -591,6 +642,7 @@ export default function SuppliersPage() {
         onSave={handleSavePurchaseOrder}
         initialSupplierId={newPoSupplier}
         inventoryItems={inventory}
+        suppliers={suppliers}
       />
       
       {supplierToEdit && (

@@ -27,11 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  initialInventoryItemsData,
-  inventoryPageStats,
-  lowStockItems,
-} from "@/lib/data";
+import { inventoryPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -41,6 +37,7 @@ import {
   Pencil,
   Trash2,
   Package as PackageIcon,
+  Loader2,
 } from "lucide-react";
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
@@ -55,6 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 
 export type InventoryItem = {
   id: string;
@@ -71,56 +69,86 @@ export type InventoryItem = {
 };
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = React.useState<InventoryItem[]>(initialInventoryItemsData);
+  const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    async function fetchInventory() {
+        try {
+            const data = await getCollection<InventoryItem>('inventory');
+            setInventory(data);
+        } catch (error) {
+            toast({ title: "Error fetching inventory", variant: 'destructive'});
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchInventory();
+  }, [toast]);
+
   const inventoryCategories = React.useMemo(() => {
     return [...new Set(inventory.map((i) => i.category))];
   }, [inventory]);
 
-  const handleSaveItem = (data: any) => {
-    const newItem: InventoryItem = {
-      id: `INV-${Math.floor(100 + Math.random() * 900).toString().padStart(3, '0')}`,
-      name: data.name,
-      expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
-      category: data.category,
-      stock: data.stock,
-      min: 10,
-      max: 50,
-      status: data.stock < 10 ? 'Low Stock' : 'Normal',
-      unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
-      supplier: data.supplier,
-      location: data.location,
-    };
-    setInventory(prev => [newItem, ...prev]);
-    toast({
-      title: "Item Added",
-      description: `${newItem.name} has been added to inventory.`,
-    });
+  const handleSaveItem = async (data: any) => {
+    try {
+        const newItem: InventoryItem = {
+          id: `INV-${Date.now()}`,
+          name: data.name,
+          expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
+          category: data.category,
+          stock: data.stock,
+          min: 10,
+          max: 50,
+          status: data.stock < 10 ? 'Low Stock' : 'Normal',
+          unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
+          supplier: data.supplier,
+          location: data.location,
+        };
+        await setDocument('inventory', newItem.id, newItem);
+        setInventory(prev => [newItem, ...prev]);
+        toast({
+          title: "Item Added",
+          description: `${newItem.name} has been added to inventory.`,
+        });
+    } catch(e) {
+        toast({ title: 'Error adding item', variant: 'destructive'});
+    }
   };
 
-  const handleUpdateItem = (updatedItem: InventoryItem) => {
-    setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
-    setItemToEdit(null);
-    toast({
-      title: "Item Updated",
-      description: `${updatedItem.name} has been successfully updated.`,
-    });
+  const handleUpdateItem = async (updatedItem: InventoryItem) => {
+    try {
+        await updateDocument('inventory', updatedItem.id, updatedItem);
+        setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+        setItemToEdit(null);
+        toast({
+          title: "Item Updated",
+          description: `${updatedItem.name} has been successfully updated.`,
+        });
+    } catch(e) {
+        toast({ title: 'Error updating item', variant: 'destructive'});
+    }
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (itemToDelete) {
-      setInventory(prev => prev.filter(item => item.id !== itemToDelete.id));
-      toast({
-        title: "Item Deleted",
-        description: `${itemToDelete.name} has been removed from inventory.`,
-        variant: "destructive",
-      });
-      setItemToDelete(null);
+      try {
+        await deleteDocument('inventory', itemToDelete.id);
+        setInventory(prev => prev.filter(item => item.id !== itemToDelete.id));
+        toast({
+          title: "Item Deleted",
+          description: `${itemToDelete.name} has been removed from inventory.`,
+          variant: "destructive",
+        });
+        setItemToDelete(null);
+      } catch(e) {
+        toast({ title: 'Error deleting item', variant: 'destructive'});
+      }
     }
   };
   
@@ -137,6 +165,8 @@ export default function InventoryPage() {
         description: `A purchase order for ${itemName} has been initiated.`,
     });
   };
+
+  const lowStockItems = React.useMemo(() => inventory.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock'), [inventory]);
 
   const filteredInventory = React.useMemo(() => {
     return inventory
@@ -163,7 +193,7 @@ export default function InventoryPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {inventoryPageStats.map((stat) => (
+          {inventoryPageStats(inventory.length, lowStockItems.length).map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -198,7 +228,7 @@ export default function InventoryPage() {
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {item.stock} / {item.minStock} min
+                    {item.stock} / {item.min} min
                   </p>
                 </div>
                 <Button variant="destructive" size="sm" onClick={() => handleRestock(item.name)}>
@@ -254,7 +284,9 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInventory.length > 0 ? (
+                {loading ? (
+                    <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                ) : filteredInventory.length > 0 ? (
                   filteredInventory.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
