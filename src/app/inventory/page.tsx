@@ -27,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { inventoryPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -94,6 +93,25 @@ export default function InventoryPage() {
   const inventoryCategories = React.useMemo(() => {
     return [...new Set(inventory.map((i) => i.category))];
   }, [inventory]);
+  
+  const lowStockItems = React.useMemo(() => inventory.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock'), [inventory]);
+
+  const inventoryPageStats = React.useMemo(() => {
+    const totalItems = inventory.length;
+    const lowStockCount = lowStockItems.length;
+    const categoryCount = inventoryCategories.length;
+    const totalValue = inventory.reduce((acc, item) => {
+        const cost = parseFloat(item.unitCost.replace(/[^0-9.-]+/g, '')) || 0;
+        return acc + (cost * item.stock);
+    }, 0);
+
+    return [
+      { title: "Total Items", value: totalItems, description: "All items in inventory" },
+      { title: "Low Stock Items", value: lowStockCount, description: "Items needing attention", valueClassName: "text-red-500" },
+      { title: "Categories", value: categoryCount, description: "Total item categories" },
+      { title: "Total Value", value: `EGP ${totalValue.toLocaleString()}`, description: "Estimated inventory value" }
+    ];
+  }, [inventory, lowStockItems, inventoryCategories]);
 
   const handleSaveItem = async (data: any) => {
     try {
@@ -166,8 +184,6 @@ export default function InventoryPage() {
     });
   };
 
-  const lowStockItems = React.useMemo(() => inventory.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock'), [inventory]);
-
   const filteredInventory = React.useMemo(() => {
     return inventory
       .filter(item =>
@@ -193,7 +209,7 @@ export default function InventoryPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {inventoryPageStats(inventory.length, lowStockItems.length).map((stat) => (
+          {inventoryPageStats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
