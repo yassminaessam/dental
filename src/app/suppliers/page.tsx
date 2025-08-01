@@ -62,6 +62,7 @@ import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog'
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
 import { InventoryItem } from '../inventory/page';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { AddItemDialog } from '@/components/inventory/add-item-dialog';
 
 export type Supplier = {
   id: string;
@@ -117,6 +118,7 @@ export default function SuppliersPage() {
   const [poStatusFilter, setPoStatusFilter] = React.useState('all');
   
   const [isNewPoOpen, setIsNewPoOpen] = React.useState(false);
+  const [isAddItemOpen, setIsAddItemOpen] = React.useState(false);
   const [newPoSupplier, setNewPoSupplier] = React.useState<string | undefined>(undefined);
 
 
@@ -229,6 +231,33 @@ export default function SuppliersPage() {
         });
     } catch(e) {
         toast({ title: "Error creating PO", variant: 'destructive'});
+    }
+  };
+
+  const handleSaveItem = async (data: any) => {
+    try {
+        const newItem: InventoryItem = {
+          id: `INV-${Date.now()}`,
+          name: data.name,
+          expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
+          category: data.category,
+          stock: data.stock,
+          min: 10,
+          max: 50,
+          status: data.stock < 10 ? 'Low Stock' : 'Normal',
+          unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
+          supplier: data.supplier,
+          location: data.location,
+        };
+        await setDocument('inventory', newItem.id, newItem);
+        setInventory(prev => [newItem, ...prev]);
+        toast({
+          title: "Item Added",
+          description: `${newItem.name} has been added to inventory.`,
+        });
+        setIsAddItemOpen(false); // Close the dialog
+    } catch(e) {
+        toast({ title: 'Error adding item', variant: 'destructive'});
     }
   };
 
@@ -656,7 +685,10 @@ export default function SuppliersPage() {
         initialSupplierId={newPoSupplier}
         inventoryItems={inventory}
         suppliers={suppliers}
+        onAddItem={() => setIsAddItemOpen(true)}
       />
+
+      <AddItemDialog onSave={handleSaveItem} open={isAddItemOpen} onOpenChange={setIsAddItemOpen} />
       
       {supplierToEdit && (
         <EditSupplierDialog

@@ -56,9 +56,10 @@ interface NewPurchaseOrderDialogProps {
   initialSupplierId?: string;
   inventoryItems: InventoryItem[];
   suppliers: Supplier[];
+  onAddItem: () => void;
 }
 
-export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems, suppliers }: NewPurchaseOrderDialogProps) {
+export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems, suppliers, onAddItem }: NewPurchaseOrderDialogProps) {
   const [orderDateOpen, setOrderDateOpen] = React.useState(false);
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -161,7 +162,12 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
               />
             </div>
             <div>
-              <h3 className="mb-2 text-sm font-medium">Order Items *</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium">Order Items *</h3>
+                <Button type="button" size="sm" variant="outline" onClick={onAddItem}>
+                    <Plus className="mr-2 h-4 w-4" /> New Item
+                </Button>
+              </div>
               <div className="rounded-lg border p-2 space-y-2">
                   <div className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-6"><Label>Item Description</Label></div>

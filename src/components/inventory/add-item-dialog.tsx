@@ -46,10 +46,11 @@ type ItemFormData = z.infer<typeof itemSchema>;
 
 interface AddItemDialogProps {
   onSave: (data: any) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function AddItemDialog({ onSave }: AddItemDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
@@ -79,17 +80,19 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
     const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
     onSave({...data, supplier: supplierName});
     form.reset();
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Item
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+       {!open && ( // To prevent showing a trigger if this dialog is opened programmatically
+        <DialogTrigger asChild>
+            <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Item
+            </Button>
+        </DialogTrigger>
+       )}
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>Add New Inventory Item</DialogTitle>
@@ -219,7 +222,7 @@ export function AddItemDialog({ onSave }: AddItemDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">Save Item</Button>
             </DialogFooter>
           </form>
