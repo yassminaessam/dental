@@ -97,7 +97,6 @@ export default function StaffPage() {
       { title: "Total Staff", value: totalStaff, description: "All clinic employees" },
       { title: "Active Staff", value: activeStaff, description: "Currently working employees" },
       { title: "New Hires (30d)", value: newHires, description: "Joined in the last month" },
-      { title: "On Leave", value: "2", description: "Currently on approved leave" },
     ];
   }, [staff]);
 
@@ -176,7 +175,7 @@ export default function StaffPage() {
           <AddEmployeeDialog onSave={handleSaveEmployee} />
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {staffPageStats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
