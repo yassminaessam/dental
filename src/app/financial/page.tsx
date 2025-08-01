@@ -52,7 +52,7 @@ import { format } from 'date-fns';
 
 export type Transaction = {
   id: string;
-  date: string | Date;
+  date: Date;
   description: string;
   category: string;
   type: 'Revenue' | 'Expense';
@@ -82,7 +82,7 @@ export default function FinancialPage() {
   React.useEffect(() => {
     async function fetchTransactions() {
       try {
-        const data = await getCollection<Transaction>('transactions');
+        const data = await getCollection<any>('transactions');
         const parsedData = data.map(t => ({ ...t, date: new Date(t.date) }));
         setTransactions(parsedData);
 
@@ -186,7 +186,7 @@ export default function FinancialPage() {
         status: 'Completed',
       };
       await setDocument('transactions', newTransaction.id, { ...newTransaction, date: newTransaction.date.toISOString() });
-      setTransactions(prev => [newTransaction, ...prev]);
+      setTransactions(prev => [...prev.map(t => ({...t, date: new Date(t.date)})), newTransaction]);
       toast({
         title: "Transaction Added",
         description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
