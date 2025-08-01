@@ -103,21 +103,21 @@ export default function FinancialPage() {
       {
         title: "Total Revenue",
         value: `EGP ${revenue.toLocaleString()}`,
-        change: "+12% from last month",
+        description: "Total revenue recorded",
         icon: "TrendingUp",
         changeType: "positive",
       },
       {
         title: "Total Expenses",
         value: `EGP ${expenses.toLocaleString()}`,
-        change: "+5% from last month",
+        description: "Total expenses recorded",
         icon: "TrendingDown",
         changeType: "negative",
       },
       {
         title: "Net Profit",
         value: `EGP ${netProfit.toLocaleString()}`,
-        change: "+15% from last month",
+        description: "Revenue minus expenses",
         icon: "DollarSign",
         changeType: "positive",
       },
@@ -195,11 +195,6 @@ export default function FinancialPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  {stat.change && (
-                    <p className="text-xs text-muted-foreground">
-                      {stat.change}
-                    </p>
-                  )}
                   {stat.description && (
                     <p className="text-xs text-muted-foreground">
                       {stat.description}
