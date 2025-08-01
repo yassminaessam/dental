@@ -26,7 +26,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { communicationsPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2 } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
@@ -70,6 +69,21 @@ export default function CommunicationsPage() {
     }
     fetchData();
   }, [toast]);
+
+  const communicationsPageStats = React.useMemo(() => {
+    const totalMessages = messages.length;
+    const totalTemplates = templates.length;
+    const deliveredRate = totalMessages > 0 ? 
+      (messages.filter(m => m.status === 'Delivered' || m.status === 'Read').length / totalMessages) * 100 
+      : 0;
+
+    return [
+      { title: "Messages Sent (All Time)", value: totalMessages, description: "Total messages sent via Email & SMS" },
+      { title: "Templates Created", value: totalTemplates, description: "Reusable message templates" },
+      { title: "Delivered Rate", value: `${deliveredRate.toFixed(1)}%`, description: "Successful delivery rate", valueClassName: "text-green-600" },
+      { title: "Automations", value: 0, description: "Automated message workflows" }
+    ];
+  }, [messages, templates]);
   
   const handleSendMessage = async (data: any) => {
     try {
@@ -139,7 +153,7 @@ export default function CommunicationsPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {communicationsPageStats(messages.length, templates.length).map((stat) => (
+          {communicationsPageStats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
