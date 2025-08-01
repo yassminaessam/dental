@@ -27,7 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { billingPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
@@ -82,6 +81,22 @@ export default function BillingPage() {
     }
     fetchData();
   }, [toast]);
+  
+  const billingPageStats = React.useMemo(() => {
+    const totalBilled = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+    const totalPaid = invoices.reduce((acc, inv) => acc + inv.amountPaid, 0);
+    const outstanding = totalBilled - totalPaid;
+    const overdue = invoices
+        .filter(inv => inv.status === 'Overdue')
+        .reduce((acc, inv) => acc + (inv.totalAmount - inv.amountPaid), 0);
+    
+    return [
+        { title: "Total Billed", value: `EGP ${totalBilled.toLocaleString()}`, description: "All invoices created", valueClassName: "" },
+        { title: "Outstanding", value: `EGP ${outstanding.toLocaleString()}`, description: "Total amount unpaid", valueClassName: "text-orange-500" },
+        { title: "Overdue", value: `EGP ${overdue.toLocaleString()}`, description: "Past due date", valueClassName: "text-red-600" },
+        { title: "Paid (All Time)", value: `EGP ${totalPaid.toLocaleString()}`, description: "Total collected", valueClassName: "text-green-600" },
+    ];
+  }, [invoices]);
 
 
   const handleSaveInvoice = async (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
