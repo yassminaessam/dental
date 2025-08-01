@@ -70,7 +70,10 @@ export function NewMessageDialog({
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
+      patient: '',
       type: 'Email',
+      subject: '',
+      message: '',
     }
   });
 
@@ -88,7 +91,7 @@ export function NewMessageDialog({
     if (initialData && open) {
       const patient = patients.find(p => p.name === initialData.patientName);
       form.reset({
-        patient: patient?.id,
+        patient: patient?.id || '',
         subject: initialData.subject,
         message: initialData.originalMessage 
             ? `\n\n--- Original Message ---\n${initialData.originalMessage}`
@@ -96,7 +99,12 @@ export function NewMessageDialog({
         type: 'Email',
       });
     } else if (!isReply) {
-      form.reset({ type: 'Email' });
+      form.reset({
+        patient: '',
+        type: 'Email',
+        subject: '',
+        message: '',
+      });
     }
   }, [initialData, open, form, isReply, patients]);
 
