@@ -29,11 +29,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, ClipboardPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { commonMedicationsData } from '@/lib/data';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
+import type { Medication } from '@/app/pharmacy/page';
 
 const prescriptionSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -49,9 +49,10 @@ type PrescriptionFormData = z.infer<typeof prescriptionSchema>;
 
 interface NewPrescriptionDialogProps {
   onSave: (data: any) => void;
+  medications: Medication[];
 }
 
-export function NewPrescriptionDialog({ onSave }: NewPrescriptionDialogProps) {
+export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -80,8 +81,14 @@ export function NewPrescriptionDialog({ onSave }: NewPrescriptionDialogProps) {
   const onSubmit = (data: PrescriptionFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const doctorName = doctors.find(d => d.id === data.doctor)?.name;
-    const medicationName = commonMedicationsData.find(m => m.name.toLowerCase() === data.medication)?.name;
-    onSave({ ...data, patient: patientName, doctor: doctorName, medication: medicationName });
+    const medicationDetails = medications.find(m => m.id === data.medication);
+    onSave({ 
+      ...data, 
+      patient: patientName, 
+      doctor: doctorName, 
+      medication: medicationDetails?.name,
+      strength: medicationDetails?.strength,
+    });
     form.reset();
     setOpen(false);
   };
@@ -166,9 +173,9 @@ export function NewPrescriptionDialog({ onSave }: NewPrescriptionDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {commonMedicationsData.map((med) => (
-                        <SelectItem key={med.name} value={med.name.toLowerCase()}>
-                          {med.name}
+                      {medications.map((med) => (
+                        <SelectItem key={med.id} value={med.id}>
+                          {med.name} ({med.strength})
                         </SelectItem>
                       ))}
                     </SelectContent>

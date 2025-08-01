@@ -34,7 +34,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { pharmacyPageStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -132,6 +131,27 @@ export default function PharmacyPage() {
     const medicationCategories = React.useMemo(() => {
         return [...new Set(medications.map((i) => i.category))];
     }, [medications]);
+
+    const pharmacyPageStats = React.useMemo(() => {
+        const totalMedications = medications.length;
+        const totalPrescriptions = prescriptions.length;
+        const lowStockMedications = medications.filter(m => m.status === 'Low Stock' || m.status === 'Out of Stock').length;
+        const expiringSoon = medications.filter(m => {
+            if (m.expiryDate === 'N/A') return false;
+            const expiry = new Date(m.expiryDate);
+            const today = new Date();
+            const thirtyDaysFromNow = new Date();
+            thirtyDaysFromNow.setDate(today.getDate() + 30);
+            return expiry > today && expiry <= thirtyDaysFromNow;
+        }).length;
+        
+        return [
+            { title: "Total Medications", value: totalMedications, icon: "Pill", description: "Different types of medicine" },
+            { title: "Low Stock", value: lowStockMedications, icon: "AlertTriangle", description: "Needs reordering", valueClassName: "text-destructive" },
+            { title: "Expiring Soon", value: expiringSoon, icon: "CalendarClock", description: "Within 30 days", valueClassName: "text-orange-500" },
+            { title: "Prescriptions", value: totalPrescriptions, icon: "ClipboardList", description: "Total prescriptions written" },
+        ];
+    }, [medications, prescriptions]);
 
     const handleSaveMedication = async (data: any) => {
       try {
@@ -240,13 +260,13 @@ export default function PharmacyPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NewPrescriptionDialog onSave={handleSavePrescription} />
+            <NewPrescriptionDialog onSave={handleSavePrescription} medications={medications} />
             <AddMedicationDialog onSave={handleSaveMedication} />
           </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {pharmacyPageStats(medications.length, prescriptions.length).map((stat) => {
+          {pharmacyPageStats.map((stat) => {
              const Icon = iconMap[stat.icon as IconKey];
              return (
             <Card key={stat.title}>
