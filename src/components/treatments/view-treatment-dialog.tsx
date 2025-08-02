@@ -54,7 +54,7 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
                 </div>
                  <div>
                     <h4 className="font-semibold">Overall Status</h4>
-                    <p>
+                    <div>
                         <Badge variant={
                             treatment.status === 'Cancelled' ? 'destructive' :
                             treatment.status === 'Completed' ? 'default' :
@@ -65,7 +65,7 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
                             )}>
                             {treatment.status}
                         </Badge>
-                    </p>
+                    </div>
                 </div>
             </div>
              <div>
