@@ -47,7 +47,6 @@ const planSchema = z.object({
   doctor: z.string({ required_error: "Doctor is required." }),
   procedure: z.string().min(1, "Procedure name is required."),
   cost: z.string().min(1, "Cost is required."),
-  status: z.enum(['In Progress', 'Completed', 'Pending']),
   notes: z.string().optional(),
   appointments: z.array(appointmentSchema).min(1, "At least one appointment is required."),
 });
@@ -101,7 +100,6 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             doctor: doctors.find(d => d.name === treatment.doctor)?.id,
             procedure: treatment.procedure,
             cost: treatment.cost.replace(/[^0-9.-]+/g,""),
-            status: treatment.status,
             notes: treatment.notes,
             appointments: treatment.appointments.map(a => ({
                 date: new Date(a.date),
@@ -127,13 +125,23 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const doctorName = doctors.find(d => d.id === data.doctor)?.name;
     
+    // Determine overall status from appointments
+    const allCompleted = data.appointments.every(a => a.status === 'Completed');
+    const anyCompleted = data.appointments.some(a => a.status === 'Completed' || a.status === 'Cancelled');
+    let overallStatus: Treatment['status'] = 'Pending';
+    if (allCompleted) {
+        overallStatus = 'Completed';
+    } else if (anyCompleted) {
+        overallStatus = 'In Progress';
+    }
+
     const updatedTreatment: Treatment = {
         ...treatment,
         patient: patientName || treatment.patient,
         doctor: doctorName || treatment.doctor,
         procedure: data.procedure,
         cost: `EGP ${data.cost}`,
-        status: data.status,
+        status: overallStatus,
         notes: data.notes || '',
         appointments: data.appointments.map(a => ({
             date: a.date.toISOString(),
@@ -201,39 +209,17 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     </FormItem>
                     )}
                 />
-                <div className="grid grid-cols-2 gap-4">
-                     <FormField
-                        control={control}
-                        name="cost"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Cost *</FormLabel>
-                            <FormControl><Input type="text" placeholder="EGP 0.00" {...field} /></FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={control}
-                        name="status"
-                        render={({ field }) => (
+                 <FormField
+                    control={control}
+                    name="cost"
+                    render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Status *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="In Progress">In Progress</SelectItem>
-                                <SelectItem value="Completed">Completed</SelectItem>
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
+                        <FormLabel>Cost *</FormLabel>
+                        <FormControl><Input type="text" placeholder="EGP 0.00" {...field} /></FormControl>
+                        <FormMessage />
                         </FormItem>
-                        )}
-                    />
-                </div>
+                    )}
+                />
                 <FormField
                     control={control}
                     name="notes"
