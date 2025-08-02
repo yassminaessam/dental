@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -7,6 +8,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  onSnapshot,
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
@@ -15,6 +17,23 @@ import {
 export async function getCollection<T>(collectionName: string): Promise<T[]> {
   const querySnapshot = await getDocs(collection(db, collectionName));
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+}
+
+// Generic function to listen to a collection in real-time
+export function listenToCollection<T>(
+    collectionName: string, 
+    callback: (data: T[]) => void,
+    onError: (error: Error) => void
+): () => void {
+    const q = collection(db, collectionName);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+        callback(data);
+    }, (error) => {
+        console.error(`Error listening to ${collectionName}: `, error);
+        onError(error);
+    });
+    return unsubscribe;
 }
 
 // Generic function to add a document to a collection

@@ -40,7 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
-import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { setDocument, updateDocument, listenToCollection } from '@/services/firestore';
 import { Badge } from '@/components/ui/badge';
 
 export type Appointment = {
@@ -65,18 +65,19 @@ export default function AppointmentsPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchAppointments() {
-      try {
-        const data = await getCollection<any>('appointments');
-        setAppointments(data.map(a => ({...a, dateTime: new Date(a.dateTime) })).sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()));
-      } catch (error) {
-        toast({ title: 'Error fetching appointments', variant: 'destructive' });
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAppointments();
-  }, [toast]);
+    const unsubscribe = listenToCollection<any>('appointments', (data) => {
+      const sortedData = data
+        .map(a => ({...a, dateTime: new Date(a.dateTime) }))
+        .sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
+      setAppointments(sortedData);
+      if (loading) setLoading(false);
+    }, (error) => {
+      toast({ title: 'Error fetching appointments', variant: 'destructive', description: error.message });
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast, loading]);
 
   const appointmentPageStats = React.useMemo(() => {
     const total = appointments.length;
@@ -100,7 +101,6 @@ export default function AppointmentsPage() {
         status: 'Confirmed',
       };
       await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
-      setAppointments(prev => [newAppointment, ...prev].sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()));
       toast({ title: "Appointment Scheduled", description: `An appointment for ${newAppointment.patient} has been scheduled.` });
     } catch (error) {
         toast({ title: "Error scheduling appointment", variant: "destructive" });
@@ -110,7 +110,6 @@ export default function AppointmentsPage() {
   const handleUpdateAppointment = async (updatedAppointment: Appointment) => {
     try {
       await updateDocument('appointments', updatedAppointment.id, { ...updatedAppointment, dateTime: updatedAppointment.dateTime.toISOString() });
-      setAppointments(prev => prev.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt));
       setAppointmentToEdit(null);
       toast({ title: "Appointment Updated", description: `Appointment for ${updatedAppointment.patient} has been updated.` });
     } catch (error) {
@@ -121,11 +120,6 @@ export default function AppointmentsPage() {
   const handleStatusChange = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
       await updateDocument('appointments', appointmentId, { status: newStatus });
-      setAppointments(prev =>
-        prev.map(appt =>
-          appt.id === appointmentId ? { ...appt, status: newStatus } : appt
-        )
-      );
       toast({ title: "Status Updated", description: `Appointment ${appointmentId} has been marked as ${newStatus}.` });
     } catch (error) {
         toast({ title: "Error updating status", variant: "destructive" });

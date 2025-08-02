@@ -32,7 +32,7 @@ import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-pl
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
 import { EditTreatmentDialog } from "@/components/treatments/edit-treatment-dialog";
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument, listenToCollection } from '@/services/firestore';
 import type { Appointment } from '../appointments/page';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -72,25 +72,26 @@ export default function TreatmentsPage() {
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
 
-  const fetchAppointments = React.useCallback(async () => {
-    const appointmentsData = await getCollection<any>('appointments');
-    setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
-  }, []);
-
   React.useEffect(() => {
-    async function fetchData() {
-      try {
-        const treatmentsData = await getCollection<Treatment>('treatments');
-        setTreatments(treatmentsData);
-        await fetchAppointments();
-      } catch (e) {
-        toast({ title: "Error fetching data", variant: "destructive" });
-      } finally {
+    const unsubscribeTreatments = listenToCollection<Treatment>('treatments', (data) => {
+        setTreatments(data);
+        if (loading) setLoading(false);
+    }, (error) => {
+        toast({ title: "Error fetching treatments", variant: "destructive", description: error.message });
         setLoading(false);
-      }
-    }
-    fetchData();
-  }, [toast, fetchAppointments]);
+    });
+
+    const unsubscribeAppointments = listenToCollection<any>('appointments', (data) => {
+        setAllAppointments(data.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
+    }, (error) => {
+        toast({ title: "Error fetching appointments", variant: "destructive", description: error.message });
+    });
+
+    return () => {
+        unsubscribeTreatments();
+        unsubscribeAppointments();
+    };
+  }, [toast, loading]);
   
   const treatmentPageStats = React.useMemo(() => {
     const total = treatments.length;
@@ -170,9 +171,6 @@ export default function TreatmentsPage() {
       
       await batch.commit();
 
-      setTreatments(prev => [newTreatment, ...prev]);
-      await fetchAppointments();
-
       toast({
         title: "Treatment Plan Created",
         description: `A new plan for ${newTreatment.patient} has been created.`,
@@ -246,9 +244,6 @@ export default function TreatmentsPage() {
         });
 
         await batch.commit();
-
-        setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
-        await fetchAppointments();
         setTreatmentToEdit(null);
         toast({
             title: "Treatment Updated",
@@ -272,9 +267,7 @@ export default function TreatmentsPage() {
 
         await deleteDocument('treatments', treatmentToDelete.id);
 
-        setTreatments(prev => prev.filter(t => t.id !== treatmentToDelete.id));
         setTreatmentToDelete(null);
-        await fetchAppointments();
 
         toast({
             title: "Treatment Plan Deleted",
