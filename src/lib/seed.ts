@@ -75,8 +75,9 @@ async function seedDatabase() {
     ];
     
     const initialClinicalImagesData = [
-        { id: 'img1', patient: 'John Doe', type: 'X-Ray', date: '2024-05-10', imageUrl: 'https://placehold.co/600x400.png', caption: 'X-Ray of tooth #14' },
-        { id: 'img2', patient: 'Jane Smith', type: 'Intraoral Photo', date: '2024-04-22', imageUrl: 'https://placehold.co/600x400.png', caption: 'Photo of tooth #25' },
+        { id: 'img1', patient: 'John Doe', type: 'X-Ray', date: '2024-05-10', imageUrl: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop', caption: 'X-Ray of tooth #14' },
+        { id: 'img2', patient: 'Jane Smith', type: 'Intraoral Photo', date: '2024-04-22', imageUrl: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&h=300&fit=crop', caption: 'Photo of tooth #25' },
+        { id: 'img3', patient: 'Ahmed Hassan', type: 'Scan', date: '2024-06-15', imageUrl: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=400&h=300&fit=crop', caption: '3D scan for implant planning' },
     ];
     
     const initialInsuranceClaimsData = [

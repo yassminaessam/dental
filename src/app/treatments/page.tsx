@@ -112,7 +112,7 @@ export default function TreatmentsPage() {
 
   const treatmentsWithAppointmentDetails = React.useMemo(() => {
     return treatments.map(treatment => {
-      const appointmentsWithStatus = treatment.appointments.map(appt => {
+      const appointmentsWithStatus = (treatment.appointments || []).map(appt => {
         const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
@@ -124,7 +124,7 @@ export default function TreatmentsPage() {
       const hasInProgress = appointmentsWithStatus.some(a => a.status === 'Confirmed' || a.status === 'Pending');
       
       let overallStatus: Treatment['status'] = 'Pending';
-      if(hasCompleted) {
+      if(hasCompleted && appointmentsWithStatus.length > 0) {
         overallStatus = 'Completed';
       } else if (hasInProgress) {
         overallStatus = 'In Progress';
@@ -141,7 +141,7 @@ export default function TreatmentsPage() {
       
       const appointmentRefs: TreatmentAppointment[] = [];
 
-      for (const appt of data.appointments) {
+      for (const appt of (data.appointments || [])) {
         const [hours, minutes] = appt.time.split(':');
         const apptDateTime = new Date(appt.date);
         apptDateTime.setHours(parseInt(hours, 10));
@@ -191,10 +191,10 @@ export default function TreatmentsPage() {
         description: `A new plan for ${newTreatment.patient} has been created.`,
       });
 
-      if (data.appointments.length > 0) {
+      if ((data.appointments || []).length > 0) {
         toast({
           title: "Appointments Scheduled",
-          description: `${data.appointments.length} appointments for "${data.treatmentName}" have been added to the calendar.`,
+          description: `${(data.appointments || []).length} appointments for "${data.treatmentName}" have been added to the calendar.`,
         });
       }
 
@@ -212,7 +212,7 @@ export default function TreatmentsPage() {
         const existingAppointmentsSnapshot = await getDocs(existingAppointmentsQuery);
         const existingAppointmentIds = new Set(existingAppointmentsSnapshot.docs.map(d => d.id));
 
-        const updatedAppointmentIds = new Set(updatedTreatment.appointments.map(a => a.appointmentId).filter(Boolean));
+        const updatedAppointmentIds = new Set((updatedTreatment.appointments || []).map(a => a.appointmentId).filter(Boolean));
 
         // Delete appointments that are no longer in the plan
         existingAppointmentsSnapshot.forEach(appointmentDoc => {
@@ -222,7 +222,7 @@ export default function TreatmentsPage() {
         });
 
         // Update existing or create new appointments
-        for (const appt of updatedTreatment.appointments) {
+        for (const appt of (updatedTreatment.appointments || [])) {
             const [hours, minutes] = appt.time.split(':');
             const apptDateTime = new Date(appt.date);
             apptDateTime.setHours(parseInt(hours, 10));
@@ -246,14 +246,14 @@ export default function TreatmentsPage() {
                 const appointmentRef = doc(db, 'appointments', appointmentId);
                 batch.set(appointmentRef, {...appointmentData, id: appointmentId, dateTime: appointmentData.dateTime.toISOString() });
                 // Update the treatment's appointment with the new ID
-                const treatmentAppt = updatedTreatment.appointments.find(a => a.date === appt.date && a.time === appt.time);
+                const treatmentAppt = (updatedTreatment.appointments || []).find(a => a.date === appt.date && a.time === appt.time);
                 if (treatmentAppt) {
                     treatmentAppt.appointmentId = appointmentId;
                 }
             }
         }
         
-        const treatmentDocData = { ...updatedTreatment, appointments: updatedTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) };
+        const treatmentDocData = { ...updatedTreatment, appointments: (updatedTreatment.appointments || []).map(a => ({...a, date: new Date(a.date).toISOString()})) };
         batch.update(treatmentRef, treatmentDocData);
 
         await batch.commit();
@@ -394,7 +394,7 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.cost}</TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-2">
-                                {treatment.appointments.map((appt, index) => (
+                                {(treatment.appointments || []).map((appt, index) => (
                                     <div key={index} className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                                             {format(new Date(appt.date), 'PPP')} @ {appt.time}
@@ -411,6 +411,9 @@ export default function TreatmentsPage() {
                                        </Badge>
                                     </div>
                                 ))}
+                                {(!treatment.appointments || treatment.appointments.length === 0) && (
+                                    <span className="text-xs text-muted-foreground">No appointments scheduled</span>
+                                )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">

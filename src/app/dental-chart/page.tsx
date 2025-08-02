@@ -22,6 +22,7 @@ import { allHealthyDentalChart } from "@/lib/data/dental-chart-data";
 import { Download, Printer, RotateCw, Search, User, Loader2 } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
+import { EnhancedToothDetailCard } from '@/components/dental-chart/enhanced-tooth-detail-card';
 import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
@@ -271,8 +272,10 @@ export default function DentalChartPage() {
             )}
           </div>
           <div className="lg:col-span-1">
-            <ToothDetailCard 
+            <EnhancedToothDetailCard 
                 tooth={selectedTooth} 
+                patientId={selectedPatientId}
+                patientName={patients.find(p => p.id === selectedPatientId)?.name || "Selected Patient"}
                 onUpdateCondition={handleUpdateCondition}
                 onViewHistory={(tooth) => setHistoryTooth(tooth)}
                 onClose={() => setSelectedTooth(null)}
