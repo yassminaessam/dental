@@ -240,8 +240,6 @@ export default function TreatmentsPage() {
         }
         
         const treatmentDocData = { ...updatedTreatment };
-        delete (treatmentDocData as any).status; 
-
         batch.update(treatmentRef, treatmentDocData);
 
         await batch.commit();
