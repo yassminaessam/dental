@@ -12,6 +12,7 @@ import {
 import type { Treatment } from '@/app/treatments/page';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ViewTreatmentDialogProps {
   treatment: Treatment | null;
@@ -24,14 +25,14 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Treatment Details: {treatment.id}</DialogTitle>
           <DialogDescription>
-            On {treatment.date} for {treatment.patient}
+            On {new Date(treatment.date).toLocaleDateString()} for {treatment.patient}
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 grid gap-4 text-sm">
+        <div className="py-4 grid gap-6 text-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
                 <h4 className="font-semibold">Patient</h4>
@@ -48,23 +49,27 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
             </div>
             <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <h4 className="font-semibold">Tooth</h4>
-                    <p className="text-muted-foreground">{treatment.tooth || 'N/A'}</p>
-                </div>
-                 <div>
                     <h4 className="font-semibold">Cost</h4>
                     <p className="text-muted-foreground">{treatment.cost}</p>
                 </div>
-            </div>
-             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <h4 className="font-semibold">Status</h4>
                     <div><Badge variant="outline">{treatment.status}</Badge></div>
                 </div>
-                 <div>
-                    <h4 className="font-semibold">Follow-up Date</h4>
-                    <p className="text-muted-foreground">{treatment.followUp || 'N/A'}</p>
-                </div>
+            </div>
+             <div>
+                <h4 className="font-semibold">Notes</h4>
+                <p className="text-muted-foreground p-2 border rounded-md bg-secondary/50 min-h-[60px]">{treatment.notes || 'No notes for this plan.'}</p>
+            </div>
+             <div>
+                <h4 className="font-semibold">Scheduled Appointments</h4>
+                <ul className="list-disc pl-5 mt-1 text-muted-foreground">
+                    {treatment.appointments.map((appt, index) => (
+                         <li key={index}>
+                            {format(new Date(appt.date), 'PPP')} at {appt.time} ({appt.duration})
+                        </li>
+                    ))}
+                </ul>
             </div>
         </div>
       </DialogContent>

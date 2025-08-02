@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2, Badge } from "lucide-react";
+import { Search, Pencil, Loader2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
@@ -35,18 +35,24 @@ import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dial
 import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 import type { Appointment } from '../appointments/page';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+
+export type TreatmentAppointment = {
+    date: string;
+    time: string;
+    duration: string;
+};
 
 export type Treatment = {
   id: string;
-  date: string; // The primary date of the plan, e.g., creation date
+  date: string; 
   patient: string;
   procedure: string;
   doctor: string;
-  tooth: string | null;
   cost: string;
   status: 'In Progress' | 'Completed' | 'Pending';
-  followUp: string | null; // Can be used for the final follow-up date
-  appointmentDates: string[]; // Store all associated appointment dates
+  notes: string;
+  appointments: TreatmentAppointment[]; 
 };
 
 export default function TreatmentsPage() {
@@ -93,11 +99,14 @@ export default function TreatmentsPage() {
         patient: data.patient,
         procedure: data.treatmentName,
         doctor: data.doctor,
-        tooth: 'Multiple',
         cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
         status: 'Pending',
-        followUp: data.appointments.length > 0 ? new Date(data.appointments[data.appointments.length - 1].date).toLocaleDateString() : null,
-        appointmentDates: data.appointments.map((a: { date: Date }) => a.date.toISOString()),
+        notes: data.notes,
+        appointments: data.appointments.map((a: any) => ({
+            date: a.date.toISOString(),
+            time: a.time,
+            duration: a.duration,
+        })),
       };
 
       const treatmentId = `TRT-${Date.now()}`;
@@ -252,9 +261,9 @@ export default function TreatmentsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                                {treatment.appointmentDates && treatment.appointmentDates.map((date, index) => (
+                                {treatment.appointments && treatment.appointments.map((appt, index) => (
                                     <span key={index} className="text-xs text-muted-foreground">
-                                        {format(new Date(date), 'PPP')}
+                                        {format(new Date(appt.date), 'PPP')} @ {appt.time} ({appt.duration})
                                     </span>
                                 ))}
                             </div>
@@ -302,4 +311,3 @@ export default function TreatmentsPage() {
     </DashboardLayout>
   );
 }
-

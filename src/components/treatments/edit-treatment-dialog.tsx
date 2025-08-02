@@ -23,11 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Treatment } from '@/app/treatments/page';
 import { getCollection } from '@/services/firestore';
@@ -38,7 +33,6 @@ const planSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
   doctor: z.string({ required_error: "Doctor is required." }),
   procedure: z.string().min(1, "Procedure name is required."),
-  date: z.date({ required_error: "Date is required." }),
   cost: z.string().min(1, "Cost is required."),
   status: z.enum(['In Progress', 'Completed', 'Pending']),
   notes: z.string().optional(),
@@ -54,7 +48,6 @@ interface EditTreatmentDialogProps {
 }
 
 export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: EditTreatmentDialogProps) {
-  const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
 
@@ -80,10 +73,9 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             patient: patients.find(p => p.name === treatment.patient)?.id,
             doctor: doctors.find(d => d.name === treatment.doctor)?.id,
             procedure: treatment.procedure,
-            date: new Date(treatment.date),
             cost: treatment.cost.replace(/[^0-9.-]+/g,""),
             status: treatment.status,
-            notes: '', // assuming no notes are passed initially
+            notes: treatment.notes,
         });
     }
   }, [treatment, form, patients, doctors]);
@@ -97,9 +89,9 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
         patient: patientName || treatment.patient,
         doctor: doctorName || treatment.doctor,
         procedure: data.procedure,
-        date: new Date(data.date).toLocaleDateString(),
         cost: `EGP ${data.cost}`,
         status: data.status,
+        notes: data.notes || '',
     };
     onSave(updatedTreatment);
     onOpenChange(false);
@@ -180,42 +172,13 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
-                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
-                            if (date) field.onChange(date);
-                            setDateOpen(false);
-                        }} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
                 <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Status *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -231,20 +194,20 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="cost"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Cost *</FormLabel>
+                        <FormControl>
+                            <Input type="text" placeholder="EGP 0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
             </div>
-             <FormField
-                control={form.control}
-                name="cost"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Cost *</FormLabel>
-                    <FormControl>
-                        <Input type="text" placeholder="EGP 0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
             <FormField
               control={form.control}
               name="notes"
