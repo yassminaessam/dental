@@ -45,6 +45,7 @@ export type TreatmentAppointment = {
     date: string;
     time: string;
     duration: string;
+    status?: Appointment['status'];
 };
 
 export type Treatment = {
@@ -61,6 +62,7 @@ export type Treatment = {
 
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = React.useState<Treatment[]>([]);
+  const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
@@ -70,17 +72,21 @@ export default function TreatmentsPage() {
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
 
   React.useEffect(() => {
-    async function fetchTreatments() {
+    async function fetchData() {
       try {
-        const data = await getCollection<Treatment>('treatments');
-        setTreatments(data);
+        const [treatmentsData, appointmentsData] = await Promise.all([
+          getCollection<Treatment>('treatments'),
+          getCollection<any>('appointments'),
+        ]);
+        setTreatments(treatmentsData);
+        setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
       } catch (e) {
-        toast({ title: "Error fetching treatments", variant: "destructive" });
+        toast({ title: "Error fetching data", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     }
-    fetchTreatments();
+    fetchData();
   }, [toast]);
   
   const treatmentPageStats = React.useMemo(() => {
@@ -97,10 +103,26 @@ export default function TreatmentsPage() {
     ];
   }, [treatments]);
 
+  const treatmentsWithAppointmentDetails = React.useMemo(() => {
+    return treatments.map(treatment => {
+      const relatedAppointments = allAppointments.filter(appt => appt.treatmentId === treatment.id);
+      const appointmentsWithStatus = treatment.appointments.map(appt => {
+        // This is a simplified matching logic. A more robust solution might use a unique ID per appointment.
+        const matchingAppt = relatedAppointments.find(ra => format(ra.dateTime, 'yyyy-MM-dd') === format(new Date(appt.date), 'yyyy-MM-dd'));
+        return {
+          ...appt,
+          status: matchingAppt?.status || 'Unknown'
+        };
+      });
+      return { ...treatment, appointments: appointmentsWithStatus };
+    });
+  }, [treatments, allAppointments]);
+
   const handleSavePlan = async (data: any) => {
     try {
       const treatmentId = `TRT-${Date.now()}`;
-      const newTreatment: Omit<Treatment, 'id'> = {
+      const newTreatment: Treatment = {
+        id: treatmentId,
         date: new Date().toLocaleDateString(),
         patient: data.patient,
         procedure: data.treatmentName,
@@ -115,8 +137,8 @@ export default function TreatmentsPage() {
         })),
       };
 
-      await setDocument('treatments', treatmentId, { ...newTreatment, id: treatmentId });
-      setTreatments(prev => [{ ...newTreatment, id: treatmentId }, ...prev]);
+      await setDocument('treatments', treatmentId, newTreatment);
+      setTreatments(prev => [newTreatment, ...prev]);
       toast({
         title: "Treatment Plan Created",
         description: `A new plan for ${newTreatment.patient} has been created.`,
@@ -144,6 +166,10 @@ export default function TreatmentsPage() {
         batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString(), id: appointmentId });
       }
       await batch.commit();
+
+       // Refetch appointments after creating them
+      const appointmentsData = await getCollection<any>('appointments');
+      setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
 
 
       if (data.appointments.length > 0) {
@@ -185,6 +211,11 @@ export default function TreatmentsPage() {
         await batch.commit();
 
         setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
+        
+        // Refetch appointments to update UI
+        const updatedAppointments = await getCollection<any>('appointments');
+        setAllAppointments(updatedAppointments.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
+
         setTreatmentToEdit(null);
         toast({
             title: "Treatment Updated",
@@ -224,7 +255,7 @@ export default function TreatmentsPage() {
   };
 
   const filteredTreatments = React.useMemo(() => {
-    return treatments
+    return treatmentsWithAppointmentDetails
       .filter(treatment =>
         treatment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
         treatment.procedure.toLowerCase().includes(searchTerm.toLowerCase())
@@ -232,7 +263,7 @@ export default function TreatmentsPage() {
       .filter(treatment =>
         statusFilter === 'all' || treatment.status.toLowerCase().replace(' ', '_') === statusFilter
       );
-  }, [treatments, searchTerm, statusFilter]);
+  }, [treatmentsWithAppointmentDetails, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -323,15 +354,25 @@ export default function TreatmentsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                                {treatment.appointments && treatment.appointments.slice(0, 2).map((appt, index) => (
-                                    <span key={index} className="text-xs text-muted-foreground">
-                                        {format(new Date(appt.date), 'PPP')} @ {appt.time}
-                                    </span>
+                            <div className="flex flex-col gap-1">
+                                {treatment.appointments.map((appt, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {format(new Date(appt.date), 'PPP')} @ {appt.time}
+                                        </span>
+                                        <Badge variant={
+                                          appt.status === 'Cancelled' ? 'destructive' :
+                                          appt.status === 'Completed' ? 'default' :
+                                          'secondary'
+                                        } className={cn(
+                                            "h-5 text-xs capitalize",
+                                            appt.status === 'Completed' && 'bg-green-100 text-green-800',
+                                            !appt.status && 'hidden'
+                                        )}>
+                                            {appt.status}
+                                        </Badge>
+                                    </div>
                                 ))}
-                                {treatment.appointments && treatment.appointments.length > 2 && (
-                                    <span className="text-xs text-muted-foreground">...and {treatment.appointments.length - 2} more</span>
-                                )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
