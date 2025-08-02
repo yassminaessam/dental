@@ -71,6 +71,14 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
 
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
+    defaultValues: {
+        patient: '',
+        doctor: '',
+        procedure: '',
+        cost: '',
+        notes: '',
+        appointments: [],
+    }
   });
 
   const { control, reset, formState: { errors } } = form;
