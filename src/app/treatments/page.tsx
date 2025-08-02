@@ -33,17 +33,19 @@ import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
 import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
 import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import type { Appointment } from '../appointments/page';
 
 export type Treatment = {
   id: string;
-  date: string;
+  date: string; // The primary date of the plan, e.g., creation date
   patient: string;
   procedure: string;
   doctor: string;
   tooth: string | null;
   cost: string;
   status: 'In Progress' | 'Completed' | 'Pending';
-  followUp: string | null;
+  followUp: string | null; // Can be used for the final follow-up date
+  appointmentDates: string[]; // Store all associated appointment dates
 };
 
 export default function TreatmentsPage() {
@@ -85,23 +87,47 @@ export default function TreatmentsPage() {
 
   const handleSavePlan = async (data: any) => {
     try {
-      const newTreatment: Treatment = {
-        id: `TRT-${Date.now()}`,
-        date: new Date(data.startDate).toLocaleDateString(),
+      const newTreatment: Omit<Treatment, 'id'> = {
+        date: new Date().toLocaleDateString(),
         patient: data.patient,
         procedure: data.treatmentName,
         doctor: data.doctor,
         tooth: 'Multiple',
         cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
         status: 'Pending',
-        followUp: data.endDate ? new Date(data.endDate).toLocaleDateString() : null,
+        followUp: data.appointmentDates.length > 0 ? new Date(data.appointmentDates[data.appointmentDates.length - 1]).toLocaleDateString() : null,
+        appointmentDates: data.appointmentDates.map((d: Date) => d.toISOString()),
       };
-      await setDocument('treatments', newTreatment.id, newTreatment);
-      setTreatments(prev => [newTreatment, ...prev]);
+
+      const treatmentId = `TRT-${Date.now()}`;
+      await setDocument('treatments', treatmentId, { ...newTreatment, id: treatmentId });
+      setTreatments(prev => [{ ...newTreatment, id: treatmentId }, ...prev]);
       toast({
         title: "Treatment Plan Created",
         description: `A new plan for ${newTreatment.patient} has been created.`,
       });
+
+      // Automatically create appointments
+      for (const apptDate of data.appointmentDates) {
+        const newAppointment: Omit<Appointment, 'id'> = {
+          dateTime: apptDate,
+          patient: data.patient,
+          doctor: data.doctor,
+          type: data.treatmentName,
+          duration: '1 hour', // Default duration
+          status: 'Confirmed',
+        };
+        const appointmentId = `APT-${Date.now()}-${Math.random()}`;
+        await setDocument('appointments', appointmentId, { ...newAppointment, dateTime: apptDate.toISOString(), id: appointmentId });
+      }
+
+      if (data.appointmentDates.length > 0) {
+        toast({
+          title: "Appointments Scheduled",
+          description: `${data.appointmentDates.length} appointments for "${data.treatmentName}" have been added to the calendar.`,
+        });
+      }
+
     } catch (e) {
       toast({ title: "Error creating plan", variant: "destructive" });
     }

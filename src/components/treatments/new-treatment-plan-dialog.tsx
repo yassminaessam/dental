@@ -24,22 +24,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
+import { Badge } from '../ui/badge';
 
 const planSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
   doctor: z.string({ required_error: "Doctor is required." }),
   treatmentName: z.string().min(1, "Treatment name is required."),
-  startDate: z.date({ required_error: "Start date is required." }),
-  endDate: z.date().optional(),
+  appointmentDates: z.array(z.date()).min(1, "At least one appointment date is required."),
   notes: z.string().optional(),
 });
 
@@ -51,8 +49,6 @@ interface NewTreatmentPlanDialogProps {
 
 export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const [startDateOpen, setStartDateOpen] = React.useState(false);
-  const [endDateOpen, setEndDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
 
@@ -61,10 +57,12 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
     defaultValues: {
       treatmentName: '',
       notes: '',
-      startDate: new Date(),
-      endDate: undefined,
+      appointmentDates: [],
     },
   });
+
+  const { watch, setValue } = form;
+  const appointmentDates = watch('appointmentDates');
 
   React.useEffect(() => {
     async function fetchData() {
@@ -77,6 +75,20 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
         fetchData();
     }
   }, [open]);
+
+  const handleDateSelect = (day: Date | undefined) => {
+    if (!day) return;
+    const existingDates = appointmentDates.map(d => d.getTime());
+    if (!existingDates.includes(day.getTime())) {
+      const newDates = [...appointmentDates, day].sort((a, b) => a.getTime() - b.getTime());
+      setValue('appointmentDates', newDates, { shouldValidate: true });
+    }
+  };
+
+  const removeDate = (dateToRemove: Date) => {
+    const newDates = appointmentDates.filter(d => d.getTime() !== dateToRemove.getTime());
+    setValue('appointmentDates', newDates, { shouldValidate: true });
+  };
 
   const onSubmit = (data: PlanFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
@@ -94,16 +106,16 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
           New Treatment Plan
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Create New Treatment Plan</DialogTitle>
           <DialogDescription>
-            Outline a new treatment plan for a patient.
+            Outline a new treatment plan for a patient and schedule all related appointments at once.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-3 gap-6 py-4">
+            <div className="col-span-1 space-y-6">
               <FormField
                 control={form.control}
                 name="patient"
@@ -152,99 +164,61 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                   </FormItem>
                 )}
               />
-            </div>
-            <FormField
-              control={form.control}
-              name="treatmentName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Treatment Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Full Mouth Restoration" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="startDate"
+                name="treatmentName"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Start Date *</FormLabel>
-                    <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
-                          field.onChange(date)
-                          setStartDateOpen(false)
-                        }} initialFocus />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Treatment Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Full Mouth Restoration" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
+               <FormField
                 control={form.control}
-                name="endDate"
+                name="notes"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
-                    <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
-                          field.onChange(date)
-                          setEndDateOpen(false)
-                        }} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe the treatment plan, goals, and steps."
+                        className="resize-none h-24"
+                        {...field}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the treatment plan, goals, and steps."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+
+            <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="appointmentDates"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Appointment Dates *</FormLabel>
+                      <FormControl>
+                        <Calendar
+                          mode="multiple"
+                          selected={field.value}
+                          onSelect={(days) => setValue('appointmentDates', days || [], { shouldValidate: true })}
+                          className="rounded-md border"
+                        />
+                      </FormControl>
+                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            
+            <DialogFooter className="col-span-3">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Plan</Button>
+              <Button type="submit">Save Plan and Schedule</Button>
             </DialogFooter>
           </form>
         </Form>
