@@ -28,12 +28,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2 } from "lucide-react";
+import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2, Trash2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
 import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
-import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
 
 export type InvoiceLineItem = {
@@ -61,6 +62,7 @@ export default function BillingPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [invoiceToPay, setInvoiceToPay] = React.useState<Invoice | null>(null);
   const [invoiceToView, setInvoiceToView] = React.useState<Invoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = React.useState<Invoice | null>(null);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const { toast } = useToast();
   
@@ -121,7 +123,7 @@ export default function BillingPage() {
       if (!invoiceToUpdate) return;
 
       const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
-      const newStatus = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
+      const newStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
       const updatedData = { amountPaid: newAmountPaid, status: newStatus };
 
       await updateDocument('invoices', invoiceId, updatedData);
@@ -133,6 +135,22 @@ export default function BillingPage() {
       toast({ title: "Payment Recorded", description: `Payment of EGP ${paymentAmount.toFixed(2)} recorded for invoice ${invoiceId}.` });
     } catch (e) {
         toast({ title: "Error recording payment", variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    try {
+      await deleteDocument('invoices', invoiceToDelete.id);
+      setInvoices(prev => prev.filter(invoice => invoice.id !== invoiceToDelete.id));
+      setInvoiceToDelete(null);
+      toast({
+        title: "Invoice Deleted",
+        description: `Invoice ${invoiceToDelete.id} has been permanently deleted.`,
+        variant: "destructive",
+      });
+    } catch (e) {
+      toast({ title: "Error deleting invoice", variant: "destructive" });
     }
   };
 
@@ -281,6 +299,12 @@ export default function BillingPage() {
                             <DropdownMenuItem onClick={() => handlePrintInvoice(invoice.id)}>
                               <Printer className="mr-2 h-4 w-4" /> Print Invoice
                             </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setInvoiceToDelete(invoice)} 
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -322,6 +346,21 @@ export default function BillingPage() {
         open={!!invoiceToView}
         onOpenChange={(isOpen) => !isOpen && setInvoiceToView(null)}
       />
+
+      <AlertDialog open={!!invoiceToDelete} onOpenChange={(isOpen) => !isOpen && setInvoiceToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the invoice and all payment records associated with it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteInvoice}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </DashboardLayout>
   );

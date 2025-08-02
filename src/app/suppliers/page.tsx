@@ -162,6 +162,77 @@ export default function SuppliersPage() {
     ];
   }, [suppliers, purchaseOrders]);
 
+  const getSupplierPerformance = React.useCallback((supplierName: string) => {
+    const supplierOrders = purchaseOrders.filter(po => po.supplier === supplierName);
+    const totalOrders = supplierOrders.length;
+    const deliveredOrders = supplierOrders.filter(po => po.status === 'Delivered').length;
+    const pendingOrders = supplierOrders.filter(po => po.status === 'Pending').length;
+    const onTimeDelivery = totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0;
+    const totalValue = supplierOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
+    
+    return {
+      totalOrders,
+      deliveredOrders,
+      pendingOrders,
+      onTimeDelivery,
+      totalValue,
+      averageOrderValue: totalOrders > 0 ? totalValue / totalOrders : 0
+    };
+  }, [purchaseOrders]);
+
+  const createQuickPurchaseOrder = async (supplier: Supplier) => {
+    try {
+      // Find low stock items from this supplier
+      const lowStockFromSupplier = inventory.filter(item => 
+        item.supplier === supplier.name && 
+        (item.status === 'Low Stock' || item.status === 'Out of Stock')
+      );
+
+      if (lowStockFromSupplier.length === 0) {
+        toast({
+          title: "No Low Stock Items",
+          description: `No items from ${supplier.name} are currently low in stock.`,
+        });
+        return;
+      }
+
+      const orderItems = lowStockFromSupplier.map(item => ({
+        itemId: item.id,
+        description: item.name,
+        quantity: item.max - item.stock,
+        unitPrice: parseFloat(item.unitCost.replace(/[^\d.]/g, ''))
+      }));
+
+      const total = orderItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+
+      const newPurchaseOrder = {
+        supplier: supplier.name,
+        orderDate: new Date().toISOString().split('T')[0],
+        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        total: `EGP ${total.toLocaleString()}`,
+        status: 'Pending',
+        items: orderItems
+      };
+
+      await setDocument('purchase-orders', `PO-${Date.now()}`, newPurchaseOrder);
+      
+      // Refresh purchase orders
+      const updatedPOs = await getCollection<PurchaseOrder>('purchase-orders');
+      setPurchaseOrders(updatedPOs);
+      
+      toast({
+        title: "Quick Order Created",
+        description: `Created purchase order for ${lowStockFromSupplier.length} low stock items from ${supplier.name}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create quick purchase order",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSaveSupplier = async (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
     try {
         const newSupplier: Supplier = {
@@ -424,7 +495,7 @@ export default function SuppliersPage() {
                       <TableHead>Supplier</TableHead>
                       <TableHead>Contact</TableHead>
                       <TableHead>Category</TableHead>
-                      <TableHead>Payment Terms</TableHead>
+                      <TableHead>Performance</TableHead>
                       <TableHead>Rating</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -434,7 +505,9 @@ export default function SuppliersPage() {
                     {loading ? (
                         <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredSuppliers.length > 0 ? (
-                      filteredSuppliers.map((supplier) => (
+                      filteredSuppliers.map((supplier) => {
+                        const performance = getSupplierPerformance(supplier.name);
+                        return (
                         <TableRow key={supplier.id}>
                           <TableCell>
                             <div className="font-medium">{supplier.name}</div>
@@ -454,8 +527,23 @@ export default function SuppliersPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{supplier.category}</Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {supplier.paymentTerms}
+                            </div>
                           </TableCell>
-                          <TableCell>{supplier.paymentTerms}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">
+                                {performance.totalOrders} orders
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {performance.onTimeDelivery}% on-time
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                EGP {performance.totalValue.toLocaleString()} total
+                              </div>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
@@ -489,6 +577,10 @@ export default function SuppliersPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => createQuickPurchaseOrder(supplier)}>
+                                        <ShoppingCart className="mr-2 h-4 w-4" />
+                                        Quick Order
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setSupplierToEdit(supplier)}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Edit
@@ -497,15 +589,12 @@ export default function SuppliersPage() {
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => openNewPoDialog(supplier.id)}>
-                                        <ShoppingCart className="mr-2 h-4 w-4" />
-                                        New Purchase Order
-                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">

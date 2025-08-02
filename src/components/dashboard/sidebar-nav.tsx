@@ -132,6 +132,14 @@ export function SidebarNav() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith("/purchase-orders")}>
+          <Link href="/purchase-orders">
+            <Truck />
+            Purchase Orders
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={pathname.startsWith("/communications")}>
           <Link href="/communications">
             <MessageSquare />

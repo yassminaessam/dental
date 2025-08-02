@@ -57,8 +57,11 @@ async function seedDatabase() {
     ];
     
     const initialInventoryItemsData = [
-        { id: 'inv1', name: 'Dental Composite', expires: '2025-12-31', category: 'Restorative', stock: 50, min: 20, max: 100, status: 'Normal', unitCost: 'EGP 500', supplier: 'Nile Medical' },
+        { id: 'inv1', name: 'Dental Composite', expires: '2025-12-31', category: 'Restorative', stock: 17, min: 20, max: 100, status: 'Low Stock', unitCost: 'EGP 500', supplier: 'Nile Medical' },
         { id: 'inv2', name: 'Anesthetic Cartridges', expires: '2026-06-30', category: 'Anesthetics', stock: 15, min: 50, max: 200, status: 'Low Stock', unitCost: 'EGP 15', supplier: 'PharmaPlus' },
+        { id: 'inv3', name: 'Digital X-Ray Films', expires: '2025-08-15', category: 'Radiology', stock: 25, min: 30, max: 150, status: 'Low Stock', unitCost: 'EGP 60', supplier: 'DentalTech Solutions' },
+        { id: 'inv4', name: 'Dental Impression Material', expires: '2025-10-20', category: 'Restorative', stock: 45, min: 15, max: 80, status: 'Normal', unitCost: 'EGP 120', supplier: 'Nile Medical' },
+        { id: 'inv5', name: 'Surgical Gloves', expires: '2026-02-28', category: 'Protective Equipment', stock: 8, min: 25, max: 100, status: 'Low Stock', unitCost: 'EGP 2.5', supplier: 'Cairo Dental Distributors' },
     ];
     
     const initialStaffData = [
@@ -93,18 +96,26 @@ async function seedDatabase() {
     ];
     
     const initialPurchaseOrdersData = [
-        { id: 'po1', supplier: 'Nile Medical', orderDate: '2024-07-15', deliveryDate: '2024-07-22', total: 'EGP 15,000', status: 'Shipped', items: [{ itemId: 'inv1', description: 'Dental Composite', quantity: 30, unitPrice: 500 }] },
-        { id: 'po2', supplier: 'PharmaPlus', orderDate: '2024-07-18', deliveryDate: '2024-07-25', total: 'EGP 3,000', status: 'Pending', items: [{ itemId: 'inv2', description: 'Anesthetic Cartridges', quantity: 200, unitPrice: 15 }] },
+        { id: 'po1', supplier: 'Nile Medical', orderDate: '2024-07-15', deliveryDate: '2024-07-22', total: 'EGP 15,000', status: 'Delivered', items: [{ itemId: 'inv1', description: 'Dental Composite', quantity: 30, unitPrice: 500 }] },
+        { id: 'po2', supplier: 'PharmaPlus', orderDate: '2024-07-18', deliveryDate: '2024-07-25', total: 'EGP 3,000', status: 'Shipped', items: [{ itemId: 'inv2', description: 'Anesthetic Cartridges', quantity: 200, unitPrice: 15 }] },
+        { id: 'po3', supplier: 'Nile Medical', orderDate: '2024-07-20', deliveryDate: '2024-07-28', total: 'EGP 8,500', status: 'Pending', items: [{ itemId: 'inv1', description: 'Dental Composite', quantity: 17, unitPrice: 500 }] },
+        { id: 'po4', supplier: 'PharmaPlus', orderDate: '2024-07-22', deliveryDate: '2024-07-30', total: 'EGP 2,250', status: 'Pending', items: [{ itemId: 'med2', description: 'Ibuprofen 400mg', quantity: 150, unitPrice: 15 }] },
+        { id: 'po5', supplier: 'DentalTech Solutions', orderDate: '2024-07-19', deliveryDate: '2024-07-26', total: 'EGP 12,000', status: 'Shipped', items: [{ itemId: 'inv3', description: 'Digital X-Ray Films', quantity: 200, unitPrice: 60 }] },
     ];
     
     const initialSuppliersData = [
         { id: 'sup1', name: 'Nile Medical', address: '123 Corniche, Cairo', phone: '0225550101', email: 'sales@nilemedical.com', category: 'Dental Supplies', paymentTerms: 'Net 30', rating: 4.8, status: 'active' },
         { id: 'sup2', name: 'PharmaPlus', address: '45 Industrial Zone, Giza', phone: '0238880202', email: 'contact@pharmaplus.com', category: 'Medications', paymentTerms: 'Net 60', rating: 4.5, status: 'active' },
+        { id: 'sup3', name: 'DentalTech Solutions', address: '78 Zamalek District, Cairo', phone: '0227770303', email: 'orders@dentaltech.com', category: 'Equipment & Technology', paymentTerms: 'Net 45', rating: 4.9, status: 'active' },
+        { id: 'sup4', name: 'Cairo Dental Distributors', address: '92 Heliopolis, Cairo', phone: '0224440404', email: 'supply@cairodental.com', category: 'Dental Supplies', paymentTerms: 'Net 30', rating: 4.2, status: 'active' },
     ];
     
     const initialMedicationInventoryData = [
         { id: 'med1', name: 'Amoxicillin', fullName: 'Amoxicillin 500mg', strength: '500mg', form: 'Capsule', category: 'Antibiotics', stock: 100, unitPrice: 'EGP 25.00', expiryDate: '2025-12-31', status: 'In Stock' },
         { id: 'med2', name: 'Ibuprofen', fullName: 'Ibuprofen 400mg', strength: '400mg', form: 'Tablet', category: 'Pain Relief', stock: 15, unitPrice: 'EGP 15.00', expiryDate: '2026-06-30', status: 'Low Stock' },
+        { id: 'med3', name: 'Lidocaine', fullName: 'Lidocaine 2% Injection', strength: '2%', form: 'Injection', category: 'Anesthetics', stock: 8, unitPrice: 'EGP 45.00', expiryDate: '2025-09-15', status: 'Low Stock' },
+        { id: 'med4', name: 'Chlorhexidine', fullName: 'Chlorhexidine Mouthwash', strength: '0.12%', form: 'Solution', category: 'Antiseptics', stock: 25, unitPrice: 'EGP 35.00', expiryDate: '2026-03-20', status: 'In Stock' },
+        { id: 'med5', name: 'Acetaminophen', fullName: 'Acetaminophen 500mg', strength: '500mg', form: 'Tablet', category: 'Pain Relief', stock: 5, unitPrice: 'EGP 12.00', expiryDate: '2025-11-10', status: 'Out of Stock' },
     ];
     
     const initialPrescriptionRecordsData = [

@@ -11,6 +11,7 @@ import {
 import OverviewStats from "@/components/dashboard/overview-stats";
 import RevenueTrendsChart from "@/components/dashboard/revenue-trends-chart";
 import AppointmentTypesChart from "@/components/dashboard/appointment-types-chart";
+import { SupplyChainIntegration } from "@/components/dashboard/supply-chain-integration";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
@@ -125,6 +126,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        <SupplyChainIntegration />
         <KpiSuggestions />
       </main>
     </DashboardLayout>

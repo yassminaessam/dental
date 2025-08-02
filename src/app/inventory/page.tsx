@@ -37,7 +37,17 @@ import {
   Trash2,
   Package as PackageIcon,
   Loader2,
+  MoreHorizontal,
+  Plus,
+  TrendingDown,
+  Star,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import {
@@ -74,6 +84,7 @@ export default function InventoryPage() {
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -177,11 +188,43 @@ export default function InventoryPage() {
     });
   };
   
-  const handleRestock = (itemName: string) => {
-    toast({
-        title: "Restock Requested",
-        description: `A purchase order for ${itemName} has been initiated.`,
-    });
+  const handleRestock = async (item: InventoryItem) => {
+    try {
+      const orderQuantity = item.max - item.stock;
+      const unitPrice = parseFloat(item.unitCost.replace(/[^\d.]/g, ''));
+      const total = orderQuantity * unitPrice;
+
+      const newPurchaseOrder = {
+        supplier: item.supplier,
+        orderDate: new Date().toISOString().split('T')[0],
+        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        total: `EGP ${total.toLocaleString()}`,
+        status: 'Pending',
+        items: [{
+          itemId: item.id,
+          description: item.name,
+          quantity: orderQuantity,
+          unitPrice: unitPrice
+        }]
+      };
+
+      await setDocument('purchase-orders', `PO-${Date.now()}`, newPurchaseOrder);
+      
+      toast({
+        title: "Purchase Order Created",
+        description: `Purchase order for ${item.name} (${orderQuantity} units) has been created automatically.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create purchase order",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createQuickPurchaseOrder = async (item: InventoryItem) => {
+    await handleRestock(item);
   };
 
   const filteredInventory = React.useMemo(() => {
@@ -204,7 +247,11 @@ export default function InventoryPage() {
               <BarChart className="mr-2 h-4 w-4" />
               Analytics
             </Button>
-            <AddItemDialog onSave={handleSaveItem} />
+            <AddItemDialog 
+              onSave={handleSaveItem} 
+              open={isAddItemDialogOpen}
+              onOpenChange={setIsAddItemDialogOpen}
+            />
           </div>
         </div>
 
@@ -232,7 +279,7 @@ export default function InventoryPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Low Stock Alert
+              Low Stock Alert ({lowStockItems.length} items)
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
@@ -244,13 +291,26 @@ export default function InventoryPage() {
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {item.stock} / {item.min} min
+                    Stock: {item.stock} / Min: {item.min}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Supplier: {item.supplier}
                   </p>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => handleRestock(item.name)}>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Restock
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => createQuickPurchaseOrder(item)}
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Auto Order
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleRestock(item)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Manual Order
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -344,16 +404,37 @@ export default function InventoryPage() {
                       <TableCell>{item.supplier}</TableCell>
                       <TableCell>{item.location}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setItemToEdit(item)}>
-                            <Pencil className="mr-2 h-3 w-3" />
-                            Edit
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => setItemToDelete(item)}>
-                            <Trash2 className="mr-2 h-3 w-3" />
-                            Delete
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setItemToEdit(item)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            {(item.status === 'Low Stock' || item.status === 'Out of Stock') && (
+                              <DropdownMenuItem onClick={() => createQuickPurchaseOrder(item)}>
+                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                Quick Order
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => toast({
+                              title: "Supplier Info",
+                              description: `${item.supplier} - Contact supplier for bulk orders or special pricing.`
+                            })}>
+                              <Star className="mr-2 h-4 w-4" />
+                              Supplier Info
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))

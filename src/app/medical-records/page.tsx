@@ -35,15 +35,22 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2 } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { ViewRecordDialog } from '@/components/medical-records/view-record-dialog';
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
-import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export type MedicalRecord = {
   id: string;
@@ -87,6 +94,7 @@ export default function MedicalRecordsPage() {
 
   const [recordToView, setRecordToView] = React.useState<MedicalRecord | null>(null);
   const [recordToEdit, setRecordToEdit] = React.useState<MedicalRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = React.useState<MedicalRecord | null>(null);
   const { toast } = useToast();
   
   React.useEffect(() => {
@@ -148,6 +156,22 @@ export default function MedicalRecordsPage() {
       });
     } catch(e) {
       toast({ title: 'Error updating record', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete) return;
+    try {
+      await deleteDocument('medical-records', recordToDelete.id);
+      setRecords(prev => prev.filter(record => record.id !== recordToDelete.id));
+      setRecordToDelete(null);
+      toast({
+        title: "Medical Record Deleted",
+        description: `Record ${recordToDelete.id} has been permanently deleted.`,
+        variant: "destructive",
+      });
+    } catch (e) {
+      toast({ title: "Error deleting record", variant: "destructive" });
     }
   };
 
@@ -308,18 +332,32 @@ export default function MedicalRecordsPage() {
                             <Badge variant="outline">{record.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => setRecordToView(record)}>
-                                <Eye className="mr-2 h-3 w-3" /> View
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setRecordToEdit(record)}>
-                                <Pencil className="mr-2 h-3 w-3" /> Edit
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDownloadRecord(record.id)}>
-                                <Download className="h-4 w-4" />
-                                <span className="sr-only">Download</span>
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setRecordToView(record)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setRecordToEdit(record)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownloadRecord(record.id)}>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setRecordToDelete(record)} className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -457,6 +495,21 @@ export default function MedicalRecordsPage() {
           onOpenChange={(isOpen) => !isOpen && setRecordToEdit(null)}
         />
       )}
+
+      <AlertDialog open={!!recordToDelete} onOpenChange={(isOpen) => !isOpen && setRecordToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the medical record and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRecord}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </DashboardLayout>
   );

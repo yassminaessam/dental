@@ -49,8 +49,18 @@ import {
   Eye,
   CheckCircle2,
   Clock,
+  Package,
+  TrendingDown,
+  ExternalLink,
   Loader2,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NewPrescriptionDialog } from "@/components/pharmacy/new-prescription-dialog";
 import { AddMedicationDialog } from "@/components/pharmacy/add-medication-dialog";
 import { useToast } from '@/hooks/use-toast';
@@ -107,18 +117,21 @@ export default function PharmacyPage() {
     const [prescriptionToView, setPrescriptionToView] = React.useState<Prescription | null>(null);
     const [prescriptionSearchTerm, setPrescriptionSearchTerm] = React.useState('');
     const [prescriptionStatusFilter, setPrescriptionStatusFilter] = React.useState('all');
+    const [inventory, setInventory] = React.useState<any[]>([]);
     
     const { toast } = useToast();
     
     React.useEffect(() => {
         async function fetchData() {
             try {
-                const [medicationData, prescriptionData] = await Promise.all([
+                const [medicationData, prescriptionData, inventoryData] = await Promise.all([
                     getCollection<Medication>('medications'),
                     getCollection<Prescription>('prescriptions'),
+                    getCollection<any>('inventory'),
                 ]);
                 setMedications(medicationData);
                 setPrescriptions(prescriptionData);
+                setInventory(inventoryData);
             } catch (error) {
                 toast({ title: "Error fetching data", variant: 'destructive'});
             } finally {
@@ -206,6 +219,84 @@ export default function PharmacyPage() {
         } catch(e) {
             toast({ title: 'Error deleting medication', variant: 'destructive'});
         }
+      }
+    };
+
+    const createMedicationPurchaseOrder = async (medication: Medication) => {
+      try {
+        const orderQuantity = 100; // Standard reorder quantity
+        const unitPrice = parseFloat(medication.unitPrice.replace(/[^\d.]/g, ''));
+        const total = orderQuantity * unitPrice;
+
+        const newPurchaseOrder = {
+          supplier: 'PharmaPlus', // Default pharmaceutical supplier
+          orderDate: new Date().toISOString().split('T')[0],
+          deliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days
+          total: `EGP ${total.toLocaleString()}`,
+          status: 'Pending',
+          items: [{
+            itemId: medication.id,
+            description: `${medication.fullName} ${medication.strength}`,
+            quantity: orderQuantity,
+            unitPrice: unitPrice
+          }]
+        };
+
+        await setDocument('purchase-orders', `PO-MED-${Date.now()}`, newPurchaseOrder);
+        
+        toast({
+          title: "Purchase Order Created",
+          description: `Purchase order for ${medication.name} (${orderQuantity} units) has been created.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create purchase order",
+          variant: "destructive",
+        });
+      }
+    };
+
+    const syncWithInventory = async (medication: Medication) => {
+      try {
+        // Check if medication exists in main inventory
+        const existingInventoryItem = inventory.find(item => 
+          item.name.toLowerCase().includes(medication.name.toLowerCase())
+        );
+
+        if (existingInventoryItem) {
+          toast({
+            title: "Already in Inventory",
+            description: `${medication.name} is already tracked in the main inventory system.`,
+          });
+        } else {
+          // Create new inventory item
+          const newInventoryItem = {
+            name: medication.name,
+            expires: medication.expiryDate,
+            category: 'Medications',
+            stock: medication.stock,
+            min: 20,
+            max: 100,
+            status: medication.status,
+            unitCost: medication.unitPrice,
+            supplier: 'PharmaPlus',
+            location: 'Pharmacy'
+          };
+
+          await setDocument('inventory', `INV-MED-${Date.now()}`, newInventoryItem);
+          
+          toast({
+            title: "Added to Inventory",
+            description: `${medication.name} has been added to the main inventory system.`,
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to sync with inventory",
+          variant: "destructive",
+        });
       }
     };
     
@@ -377,16 +468,41 @@ export default function PharmacyPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setMedicationToEdit(item)}>
-                                <Pencil className="mr-2 h-3 w-3" />
-                                Edit
-                              </Button>
-                              <Button variant="destructive" size="sm" onClick={() => setMedicationToDelete(item)}>
-                                <Trash2 className="mr-2 h-3 w-3" />
-                                Delete
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setMedicationToEdit(item)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                {(item.status === 'Low Stock' || item.status === 'Out of Stock') && (
+                                  <DropdownMenuItem onClick={() => createMedicationPurchaseOrder(item)}>
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    Reorder
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => syncWithInventory(item)}>
+                                  <Package className="mr-2 h-4 w-4" />
+                                  Add to Inventory
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast({
+                                  title: "Prescription History",
+                                  description: `View all prescriptions for ${item.name}`
+                                })}>
+                                  <ClipboardList className="mr-2 h-4 w-4" />
+                                  Prescription History
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setMedicationToDelete(item)} className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -486,22 +602,36 @@ export default function PharmacyPage() {
                             </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setPrescriptionToView(record)}>
-                                <Eye className="mr-2 h-3 w-3" />
-                                View
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
                                 </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setPrescriptionToView(record)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </DropdownMenuItem>
                                 {record.status === 'Active' && (
-                                    <Button variant="outline" size="sm" disabled>
-                                        <Send className="mr-2 h-3 w-3" />
-                                        Send
-                                    </Button>
+                                  <DropdownMenuItem>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Send to Patient
+                                  </DropdownMenuItem>
                                 )}
-                                <Button variant="ghost" size="icon" disabled>
-                                <Download className="h-4 w-4" />
-                                <span className="sr-only">Download</span>
-                                </Button>
-                            </div>
+                                <DropdownMenuItem>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                {record.status === 'Active' && (
+                                  <DropdownMenuItem>
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    Mark as Completed
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                             </TableCell>
                         </TableRow>
                         ))
