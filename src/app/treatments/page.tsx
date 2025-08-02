@@ -116,10 +116,21 @@ export default function TreatmentsPage() {
         const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
-          status: matchingAppt?.status || appt.status || 'Unknown',
+          status: matchingAppt?.status || appt.status,
         };
       });
-      return { ...treatment, appointments: appointmentsWithStatus };
+      // Determine overall treatment status
+      const hasCompleted = appointmentsWithStatus.every(a => a.status === 'Completed');
+      const hasInProgress = appointmentsWithStatus.some(a => a.status === 'Confirmed' || a.status === 'Pending');
+      
+      let overallStatus: Treatment['status'] = 'Pending';
+      if(hasCompleted) {
+        overallStatus = 'Completed';
+      } else if (hasInProgress) {
+        overallStatus = 'In Progress';
+      }
+
+      return { ...treatment, appointments: appointmentsWithStatus, status: overallStatus };
     });
   }, [treatments, allAppointments]);
 
@@ -242,7 +253,7 @@ export default function TreatmentsPage() {
             }
         }
         
-        const treatmentDocData = { ...updatedTreatment };
+        const treatmentDocData = { ...updatedTreatment, appointments: updatedTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) };
         batch.update(treatmentRef, treatmentDocData);
 
         await batch.commit();
@@ -368,12 +379,13 @@ export default function TreatmentsPage() {
                       <TableHead>Doctor</TableHead>
                       <TableHead>Cost</TableHead>
                       <TableHead>Appointments</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
@@ -382,7 +394,7 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.doctor}</TableCell>
                           <TableCell>{treatment.cost}</TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-2">
                                 {treatment.appointments.map((appt, index) => (
                                     <div key={index} className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -393,7 +405,7 @@ export default function TreatmentsPage() {
                                         appt.status === 'Completed' ? 'default' :
                                         'secondary'
                                        } className={cn(
-                                           'capitalize',
+                                           'capitalize h-5 text-xs',
                                            appt.status === 'Completed' && 'bg-green-100 text-green-800'
                                        )}>
                                         {appt.status}
@@ -401,6 +413,18 @@ export default function TreatmentsPage() {
                                     </div>
                                 ))}
                             </div>
+                          </TableCell>
+                           <TableCell>
+                             <Badge variant={
+                                treatment.status === 'Cancelled' ? 'destructive' :
+                                treatment.status === 'Completed' ? 'default' :
+                                'secondary'
+                               } className={cn(
+                                   'capitalize',
+                                   treatment.status === 'Completed' && 'bg-green-100 text-green-800'
+                               )}>
+                                {treatment.status}
+                               </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                              <DropdownMenu>
@@ -426,7 +450,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                           No records found.
                         </TableCell>
                       </TableRow>

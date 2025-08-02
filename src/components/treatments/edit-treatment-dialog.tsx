@@ -49,6 +49,7 @@ const planSchema = z.object({
   cost: z.string().min(1, "Cost is required."),
   notes: z.string().optional(),
   appointments: z.array(appointmentSchema).min(1, "At least one appointment is required."),
+  status: z.enum(['In Progress', 'Completed', 'Pending']),
 });
 
 type PlanFormData = z.infer<typeof planSchema>;
@@ -101,6 +102,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             procedure: treatment.procedure,
             cost: treatment.cost.replace(/[^0-9.-]+/g,""),
             notes: treatment.notes,
+            status: treatment.status,
             appointments: treatment.appointments.map(a => ({
                 date: new Date(a.date),
                 time: a.time,
@@ -131,6 +133,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
         doctor: doctorName || treatment.doctor,
         procedure: data.procedure,
         cost: `EGP ${data.cost}`,
+        status: data.status,
         notes: data.notes || '',
         appointments: data.appointments.map(a => ({
             date: a.date.toISOString(),
