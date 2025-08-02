@@ -109,8 +109,33 @@ export default function MedicalRecordsPage() {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = React.useState(false);
   const [imageToView, setImageToView] = React.useState<ClinicalImage | null>(null);
   const [isReplaceDialogOpen, setIsReplaceDialogOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState('medical-records');
   
   const { toast } = useToast();
+  
+  // Handle hash navigation
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1); // Remove the # character
+      if (hash === 'clinical-images') {
+        setActiveTab('clinical-images');
+      } else if (hash === 'templates') {
+        setActiveTab('templates');
+      } else if (hash === 'medical-records' || hash === '') {
+        setActiveTab('medical-records');
+      }
+    };
+
+    // Handle initial hash on load
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
   
   React.useEffect(() => {
     async function fetchData() {
@@ -329,7 +354,7 @@ export default function MedicalRecordsPage() {
           ))}
         </div>
         
-        <Tabs defaultValue="medical-records">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="medical-records">Medical Records</TabsTrigger>
             <TabsTrigger value="clinical-images">Clinical Images</TabsTrigger>

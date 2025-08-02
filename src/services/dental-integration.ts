@@ -81,21 +81,48 @@ export class DentalIntegrationService {
   }
 
   /**
+   * Get all images for a patient
+   */
+  static async getPatientImages(patient: string): Promise<ClinicalImage[]> {
+    try {
+      console.log('Fetching all images for patient:', patient);
+      const images = await getCollection('clinical-images') as ClinicalImage[];
+      return images.filter(image => image.patient === patient);
+    } catch (error) {
+      console.error('Error fetching patient images:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get all images linked to a specific tooth
    */
   static async getToothImages(toothNumber: number, patient: string): Promise<ClinicalImage[]> {
     try {
+      console.log('Fetching tooth images for tooth:', toothNumber, 'patient:', patient);
+      
       const links = await getCollection('tooth-image-links') as ToothImageLink[];
+      console.log('All tooth-image-links:', links);
+      
       const relevantLinks = links.filter(link => 
         link.toothNumber === toothNumber && link.patient === patient
       );
+      console.log('Relevant links for this tooth:', relevantLinks);
 
-      if (relevantLinks.length === 0) return [];
+      if (relevantLinks.length === 0) {
+        console.log('No links found for this tooth');
+        return [];
+      }
 
       const images = await getCollection('clinical-images') as ClinicalImage[];
-      return images.filter(image => 
+      console.log('All clinical images:', images);
+      
+      const filteredImages = images.filter(image => 
         relevantLinks.some(link => link.imageId === image.id)
       );
+      console.log('Filtered images for this tooth:', filteredImages);
+      
+      return filteredImages;
     } catch (error) {
       console.error('Error fetching tooth images:', error);
       return [];

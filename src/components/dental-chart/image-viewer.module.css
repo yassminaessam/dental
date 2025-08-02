@@ -1,0 +1,85 @@
+.imageContainer {
+  position: relative;
+  transition: transform 200ms ease-in-out;
+  transform-origin: center;
+}
+
+.imageTransform {
+  transition: transform 200ms ease-in-out;
+  transform-origin: center;
+}
+
+/* Zoom levels */
+.zoom-50 { transform: scale(0.5); }
+.zoom-75 { transform: scale(0.75); }
+.zoom-100 { transform: scale(1); }
+.zoom-125 { transform: scale(1.25); }
+.zoom-150 { transform: scale(1.5); }
+.zoom-175 { transform: scale(1.75); }
+.zoom-200 { transform: scale(2); }
+.zoom-225 { transform: scale(2.25); }
+.zoom-250 { transform: scale(2.5); }
+.zoom-275 { transform: scale(2.75); }
+.zoom-300 { transform: scale(3); }
+
+/* Rotation levels */
+.rotate-0 { transform: rotate(0deg); }
+.rotate-90 { transform: rotate(90deg); }
+.rotate-180 { transform: rotate(180deg); }
+.rotate-270 { transform: rotate(270deg); }
+
+/* Combined transforms */
+.zoom-50.rotate-0 { transform: scale(0.5) rotate(0deg); }
+.zoom-50.rotate-90 { transform: scale(0.5) rotate(90deg); }
+.zoom-50.rotate-180 { transform: scale(0.5) rotate(180deg); }
+.zoom-50.rotate-270 { transform: scale(0.5) rotate(270deg); }
+
+.zoom-75.rotate-0 { transform: scale(0.75) rotate(0deg); }
+.zoom-75.rotate-90 { transform: scale(0.75) rotate(90deg); }
+.zoom-75.rotate-180 { transform: scale(0.75) rotate(180deg); }
+.zoom-75.rotate-270 { transform: scale(0.75) rotate(270deg); }
+
+.zoom-100.rotate-0 { transform: scale(1) rotate(0deg); }
+.zoom-100.rotate-90 { transform: scale(1) rotate(90deg); }
+.zoom-100.rotate-180 { transform: scale(1) rotate(180deg); }
+.zoom-100.rotate-270 { transform: scale(1) rotate(270deg); }
+
+.zoom-125.rotate-0 { transform: scale(1.25) rotate(0deg); }
+.zoom-125.rotate-90 { transform: scale(1.25) rotate(90deg); }
+.zoom-125.rotate-180 { transform: scale(1.25) rotate(180deg); }
+.zoom-125.rotate-270 { transform: scale(1.25) rotate(270deg); }
+
+.zoom-150.rotate-0 { transform: scale(1.5) rotate(0deg); }
+.zoom-150.rotate-90 { transform: scale(1.5) rotate(90deg); }
+.zoom-150.rotate-180 { transform: scale(1.5) rotate(180deg); }
+.zoom-150.rotate-270 { transform: scale(1.5) rotate(270deg); }
+
+.zoom-175.rotate-0 { transform: scale(1.75) rotate(0deg); }
+.zoom-175.rotate-90 { transform: scale(1.75) rotate(90deg); }
+.zoom-175.rotate-180 { transform: scale(1.75) rotate(180deg); }
+.zoom-175.rotate-270 { transform: scale(1.75) rotate(270deg); }
+
+.zoom-200.rotate-0 { transform: scale(2) rotate(0deg); }
+.zoom-200.rotate-90 { transform: scale(2) rotate(90deg); }
+.zoom-200.rotate-180 { transform: scale(2) rotate(180deg); }
+.zoom-200.rotate-270 { transform: scale(2) rotate(270deg); }
+
+.zoom-225.rotate-0 { transform: scale(2.25) rotate(0deg); }
+.zoom-225.rotate-90 { transform: scale(2.25) rotate(90deg); }
+.zoom-225.rotate-180 { transform: scale(2.25) rotate(180deg); }
+.zoom-225.rotate-270 { transform: scale(2.25) rotate(270deg); }
+
+.zoom-250.rotate-0 { transform: scale(2.5) rotate(0deg); }
+.zoom-250.rotate-90 { transform: scale(2.5) rotate(90deg); }
+.zoom-250.rotate-180 { transform: scale(2.5) rotate(180deg); }
+.zoom-250.rotate-270 { transform: scale(2.5) rotate(270deg); }
+
+.zoom-275.rotate-0 { transform: scale(2.75) rotate(0deg); }
+.zoom-275.rotate-90 { transform: scale(2.75) rotate(90deg); }
+.zoom-275.rotate-180 { transform: scale(2.75) rotate(180deg); }
+.zoom-275.rotate-270 { transform: scale(2.75) rotate(270deg); }
+
+.zoom-300.rotate-0 { transform: scale(3) rotate(0deg); }
+.zoom-300.rotate-90 { transform: scale(3) rotate(90deg); }
+.zoom-300.rotate-180 { transform: scale(3) rotate(180deg); }
+.zoom-300.rotate-270 { transform: scale(3) rotate(270deg); }

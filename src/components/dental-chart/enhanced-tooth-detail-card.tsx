@@ -14,6 +14,8 @@ import { toothNames } from '@/lib/data/dental-chart-data';
 import { Search, X, FileText, Camera, Calendar, Plus, ExternalLink } from 'lucide-react';
 import { DentalIntegrationService } from '@/services/dental-integration';
 import { useToast } from '@/hooks/use-toast';
+import { ToothRecordsDialog } from './tooth-records-dialog';
+import { ToothImagesDialog } from './tooth-images-dialog';
 import Image from 'next/image';
 
 const conditionOptions: { value: ToothCondition, label: string }[] = [
@@ -49,6 +51,8 @@ export function EnhancedToothDetailCard({
     const [relatedImages, setRelatedImages] = React.useState<ClinicalImage[]>([]);
     const [relatedRecords, setRelatedRecords] = React.useState<MedicalRecord[]>([]);
     const [loading, setLoading] = React.useState(false);
+    const [showRecordsDialog, setShowRecordsDialog] = React.useState(false);
+    const [showImagesDialog, setShowImagesDialog] = React.useState(false);
     const { toast } = useToast();
 
     React.useEffect(() => {
@@ -160,6 +164,7 @@ export function EnhancedToothDetailCard({
     }
 
     return (
+        <>
         <Card className="relative">
             <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10" onClick={onClose}>
                 <X className="h-4 w-4" />
@@ -242,12 +247,17 @@ export function EnhancedToothDetailCard({
                     <TabsContent value="records" className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="font-medium">Medical Records</h4>
-                            {onViewMedicalRecords && (
-                                <Button variant="outline" size="sm" onClick={onViewMedicalRecords}>
+                            <div className="flex gap-1">
+                                <Button variant="outline" size="sm" onClick={() => setShowRecordsDialog(true)}>
                                     <ExternalLink className="h-4 w-4 mr-1" />
                                     View All
                                 </Button>
-                            )}
+                                {onViewMedicalRecords && (
+                                    <Button variant="outline" size="sm" onClick={onViewMedicalRecords}>
+                                        Upload
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                         
                         <ScrollArea className="h-32">
@@ -284,7 +294,20 @@ export function EnhancedToothDetailCard({
                     </TabsContent>
 
                     <TabsContent value="images" className="space-y-3">
-                        <h4 className="font-medium">Clinical Images</h4>
+                        <div className="flex items-center justify-between">
+                            <h4 className="font-medium">Clinical Images</h4>
+                            <div className="flex gap-1">
+                                <Button variant="outline" size="sm" onClick={() => setShowImagesDialog(true)}>
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    View All
+                                </Button>
+                                {onViewMedicalRecords && (
+                                    <Button variant="outline" size="sm" onClick={onViewMedicalRecords}>
+                                        Upload
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                         
                         <ScrollArea className="h-32">
                             {loading ? (
@@ -358,5 +381,24 @@ export function EnhancedToothDetailCard({
                 </Button>
             </CardFooter>
         </Card>
+
+        {/* Records Dialog */}
+        <ToothRecordsDialog
+            open={showRecordsDialog}
+            onOpenChange={setShowRecordsDialog}
+            toothNumber={tooth.id}
+            patientName={patientName}
+            records={relatedRecords}
+        />
+
+        {/* Images Dialog */}
+        <ToothImagesDialog
+            open={showImagesDialog}
+            onOpenChange={setShowImagesDialog}
+            toothNumber={tooth.id}
+            patientName={patientName}
+            images={relatedImages}
+        />
+        </>
     );
 }

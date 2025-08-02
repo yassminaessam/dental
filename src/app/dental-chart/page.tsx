@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import InteractiveDentalChart from "@/components/dental-chart/interactive-dental
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
 import { EnhancedToothDetailCard } from '@/components/dental-chart/enhanced-tooth-detail-card';
 import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dialog';
+import { UploadImageDialog } from '@/components/medical-records/upload-image-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { getCollection, setDocument } from '@/services/firestore';
@@ -49,13 +51,39 @@ const dentalChartStats = [
 
 export default function DentalChartPage() {
     const [loading, setLoading] = React.useState(false);
+    const router = useRouter();
     const [patients, setPatients] = React.useState<Patient[]>([]);
     const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...allHealthyDentalChart });
     const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
     const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
     const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
+    const [showUploadDialog, setShowUploadDialog] = React.useState(false);
     const { toast } = useToast();
+
+    // Handle image upload from dental chart context
+    const handleImageUpload = async (data: any) => {
+        try {
+            // The upload dialog handles the actual upload to Firebase
+            // Here we just show success feedback and optionally refresh data
+            toast({
+                title: "Image Uploaded Successfully",
+                description: `Clinical image for ${data.patientName} has been uploaded.`,
+            });
+            
+            // Optionally refresh the selected tooth data if needed
+            if (selectedTooth) {
+                // You could refresh the tooth's related images here
+            }
+        } catch (error) {
+            console.error('Error handling image upload:', error);
+            toast({
+                title: "Upload Error",
+                description: "There was an error processing the image upload.",
+                variant: "destructive",
+            });
+        }
+    };
 
     React.useEffect(() => {
         async function fetchPatients() {
@@ -181,6 +209,27 @@ export default function DentalChartPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Dental Chart</h1>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                console.log('=== DEBUG: Checking database ===');
+                try {
+                  const images = await getCollection('clinical-images');
+                  console.log('Clinical images in database:', images);
+                  
+                  const links = await getCollection('tooth-image-links');
+                  console.log('Tooth-image-links in database:', links);
+                  
+                  const records = await getCollection('medical-records');
+                  console.log('Medical records in database:', records);
+                } catch (error) {
+                  console.error('Debug error:', error);
+                }
+              }}
+              className="text-xs"
+            >
+              🐛 Debug DB
+            </Button>
             <Button variant="outline" onClick={handleResetChart} disabled={!selectedPatientId}>
               <RotateCw className="mr-2 h-4 w-4" />
               Reset
@@ -279,6 +328,14 @@ export default function DentalChartPage() {
                 onUpdateCondition={handleUpdateCondition}
                 onViewHistory={(tooth) => setHistoryTooth(tooth)}
                 onClose={() => setSelectedTooth(null)}
+                onViewMedicalRecords={() => {
+                    // Open the upload dialog instead of navigating to medical records
+                    setShowUploadDialog(true);
+                }}
+                onAddTreatmentNote={(toothId) => {
+                    // Navigate to medical records with specific tooth context
+                    router.push(`/medical-records?toothId=${toothId}&patientId=${selectedPatientId}#clinical-images`);
+                }}
             />
           </div>
         </div>
@@ -289,6 +346,13 @@ export default function DentalChartPage() {
         tooth={historyTooth}
         open={!!historyTooth}
         onOpenChange={(isOpen) => !isOpen && setHistoryTooth(null)}
+      />
+
+      <UploadImageDialog
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        onUpload={handleImageUpload}
+        defaultPatient={selectedPatientId || undefined}
       />
     </DashboardLayout>
   );

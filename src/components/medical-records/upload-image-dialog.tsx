@@ -49,18 +49,32 @@ const clinicalImageTypes = ['X-Ray', 'Intraoral Photo', 'Scan', 'Other'];
 
 interface UploadImageDialogProps {
   onUpload: (data: any) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultPatient?: string;
+  triggerElement?: React.ReactNode;
 }
 
-export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export function UploadImageDialog({ 
+  onUpload, 
+  open: externalOpen, 
+  onOpenChange: externalOnOpenChange,
+  defaultPatient,
+  triggerElement 
+}: UploadImageDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const { toast } = useToast();
 
+  // Use external open state if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
+
   const form = useForm<ImageFormData>({
     resolver: zodResolver(imageSchema),
     defaultValues: {
-      patient: '',
+      patient: defaultPatient || '',
       type: '',
       file: undefined,
       caption: '',
@@ -148,12 +162,19 @@ export function UploadImageDialog({ onUpload }: UploadImageDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Image
-        </Button>
-      </DialogTrigger>
+      {triggerElement && (
+        <DialogTrigger asChild>
+          {triggerElement}
+        </DialogTrigger>
+      )}
+      {!triggerElement && (
+        <DialogTrigger asChild>
+          <Button variant="outline">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Image
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Upload Clinical Image</DialogTitle>
