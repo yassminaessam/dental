@@ -34,6 +34,7 @@ import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dial
 import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
 import { getCollection, setDocument, updateDocument } from '@/services/firestore';
 import type { Appointment } from '../appointments/page';
+import { format } from 'date-fns';
 
 export type Treatment = {
   id: string;
@@ -95,8 +96,8 @@ export default function TreatmentsPage() {
         tooth: 'Multiple',
         cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
         status: 'Pending',
-        followUp: data.appointmentDates.length > 0 ? new Date(data.appointmentDates[data.appointmentDates.length - 1]).toLocaleDateString() : null,
-        appointmentDates: data.appointmentDates.map((d: Date) => d.toISOString()),
+        followUp: data.appointments.length > 0 ? new Date(data.appointments[data.appointments.length - 1].date).toLocaleDateString() : null,
+        appointmentDates: data.appointments.map((a: { date: Date }) => a.date.toISOString()),
       };
 
       const treatmentId = `TRT-${Date.now()}`;
@@ -108,23 +109,28 @@ export default function TreatmentsPage() {
       });
 
       // Automatically create appointments
-      for (const apptDate of data.appointmentDates) {
+      for (const appt of data.appointments) {
+        const [hours, minutes] = appt.time.split(':');
+        const apptDateTime = new Date(appt.date);
+        apptDateTime.setHours(parseInt(hours, 10));
+        apptDateTime.setMinutes(parseInt(minutes, 10));
+
         const newAppointment: Omit<Appointment, 'id'> = {
-          dateTime: apptDate,
+          dateTime: apptDateTime,
           patient: data.patient,
           doctor: data.doctor,
           type: data.treatmentName,
-          duration: '1 hour', // Default duration
+          duration: appt.duration,
           status: 'Confirmed',
         };
         const appointmentId = `APT-${Date.now()}-${Math.random()}`;
-        await setDocument('appointments', appointmentId, { ...newAppointment, dateTime: apptDate.toISOString(), id: appointmentId });
+        await setDocument('appointments', appointmentId, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString(), id: appointmentId });
       }
 
-      if (data.appointmentDates.length > 0) {
+      if (data.appointments.length > 0) {
         toast({
           title: "Appointments Scheduled",
-          description: `${data.appointmentDates.length} appointments for "${data.treatmentName}" have been added to the calendar.`,
+          description: `${data.appointments.length} appointments for "${data.treatmentName}" have been added to the calendar.`,
         });
       }
 

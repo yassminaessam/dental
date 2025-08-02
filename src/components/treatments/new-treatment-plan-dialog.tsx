@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -25,23 +25,35 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
-import { Badge } from '../ui/badge';
+import { ScrollArea } from '../ui/scroll-area';
+
+const appointmentSchema = z.object({
+    date: z.date(),
+    time: z.string().min(1, "Time is required."),
+    duration: z.string().min(1, "Duration is required."),
+});
 
 const planSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
   doctor: z.string({ required_error: "Doctor is required." }),
   treatmentName: z.string().min(1, "Treatment name is required."),
-  appointmentDates: z.array(z.date()).min(1, "At least one appointment date is required."),
+  appointments: z.array(appointmentSchema).min(1, "At least one appointment is required."),
   notes: z.string().optional(),
 });
 
 type PlanFormData = z.infer<typeof planSchema>;
+
+const availableTimeSlots = [
+  "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"
+];
+
+const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
 interface NewTreatmentPlanDialogProps {
   onSave: (data: any) => void;
@@ -51,18 +63,23 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const [open, setOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const [selectedDates, setSelectedDates] = React.useState<Date[]>([]);
+
 
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
     defaultValues: {
       treatmentName: '',
       notes: '',
-      appointmentDates: [],
+      appointments: [],
     },
   });
 
-  const { watch, setValue } = form;
-  const appointmentDates = watch('appointmentDates');
+  const { control, setValue } = form;
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "appointments"
+  });
 
   React.useEffect(() => {
     async function fetchData() {
@@ -78,17 +95,18 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
 
   const handleDateSelect = (day: Date | undefined) => {
     if (!day) return;
-    const existingDates = appointmentDates.map(d => d.getTime());
-    if (!existingDates.includes(day.getTime())) {
-      const newDates = [...appointmentDates, day].sort((a, b) => a.getTime() - b.getTime());
-      setValue('appointmentDates', newDates, { shouldValidate: true });
+    const alreadySelected = fields.some(field => field.date.getTime() === day.getTime());
+    if (!alreadySelected) {
+        append({ date: day, time: '09:00', duration: '1 hour' });
+    } else {
+        const indexToRemove = fields.findIndex(field => field.date.getTime() === day.getTime());
+        remove(indexToRemove);
     }
   };
-
-  const removeDate = (dateToRemove: Date) => {
-    const newDates = appointmentDates.filter(d => d.getTime() !== dateToRemove.getTime());
-    setValue('appointmentDates', newDates, { shouldValidate: true });
-  };
+  
+  React.useEffect(() => {
+    setSelectedDates(fields.map(f => f.date));
+  }, [fields]);
 
   const onSubmit = (data: PlanFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
@@ -110,7 +128,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
         <DialogHeader>
           <DialogTitle>Create New Treatment Plan</DialogTitle>
           <DialogDescription>
-            Outline a new treatment plan for a patient and schedule all related appointments at once.
+            Outline a new treatment plan and schedule all related appointments at once.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -196,24 +214,59 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
             </div>
 
             <div className="col-span-2">
-                <FormField
-                  control={form.control}
-                  name="appointmentDates"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Appointment Dates *</FormLabel>
-                      <FormControl>
+                <FormItem>
+                    <FormLabel>Appointment Dates *</FormLabel>
+                    <div className="flex gap-4">
                         <Calendar
-                          mode="multiple"
-                          selected={field.value}
-                          onSelect={(days) => setValue('appointmentDates', days || [], { shouldValidate: true })}
-                          className="rounded-md border"
-                        />
-                      </FormControl>
-                       <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                            mode="multiple"
+                            selected={selectedDates}
+                            onSelect={days => days?.forEach(handleDateSelect)}
+                            className="rounded-md border"
+                            />
+                        <div className="flex-1">
+                            <h4 className="mb-2 text-sm font-medium">Selected Appointments</h4>
+                             <ScrollArea className="h-72 rounded-md border p-2">
+                               {fields.length > 0 ? (
+                                fields.map((field, index) => (
+                                    <div key={field.id} className="grid grid-cols-12 gap-2 items-center mb-2">
+                                       <p className="col-span-4 text-sm font-medium">{format(field.date, 'PPP')}</p>
+                                       <FormField
+                                            control={form.control}
+                                            name={`appointments.${index}.time`}
+                                            render={({ field }) => (
+                                                <FormItem className="col-span-3">
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                        <SelectContent>{availableTimeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                       <FormField
+                                            control={form.control}
+                                            name={`appointments.${index}.duration`}
+                                            render={({ field }) => (
+                                                <FormItem className="col-span-4">
+                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                        <SelectContent>{appointmentDurations.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button variant="ghost" size="icon" className="col-span-1" onClick={() => remove(index)}>
+                                            <Trash2 className="h-4 w-4 text-destructive"/>
+                                        </Button>
+                                    </div>
+                                ))
+                               ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">Select dates from the calendar.</p>
+                               )}
+                             </ScrollArea>
+                        </div>
+                    </div>
+                    <FormMessage>{form.formState.errors.appointments?.message}</FormMessage>
+                </FormItem>
             </div>
             
             <DialogFooter className="col-span-3">
