@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Search, Pencil, Loader2, MoreHorizontal, Trash2, Eye } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
@@ -40,6 +40,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { ViewAppointmentDialog } from '../appointments/view-appointment-dialog';
 
 export type TreatmentAppointment = {
     date: string;
@@ -71,6 +72,8 @@ export default function TreatmentsPage() {
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
+  const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
+
 
   React.useEffect(() => {
     const unsubscribeTreatments = listenToCollection<Treatment>('treatments', (data) => {
@@ -290,6 +293,17 @@ export default function TreatmentsPage() {
       );
   }, [treatmentsWithAppointmentDetails, searchTerm, statusFilter]);
 
+  const handleViewAppointment = (appointmentId?: string) => {
+    if (!appointmentId) return;
+    const appointment = allAppointments.find(a => a.id === appointmentId);
+    if (appointment) {
+        setAppointmentToView(appointment);
+    } else {
+        toast({ title: 'Appointment not found', variant: 'destructive'});
+    }
+  };
+
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
@@ -377,13 +391,18 @@ export default function TreatmentsPage() {
                                         <Badge variant={
                                           appt.status === 'Cancelled' ? 'destructive' :
                                           appt.status === 'Completed' ? 'default' :
-                                          'secondary'
+                                          appt.status === 'Confirmed' ? 'secondary' :
+                                          'outline'
                                         } className={cn(
                                             "h-5 text-xs capitalize",
-                                            appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                                            appt.status === 'Completed' && 'bg-green-100 text-green-800',
+                                            appt.status === 'Confirmed' && 'bg-blue-100 text-blue-800'
                                         )}>
                                             {appt.status}
                                         </Badge>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleViewAppointment(appt.appointmentId)}>
+                                            <Eye className="h-3 w-3" />
+                                        </Button>
                                     </div>
                                 ))}
                             </div>
@@ -429,6 +448,12 @@ export default function TreatmentsPage() {
         treatment={treatmentToView}
         open={!!treatmentToView}
         onOpenChange={(isOpen) => !isOpen && setTreatmentToView(null)}
+      />
+
+       <ViewAppointmentDialog
+        appointment={appointmentToView}
+        open={!!appointmentToView}
+        onOpenChange={(isOpen) => !isOpen && setAppointmentToView(null)}
       />
 
       {treatmentToEdit && (
