@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
-import { Plus, X, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
@@ -63,8 +63,6 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const [open, setOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
-  const [selectedDates, setSelectedDates] = React.useState<Date[]>([]);
-
 
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
@@ -75,11 +73,13 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
     },
   });
 
-  const { control, setValue } = form;
-  const { fields, append, remove } = useFieldArray({
+  const { control } = form;
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "appointments"
   });
+
+  const selectedDates = React.useMemo(() => fields.map(f => f.date), [fields]);
 
   React.useEffect(() => {
     async function fetchData() {
@@ -93,20 +93,14 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
     }
   }, [open]);
 
-  const handleDateSelect = (day: Date | undefined) => {
-    if (!day) return;
-    const alreadySelected = fields.some(field => field.date.getTime() === day.getTime());
-    if (!alreadySelected) {
-        append({ date: day, time: '09:00', duration: '1 hour' });
-    } else {
-        const indexToRemove = fields.findIndex(field => field.date.getTime() === day.getTime());
-        remove(indexToRemove);
-    }
+  const handleDateSelect = (days: Date[] | undefined) => {
+    const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());
+    const newAppointments = sortedDays.map(day => {
+        const existing = fields.find(f => f.date.getTime() === day.getTime());
+        return existing || { date: day, time: '09:00', duration: '1 hour' };
+    });
+    replace(newAppointments);
   };
-  
-  React.useEffect(() => {
-    setSelectedDates(fields.map(f => f.date));
-  }, [fields]);
 
   const onSubmit = (data: PlanFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
@@ -220,7 +214,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                         <Calendar
                             mode="multiple"
                             selected={selectedDates}
-                            onSelect={days => days?.forEach(handleDateSelect)}
+                            onSelect={handleDateSelect}
                             className="rounded-md border"
                             />
                         <div className="flex-1">
@@ -265,7 +259,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                              </ScrollArea>
                         </div>
                     </div>
-                    <FormMessage>{form.formState.errors.appointments?.message}</FormMessage>
+                    <FormMessage>{form.formState.errors.appointments?.message || form.formState.errors.appointments?.root?.message}</FormMessage>
                 </FormItem>
             </div>
             
