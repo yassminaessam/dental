@@ -235,6 +235,7 @@ export default function TreatmentsPage() {
                       <TableHead>Patient</TableHead>
                       <TableHead>Procedure</TableHead>
                       <TableHead>Doctor</TableHead>
+                      <TableHead>Cost</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Appointments</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -242,13 +243,14 @@ export default function TreatmentsPage() {
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
                           <TableCell>{treatment.patient}</TableCell>
                           <TableCell>{treatment.procedure}</TableCell>
                           <TableCell>{treatment.doctor}</TableCell>
+                          <TableCell>{treatment.cost}</TableCell>
                           <TableCell>
                             <Badge variant={
                                 treatment.status === 'Completed' ? 'default' : 
@@ -281,7 +283,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                           No records found.
                         </TableCell>
                       </TableRow>
