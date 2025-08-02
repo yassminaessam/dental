@@ -30,8 +30,8 @@ import { cn } from "@/lib/utils";
 import { Search, Pencil, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
-import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
+import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
+import { EditTreatmentDialog } from "@/components/treatments/edit-treatment-dialog";
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import type { Appointment } from '../appointments/page';
 import { format } from 'date-fns';
@@ -46,6 +46,7 @@ export type TreatmentAppointment = {
     time: string;
     duration: string;
     status?: Appointment['status'];
+    appointmentId?: string;
 };
 
 export type Treatment = {
@@ -71,15 +72,17 @@ export default function TreatmentsPage() {
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
 
+  const fetchAppointments = React.useCallback(async () => {
+    const appointmentsData = await getCollection<any>('appointments');
+    setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
+  }, []);
+
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const [treatmentsData, appointmentsData] = await Promise.all([
-          getCollection<Treatment>('treatments'),
-          getCollection<any>('appointments'),
-        ]);
+        const treatmentsData = await getCollection<Treatment>('treatments');
         setTreatments(treatmentsData);
-        setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
+        await fetchAppointments();
       } catch (e) {
         toast({ title: "Error fetching data", variant: "destructive" });
       } finally {
@@ -87,7 +90,7 @@ export default function TreatmentsPage() {
       }
     }
     fetchData();
-  }, [toast]);
+  }, [toast, fetchAppointments]);
   
   const treatmentPageStats = React.useMemo(() => {
     const total = treatments.length;
@@ -107,11 +110,11 @@ export default function TreatmentsPage() {
     return treatments.map(treatment => {
       const relatedAppointments = allAppointments.filter(appt => appt.treatmentId === treatment.id);
       const appointmentsWithStatus = treatment.appointments.map(appt => {
-        // This is a simplified matching logic. A more robust solution might use a unique ID per appointment.
         const matchingAppt = relatedAppointments.find(ra => format(ra.dateTime, 'yyyy-MM-dd') === format(new Date(appt.date), 'yyyy-MM-dd'));
         return {
           ...appt,
-          status: matchingAppt?.status || 'Unknown'
+          status: matchingAppt?.status || 'Unknown',
+          appointmentId: matchingAppt?.id,
         };
       });
       return { ...treatment, appointments: appointmentsWithStatus };
@@ -144,7 +147,6 @@ export default function TreatmentsPage() {
         description: `A new plan for ${newTreatment.patient} has been created.`,
       });
 
-      // Automatically create appointments
       const batch = writeBatch(db);
       for (const appt of data.appointments) {
         const [hours, minutes] = appt.time.split(':');
@@ -152,7 +154,9 @@ export default function TreatmentsPage() {
         apptDateTime.setHours(parseInt(hours, 10));
         apptDateTime.setMinutes(parseInt(minutes, 10));
 
-        const newAppointment: Omit<Appointment, 'id'> = {
+        const appointmentId = `APT-${Date.now()}-${Math.random()}`;
+        const newAppointment: Appointment = {
+          id: appointmentId,
           dateTime: apptDateTime,
           patient: data.patient,
           doctor: data.doctor,
@@ -161,16 +165,11 @@ export default function TreatmentsPage() {
           status: 'Confirmed',
           treatmentId: treatmentId,
         };
-        const appointmentId = `APT-${Date.now()}-${Math.random()}`;
         const appointmentRef = doc(db, 'appointments', appointmentId);
-        batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString(), id: appointmentId });
+        batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
       }
       await batch.commit();
-
-       // Refetch appointments after creating them
-      const appointmentsData = await getCollection<any>('appointments');
-      setAllAppointments(appointmentsData.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
-
+      await fetchAppointments();
 
       if (data.appointments.length > 0) {
         toast({
@@ -187,35 +186,56 @@ export default function TreatmentsPage() {
   const handleUpdateTreatment = async (updatedTreatment: Treatment) => {
     try {
         const batch = writeBatch(db);
-
-        // 1. Update the treatment plan document
         const treatmentRef = doc(db, 'treatments', updatedTreatment.id);
-        batch.update(treatmentRef, updatedTreatment);
+        
+        const existingAppointmentsQuery = query(collection(db, "appointments"), where("treatmentId", "==", updatedTreatment.id));
+        const existingAppointmentsSnapshot = await getDocs(existingAppointmentsQuery);
+        const existingAppointmentIds = new Set(existingAppointmentsSnapshot.docs.map(d => d.id));
 
-        // 2. Find and update associated appointments
-        const appointmentsQuery = query(collection(db, "appointments"), where("treatmentId", "==", updatedTreatment.id));
-        const appointmentsSnapshot = await getDocs(appointmentsQuery);
+        const updatedAppointmentIds = new Set(updatedTreatment.appointments.map(a => a.appointmentId).filter(Boolean));
 
-        let newAppointmentStatus: Appointment['status'] | null = null;
-        if (updatedTreatment.status === 'Completed') newAppointmentStatus = 'Completed';
-        else if (updatedTreatment.status === 'Pending') newAppointmentStatus = 'Pending';
-        else if (updatedTreatment.status === 'In Progress') newAppointmentStatus = 'Confirmed';
+        // Delete appointments that are no longer in the plan
+        existingAppointmentsSnapshot.forEach(appointmentDoc => {
+            if (!updatedAppointmentIds.has(appointmentDoc.id)) {
+                batch.delete(appointmentDoc.ref);
+            }
+        });
 
-        if (newAppointmentStatus) {
-            appointmentsSnapshot.forEach((appointmentDoc) => {
-                const appointmentRef = doc(db, 'appointments', appointmentDoc.id);
-                batch.update(appointmentRef, { status: newAppointmentStatus });
-            });
+        // Update existing or create new appointments
+        for (const appt of updatedTreatment.appointments) {
+            const [hours, minutes] = appt.time.split(':');
+            const apptDateTime = new Date(appt.date);
+            apptDateTime.setHours(parseInt(hours, 10));
+            apptDateTime.setMinutes(parseInt(minutes, 10));
+
+            const appointmentData = {
+                dateTime: apptDateTime.toISOString(),
+                patient: updatedTreatment.patient,
+                doctor: updatedTreatment.doctor,
+                type: updatedTreatment.procedure,
+                duration: appt.duration,
+                status: appt.status || 'Confirmed',
+                treatmentId: updatedTreatment.id,
+            };
+
+            if (appt.appointmentId && existingAppointmentIds.has(appt.appointmentId)) {
+                 const appointmentRef = doc(db, 'appointments', appt.appointmentId);
+                 batch.update(appointmentRef, appointmentData);
+            } else {
+                const appointmentId = `APT-${Date.now()}-${Math.random()}`;
+                const appointmentRef = doc(db, 'appointments', appointmentId);
+                batch.set(appointmentRef, {...appointmentData, id: appointmentId });
+            }
         }
         
+        const simplifiedTreatment = { ...updatedTreatment };
+        delete (simplifiedTreatment.appointments as any).appointmentId; // Clean up before saving
+        batch.update(treatmentRef, simplifiedTreatment);
+
         await batch.commit();
 
         setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
-        
-        // Refetch appointments to update UI
-        const updatedAppointments = await getCollection<any>('appointments');
-        setAllAppointments(updatedAppointments.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
-
+        await fetchAppointments();
         setTreatmentToEdit(null);
         toast({
             title: "Treatment Updated",
@@ -229,7 +249,6 @@ export default function TreatmentsPage() {
   const handleDeleteTreatment = async () => {
     if (!treatmentToDelete) return;
     try {
-        // Find and delete associated appointments
         const q = query(collection(db, "appointments"), where("treatmentId", "==", treatmentToDelete.id));
         const querySnapshot = await getDocs(q);
         const batch = writeBatch(db);
@@ -238,16 +257,17 @@ export default function TreatmentsPage() {
         });
         await batch.commit();
 
-        // Delete the treatment plan itself
         await deleteDocument('treatments', treatmentToDelete.id);
 
         setTreatments(prev => prev.filter(t => t.id !== treatmentToDelete.id));
+        setTreatmentToDelete(null);
+        await fetchAppointments();
+
         toast({
             title: "Treatment Plan Deleted",
             description: `Plan for ${treatmentToDelete.patient} and associated appointments have been deleted.`,
             variant: "destructive",
         });
-        setTreatmentToDelete(null);
 
     } catch (e) {
         toast({ title: "Error deleting treatment plan", variant: "destructive" });
