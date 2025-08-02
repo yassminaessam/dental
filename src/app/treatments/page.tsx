@@ -40,7 +40,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ViewAppointmentDialog } from '../appointments/view-appointment-dialog';
+import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 
 export type TreatmentAppointment = {
     date: string;
