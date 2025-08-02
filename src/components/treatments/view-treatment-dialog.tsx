@@ -52,6 +52,21 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
                     <h4 className="font-semibold">Cost</h4>
                     <p className="text-muted-foreground">{treatment.cost}</p>
                 </div>
+                 <div>
+                    <h4 className="font-semibold">Overall Status</h4>
+                    <p>
+                        <Badge variant={
+                            treatment.status === 'Cancelled' ? 'destructive' :
+                            treatment.status === 'Completed' ? 'default' :
+                            'secondary'
+                            } className={cn(
+                                'capitalize',
+                                treatment.status === 'Completed' && 'bg-green-100 text-green-800'
+                            )}>
+                            {treatment.status}
+                        </Badge>
+                    </p>
+                </div>
             </div>
              <div>
                 <h4 className="font-semibold">Notes</h4>

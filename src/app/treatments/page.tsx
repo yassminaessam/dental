@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Search, Pencil, Loader2, MoreHorizontal, Trash2, Eye } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
@@ -76,7 +76,7 @@ export default function TreatmentsPage() {
 
 
   React.useEffect(() => {
-    const unsubscribeTreatments = listenToCollection<Treatment>('treatments', (data) => {
+    const unsubscribeTreatments = listenToCollection<any>('treatments', (data) => {
         setTreatments(data);
         if (loading) setLoading(false);
     }, (error) => {
@@ -116,7 +116,7 @@ export default function TreatmentsPage() {
         const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
-          status: matchingAppt?.status || appt.status,
+          status: matchingAppt?.status || appt.status || 'Unknown',
         };
       });
       // Determine overall treatment status
@@ -182,7 +182,7 @@ export default function TreatmentsPage() {
       };
 
       const treatmentRef = doc(db, 'treatments', treatmentId);
-      batch.set(treatmentRef, newTreatment);
+      batch.set(treatmentRef, { ...newTreatment, appointments: newTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) });
       
       await batch.commit();
 
@@ -379,13 +379,12 @@ export default function TreatmentsPage() {
                       <TableHead>Doctor</TableHead>
                       <TableHead>Cost</TableHead>
                       <TableHead>Appointments</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
@@ -414,18 +413,6 @@ export default function TreatmentsPage() {
                                 ))}
                             </div>
                           </TableCell>
-                           <TableCell>
-                             <Badge variant={
-                                treatment.status === 'Cancelled' ? 'destructive' :
-                                treatment.status === 'Completed' ? 'default' :
-                                'secondary'
-                               } className={cn(
-                                   'capitalize',
-                                   treatment.status === 'Completed' && 'bg-green-100 text-green-800'
-                               )}>
-                                {treatment.status}
-                               </Badge>
-                          </TableCell>
                           <TableCell className="text-right">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -435,7 +422,7 @@ export default function TreatmentsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setTreatmentToView(treatment)}>
-                                        <MoreHorizontal className="mr-2 h-4 w-4" /> View Details
+                                        <Eye className="mr-2 h-4 w-4" /> View Details
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setTreatmentToEdit(treatment)}>
                                         <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -450,7 +437,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           No records found.
                         </TableCell>
                       </TableRow>
