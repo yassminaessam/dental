@@ -354,14 +354,13 @@ export default function TreatmentsPage() {
                       <TableHead>Procedure</TableHead>
                       <TableHead>Doctor</TableHead>
                       <TableHead>Cost</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Appointments</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
@@ -369,16 +368,6 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.procedure}</TableCell>
                           <TableCell>{treatment.doctor}</TableCell>
                           <TableCell>{treatment.cost}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                                treatment.status === 'Completed' ? 'default' : 
-                                treatment.status === 'In Progress' ? 'secondary' : 'outline'
-                            } className={cn(
-                                treatment.status === 'Completed' && 'bg-green-100 text-green-800'
-                            )}>
-                                {treatment.status}
-                            </Badge>
-                          </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">
                                 {treatment.appointments.map((appt, index) => (
@@ -424,7 +413,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           No records found.
                         </TableCell>
                       </TableRow>
