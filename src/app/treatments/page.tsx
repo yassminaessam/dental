@@ -116,7 +116,7 @@ export default function TreatmentsPage() {
         const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
-          status: matchingAppt?.status || appt.status,
+          status: matchingAppt?.status || appt.status || 'Unknown',
         };
       });
       return { ...treatment, appointments: appointmentsWithStatus };
@@ -217,8 +217,8 @@ export default function TreatmentsPage() {
             apptDateTime.setHours(parseInt(hours, 10));
             apptDateTime.setMinutes(parseInt(minutes, 10));
 
-            const appointmentData = {
-                dateTime: apptDateTime.toISOString(),
+            const appointmentData: Omit<Appointment, 'id'> = {
+                dateTime: apptDateTime,
                 patient: updatedTreatment.patient,
                 doctor: updatedTreatment.doctor,
                 type: updatedTreatment.procedure,
@@ -229,11 +229,11 @@ export default function TreatmentsPage() {
 
             if (appt.appointmentId && existingAppointmentIds.has(appt.appointmentId)) {
                  const appointmentRef = doc(db, 'appointments', appt.appointmentId);
-                 batch.update(appointmentRef, appointmentData);
+                 batch.update(appointmentRef, {...appointmentData, dateTime: appointmentData.dateTime.toISOString() });
             } else {
                 const appointmentId = `APT-${Date.now()}-${Math.random()}`;
                 const appointmentRef = doc(db, 'appointments', appointmentId);
-                batch.set(appointmentRef, {...appointmentData, id: appointmentId });
+                batch.set(appointmentRef, {...appointmentData, id: appointmentId, dateTime: appointmentData.dateTime.toISOString() });
                 // Update the treatment's appointment with the new ID
                 const treatmentAppt = updatedTreatment.appointments.find(a => a.date === appt.date && a.time === appt.time);
                 if (treatmentAppt) {
