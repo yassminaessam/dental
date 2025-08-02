@@ -116,7 +116,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
     const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());
     const newAppointments = sortedDays.map(day => {
         const existing = fields.find(f => f.date.getTime() === day.getTime());
-        return existing || { date: day, time: '09:00', duration: '1 hour' };
+        return existing || { date: day, time: '09:00', duration: '1 hour', status: 'Confirmed' };
     });
     replace(newAppointments);
   };
@@ -137,7 +137,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             time: a.time,
             duration: a.duration,
             appointmentId: a.appointmentId,
-            status: a.status
+            status: a.status || 'Confirmed'
         })),
     };
     onSave(updatedTreatment);

@@ -45,7 +45,7 @@ export type TreatmentAppointment = {
     date: string;
     time: string;
     duration: string;
-    status?: Appointment['status'];
+    status: Appointment['status'];
     appointmentId?: string;
 };
 
@@ -113,7 +113,7 @@ export default function TreatmentsPage() {
         const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
-          status: matchingAppt?.status || 'Pending',
+          status: matchingAppt?.status || appt.status,
         };
       });
       return { ...treatment, appointments: appointmentsWithStatus };
@@ -151,6 +151,7 @@ export default function TreatmentsPage() {
             time: appt.time,
             duration: appt.duration,
             appointmentId: appointmentId,
+            status: 'Confirmed',
         });
       }
 
@@ -238,12 +239,9 @@ export default function TreatmentsPage() {
             }
         }
         
-        const treatmentDocData = {
-            ...updatedTreatment,
-            appointments: updatedTreatment.appointments.map(({ status, ...rest}) => rest)
-        };
-        delete (treatmentDocData as any).status; // Remove status from the update object
-        
+        const treatmentDocData = { ...updatedTreatment };
+        delete (treatmentDocData as any).status; 
+
         batch.update(treatmentRef, treatmentDocData);
 
         await batch.commit();
