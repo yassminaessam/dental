@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2 } from "lucide-react";
+import { Search, Pencil, Loader2, Badge } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
@@ -223,31 +223,42 @@ export default function TreatmentsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
                       <TableHead>Patient</TableHead>
                       <TableHead>Procedure</TableHead>
                       <TableHead>Doctor</TableHead>
-                      <TableHead>Tooth</TableHead>
-                      <TableHead>Cost</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Follow-up</TableHead>
+                      <TableHead>Appointments</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={9} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
-                          <TableCell>{treatment.date}</TableCell>
                           <TableCell>{treatment.patient}</TableCell>
                           <TableCell>{treatment.procedure}</TableCell>
                           <TableCell>{treatment.doctor}</TableCell>
-                          <TableCell>{treatment.tooth ?? 'N/A'}</TableCell>
-                          <TableCell>{treatment.cost}</TableCell>
-                          <TableCell>{treatment.status}</TableCell>
-                          <TableCell>{treatment.followUp ?? 'N/A'}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                                treatment.status === 'Completed' ? 'default' : 
+                                treatment.status === 'In Progress' ? 'secondary' : 'outline'
+                            } className={cn(
+                                treatment.status === 'Completed' && 'bg-green-100 text-green-800'
+                            )}>
+                                {treatment.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                                {treatment.appointmentDates && treatment.appointmentDates.map((date, index) => (
+                                    <span key={index} className="text-xs text-muted-foreground">
+                                        {format(new Date(date), 'PPP')}
+                                    </span>
+                                ))}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                                 <Button variant="ghost" size="sm" onClick={() => setTreatmentToView(treatment)}>View</Button>
@@ -261,7 +272,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={9} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           No records found.
                         </TableCell>
                       </TableRow>
@@ -291,3 +302,4 @@ export default function TreatmentsPage() {
     </DashboardLayout>
   );
 }
+
