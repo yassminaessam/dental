@@ -32,12 +32,14 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
 import { Plus, Trash2 } from 'lucide-react';
+import { Appointment } from '@/app/appointments/page';
 
 const appointmentSchema = z.object({
     date: z.date(),
     time: z.string().min(1, "Time is required."),
     duration: z.string().min(1, "Duration is required."),
     appointmentId: z.string().optional(),
+    status: z.custom<Appointment['status']>().optional(),
 });
 
 const planSchema = z.object({
@@ -106,6 +108,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                 time: a.time,
                 duration: a.duration,
                 appointmentId: a.appointmentId,
+                status: a.status,
             }))
         });
     }
@@ -136,7 +139,8 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             date: a.date.toISOString(),
             time: a.time,
             duration: a.duration,
-            appointmentId: a.appointmentId
+            appointmentId: a.appointmentId,
+            status: a.status
         })),
     };
     onSave(updatedTreatment);

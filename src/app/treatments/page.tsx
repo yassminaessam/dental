@@ -108,13 +108,11 @@ export default function TreatmentsPage() {
 
   const treatmentsWithAppointmentDetails = React.useMemo(() => {
     return treatments.map(treatment => {
-      const relatedAppointments = allAppointments.filter(appt => appt.treatmentId === treatment.id);
       const appointmentsWithStatus = treatment.appointments.map(appt => {
-        const matchingAppt = relatedAppointments.find(ra => format(ra.dateTime, 'yyyy-MM-dd') === format(new Date(appt.date), 'yyyy-MM-dd'));
+        const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
         return {
           ...appt,
-          status: matchingAppt?.status || 'Unknown',
-          appointmentId: matchingAppt?.id,
+          status: matchingAppt?.status || 'Pending',
         };
       });
       return { ...treatment, appointments: appointmentsWithStatus };
@@ -124,30 +122,10 @@ export default function TreatmentsPage() {
   const handleSavePlan = async (data: any) => {
     try {
       const treatmentId = `TRT-${Date.now()}`;
-      const newTreatment: Treatment = {
-        id: treatmentId,
-        date: new Date().toLocaleDateString(),
-        patient: data.patient,
-        procedure: data.treatmentName,
-        doctor: data.doctor,
-        cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
-        status: 'Pending',
-        notes: data.notes,
-        appointments: data.appointments.map((a: any) => ({
-            date: a.date.toISOString(),
-            time: a.time,
-            duration: a.duration,
-        })),
-      };
-
-      await setDocument('treatments', treatmentId, newTreatment);
-      setTreatments(prev => [newTreatment, ...prev]);
-      toast({
-        title: "Treatment Plan Created",
-        description: `A new plan for ${newTreatment.patient} has been created.`,
-      });
-
       const batch = writeBatch(db);
+      
+      const appointmentRefs: TreatmentAppointment[] = [];
+
       for (const appt of data.appointments) {
         const [hours, minutes] = appt.time.split(':');
         const apptDateTime = new Date(appt.date);
@@ -167,9 +145,38 @@ export default function TreatmentsPage() {
         };
         const appointmentRef = doc(db, 'appointments', appointmentId);
         batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
+        appointmentRefs.push({
+            date: appt.date.toISOString(),
+            time: appt.time,
+            duration: appt.duration,
+            appointmentId: appointmentId,
+        });
       }
+
+      const newTreatment: Treatment = {
+        id: treatmentId,
+        date: new Date().toLocaleDateString(),
+        patient: data.patient,
+        procedure: data.treatmentName,
+        doctor: data.doctor,
+        cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
+        status: 'Pending',
+        notes: data.notes,
+        appointments: appointmentRefs,
+      };
+
+      const treatmentRef = doc(db, 'treatments', treatmentId);
+      batch.set(treatmentRef, newTreatment);
+      
       await batch.commit();
+
+      setTreatments(prev => [newTreatment, ...prev]);
       await fetchAppointments();
+
+      toast({
+        title: "Treatment Plan Created",
+        description: `A new plan for ${newTreatment.patient} has been created.`,
+      });
 
       if (data.appointments.length > 0) {
         toast({
@@ -225,12 +232,18 @@ export default function TreatmentsPage() {
                 const appointmentId = `APT-${Date.now()}-${Math.random()}`;
                 const appointmentRef = doc(db, 'appointments', appointmentId);
                 batch.set(appointmentRef, {...appointmentData, id: appointmentId });
+                // Update the treatment's appointment with the new ID
+                const treatmentAppt = updatedTreatment.appointments.find(a => a.date === appt.date && a.time === appt.time);
+                if (treatmentAppt) {
+                    treatmentAppt.appointmentId = appointmentId;
+                }
             }
         }
         
-        const simplifiedTreatment = { ...updatedTreatment };
-        delete (simplifiedTreatment.appointments as any).appointmentId; // Clean up before saving
-        batch.update(treatmentRef, simplifiedTreatment);
+        batch.update(treatmentRef, {
+            ...updatedTreatment,
+            appointments: updatedTreatment.appointments.map(({ status, ...rest}) => rest)
+        });
 
         await batch.commit();
 
@@ -386,8 +399,7 @@ export default function TreatmentsPage() {
                                           'secondary'
                                         } className={cn(
                                             "h-5 text-xs capitalize",
-                                            appt.status === 'Completed' && 'bg-green-100 text-green-800',
-                                            !appt.status && 'hidden'
+                                            appt.status === 'Completed' && 'bg-green-100 text-green-800'
                                         )}>
                                             {appt.status}
                                         </Badge>
