@@ -53,6 +53,9 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
 
   const form = useForm<PlanFormData>({
     resolver: zodResolver(planSchema),
+    defaultValues: {
+      notes: '',
+    },
   });
   
   React.useEffect(() => {
@@ -219,6 +222,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                       placeholder="Describe the treatment plan, goals, and steps."
                       className="resize-none"
                       {...field}
+                      value={field.value ?? ''}
                     />
                   </FormControl>
                 </FormItem>
