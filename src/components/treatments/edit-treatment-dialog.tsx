@@ -125,23 +125,12 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const doctorName = doctors.find(d => d.id === data.doctor)?.name;
     
-    // Determine overall status from appointments
-    const allCompleted = data.appointments.every(a => a.status === 'Completed');
-    const anyCompleted = data.appointments.some(a => a.status === 'Completed' || a.status === 'Cancelled');
-    let overallStatus: Treatment['status'] = 'Pending';
-    if (allCompleted) {
-        overallStatus = 'Completed';
-    } else if (anyCompleted) {
-        overallStatus = 'In Progress';
-    }
-
     const updatedTreatment: Treatment = {
         ...treatment,
         patient: patientName || treatment.patient,
         doctor: doctorName || treatment.doctor,
         procedure: data.procedure,
         cost: `EGP ${data.cost}`,
-        status: overallStatus,
         notes: data.notes || '',
         appointments: data.appointments.map(a => ({
             date: a.date.toISOString(),

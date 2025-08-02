@@ -238,10 +238,13 @@ export default function TreatmentsPage() {
             }
         }
         
-        batch.update(treatmentRef, {
+        const treatmentDocData = {
             ...updatedTreatment,
             appointments: updatedTreatment.appointments.map(({ status, ...rest}) => rest)
-        });
+        };
+        delete (treatmentDocData as any).status; // Remove status from the update object
+        
+        batch.update(treatmentRef, treatmentDocData);
 
         await batch.commit();
         setTreatmentToEdit(null);
