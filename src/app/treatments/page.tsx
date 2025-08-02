@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2, MoreHorizontal, Trash2, Eye } from "lucide-react";
+import { Search, Pencil, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
@@ -393,6 +393,7 @@ export default function TreatmentsPage() {
                                         appt.status === 'Completed' ? 'default' :
                                         'secondary'
                                        } className={cn(
+                                           'capitalize',
                                            appt.status === 'Completed' && 'bg-green-100 text-green-800'
                                        )}>
                                         {appt.status}
