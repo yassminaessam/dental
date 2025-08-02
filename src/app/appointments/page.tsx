@@ -34,13 +34,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, List, Search, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
+import { Plus, Calendar, List, Search, MoreHorizontal, Pencil, Loader2, CheckCircle } from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
 import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { Badge } from '@/components/ui/badge';
 
 export type Appointment = {
   id: string;
@@ -49,7 +50,7 @@ export type Appointment = {
   doctor: string;
   type: string;
   duration: string;
-  status: 'Confirmed' | 'Pending' | 'Cancelled';
+  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
   treatmentId?: string; // Optional field to link to a treatment plan
 }
 
@@ -209,6 +210,7 @@ export default function AppointmentsPage() {
                         <SelectItem value="all">All Status</SelectItem>
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
@@ -238,7 +240,17 @@ export default function AppointmentsPage() {
                             <TableCell>{appt.doctor}</TableCell>
                             <TableCell>{appt.type}</TableCell>
                             <TableCell>{appt.duration}</TableCell>
-                            <TableCell>{appt.status}</TableCell>
+                            <TableCell>
+                               <Badge variant={
+                                appt.status === 'Cancelled' ? 'destructive' :
+                                appt.status === 'Completed' ? 'default' :
+                                'secondary'
+                               } className={cn(
+                                   appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                               )}>
+                                {appt.status}
+                               </Badge>
+                            </TableCell>
                             <TableCell className="text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -260,6 +272,9 @@ export default function AppointmentsPage() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
                                     Mark as Pending
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
+                                    <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
                                     Mark as Cancelled

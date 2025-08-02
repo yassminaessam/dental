@@ -38,7 +38,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export type TreatmentAppointment = {
@@ -157,16 +157,39 @@ export default function TreatmentsPage() {
       toast({ title: "Error creating plan", variant: "destructive" });
     }
   };
-
+  
   const handleUpdateTreatment = async (updatedTreatment: Treatment) => {
     try {
-      await updateDocument('treatments', updatedTreatment.id, updatedTreatment);
-      setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
-      setTreatmentToEdit(null);
-      toast({
-          title: "Treatment Updated",
-          description: `Treatment for ${updatedTreatment.patient} has been updated.`,
-      });
+        const batch = writeBatch(db);
+
+        // 1. Update the treatment plan document
+        const treatmentRef = doc(db, 'treatments', updatedTreatment.id);
+        batch.update(treatmentRef, updatedTreatment);
+
+        // 2. Find and update associated appointments
+        const appointmentsQuery = query(collection(db, "appointments"), where("treatmentId", "==", updatedTreatment.id));
+        const appointmentsSnapshot = await getDocs(appointmentsQuery);
+
+        let newAppointmentStatus: Appointment['status'] | null = null;
+        if (updatedTreatment.status === 'Completed') newAppointmentStatus = 'Completed';
+        else if (updatedTreatment.status === 'Pending') newAppointmentStatus = 'Pending';
+        else if (updatedTreatment.status === 'In Progress') newAppointmentStatus = 'Confirmed';
+
+        if (newAppointmentStatus) {
+            appointmentsSnapshot.forEach((appointmentDoc) => {
+                const appointmentRef = doc(db, 'appointments', appointmentDoc.id);
+                batch.update(appointmentRef, { status: newAppointmentStatus });
+            });
+        }
+        
+        await batch.commit();
+
+        setTreatments(prev => prev.map(t => t.id === updatedTreatment.id ? updatedTreatment : t));
+        setTreatmentToEdit(null);
+        toast({
+            title: "Treatment Updated",
+            description: `Treatment for ${updatedTreatment.patient} and its appointments have been updated.`,
+        });
     } catch(e) {
       toast({ title: "Error updating treatment", variant: "destructive" });
     }
