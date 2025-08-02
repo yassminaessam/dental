@@ -50,6 +50,7 @@ export type Appointment = {
   type: string;
   duration: string;
   status: 'Confirmed' | 'Pending' | 'Cancelled';
+  treatmentId?: string; // Optional field to link to a treatment plan
 }
 
 export default function AppointmentsPage() {

@@ -27,15 +27,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2 } from "lucide-react";
+import { Search, Pencil, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
 import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
-import { getCollection, setDocument, updateDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import type { Appointment } from '../appointments/page';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export type TreatmentAppointment = {
     date: string;
@@ -63,6 +67,7 @@ export default function TreatmentsPage() {
   const { toast } = useToast();
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
+  const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
 
   React.useEffect(() => {
     async function fetchTreatments() {
@@ -94,6 +99,7 @@ export default function TreatmentsPage() {
 
   const handleSavePlan = async (data: any) => {
     try {
+      const treatmentId = `TRT-${Date.now()}`;
       const newTreatment: Omit<Treatment, 'id'> = {
         date: new Date().toLocaleDateString(),
         patient: data.patient,
@@ -109,7 +115,6 @@ export default function TreatmentsPage() {
         })),
       };
 
-      const treatmentId = `TRT-${Date.now()}`;
       await setDocument('treatments', treatmentId, { ...newTreatment, id: treatmentId });
       setTreatments(prev => [{ ...newTreatment, id: treatmentId }, ...prev]);
       toast({
@@ -118,6 +123,7 @@ export default function TreatmentsPage() {
       });
 
       // Automatically create appointments
+      const batch = writeBatch(db);
       for (const appt of data.appointments) {
         const [hours, minutes] = appt.time.split(':');
         const apptDateTime = new Date(appt.date);
@@ -131,10 +137,14 @@ export default function TreatmentsPage() {
           type: data.treatmentName,
           duration: appt.duration,
           status: 'Confirmed',
+          treatmentId: treatmentId,
         };
         const appointmentId = `APT-${Date.now()}-${Math.random()}`;
-        await setDocument('appointments', appointmentId, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString(), id: appointmentId });
+        const appointmentRef = doc(db, 'appointments', appointmentId);
+        batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString(), id: appointmentId });
       }
+      await batch.commit();
+
 
       if (data.appointments.length > 0) {
         toast({
@@ -159,6 +169,34 @@ export default function TreatmentsPage() {
       });
     } catch(e) {
       toast({ title: "Error updating treatment", variant: "destructive" });
+    }
+  };
+  
+  const handleDeleteTreatment = async () => {
+    if (!treatmentToDelete) return;
+    try {
+        // Find and delete associated appointments
+        const q = query(collection(db, "appointments"), where("treatmentId", "==", treatmentToDelete.id));
+        const querySnapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // Delete the treatment plan itself
+        await deleteDocument('treatments', treatmentToDelete.id);
+
+        setTreatments(prev => prev.filter(t => t.id !== treatmentToDelete.id));
+        toast({
+            title: "Treatment Plan Deleted",
+            description: `Plan for ${treatmentToDelete.patient} and associated appointments have been deleted.`,
+            variant: "destructive",
+        });
+        setTreatmentToDelete(null);
+
+    } catch (e) {
+        toast({ title: "Error deleting treatment plan", variant: "destructive" });
     }
   };
 
@@ -263,21 +301,35 @@ export default function TreatmentsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                                {treatment.appointments && treatment.appointments.map((appt, index) => (
+                                {treatment.appointments && treatment.appointments.slice(0, 2).map((appt, index) => (
                                     <span key={index} className="text-xs text-muted-foreground">
-                                        {format(new Date(appt.date), 'PPP')} @ {appt.time} ({appt.duration})
+                                        {format(new Date(appt.date), 'PPP')} @ {appt.time}
                                     </span>
                                 ))}
+                                {treatment.appointments && treatment.appointments.length > 2 && (
+                                    <span className="text-xs text-muted-foreground">...and {treatment.appointments.length - 2} more</span>
+                                )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => setTreatmentToView(treatment)}>View</Button>
-                                <Button variant="ghost" size="sm" onClick={() => setTreatmentToEdit(treatment)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Edit
-                                </Button>
-                            </div>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setTreatmentToView(treatment)}>
+                                        <MoreHorizontal className="mr-2 h-4 w-4" /> View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setTreatmentToEdit(treatment)}>
+                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setTreatmentToDelete(treatment)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -310,6 +362,21 @@ export default function TreatmentsPage() {
             onOpenChange={(isOpen) => !isOpen && setTreatmentToEdit(null)}
         />
       )}
+
+      <AlertDialog open={!!treatmentToDelete} onOpenChange={(isOpen) => !isOpen && setTreatmentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the treatment plan and all of its associated appointments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTreatment}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
