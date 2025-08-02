@@ -52,10 +52,6 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
                     <h4 className="font-semibold">Cost</h4>
                     <p className="text-muted-foreground">{treatment.cost}</p>
                 </div>
-                <div>
-                    <h4 className="font-semibold">Status</h4>
-                    <div><Badge variant="outline">{treatment.status}</Badge></div>
-                </div>
             </div>
              <div>
                 <h4 className="font-semibold">Notes</h4>
@@ -63,10 +59,22 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
             </div>
              <div>
                 <h4 className="font-semibold">Scheduled Appointments</h4>
-                <ul className="list-disc pl-5 mt-1 text-muted-foreground">
+                <ul className="list-disc pl-5 mt-1 text-muted-foreground space-y-2">
                     {treatment.appointments.map((appt, index) => (
                          <li key={index}>
-                            {format(new Date(appt.date), 'PPP')} at {appt.time} ({appt.duration})
+                            <div className="flex items-center gap-2">
+                                <span>{format(new Date(appt.date), 'PPP')} at {appt.time} ({appt.duration})</span>
+                                <Badge variant={
+                                  appt.status === 'Cancelled' ? 'destructive' :
+                                  appt.status === 'Completed' ? 'default' :
+                                  'secondary'
+                                } className={cn(
+                                    "h-5 text-xs capitalize",
+                                    appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                                )}>
+                                    {appt.status}
+                                </Badge>
+                            </div>
                         </li>
                     ))}
                 </ul>
