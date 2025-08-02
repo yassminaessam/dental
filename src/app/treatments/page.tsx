@@ -389,20 +389,14 @@ export default function TreatmentsPage() {
                                             {format(new Date(appt.date), 'PPP')} @ {appt.time}
                                         </span>
                                         <Badge variant={
-                                          appt.status === 'Cancelled' ? 'destructive' :
-                                          appt.status === 'Completed' ? 'default' :
-                                          appt.status === 'Confirmed' ? 'secondary' :
-                                          'outline'
-                                        } className={cn(
-                                            "h-5 text-xs capitalize",
-                                            appt.status === 'Completed' && 'bg-green-100 text-green-800',
-                                            appt.status === 'Confirmed' && 'bg-blue-100 text-blue-800'
-                                        )}>
-                                            {appt.status}
-                                        </Badge>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleViewAppointment(appt.appointmentId)}>
-                                            <Eye className="h-3 w-3" />
-                                        </Button>
+                                        appt.status === 'Cancelled' ? 'destructive' :
+                                        appt.status === 'Completed' ? 'default' :
+                                        'secondary'
+                                       } className={cn(
+                                           appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                                       )}>
+                                        {appt.status}
+                                       </Badge>
                                     </div>
                                 ))}
                             </div>
