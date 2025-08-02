@@ -11,7 +11,7 @@ import {
 
 // Check if we're in development mode and Firebase is having issues
 const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const USE_MOCK_UPLOAD = false; // Set to true to use mock uploads in development
+const USE_MOCK_UPLOAD = true; // Set to true to use mock uploads in development
 
 // Mock upload function for development
 async function mockUpload(file: File, path: string, fileName?: string): Promise<string> {

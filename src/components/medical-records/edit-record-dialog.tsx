@@ -94,7 +94,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
         date: new Date(record.date),
         complaint: record.complaint,
         status: record.status,
-        notes: '', // Notes are not stored in the main object, clear for editing
+        notes: record.notes || '',
       });
     }
   }, [record, form, patients, doctors]);
@@ -112,6 +112,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
       type: data.type,
       date: new Date(data.date).toLocaleDateString(),
       complaint: data.complaint || '',
+      notes: data.notes || '',
       status: data.status,
     };
     onSave(updatedRecord);
@@ -243,6 +244,22 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                   <FormLabel>Chief Complaint</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Tooth pain on upper right" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Add subjective, objective, assessment, and plan notes here." 
+                      className="min-h-[120px]" 
+                      {...field} 
+                    />
                   </FormControl>
                 </FormItem>
               )}

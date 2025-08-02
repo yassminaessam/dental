@@ -9,6 +9,11 @@
   transform-origin: center;
 }
 
+.fullSizeImage {
+  max-width: 90vw;
+  max-height: 60vh;
+}
+
 /* Zoom levels */
 .zoom-50 { transform: scale(0.5); }
 .zoom-75 { transform: scale(0.75); }

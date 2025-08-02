@@ -185,14 +185,28 @@ export function ToothImagesDialog({
                             </CardHeader>
                             <CardContent className="pt-0">
                               <div className="space-y-3">
-                                {/* Image Preview Placeholder */}
-                                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                                  <div className="text-center space-y-2">
-                                    <Camera className="h-8 w-8 text-muted-foreground mx-auto" />
-                                    <div className="text-xs text-muted-foreground">
-                                      {image.type} Image
+                                {/* Actual Image Display */}
+                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                  {image.imageUrl ? (
+                                    <img 
+                                      src={image.imageUrl} 
+                                      alt={`${image.type} for ${image.patient}`}
+                                      className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={() => onViewFullImage?.(image)}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <div className="text-center space-y-2">
+                                        <Camera className="h-8 w-8 text-muted-foreground mx-auto" />
+                                        <div className="text-xs text-muted-foreground">
+                                          {image.type} Image
+                                        </div>
+                                        <div className="text-xs text-red-500">
+                                          Image URL not available
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
                                 </div>
                                 
                                 {image.caption && (

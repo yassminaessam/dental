@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -39,7 +40,8 @@ const employeeSchema = z.object({
   role: z.string({ required_error: "Role is required." }),
   hireDate: z.date({ required_error: "Hire date is required." }),
   salary: z.string().min(1, "Salary is required."),
-  status: z.enum(['Active', 'Inactive'])
+  status: z.enum(['Active', 'Inactive']),
+  notes: z.string().optional(),
 });
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
@@ -77,6 +79,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
         hireDate: new Date(staffMember.hireDate),
         salary: staffMember.salary.replace(/[^0-9.-]+/g,""),
         status: staffMember.status,
+        notes: staffMember.notes || '',
       });
     }
   }, [staffMember, form]);
@@ -91,6 +94,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
       hireDate: new Date(data.hireDate).toLocaleDateString(),
       salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
       status: data.status,
+      notes: data.notes || '',
     };
     onSave(updatedStaffMember);
   };
@@ -257,6 +261,22 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                     )}
                 />
             </div>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Add notes about the employee, performance, or other relevant information..." 
+                      className="min-h-[100px]" 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">Save Changes</Button>

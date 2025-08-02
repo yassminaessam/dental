@@ -67,6 +67,7 @@ export type MedicalRecord = {
   provider: string;
   date: string;
   status: 'Final' | 'Draft';
+  notes?: string;
 };
 
 export type MedicalRecordTemplate = {

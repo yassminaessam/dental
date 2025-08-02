@@ -55,12 +55,13 @@ export function ImageViewerDialog({
   };
 
   const handleDownload = () => {
-    if (!image) return;
+    if (!image || !image.imageUrl) return;
     
     // Create a download link for the image
     const link = document.createElement('a');
-    link.href = '#'; // Placeholder since ClinicalImage doesn't have url property yet
+    link.href = image.imageUrl;
     link.download = `${image.type}_${image.patient}_${image.date}.jpg`;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -155,24 +156,35 @@ export function ImageViewerDialog({
                 {/* Image Container */}
                 <div className="w-full h-full flex items-center justify-center bg-muted/50 overflow-auto">
                   <div className={`${styles.imageContainer} relative transition-transform duration-200 ease-in-out origin-center`}>
-                    {/* Placeholder for actual image */}
-                    <div className={`w-96 h-96 bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20 ${getTransformClasses}`}>
-                      <div className="text-center space-y-3">
-                        <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
-                        <div>
-                          <div className="font-medium text-lg">{image.type}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {image.patient} - {image.date}
+                    {/* Actual Image Display */}
+                    {image.imageUrl ? (
+                      <img 
+                        src={image.imageUrl} 
+                        alt={`${image.type} for ${image.patient}`}
+                        className={`max-w-none max-h-none object-contain ${getTransformClasses} ${styles.fullSizeImage}`}
+                      />
+                    ) : (
+                      <div className={`w-96 h-96 bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20 ${getTransformClasses}`}>
+                        <div className="text-center space-y-3">
+                          <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
+                          <div>
+                            <div className="font-medium text-lg">{image.type}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {image.patient} - {image.date}
+                            </div>
+                            <div className="text-sm text-red-500 mt-2">
+                              Image URL not available
+                            </div>
                           </div>
+                          <Badge 
+                            variant="outline" 
+                            className={`${getImageTypeColor(image.type)}`}
+                          >
+                            {image.type}
+                          </Badge>
                         </div>
-                        <Badge 
-                          variant="outline" 
-                          className={`${getImageTypeColor(image.type)}`}
-                        >
-                          {image.type}
-                        </Badge>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

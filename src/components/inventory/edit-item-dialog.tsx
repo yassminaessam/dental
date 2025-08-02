@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -40,6 +41,7 @@ const itemSchema = z.object({
   unitCost: z.coerce.number().min(0, 'Unit cost cannot be negative'),
   location: z.string().optional(),
   expires: z.date().optional(),
+  notes: z.string().optional(),
 });
 
 type ItemFormData = z.infer<typeof itemSchema>;
@@ -78,6 +80,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
         unitCost: parseFloat(item.unitCost.replace(/[^0-9.-]+/g,"")),
         location: item.location,
         expires: item.expires !== 'N/A' ? new Date(item.expires) : undefined,
+        notes: item.notes || '',
       });
     }
   }, [item, form, suppliers]);
@@ -94,6 +97,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
       unitCost: `EGP ${data.unitCost.toFixed(2)}`,
       location: data.location || item.location,
       expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
+      notes: data.notes || '',
     };
     onSave(updatedItem);
   };
@@ -225,6 +229,22 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Add notes about storage conditions, handling instructions, or other relevant information..." 
+                      className="min-h-[100px]" 
+                      {...field} 
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

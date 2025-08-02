@@ -53,8 +53,18 @@ export function LinkedImagesDisplay({
             className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
             onClick={() => onImageClick?.(image)}
           >
-            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+              {image.imageUrl ? (
+                <img 
+                  src={image.imageUrl} 
+                  alt={`${image.type} thumbnail`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
             </div>
             
             <div className="flex-1 min-w-0">

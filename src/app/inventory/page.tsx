@@ -75,6 +75,7 @@ export type InventoryItem = {
   unitCost: string;
   supplier: string;
   location: string;
+  notes?: string;
 };
 
 export default function InventoryPage() {

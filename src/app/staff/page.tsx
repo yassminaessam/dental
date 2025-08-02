@@ -55,6 +55,7 @@ export type StaffMember = {
   salary: string;
   hireDate: string;
   status: 'Active' | 'Inactive';
+  notes?: string;
 };
 
 const staffRoles = [

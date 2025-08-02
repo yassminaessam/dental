@@ -78,6 +78,15 @@ async function seedDatabase() {
         { id: 'img1', patient: 'John Doe', type: 'X-Ray', date: '2024-05-10', imageUrl: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop', caption: 'X-Ray of tooth #14' },
         { id: 'img2', patient: 'Jane Smith', type: 'Intraoral Photo', date: '2024-04-22', imageUrl: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&h=300&fit=crop', caption: 'Photo of tooth #25' },
         { id: 'img3', patient: 'Ahmed Hassan', type: 'Scan', date: '2024-06-15', imageUrl: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=400&h=300&fit=crop', caption: '3D scan for implant planning' },
+        { id: 'img4', patient: 'John Doe', type: 'Clinical Photo', date: '2024-05-15', imageUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=400&h=300&fit=crop', caption: 'Before crown placement' },
+        { id: 'img5', patient: 'Jane Smith', type: 'X-Ray', date: '2024-04-20', imageUrl: 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=400&h=300&fit=crop', caption: 'Periapical X-ray' },
+    ];
+
+    const initialToothImageLinksData = [
+        { id: 'link1', imageId: 'img1', toothNumber: 14, patient: 'John Doe', linkDate: '2024-05-10', imageType: 'X-Ray' },
+        { id: 'link2', imageId: 'img2', toothNumber: 25, patient: 'Jane Smith', linkDate: '2024-04-22', imageType: 'Intraoral Photo' },
+        { id: 'link3', imageId: 'img4', toothNumber: 14, patient: 'John Doe', linkDate: '2024-05-15', imageType: 'Clinical Photo' },
+        { id: 'link4', imageId: 'img5', toothNumber: 25, patient: 'Jane Smith', linkDate: '2024-04-20', imageType: 'X-Ray' },
     ];
     
     const initialInsuranceClaimsData = [
@@ -165,6 +174,7 @@ async function seedDatabase() {
   await seedCollection('staff', initialStaffData);
   await seedCollection('medical-records', initialMedicalRecordsData);
   await seedCollection('clinical-images', initialClinicalImagesData);
+  await seedCollection('tooth-image-links', initialToothImageLinksData);
   await seedCollection('insurance-claims', initialInsuranceClaimsData);
   await seedCollection('insurance-providers', insuranceProviders);
   await seedCollection('referrals', initialOutgoingReferralsData);
