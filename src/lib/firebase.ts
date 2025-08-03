@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,6 +19,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
 // Configure CORS for development
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
@@ -31,4 +33,4 @@ console.log('Firebase initialized:', {
   projectId: firebaseConfig.projectId
 });
 
-export { app, db, storage };
+export { app, db, storage, auth };

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,11 +48,16 @@ export type Appointment = {
   id: string;
   dateTime: Date;
   patient: string;
+  patientEmail?: string; // Add patient email for easier filtering
+  patientPhone?: string; // Add patient phone
   doctor: string;
   type: string;
   duration: string;
   status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
   treatmentId?: string; // Optional field to link to a treatment plan
+  notes?: string; // Additional notes
+  bookedBy?: 'patient' | 'staff'; // Track who booked the appointment
+  createdAt?: Date; // When the appointment was created
 }
 
 export default function AppointmentsPage() {
@@ -139,7 +145,8 @@ export default function AppointmentsPage() {
   }, [appointments, searchTerm, statusFilter]);
 
   return (
-    <DashboardLayout>
+    <ProtectedRoute requiredRoles={["receptionist", "admin", "doctor"]}>
+      <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Appointments</h1>
@@ -312,5 +319,6 @@ export default function AppointmentsPage() {
       )}
 
     </DashboardLayout>
+    </ProtectedRoute>
   );
 }

@@ -2,6 +2,9 @@
 'use client';
 
 import * as React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -16,6 +19,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
+import PendingAppointmentsManager from "@/components/dashboard/pending-appointments-manager";
+import { StaffOnly } from "@/components/auth/ProtectedRoute";
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
@@ -23,9 +28,21 @@ import type { Appointment } from '@/app/appointments/page';
 import type { Transaction } from '@/app/financial/page';
 
 export default function DashboardPage() {
+    const { user, isLoading, isAuthenticated } = useAuth();
+    const router = useRouter();
     const { toast } = useToast();
     const [revenueData, setRevenueData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
     const [appointmentTypes, setAppointmentTypes] = React.useState<{ name: string; value: number; color: string }[]>([]);
+
+    // Redirect patients to their specific homepage
+    React.useEffect(() => {
+        if (!isLoading && isAuthenticated && user) {
+            if (user.role === 'patient') {
+                router.push('/patient-home');
+                return;
+            }
+        }
+    }, [user, isLoading, isAuthenticated, router]);
 
     React.useEffect(() => {
         async function fetchData() {
@@ -97,38 +114,56 @@ export default function DashboardPage() {
         }
     };
 
+    // Show loading during redirect for patients
+    if (!isLoading && isAuthenticated && user?.role === 'patient') {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Redirecting to your patient portal...</p>
+                </div>
+            </div>
+        );
+    }
+
   return (
-    <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center gap-2">
-            <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
-            <AddPatientDialog onSave={handleSavePatient} />
+    <StaffOnly>
+      <DashboardLayout>
+        <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+              <AddPatientDialog onSave={handleSavePatient} />
+            </div>
           </div>
-        </div>
-        <OverviewStats />
-        <div className="grid gap-6 md:grid-cols-5">
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>Revenue Trend</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <RevenueTrendsChart data={revenueData} />
-            </CardContent>
-          </Card>
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Appointments by Type</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <AppointmentTypesChart data={appointmentTypes} />
-            </CardContent>
-          </Card>
-        </div>
-        <SupplyChainIntegration />
-        <KpiSuggestions />
-      </main>
-    </DashboardLayout>
+          <OverviewStats />
+          <div className="grid gap-6 md:grid-cols-5">
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle>Revenue Trend</CardTitle>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <RevenueTrendsChart data={revenueData} />
+              </CardContent>
+            </Card>
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Appointments by Type</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <AppointmentTypesChart data={appointmentTypes} />
+              </CardContent>
+            </Card>
+          </div>
+          <PendingAppointmentsManager onAppointmentUpdate={() => {
+            // Optionally refresh dashboard data when appointments are confirmed
+            window.location.reload();
+          }} />
+          <SupplyChainIntegration />
+          <KpiSuggestions />
+        </main>
+      </DashboardLayout>
+    </StaffOnly>
   );
 }

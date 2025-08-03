@@ -86,3 +86,91 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar styles for better visibility */
+.scrollbar-visible::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+.scrollbar-visible::-webkit-scrollbar-corner {
+  background: hsl(var(--muted));
+}
+
+/* Make scrollbars more visible on mobile */
+@media (max-width: 640px) {
+  .scrollbar-visible::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Patient history main scroll area */
+.patient-history-main-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.patient-history-main-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.patient-history-main-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+}
+
+.patient-history-main-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+}
+
+.patient-history-main-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+/* Enhanced scrollbar visibility for Radix UI ScrollArea */
+[data-radix-scroll-area-scrollbar] {
+  width: 12px !important;
+  height: 12px !important;
+  background: hsl(var(--muted)) !important;
+  border-radius: 6px !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-radix-scroll-area-thumb] {
+  background: hsl(var(--muted-foreground)) !important;
+  border-radius: 6px !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-radix-scroll-area-thumb]:hover {
+  background: hsl(var(--foreground)) !important;
+}
+
+/* Responsive text utility classes */
+.text-responsive {
+  @apply text-sm sm:text-base lg:text-lg;
+}
+
+.text-responsive-sm {
+  @apply text-xs sm:text-sm lg:text-base;
+}

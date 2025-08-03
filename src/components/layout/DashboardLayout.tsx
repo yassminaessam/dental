@@ -63,42 +63,6 @@ export default function DashboardLayout({
         </SidebarHeader>
         <SidebarContent className="flex flex-col">
           <SidebarNav />
-          <div className="mt-auto border-t border-sidebar-border p-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src="https://placehold.co/32x32"
-                      data-ai-hint="person"
-                    />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="font-semibold">User</span>
-                    <span className="text-xs text-muted-foreground">User</span>
-                  </div>
-                  <ChevronDown className="ml-auto h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                align="start"
-                className="w-[calc(var(--sidebar-width)_-_1rem)] mb-2"
-              >
-                <DropdownMenuItem asChild>
-                  <Link href="/staff">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/">Logout</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </SidebarContent>
       </Sidebar>
       <SidebarInset>

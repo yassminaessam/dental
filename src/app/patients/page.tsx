@@ -3,6 +3,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
+import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
 
 export type Patient = {
@@ -169,7 +171,8 @@ export default function PatientsPage() {
   }, [patients, searchTerm, statusFilter]);
 
   return (
-    <DashboardLayout>
+    <ProtectedRoute>
+      <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Patients</h1>
@@ -301,6 +304,14 @@ export default function PatientsPage() {
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Edit
                                 </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <ComprehensivePatientHistory patient={patient}>
+                                        <div className="flex items-center w-full cursor-pointer px-2 py-1.5 text-sm hover:bg-accent rounded-sm">
+                                            <User className="mr-2 h-4 w-4" /> 
+                                            Full History
+                                        </div>
+                                    </ComprehensivePatientHistory>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
@@ -353,5 +364,6 @@ export default function PatientsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>
+    </ProtectedRoute>
   );
 }
