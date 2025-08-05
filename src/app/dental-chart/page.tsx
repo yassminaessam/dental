@@ -209,27 +209,6 @@ export default function DentalChartPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Dental Chart</h1>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                console.log('=== DEBUG: Checking database ===');
-                try {
-                  const images = await getCollection('clinical-images');
-                  console.log('Clinical images in database:', images);
-                  
-                  const links = await getCollection('tooth-image-links');
-                  console.log('Tooth-image-links in database:', links);
-                  
-                  const records = await getCollection('medical-records');
-                  console.log('Medical records in database:', records);
-                } catch (error) {
-                  console.error('Debug error:', error);
-                }
-              }}
-              className="text-xs"
-            >
-              🐛 Debug DB
-            </Button>
             <Button variant="outline" onClick={handleResetChart} disabled={!selectedPatientId}>
               <RotateCw className="mr-2 h-4 w-4" />
               Reset

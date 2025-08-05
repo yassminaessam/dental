@@ -14,6 +14,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Invoice } from '@/app/billing/page';
+import type { Patient } from '@/app/patients/page';
 import { Printer } from 'lucide-react';
 import { DentalProLogo } from '../icons';
 
@@ -21,9 +22,10 @@ interface ViewInvoiceDialogProps {
   invoice: Invoice | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  patients?: Patient[];
 }
 
-export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDialogProps) {
+export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }: ViewInvoiceDialogProps) {
   
   if (!invoice) return null;
 
@@ -52,6 +54,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDi
   }
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
+  const patient = patients.find(p => p.name === invoice.patient);
 
   const InvoiceContent = () => (
      <div id={`printable-invoice-${invoice.id}`}>
@@ -71,12 +74,29 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange }: ViewInvoiceDi
             <h4 className="font-semibold text-muted-foreground">Bill To</h4>
             <p>{invoice.patient}</p>
             <p>Patient ID: {invoice.patientId}</p>
+            {patient?.phone && <p>Phone: {patient.phone}</p>}
         </div>
         <div className="text-right">
             <h4 className="font-semibold text-muted-foreground">Issue Date</h4>
             <p>{invoice.issueDate}</p>
             <h4 className="font-semibold text-muted-foreground mt-2">Due Date</h4>
             <p>{invoice.dueDate}</p>
+        </div>
+        </div>
+        
+        {/* User and Timestamp Information */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 py-4 border-t border-border">
+        <div>
+            <h4 className="font-semibold text-muted-foreground">Created By</h4>
+            <p>{invoice.createdBy || 'N/A'}</p>
+            <h4 className="font-semibold text-muted-foreground mt-2">Created At</h4>
+            <p>{invoice.createdAt || 'N/A'}</p>
+        </div>
+        <div className="text-right">
+            <h4 className="font-semibold text-muted-foreground">Last Modified By</h4>
+            <p>{invoice.lastModifiedBy || 'N/A'}</p>
+            <h4 className="font-semibold text-muted-foreground mt-2">Last Modified At</h4>
+            <p>{invoice.lastModifiedAt || 'N/A'}</p>
         </div>
         </div>
         <Table>

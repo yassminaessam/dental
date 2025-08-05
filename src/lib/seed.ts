@@ -51,9 +51,9 @@ async function seedDatabase() {
     ];
     
     const initialInvoicesData = [
-        { id: 'INV-001', patient: 'John Doe', patientId: 'pat1', issueDate: '2024-05-10', dueDate: '2024-06-09', totalAmount: 2500, amountPaid: 2500, status: 'Paid', items: [{id: '1', description: 'Crown Placement', quantity: 1, unitPrice: 2500}] },
-        { id: 'INV-002', patient: 'Jane Smith', patientId: 'pat2', issueDate: '2024-04-22', dueDate: '2024-05-22', totalAmount: 3500, amountPaid: 2000, status: 'Partially Paid', items: [{id: '1', description: 'Root Canal Therapy', quantity: 1, unitPrice: 3500}] },
-        { id: 'INV-003', patient: 'John Doe', patientId: 'pat1', issueDate: '2024-06-15', dueDate: '2024-07-15', totalAmount: 1800, amountPaid: 0, status: 'Unpaid', items: [{id: '1', description: 'Wisdom Tooth Extraction', quantity: 1, unitPrice: 1800}] },
+        { id: 'INV-001', patient: 'John Doe', patientId: 'pat1', issueDate: '2024-05-10', dueDate: '2024-06-09', totalAmount: 2500, amountPaid: 2500, status: 'Paid', items: [{id: '1', description: 'Crown Placement', quantity: 1, unitPrice: 2500}], createdBy: 'Dr. Nourhan', createdAt: '2024-05-10 09:30:00', lastModifiedBy: 'Dr. Nourhan', lastModifiedAt: '2024-05-10 09:30:00' },
+        { id: 'INV-002', patient: 'Jane Smith', patientId: 'pat2', issueDate: '2024-04-22', dueDate: '2024-05-22', totalAmount: 3500, amountPaid: 2000, status: 'Partially Paid', items: [{id: '1', description: 'Root Canal Therapy', quantity: 1, unitPrice: 3500}], createdBy: 'Dr. Khaled', createdAt: '2024-04-22 14:15:00', lastModifiedBy: 'Dr. Khaled', lastModifiedAt: '2024-04-22 14:15:00' },
+        { id: 'INV-003', patient: 'John Doe', patientId: 'pat1', issueDate: '2024-06-15', dueDate: '2024-07-15', totalAmount: 1800, amountPaid: 0, status: 'Unpaid', items: [{id: '1', description: 'Wisdom Tooth Extraction', quantity: 1, unitPrice: 1800}], createdBy: 'Dr. Khaled', createdAt: '2024-06-15 11:45:00', lastModifiedBy: 'Dr. Khaled', lastModifiedAt: '2024-06-15 11:45:00' },
     ];
     
     const initialInventoryItemsData = [

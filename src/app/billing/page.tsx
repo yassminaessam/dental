@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2, Trash2 } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
@@ -64,9 +65,14 @@ export type Invoice = {
     frequency?: 'weekly' | 'monthly' | 'quarterly';
   };
   notes?: string;
+  createdBy?: string; // User who created the invoice
+  createdAt?: string; // Timestamp when invoice was created
+  lastModifiedBy?: string; // User who last modified the invoice
+  lastModifiedAt?: string; // Timestamp when invoice was last modified
 };
 
 export default function BillingPage() {
+  const { user } = useAuth();
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -149,11 +155,25 @@ export default function BillingPage() {
 
   const handleSaveInvoice = async (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
     try {
+        const currentTime = new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+        
         const newInvoice: Invoice = {
           id: `INV-${Date.now()}`,
           ...data,
           status: 'Unpaid',
           amountPaid: 0,
+          createdBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+          createdAt: currentTime,
+          lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+          lastModifiedAt: currentTime,
         };
         await setDocument('invoices', newInvoice.id, newInvoice);
         setInvoices(prev => [newInvoice, ...prev]);
@@ -187,6 +207,16 @@ export default function BillingPage() {
       const costMatch = treatment.cost.match(/[\d,]+/);
       const amount = costMatch ? parseFloat(costMatch[0].replace(/,/g, '')) : 0;
 
+      const currentTime = new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
       const newInvoice: Invoice = {
         id: `INV-${Date.now()}`,
         patient: treatment.patient,
@@ -203,7 +233,11 @@ export default function BillingPage() {
           quantity: 1,
           unitPrice: amount
         }],
-        notes: `Generated from treatment: ${treatment.procedure} on ${treatment.date}`
+        notes: `Generated from treatment: ${treatment.procedure} on ${treatment.date}`,
+        createdBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        createdAt: currentTime,
+        lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        lastModifiedAt: currentTime,
       };
 
       await setDocument('invoices', newInvoice.id, newInvoice);
@@ -304,7 +338,23 @@ export default function BillingPage() {
 
       const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
       const newStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
-      const updatedData = { amountPaid: newAmountPaid, status: newStatus };
+      
+      const currentTime = new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      
+      const updatedData = { 
+        amountPaid: newAmountPaid, 
+        status: newStatus,
+        lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        lastModifiedAt: currentTime,
+      };
 
       await updateDocument('invoices', invoiceId, updatedData);
       
@@ -495,6 +545,7 @@ export default function BillingPage() {
                 <TableRow>
                   <TableHead>Invoice ID</TableHead>
                   <TableHead>Patient</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Issue Date</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Total Amount</TableHead>
@@ -506,12 +557,15 @@ export default function BillingPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                    <TableRow><TableCell colSpan={9} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={10} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                 ) : filteredInvoices.length > 0 ? (
-                  filteredInvoices.map((invoice) => (
+                  filteredInvoices.map((invoice) => {
+                    const patient = patients.find(p => p.name === invoice.patient);
+                    return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.id}</TableCell>
                       <TableCell>{invoice.patient}</TableCell>
+                      <TableCell>{patient?.phone || 'N/A'}</TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>EGP {invoice.totalAmount.toFixed(2)}</TableCell>
@@ -572,10 +626,11 @@ export default function BillingPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center">
+                    <TableCell colSpan={10} className="h-24 text-center">
                       No invoices found.
                     </TableCell>
                   </TableRow>
@@ -598,7 +653,7 @@ export default function BillingPage() {
       <div className="sr-only">
         {invoices.map(invoice => (
             <div key={`print-${invoice.id}`} id={`view-invoice-${invoice.id}`}>
-                <ViewInvoiceDialog invoice={invoice} open={false} onOpenChange={() => {}} />
+                <ViewInvoiceDialog invoice={invoice} open={false} onOpenChange={() => {}} patients={patients} />
             </div>
         ))}
       </div>
@@ -608,6 +663,7 @@ export default function BillingPage() {
         invoice={invoiceToView}
         open={!!invoiceToView}
         onOpenChange={(isOpen) => !isOpen && setInvoiceToView(null)}
+        patients={patients}
       />
 
       <AlertDialog open={!!invoiceToDelete} onOpenChange={(isOpen) => !isOpen && setInvoiceToDelete(null)}>
