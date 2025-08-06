@@ -6,6 +6,18 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Cairo Dental Clinic',
   description: 'Dental Practice Management Dashboard.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', sizes: '16x16', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' }
+    ],
+    shortcut: '/favicon.svg',
+    apple: [
+      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }
+    ],
+  },
 };
 
 export default function RootLayout({
