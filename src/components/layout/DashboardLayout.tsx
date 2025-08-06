@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, ChevronDown, Package, Clock } from "lucide-react";
+import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut } from "lucide-react";
 import { DentalProLogo } from "@/components/icons";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import Link from "next/link";
@@ -28,12 +28,18 @@ import { getCollection } from '@/services/firestore';
 import { Appointment } from '@/app/appointments/page';
 import { InventoryItem } from '@/app/inventory/page';
 import { Button } from '../ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+    const { user, signOut } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
     const [pendingAppointments, setPendingAppointments] = React.useState<Appointment[]>([]);
     const [lowStockItems, setLowStockItems] = React.useState<InventoryItem[]>([]);
 
@@ -50,6 +56,49 @@ export default function DashboardLayout({
     }, []);
 
     const notificationCount = pendingAppointments.length + lowStockItems.length;
+
+    // Helper function to get user initials
+    const getUserInitials = () => {
+        if (!user) return 'U';
+        return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
+    };
+
+    // Helper function to get user display name
+    const getUserDisplayName = () => {
+        if (!user) return 'User';
+        return `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+    };
+
+    // Helper function to get role display name
+    const getRoleDisplayName = () => {
+        if (!user) return '';
+        const roleMap = {
+            'admin': 'Administrator',
+            'doctor': 'Doctor',
+            'receptionist': 'Receptionist',
+            'patient': 'Patient'
+        };
+        return roleMap[user.role] || user.role;
+    };
+
+    // Handle logout
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            toast({
+                title: "Logged out successfully",
+                description: "You have been signed out of your account.",
+            });
+            router.push('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast({
+                title: "Logout failed",
+                description: "There was an error signing out. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
 
 
   return (
@@ -131,32 +180,55 @@ export default function DashboardLayout({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2">
+                <button className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground rounded-lg px-2 py-1 transition-colors">
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src="https://placehold.co/40x40"
-                      data-ai-hint="person"
+                      src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${getUserInitials()}`}
+                      alt={getUserDisplayName()}
                     />
-                    <AvatarFallback>SA</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getUserInitials()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="hidden flex-col items-start md:flex">
-                    <span className="text-sm font-semibold">Super Admin</span>
+                    <span className="text-sm font-semibold">{getUserDisplayName()}</span>
+                    <span className="text-xs text-muted-foreground">{getRoleDisplayName()}</span>
                   </div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {getRoleDisplayName()}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/staff">Profile</Link>
+                  <Link href="/staff" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
+                  <Link href="/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/">Logout</Link>
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
