@@ -46,6 +46,8 @@ import { getCollection, setDocument, updateDocument, deleteDocument } from '@/se
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ResponsiveTableWrapper, MobileCard, MobileCardField } from '@/components/ui/responsive-table';
 
 export type Patient = {
   id: string;
@@ -84,7 +86,9 @@ export default function PatientsPage() {
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [showHistory, setShowHistory] = React.useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     async function fetchPatients() {
@@ -173,25 +177,25 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+      <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Patients</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Patients</h1>
           <AddPatientDialog onSave={handleSavePatient} />
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {patientPageStats.map((stat) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (
               <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
                   <Icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className={cn("text-2xl font-bold", stat.valueClassName)}>
+                <CardContent className="pt-0">
+                  <div className={cn("text-lg sm:text-2xl font-bold", stat.valueClassName)}>
                     {stat.value}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -204,22 +208,22 @@ export default function PatientsPage() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Patient Directory</CardTitle>
+          <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-lg sm:text-xl">Patient Directory</CardTitle>
             <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
               <div className="relative w-full md:w-auto">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name, email, phone..."
-                  className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                  placeholder="Search patients..."
+                  className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
+                <SelectTrigger className="w-full md:w-[150px] h-9 sm:h-10">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
@@ -229,107 +233,169 @@ export default function PatientsPage() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">Patient</TableHead>
-                  <TableHead className="whitespace-nowrap">Email</TableHead>
-                  <TableHead className="whitespace-nowrap">Phone</TableHead>
-                  <TableHead className="whitespace-nowrap">Date of Birth</TableHead>
-                  <TableHead className="whitespace-nowrap">Address</TableHead>
-                  <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
-                  <TableHead className="whitespace-nowrap">Insurance Provider</TableHead>
-                  <TableHead className="whitespace-nowrap">Policy Number</TableHead>
-                  <TableHead className="whitespace-nowrap">Medical History</TableHead>
-                  <TableHead className="whitespace-nowrap">Last Visit</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                 {loading ? (
-                    <TableRow>
-                        <TableCell colSpan={12} className="h-24 text-center">
-                            <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-                        </TableCell>
-                    </TableRow>
-                 ) : filteredPatients.length > 0 ? (
+          <CardContent className="p-0 sm:p-6">
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : isMobile ? (
+              // Mobile Card View
+              <div className="space-y-4 p-4">
+                {filteredPatients.length > 0 ? (
                   filteredPatients.map((patient) => (
-                    <TableRow key={patient.id}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
-                             <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
-                          </div>
+                    <MobileCard key={patient.id}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                          <User className="h-5 w-5 text-muted-foreground" />
                         </div>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {format(patient.dob, 'PPP')}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                          <div>{patient.ecName || 'N/A'}</div>
-                          <div className="text-xs text-muted-foreground">{patient.ecPhone} ({patient.ecRelationship})</div>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.policyNumber || 'N/A'}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {patient.medicalHistory && patient.medicalHistory.length > 0
-                            ? patient.medicalHistory.map(h => h.condition).join(', ')
-                            : 'N/A'}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
-                      <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{`${patient.name} ${patient.lastName}`}</div>
+                          <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
+                        </div>
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Actions</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setPatientToView(patient)}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <ComprehensivePatientHistory patient={patient}>
-                                        <div className="flex items-center w-full cursor-pointer px-2 py-1.5 text-sm hover:bg-accent rounded-sm">
-                                            <User className="mr-2 h-4 w-4" /> 
-                                            Full History
-                                        </div>
-                                    </ComprehensivePatientHistory>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setPatientToView(patient)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setPatientToDelete(patient)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="space-y-2">
+                        <MobileCardField label="Email" value={patient.email} />
+                        <MobileCardField label="Phone" value={patient.phone} />
+                        <MobileCardField label="Status" value={patient.status} />
+                        <MobileCardField label="Last Visit" value={patient.lastVisit} />
+                      </div>
+                    </MobileCard>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell colSpan={12} className="h-24 text-center">
-                      No patients found.
-                    </TableCell>
-                  </TableRow>
+                  <div className="text-center py-8">
+                    <User className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-sm font-semibold">No patients found</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Try adjusting your search or filters.
+                    </p>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
+              </div>
+            ) : (
+              // Desktop Table View
+              <ResponsiveTableWrapper>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">Patient</TableHead>
+                      <TableHead className="whitespace-nowrap">Email</TableHead>
+                      <TableHead className="whitespace-nowrap">Phone</TableHead>
+                      <TableHead className="whitespace-nowrap">Date of Birth</TableHead>
+                      <TableHead className="whitespace-nowrap">Address</TableHead>
+                      <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
+                      <TableHead className="whitespace-nowrap">Insurance Provider</TableHead>
+                      <TableHead className="whitespace-nowrap">Policy Number</TableHead>
+                      <TableHead className="whitespace-nowrap">Medical History</TableHead>
+                      <TableHead className="whitespace-nowrap">Last Visit</TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
+                      <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPatients.length > 0 ? (
+                      filteredPatients.map((patient) => (
+                        <TableRow key={patient.id}>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
+                                <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {format(patient.dob, 'PPP')}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div>{patient.ecName || 'N/A'}</div>
+                            <div className="text-xs text-muted-foreground">{patient.ecPhone} ({patient.ecRelationship})</div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.policyNumber || 'N/A'}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {patient.medicalHistory && patient.medicalHistory.length > 0
+                              ? patient.medicalHistory.map(h => h.condition).join(', ')
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
+                          <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
+                          <TableCell className="text-right whitespace-nowrap">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setPatientToView(patient)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => setPatientToDelete(patient)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={12} className="h-24 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <User className="h-12 w-12 text-muted-foreground mb-2" />
+                            <h3 className="text-sm font-semibold">No patients found</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Try adjusting your search or filters.
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </ResponsiveTableWrapper>
+            )}
           </CardContent>
         </Card>
       </main>

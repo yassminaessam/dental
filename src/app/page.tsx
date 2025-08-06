@@ -129,29 +129,29 @@ export default function DashboardPage() {
   return (
     <StaffOnly>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+        <main className="flex w-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6 max-w-screen-2xl mx-auto">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
               <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
               <AddPatientDialog onSave={handleSavePatient} />
             </div>
           </div>
           <OverviewStats />
-          <div className="grid gap-6 md:grid-cols-5">
-            <Card className="md:col-span-3">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-5">
+            <Card className="lg:col-span-3">
               <CardHeader>
-                <CardTitle>Revenue Trend</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Revenue Trend</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <RevenueTrendsChart data={revenueData} />
               </CardContent>
             </Card>
-            <Card className="md:col-span-2">
+            <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Appointments by Type</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Appointments by Type</CardTitle>
               </CardHeader>
-              <CardContent className="flex justify-center">
+              <CardContent className="flex justify-center p-4">
                 <AppointmentTypesChart data={appointmentTypes} />
               </CardContent>
             </Card>

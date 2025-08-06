@@ -116,30 +116,31 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          New Patient
+          <span className="hidden sm:inline">New Patient</span>
+          <span className="sm:hidden">Add Patient</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add New Patient</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Add New Patient</DialogTitle>
+          <DialogDescription className="text-sm">
             Enter patient details to create a new record
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-6 -mr-6">
+        <ScrollArea className="flex-grow pr-2 sm:pr-6 -mr-2 sm:-mr-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-6">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium">First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ahmed" {...field} />
+                          <Input placeholder="Ahmed" {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -150,9 +151,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium">Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ali" {...field} />
+                          <Input placeholder="Ali" {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -163,9 +164,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email *</FormLabel>
+                        <FormLabel className="text-sm font-medium">Email *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="ahmed.ali@example.com" {...field} />
+                          <Input type="email" placeholder="ahmed.ali@example.com" {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -176,9 +177,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone *</FormLabel>
+                        <FormLabel className="text-sm font-medium">Phone *</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                          <Input type="tel" placeholder="01xxxxxxxxx" {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -189,14 +190,14 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="dob"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Date of Birth *</FormLabel>
+                        <FormLabel className="text-sm font-medium">Date of Birth *</FormLabel>
                         <Popover open={dobOpen} onOpenChange={setDobOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full justify-start text-left font-normal",
+                                  "w-full justify-start text-left font-normal h-10",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -205,7 +206,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
+                          <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -229,10 +230,10 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     control={form.control}
                     name="address"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel className="text-sm font-medium">Address</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} />
+                          <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} className="min-h-[80px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -240,16 +241,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="ecName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Name</FormLabel>
+                          <FormLabel className="text-sm font-medium">Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Fatima Ali" {...field} />
+                            <Input placeholder="Fatima Ali" {...field} className="h-10" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -259,9 +260,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       name="ecPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone</FormLabel>
+                          <FormLabel className="text-sm font-medium">Phone</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                            <Input type="tel" placeholder="01xxxxxxxxx" {...field} className="h-10" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -271,10 +272,10 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       name="ecRelationship"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Relationship</FormLabel>
+                          <FormLabel className="text-sm font-medium">Relationship</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-10">
                                 <SelectValue placeholder="Select relationship" />
                               </SelectTrigger>
                             </FormControl>
@@ -293,16 +294,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">Insurance Information</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
                         name="insuranceProvider"
                         render={({ field }) => (
                           <FormItem>
-                              <FormLabel>Insurance Provider</FormLabel>
+                              <FormLabel className="text-sm font-medium">Insurance Provider</FormLabel>
                               <FormControl>
-                                <Input placeholder="Misr Insurance" {...field} />
+                                <Input placeholder="Misr Insurance" {...field} className="h-10" />
                               </FormControl>
                           </FormItem>
                         )}
@@ -312,9 +313,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                         name="policyNumber"
                         render={({ field }) => (
                           <FormItem>
-                              <FormLabel>Policy Number</FormLabel>
+                              <FormLabel className="text-sm font-medium">Policy Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="MISR123456789" {...field} />
+                                <Input placeholder="MISR123456789" {...field} className="h-10" />
                               </FormControl>
                           </FormItem>
                         )}
@@ -323,23 +324,23 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
                 
                 <div>
-                  <h3 className="mb-2 text-lg font-medium">Medical History</h3>
+                  <h3 className="mb-2 text-base sm:text-lg font-medium">Medical History</h3>
                   <div className="space-y-2">
                     {fields.map((field, index) => (
-                      <div key={field.id} className="flex items-center gap-2">
+                      <div key={field.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                          <FormField
                             control={form.control}
                             name={`medicalHistory.${index}.condition`}
                             render={({ field }) => (
                               <FormItem className="flex-grow">
                                 <FormControl>
-                                    <Input placeholder="e.g., Diabetes, Hypertension" {...field} />
+                                    <Input placeholder="e.g., Diabetes, Hypertension" {...field} className="h-10" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="h-10 w-10 sm:h-9 sm:w-9">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -348,6 +349,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       type="button"
                       variant="outline"
                       onClick={() => append({ condition: '' })}
+                      className="w-full sm:w-auto"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add medical condition
@@ -357,9 +359,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
             </form>
           </Form>
         </ScrollArea>
-        <DialogFooter className="border-t pt-4">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="submit" form="add-patient-form">Save Patient</Button>
+        <DialogFooter className="border-t pt-3 sm:pt-4 gap-2">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">Cancel</Button>
+          <Button type="submit" form="add-patient-form" className="flex-1 sm:flex-none">Save Patient</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
