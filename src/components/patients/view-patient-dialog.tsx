@@ -28,8 +28,10 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{`${patient.name} ${patient.lastName}`}</DialogTitle>
-          <DialogDescription>
-            Patient ID: {patient.id} | Status: <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>{patient.status}</Badge>
+          <DialogDescription asChild>
+            <div>
+              Patient ID: {patient.id} | Status: <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>{patient.status}</Badge>
+            </div>
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 grid gap-6 text-sm">

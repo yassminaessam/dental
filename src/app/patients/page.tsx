@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck, Eye } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck, Eye, History } from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -84,6 +84,7 @@ export default function PatientsPage() {
   const [patientToView, setPatientToView] = React.useState<Patient | null>(null);
   const [patientToEdit, setPatientToEdit] = React.useState<Patient | null>(null);
   const [patientToDelete, setPatientToDelete] = React.useState<Patient | null>(null);
+  const [patientForHistory, setPatientForHistory] = React.useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [showHistory, setShowHistory] = React.useState(false);
@@ -363,6 +364,10 @@ export default function PatientsPage() {
                                   <Eye className="mr-2 h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setPatientForHistory(patient)}>
+                                  <History className="mr-2 h-4 w-4" />
+                                  Complete History
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Edit
@@ -405,6 +410,14 @@ export default function PatientsPage() {
         open={!!patientToView}
         onOpenChange={(isOpen) => !isOpen && setPatientToView(null)}
       />
+
+      {patientForHistory && (
+        <ComprehensivePatientHistory 
+          patient={patientForHistory}
+          open={!!patientForHistory}
+          onOpenChange={(isOpen) => !isOpen && setPatientForHistory(null)}
+        />
+      )}
 
       {patientToEdit && (
         <EditPatientDialog

@@ -66,18 +66,27 @@ interface PatientHistoryData {
   insuranceClaims: any[];
   dentalChart?: any;
   toothImageLinks: any[];
+  messages: any[];
+  prescriptions: any[];
+  referrals: any[];
 }
 
 interface ComprehensivePatientHistoryProps {
   patient: Patient;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ComprehensivePatientHistory({ patient, children }: ComprehensivePatientHistoryProps) {
-  const [open, setOpen] = React.useState(false);
+export function ComprehensivePatientHistory({ patient, children, open: externalOpen, onOpenChange: externalOnOpenChange }: ComprehensivePatientHistoryProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
   const [historyData, setHistoryData] = React.useState<PatientHistoryData | null>(null);
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
+
+  // Use external control if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const onOpenChange = externalOnOpenChange || setInternalOpen;
 
   const fetchPatientHistory = async () => {
     if (!patient) return;
@@ -91,7 +100,10 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
         clinicalImages,
         invoices,
         insuranceClaims,
-        toothImageLinks
+        toothImageLinks,
+        messages,
+        prescriptions,
+        referrals
       ] = await Promise.all([
         getCollection('appointments'),
         getCollection('treatments'),
@@ -99,7 +111,10 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
         getCollection('clinical-images'),
         getCollection('invoices'),
         getCollection('insurance-claims'),
-        getCollection('tooth-image-links')
+        getCollection('tooth-image-links'),
+        getCollection('messages'),
+        getCollection('prescriptions'),
+        getCollection('referrals')
       ]);
 
       // Filter data by patient
@@ -110,7 +125,10 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
         clinicalImages: (clinicalImages as any[]).filter((img: any) => img.patient === patient.name),
         invoices: (invoices as any[]).filter((inv: any) => inv.patientId === patient.id || inv.patient === patient.name),
         insuranceClaims: (insuranceClaims as any[]).filter((claim: any) => claim.patientId === patient.id || claim.patient === patient.name),
-        toothImageLinks: (toothImageLinks as any[]).filter((link: any) => link.patient === patient.name)
+        toothImageLinks: (toothImageLinks as any[]).filter((link: any) => link.patient === patient.name),
+        messages: (messages as any[]).filter((msg: any) => msg.patient === patient.name),
+        prescriptions: (prescriptions as any[]).filter((rx: any) => rx.patient === patient.name),
+        referrals: (referrals as any[]).filter((ref: any) => ref.patient === patient.name)
       };
 
       setHistoryData(patientData);
@@ -148,7 +166,10 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
       lastVisit: lastVisit ? format(new Date(lastVisit.dateTime || lastVisit.date), 'PPP') : 'Never',
       totalImages: historyData.clinicalImages.length,
       totalRecords: historyData.medicalRecords.length,
-      activeClaims: historyData.insuranceClaims.filter(c => c.status === 'Processing').length
+      activeClaims: historyData.insuranceClaims.filter(c => c.status === 'Processing').length,
+      totalMessages: historyData.messages.length,
+      activePrescriptions: historyData.prescriptions.filter(rx => rx.status === 'Active').length,
+      totalReferrals: historyData.referrals.length
     };
   };
 
@@ -222,6 +243,45 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
       });
     });
 
+    // Add messages
+    historyData.messages.forEach(message => {
+      events.push({
+        type: 'communication',
+        date: new Date(message.date),
+        title: `${message.type} - ${message.subject}`,
+        description: message.snippet,
+        status: message.status,
+        icon: Mail,
+        color: 'blue'
+      });
+    });
+
+    // Add prescriptions
+    historyData.prescriptions.forEach(prescription => {
+      events.push({
+        type: 'prescription',
+        date: new Date(prescription.date),
+        title: `Prescription - ${prescription.medication}`,
+        description: `${prescription.strength} - ${prescription.dosage}`,
+        status: prescription.status,
+        icon: Heart,
+        color: 'green'
+      });
+    });
+
+    // Add referrals
+    historyData.referrals.forEach(referral => {
+      events.push({
+        type: 'referral',
+        date: new Date(referral.date),
+        title: `Referral - ${referral.specialty}`,
+        description: `To ${referral.specialist} - ${referral.reason}`,
+        status: referral.status,
+        icon: TrendingUp,
+        color: 'purple'
+      });
+    });
+
     return events.sort((a, b) => b.date.getTime() - a.date.getTime());
   };
 
@@ -229,11 +289,13 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
   const timeline = getTimelineEvents();
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <style dangerouslySetInnerHTML={{ __html: scrollAreaStyles }} />
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-[98vw] sm:max-w-6xl lg:max-w-7xl h-[98vh] sm:h-[90vh] overflow-hidden flex flex-col p-2 sm:p-4 lg:p-6">
         <DialogHeader className="flex-shrink-0 pb-2 sm:pb-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
@@ -257,7 +319,7 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
             <ScrollArea className="h-full w-full">
               <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-1 pr-4">
                 {/* Patient Overview Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-2 sm:gap-4">
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600 mx-auto mb-1" />
@@ -302,6 +364,27 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
+                    <Mail className="h-4 w-4 sm:h-6 sm:w-6 text-cyan-600 mx-auto mb-1" />
+                    <div className="text-lg sm:text-xl font-bold">{stats.totalMessages}</div>
+                    <div className="text-xs text-muted-foreground">Messages</div>
+                  </div>
+                </Card>
+                <Card className="p-2 sm:p-3">
+                  <div className="text-center">
+                    <Heart className="h-4 w-4 sm:h-6 sm:w-6 text-pink-600 mx-auto mb-1" />
+                    <div className="text-lg sm:text-xl font-bold">{stats.activePrescriptions}</div>
+                    <div className="text-xs text-muted-foreground">Rx Active</div>
+                  </div>
+                </Card>
+                <Card className="p-2 sm:p-3">
+                  <div className="text-center">
+                    <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-violet-600 mx-auto mb-1" />
+                    <div className="text-lg sm:text-xl font-bold">{stats.totalReferrals}</div>
+                    <div className="text-xs text-muted-foreground">Referrals</div>
+                  </div>
+                </Card>
+                <Card className="p-2 sm:p-3">
+                  <div className="text-center">
                     <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-gray-600 mx-auto mb-1" />
                     <div className="text-xs sm:text-sm font-bold">{stats.lastVisit}</div>
                     <div className="text-xs text-muted-foreground">Last Visit</div>
@@ -321,6 +404,9 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
                         <TabsTrigger value="dental" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Dental</TabsTrigger>
                         <TabsTrigger value="billing" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Billing</TabsTrigger>
                         <TabsTrigger value="images" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Images</TabsTrigger>
+                        <TabsTrigger value="communications" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Messages</TabsTrigger>
+                        <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Prescriptions</TabsTrigger>
+                        <TabsTrigger value="referrals" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Referrals</TabsTrigger>
                       </TabsList>
                     </div>
                   </ScrollArea>
@@ -772,6 +858,137 @@ export function ComprehensivePatientHistory({ patient, children }: Comprehensive
                         </div>
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">No clinical images found</div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Communications/Messages */}
+              <TabsContent value="communications" className="space-y-3 sm:space-y-4 mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Communications ({historyData.messages.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-80 lg:h-96">
+                      {historyData.messages.length > 0 ? (
+                        <div className="space-y-3 p-2">
+                          {historyData.messages
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((message, index) => (
+                              <Card key={index} className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge variant="outline">{message.type}</Badge>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant={message.priority === 'high' ? 'destructive' : 'secondary'}>
+                                      {message.priority}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">{message.date}</span>
+                                  </div>
+                                </div>
+                                <h4 className="font-medium">{message.subject}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">{message.snippet}</p>
+                                <Badge variant={message.status === 'Sent' ? 'default' : 'secondary'}>
+                                  {message.status}
+                                </Badge>
+                              </Card>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">No messages found</div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Prescriptions */}
+              <TabsContent value="prescriptions" className="space-y-3 sm:space-y-4 mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Heart className="h-5 w-5" />
+                      Prescriptions ({historyData.prescriptions.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-80 lg:h-96">
+                      {historyData.prescriptions.length > 0 ? (
+                        <div className="space-y-3 p-2">
+                          {historyData.prescriptions
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((prescription, index) => (
+                              <Card key={index} className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-medium">{prescription.medication} {prescription.strength}</h4>
+                                  <Badge variant={prescription.status === 'Active' ? 'default' : 'secondary'}>
+                                    {prescription.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground space-y-1">
+                                  <p><strong>Dosage:</strong> {prescription.dosage}</p>
+                                  <p><strong>Duration:</strong> {prescription.duration}</p>
+                                  <p><strong>Refills:</strong> {prescription.refills}</p>
+                                  <p><strong>Prescribed by:</strong> {prescription.doctor}</p>
+                                  <p><strong>Date:</strong> {prescription.date}</p>
+                                </div>
+                              </Card>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">No prescriptions found</div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Referrals */}
+              <TabsContent value="referrals" className="space-y-3 sm:space-y-4 mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Specialist Referrals ({historyData.referrals.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-80 lg:h-96">
+                      {historyData.referrals.length > 0 ? (
+                        <div className="space-y-3 p-2">
+                          {historyData.referrals
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((referral, index) => (
+                              <Card key={index} className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-medium">{referral.specialist}</h4>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant={referral.urgency === 'urgent' ? 'destructive' : 'secondary'}>
+                                      {referral.urgency}
+                                    </Badge>
+                                    <Badge variant={
+                                      referral.status === 'completed' ? 'default' :
+                                      referral.status === 'scheduled' ? 'secondary' : 'outline'
+                                    }>
+                                      {referral.status}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="text-sm text-muted-foreground space-y-1">
+                                  <p><strong>Specialty:</strong> {referral.specialty}</p>
+                                  <p><strong>Reason:</strong> {referral.reason}</p>
+                                  <p><strong>Referral Date:</strong> {referral.date}</p>
+                                  {referral.apptDate && <p><strong>Appointment:</strong> {referral.apptDate}</p>}
+                                </div>
+                              </Card>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">No referrals found</div>
                       )}
                     </ScrollArea>
                   </CardContent>
