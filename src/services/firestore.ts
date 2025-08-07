@@ -11,6 +11,8 @@ import {
   onSnapshot,
   DocumentData,
   QueryDocumentSnapshot,
+  WithFieldValue,
+  PartialWithFieldValue,
 } from 'firebase/firestore';
 
 // Generic function to fetch all documents from a collection
@@ -37,19 +39,33 @@ export function listenToCollection<T>(
 }
 
 // Generic function to add a document to a collection
-export async function addDocument<T extends DocumentData>(collectionName: string, data: T): Promise<string> {
-  const docRef = await addDoc(collection(db, collectionName), data);
+export async function addDocument<T extends DocumentData>(
+  collectionName: string, 
+  data: WithFieldValue<T>
+): Promise<string> {
+  const collectionRef = collection(db, collectionName);
+  const docRef = await addDoc(collectionRef, data as any);
   return docRef.id;
 }
 
 // Generic function to set a document with a specific ID
-export async function setDocument<T extends DocumentData>(collectionName: string, id: string, data: T): Promise<void> {
-  await setDoc(doc(db, collectionName, id), data);
+export async function setDocument<T extends DocumentData>(
+  collectionName: string, 
+  id: string, 
+  data: WithFieldValue<T>
+): Promise<void> {
+  const docRef = doc(db, collectionName, id);
+  await setDoc(docRef, data as any);
 }
 
 // Generic function to update a document
-export async function updateDocument<T extends DocumentData>(collectionName: string, id: string, data: Partial<T>): Promise<void> {
-  await updateDoc(doc(db, collectionName, id), data);
+export async function updateDocument<T extends DocumentData>(
+  collectionName: string, 
+  id: string, 
+  data: PartialWithFieldValue<T>
+): Promise<void> {
+  const docRef = doc(db, collectionName, id);
+  await updateDoc(docRef, data as any);
 }
 
 // Generic function to delete a document
