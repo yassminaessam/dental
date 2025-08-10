@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,7 @@ interface StockAlert {
 }
 
 export function SupplyChainIntegration() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
   const [stats, setStats] = useState<IntegrationStats>({
@@ -152,8 +154,8 @@ export function SupplyChainIntegration() {
     } catch (error) {
       console.error("Error fetching integration data:", error);
       toast({
-        title: "Error",
-        description: "Failed to load supply chain data",
+  title: t('common.error'),
+  description: t('dashboard.supply_chain.error_loading_desc'),
         variant: "destructive"
       });
     } finally {
@@ -433,17 +435,17 @@ export function SupplyChainIntegration() {
   };
 
   const getIntegrationScoreDescription = (score: number) => {
-    if (score >= 80) return "Excellent integration";
-    if (score >= 60) return "Good integration";
-    if (score >= 40) return "Moderate integration";
-    return "Poor integration";
+  if (score >= 80) return t('dashboard.supply_chain.score.excellent');
+  if (score >= 60) return t('dashboard.supply_chain.score.good');
+  if (score >= 40) return t('dashboard.supply_chain.score.moderate');
+  return t('dashboard.supply_chain.score.poor');
   };
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Supply Chain Integration</CardTitle>
+          <CardTitle>{t('dashboard.supply_chain.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-32">
@@ -459,10 +461,10 @@ export function SupplyChainIntegration() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Supply Chain Integration Dashboard
+          {t('dashboard.supply_chain.dashboard_title')}
         </CardTitle>
         <CardDescription>
-          Overview of how suppliers, inventory, and pharmacy work together
+          {t('dashboard.supply_chain.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -484,16 +486,16 @@ export function SupplyChainIntegration() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-blue-700">
                 <Truck className="h-5 w-5" />
-                Suppliers
+                {t('dashboard.supply_chain.suppliers')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm">Total Suppliers</span>
+                <span className="text-sm">{t('dashboard.supply_chain.total_suppliers')}</span>
                 <Badge variant="secondary">{stats.totalSuppliers}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm">Active Orders</span>
+                <span className="text-sm">{t('dashboard.supply_chain.active_orders')}</span>
                 <Badge variant={stats.activeOrders > 0 ? "default" : "outline"}>
                   {stats.activeOrders}
                 </Badge>
@@ -509,16 +511,16 @@ export function SupplyChainIntegration() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-green-700">
                 <Package className="h-5 w-5" />
-                Inventory
+                {t('dashboard.supply_chain.inventory')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm">Total Items</span>
+                <span className="text-sm">{t('dashboard.supply_chain.total_items')}</span>
                 <Badge variant="secondary">{stats.inventoryItems}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm">Low Stock</span>
+                <span className="text-sm">{t('dashboard.supply_chain.low_stock')}</span>
                 <Badge variant={stats.lowStockItems > 0 ? "destructive" : "outline"}>
                   {stats.lowStockItems}
                 </Badge>
@@ -534,16 +536,16 @@ export function SupplyChainIntegration() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-purple-700">
                 <Pill className="h-5 w-5" />
-                Pharmacy
+                {t('dashboard.supply_chain.pharmacy')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm">Medications</span>
+                <span className="text-sm">{t('dashboard.supply_chain.medications')}</span>
                 <Badge variant="secondary">{stats.medications}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm">Low Stock</span>
+                <span className="text-sm">{t('dashboard.supply_chain.low_stock')}</span>
                 <Badge variant={stats.lowStockMedications > 0 ? "destructive" : "outline"}>
                   {stats.lowStockMedications}
                 </Badge>
@@ -559,31 +561,31 @@ export function SupplyChainIntegration() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Automated Features</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.supply_chain.automated_features')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-sm">Auto-reorder for low stock items</span>
+                <span className="text-sm">{t('dashboard.supply_chain.auto_reorder')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-sm">Supplier performance tracking</span>
+                <span className="text-sm">{t('dashboard.supply_chain.supplier_performance_tracking')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-sm">Pharmacy-inventory integration</span>
+                <span className="text-sm">{t('dashboard.supply_chain.pharmacy_inventory_integration')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-sm">Purchase order management</span>
+                <span className="text-sm">{t('dashboard.supply_chain.purchase_order_management')}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Quick Actions</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.supply_chain.quick_actions')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {/* Low Stock Items Dialog */}
@@ -591,23 +593,23 @@ export function SupplyChainIntegration() {
                 <DialogTrigger asChild>
                   <Button size="sm" className="w-full justify-start">
                     <Package className="mr-2 h-4 w-4" />
-                    View Low Stock Items
+                    {t('dashboard.supply_chain.view_low_stock')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl">
                   <DialogHeader>
-                    <DialogTitle>Low Stock Items</DialogTitle>
+                    <DialogTitle>{t('dashboard.supply_chain.low_stock_items')}</DialogTitle>
                   </DialogHeader>
                   <div className="max-h-96 overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Item Name</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Current Stock</TableHead>
-                          <TableHead>Min Stock</TableHead>
-                          <TableHead>Supplier</TableHead>
-                          <TableHead>Last Ordered</TableHead>
+                          <TableHead>{t('dashboard.supply_chain.item_name')}</TableHead>
+                          <TableHead>{t('inventory.category')}</TableHead>
+                          <TableHead>{t('dashboard.supply_chain.current_stock')}</TableHead>
+                          <TableHead>{t('dashboard.supply_chain.min_stock')}</TableHead>
+                          <TableHead>{t('suppliers.supplier')}</TableHead>
+                          <TableHead>{t('dashboard.supply_chain.last_ordered')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -631,7 +633,7 @@ export function SupplyChainIntegration() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={6} className="text-center text-muted-foreground">
-                              No low stock items found
+                              {t('dashboard.supply_chain.no_low_stock_items')}
                             </TableCell>
                           </TableRow>
                         )}
@@ -649,7 +651,7 @@ export function SupplyChainIntegration() {
                 onClick={handleViewPurchaseOrders}
               >
                 <Truck className="mr-2 h-4 w-4" />
-                Active Purchase Orders
+                {t('dashboard.supply_chain.active_purchase_orders')}
                 <ExternalLink className="ml-auto h-3 w-3" />
               </Button>
 
@@ -658,23 +660,23 @@ export function SupplyChainIntegration() {
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="w-full justify-start">
                     <TrendingUp className="mr-2 h-4 w-4" />
-                    Supplier Performance
+                    {t('dashboard.supply_chain.supplier_performance')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl">
                   <DialogHeader>
-                    <DialogTitle>Supplier Performance Overview</DialogTitle>
+                    <DialogTitle>{t('dashboard.supply_chain.supplier_performance_overview')}</DialogTitle>
                   </DialogHeader>
                   <div className="max-h-96 overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Supplier</TableHead>
-                          <TableHead>Rating</TableHead>
-                          <TableHead>On-Time Delivery</TableHead>
-                          <TableHead>Quality Score</TableHead>
-                          <TableHead>Total Orders</TableHead>
-                          <TableHead>Active Orders</TableHead>
+                          <TableHead>{t('suppliers.supplier')}</TableHead>
+                          <TableHead>{t('suppliers.rating')}</TableHead>
+                          <TableHead>{t('suppliers.on_time_delivery')}</TableHead>
+                          <TableHead>{t('suppliers.quality_score')}</TableHead>
+                          <TableHead>{t('suppliers.total_orders')}</TableHead>
+                          <TableHead>{t('suppliers.active_orders')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -709,7 +711,7 @@ export function SupplyChainIntegration() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={6} className="text-center text-muted-foreground">
-                              No supplier data available
+                              {t('suppliers.no_suppliers_found')}
                             </TableCell>
                           </TableRow>
                         )}
@@ -718,7 +720,7 @@ export function SupplyChainIntegration() {
                   </div>
                   <div className="flex justify-end pt-4">
                     <Button onClick={handleViewSupplierPerformance} variant="outline">
-                      View Full Supplier Page
+                      {t('dashboard.supply_chain.view_full_supplier_page')}
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -730,7 +732,7 @@ export function SupplyChainIntegration() {
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="w-full justify-start">
                     <AlertTriangle className="mr-2 h-4 w-4" />
-                    Stock Alerts
+                    {t('dashboard.supply_chain.stock_alerts')}
                     {stockAlerts.length > 0 && (
                       <Badge variant="destructive" className="ml-auto">
                         {stockAlerts.length}
@@ -740,7 +742,7 @@ export function SupplyChainIntegration() {
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
-                    <DialogTitle>Stock Alerts & Notifications</DialogTitle>
+                    <DialogTitle>{t('dashboard.supply_chain.stock_alerts_notifications')}</DialogTitle>
                   </DialogHeader>
                   <div className="max-h-96 overflow-y-auto space-y-3">
                     {stockAlerts.length > 0 ? (
@@ -769,8 +771,8 @@ export function SupplyChainIntegration() {
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                        <p>No active stock alerts</p>
-                        <p className="text-sm">All inventory levels are within normal ranges</p>
+                        <p>{t('dashboard.supply_chain.no_active_stock_alerts')}</p>
+                        <p className="text-sm">{t('dashboard.supply_chain.inventory_levels_normal')}</p>
                       </div>
                     )}
                   </div>
@@ -786,20 +788,20 @@ export function SupplyChainIntegration() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-orange-700">
                 <AlertTriangle className="h-5 w-5" />
-                Current Alerts
+                {t('dashboard.supply_chain.current_alerts')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {stats.lowStockItems > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Inventory items running low</span>
-                  <Badge variant="destructive">{stats.lowStockItems} items</Badge>
+                  <span className="text-sm">{t('dashboard.supply_chain.inventory_items_running_low')}</span>
+                  <Badge variant="destructive">{stats.lowStockItems} {t('dashboard.supply_chain.items_label')}</Badge>
                 </div>
               )}
               {stats.lowStockMedications > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Medications running low</span>
-                  <Badge variant="destructive">{stats.lowStockMedications} medications</Badge>
+                  <span className="text-sm">{t('dashboard.supply_chain.medications_running_low')}</span>
+                  <Badge variant="destructive">{stats.lowStockMedications} {t('dashboard.supply_chain.medications_label')}</Badge>
                 </div>
               )}
             </CardContent>

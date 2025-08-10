@@ -17,6 +17,7 @@ import { ClinicalImage } from '@/app/medical-records/page';
 import { DentalIntegrationService } from '@/services/dental-integration';
 import { useToast } from '@/hooks/use-toast';
 import { toothNames } from '@/lib/data/dental-chart-data';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LinkImageToToothDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ export function LinkImageToToothDialog({
   image, 
   onSuccess 
 }: LinkImageToToothDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [toothNumber, setToothNumber] = React.useState('');
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedTooth, setSelectedTooth] = React.useState<number | null>(null);
@@ -63,8 +65,8 @@ export function LinkImageToToothDialog({
   const handleSubmit = async () => {
     if (!image || !selectedTooth) {
       toast({
-        title: "Missing Information",
-        description: "Please select a tooth number to link the image.",
+  title: t('medical_records.missing_information'),
+  description: t('medical_records.select_tooth_to_link'),
         variant: "destructive"
       });
       return;
@@ -97,8 +99,8 @@ export function LinkImageToToothDialog({
       );
 
       toast({
-        title: "Image Linked Successfully",
-        description: `Clinical image linked to tooth #${selectedTooth} and medical record created.`,
+        title: t('medical_records.toast.image_linked'),
+        description: t('medical_records.toast.image_linked_desc'),
       });
 
       onSuccess?.();
@@ -107,8 +109,8 @@ export function LinkImageToToothDialog({
     } catch (error) {
       console.error('Error linking image to tooth:', error);
       toast({
-        title: "Error",
-        description: "Failed to link image to tooth. Please try again.",
+        title: t('medical_records.toast.error_creating_record'),
+        description: t('medical_records.toast.error_creating_record'),
         variant: "destructive"
       });
     } finally {
@@ -132,14 +134,14 @@ export function LinkImageToToothDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <LinkIcon className="h-5 w-5" />
-            Link Image to Tooth
+            {t('medical_records.link_image_to_tooth')}
           </DialogTitle>
           <DialogDescription>
-            Link this clinical image to a specific tooth for better organization and treatment tracking.
+            {t('medical_records.link_image_description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,12 +163,12 @@ export function LinkImageToToothDialog({
           {/* Tooth Selection */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="tooth-search">Search for Tooth</Label>
+        <Label htmlFor="tooth-search">{t('medical_records.search_for_tooth')}</Label>
               <div className="relative mt-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="tooth-search"
-                  placeholder="Search by tooth number or name..."
+          placeholder={t('medical_records.search_tooth_placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -175,7 +177,7 @@ export function LinkImageToToothDialog({
             </div>
 
             <div>
-              <Label>Select Tooth Number</Label>
+        <Label>{t('medical_records.select_tooth_number')}</Label>
               <div className="grid grid-cols-8 gap-2 mt-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
                 {filteredTeeth.map(num => (
                   <Button
@@ -191,7 +193,7 @@ export function LinkImageToToothDialog({
               </div>
               {filteredTeeth.length === 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  No teeth found matching your search.
+          {t('medical_records.no_teeth_found')}
                 </p>
               )}
             </div>
@@ -199,7 +201,7 @@ export function LinkImageToToothDialog({
             {selectedTooth && (
               <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Selected: Tooth #{selectedTooth}</span>
+                  <span className="font-medium">{t('medical_records.selected_tooth', { tooth: selectedTooth.toString() })}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -209,7 +211,7 @@ export function LinkImageToToothDialog({
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {toothNames[selectedTooth] || 'Unknown tooth'}
+                  {toothNames[selectedTooth] || t('medical_records.unknown_tooth')}
                 </p>
               </div>
             )}
@@ -217,11 +219,11 @@ export function LinkImageToToothDialog({
 
           {/* Manual Input */}
           <div>
-            <Label htmlFor="tooth-number">Or Enter Tooth Number Manually</Label>
+            <Label htmlFor="tooth-number">{t('medical_records.enter_tooth_number_manually')}</Label>
             <Input
               id="tooth-number"
               type="number"
-              placeholder="Enter tooth number (11-48)"
+              placeholder={t('medical_records.enter_tooth_number_placeholder')}
               value={toothNumber}
               onChange={(e) => {
                 setToothNumber(e.target.value);
@@ -243,14 +245,14 @@ export function LinkImageToToothDialog({
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!selectedTooth || loading}
               className="flex-1"
             >
-              {loading ? "Linking..." : "Link to Tooth"}
+              {loading ? t('medical_records.linking') : t('medical_records.link_to_tooth')}
             </Button>
           </div>
         </div>

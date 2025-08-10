@@ -30,19 +30,20 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 import type { Patient } from '@/app/patients/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const lineItemSchema = z.object({
   id: z.string(),
-  description: z.string().min(1, "Description is required"),
-  quantity: z.coerce.number().min(1, "Qty must be at least 1"),
-  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+  description: z.string().min(1, 'validation.description_required'),
+  quantity: z.coerce.number().min(1, 'billing.validation.qty_min'),
+  unitPrice: z.coerce.number().min(0, 'billing.validation.price_positive'),
 });
 
 const invoiceSchema = z.object({
-  patient: z.string({ required_error: 'Patient is required.' }),
-  issueDate: z.date({ required_error: 'Issue date is required.' }),
-  dueDate: z.date({ required_error: 'Due date is required.' }),
-  items: z.array(lineItemSchema).min(1, "At least one item is required."),
+  patient: z.string({ required_error: 'validation.patient_required' }),
+  issueDate: z.date({ required_error: 'billing.validation.issue_date_required' }),
+  dueDate: z.date({ required_error: 'billing.validation.due_date_required' }),
+  items: z.array(lineItemSchema).min(1, 'billing.validation.at_least_one_item'),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -54,6 +55,7 @@ interface NewInvoiceDialogProps {
 
 export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { t, language, isRTL } = useLanguage();
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
@@ -72,10 +74,10 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
     const patientDetails = patients.find(p => p.id === data.patient);
     const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     onSave({
-        patient: patientDetails?.name || 'Unknown Patient',
-        patientId: patientDetails?.id || 'N/A',
-        issueDate: format(data.issueDate, "MMM d, yyyy"),
-        dueDate: format(data.dueDate, "MMM d, yyyy"),
+  patient: patientDetails?.name || t('patients.patient'),
+  patientId: patientDetails?.id || t('common.na'),
+  issueDate: data.issueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+  dueDate: data.dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
         totalAmount,
         items: data.items,
     });
@@ -87,16 +89,16 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="h-9 sm:h-10">
-          <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">New Invoice</span>
-          <span className="sm:hidden">Invoice</span>
+          <Plus className={cn("h-3 w-3 sm:h-4 sm:w-4", isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2')} />
+          <span className="hidden sm:inline">{t('billing.new_invoice')}</span>
+          <span className="sm:hidden">{t('billing.invoice')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader className="space-y-1 sm:space-y-2">
-          <DialogTitle className="text-lg sm:text-xl">Create New Invoice</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{t('billing.create_new_invoice')}</DialogTitle>
           <DialogDescription className="text-sm">
-            Fill out the details to create a new invoice for a patient.
+            {t('billing.invoice_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -107,11 +109,11 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Patient *</FormLabel>
+                    <FormLabel className="text-sm font-medium">{t('billing.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select patient" />
+                          <SelectValue placeholder={t('patients.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -129,7 +131,7 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 name="issueDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel className="text-sm font-medium">Issue Date *</FormLabel>
+                    <FormLabel className="text-sm font-medium">{t('billing.issue_date')} *</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -140,8 +142,8 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : <span>{t('appointments.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -164,7 +166,7 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel className="text-sm font-medium">Due Date *</FormLabel>
+                    <FormLabel className="text-sm font-medium">{t('billing.due_date')} *</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -175,8 +177,8 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : <span>{t('appointments.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -197,7 +199,7 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
             </div>
             
             <div className="space-y-3 sm:space-y-4">
-              <FormLabel className="text-sm font-medium">Line Items *</FormLabel>
+              <FormLabel className="text-sm font-medium">{t('billing.line_items')} *</FormLabel>
               <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-12">
@@ -206,10 +208,10 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                       name={`items.${index}.description`}
                       render={({ field }) => (
                         <FormItem className="sm:col-span-6">
-                          <FormLabel className="sr-only sm:not-sr-only text-xs">Description</FormLabel>
+                          <FormLabel className="sr-only sm:not-sr-only text-xs">{t('common.description')}</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Service or product description"
+                              placeholder={t('billing.service_description_placeholder')}
                               className="h-9 text-sm"
                               {...field}
                             />
@@ -223,11 +225,11 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                       name={`items.${index}.quantity`}
                       render={({ field }) => (
                         <FormItem className="sm:col-span-2">
-                          <FormLabel className="sr-only sm:not-sr-only text-xs">Qty</FormLabel>
+                          <FormLabel className="sr-only sm:not-sr-only text-xs">{t('billing.quantity')}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Qty"
+                              placeholder={t('billing.quantity_placeholder')}
                               className="h-9 text-sm"
                               {...field}
                             />
@@ -241,11 +243,11 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                       name={`items.${index}.unitPrice`}
                       render={({ field }) => (
                         <FormItem className="sm:col-span-3">
-                          <FormLabel className="sr-only sm:not-sr-only text-xs">Unit Price</FormLabel>
+                          <FormLabel className="sr-only sm:not-sr-only text-xs">{t('billing.unit_price')}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Unit Price"
+                              placeholder={t('billing.unit_price_placeholder')}
                               className="h-9 text-sm"
                               {...field}
                             />
@@ -279,7 +281,7 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                     unitPrice: 0 
                   })}
                 >
-                  <Plus className="mr-2 h-4 w-4" /> Add Item
+                  <Plus className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('billing.add_item')}
                 </Button>
                 <FormMessage>{form.formState.errors.items?.message}</FormMessage>
               </div>
@@ -292,13 +294,13 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 className="w-full sm:w-auto order-2 sm:order-1"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button 
                 type="submit" 
                 className="w-full sm:w-auto order-1 sm:order-2"
               >
-                Create Invoice
+                {t('billing.create_invoice')}
               </Button>
             </DialogFooter>
           </form>

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const patientNavItems = [
   {
@@ -67,6 +68,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const { isRTL, t } = useLanguage();
 
   const handleSignOut = async () => {
     try {
@@ -78,14 +80,14 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className={cn('min-h-screen bg-gray-50 flex', isRTL && 'flex-row-reverse')}>
       {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
+      <div className={cn('hidden md:flex md:w-64 md:flex-col', isRTL && 'md:order-last')}> 
         <div className="flex flex-col flex-grow bg-white shadow-sm">
           {/* Logo */}
           <div className="flex items-center h-16 flex-shrink-0 px-4 border-b">
-            <Heart className="h-8 w-8 text-primary mr-2" />
-            <span className="text-xl font-bold text-gray-900">CairoDental</span>
+            <Heart className={cn('h-8 w-8 text-primary', isRTL ? 'ml-2' : 'mr-2')} />
+            <span className="text-xl font-bold text-gray-900">{t('dashboard.clinic_name')}</span>
           </div>
 
           {/* User Info */}
@@ -111,7 +113,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             {patientNavItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link
+        <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
@@ -123,7 +125,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                 >
                   <item.icon
                     className={cn(
-                      'mr-3 flex-shrink-0 h-5 w-5',
+          'flex-shrink-0 h-5 w-5',
+          isRTL ? 'ml-3' : 'mr-3',
                       isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
                     )}
                   />
@@ -146,8 +149,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             <div className="space-y-2">
               <Link href="/patient-settings">
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  <Settings className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                  {t('nav.settings')}
                 </Button>
               </Link>
               <Button 
@@ -156,8 +159,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                 size="sm"
                 onClick={handleSignOut}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                <LogOut className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                {t('nav.sign_out')}
               </Button>
             </div>
           </div>
@@ -178,9 +181,9 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
         <div className="md:hidden">
           <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
             <div className="flex-1 px-4 flex justify-between items-center">
-              <div className="flex items-center space-x-2">
+              <div className={cn('flex items-center', isRTL ? 'space-x-reverse space-x-2' : 'space-x-2')}>
                 <Heart className="h-6 w-6 text-primary" />
-                <span className="text-lg font-bold">CairoDental</span>
+                <span className="text-lg font-bold">{t('dashboard.clinic_name')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Bell className="h-5 w-5 text-gray-400" />

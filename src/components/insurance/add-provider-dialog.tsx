@@ -18,6 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { UserPlus } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 
 const providerSchema = z.object({
   name: z.string().min(1, 'Provider name is required.'),
@@ -33,6 +35,7 @@ interface AddProviderDialogProps {
 }
 
 export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const form = useForm<ProviderFormData>({
     resolver: zodResolver(providerSchema),
@@ -54,15 +57,15 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Provider
+          <UserPlus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+          {t('insurance.add_provider')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Insurance Provider</DialogTitle>
+          <DialogTitle>{t('insurance.add_insurance_provider')}</DialogTitle>
           <DialogDescription>
-            Enter the details for a new insurance provider.
+            {t('insurance.add_insurance_provider_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -72,9 +75,9 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Provider Name *</FormLabel>
+                  <FormLabel>{t('insurance.provider_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Misr Insurance" {...field} />
+                    <Input placeholder={t('insurance.placeholder.provider_name_example')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,9 +88,9 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t('insurance.phone')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., 19001" {...field} />
+                    <Input placeholder={t('insurance.placeholder.phone_example')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -97,9 +100,9 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('insurance.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g., claims@misr.com" {...field} />
+                    <Input type="email" placeholder={t('insurance.placeholder.email_example')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -110,18 +113,18 @@ export function AddProviderDialog({ onSave }: AddProviderDialogProps) {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t('insurance.address')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., 123 Nile St, Cairo" {...field} />
+                    <Input placeholder={t('insurance.placeholder.address_example')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
-              <Button type="submit">Save Provider</Button>
+              <Button type="submit">{t('insurance.save_provider')}</Button>
             </DialogFooter>
           </form>
         </Form>

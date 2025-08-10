@@ -33,6 +33,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
@@ -52,6 +53,7 @@ interface NewRecordDialogProps {
 }
 
 export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -94,29 +96,29 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          New Record
+      {t('medical_records.new_record')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Create New Medical Record</DialogTitle>
-          <DialogDescription>
-            Fill in the patient's information to create a new medical record.
-          </DialogDescription>
+      <DialogTitle>{t('medical_records.create_new_record')}</DialogTitle>
+      <DialogDescription>
+    {t('medical_records.fill_in_info')}
+      </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+        <FormLabel>{t('common.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+          <SelectValue placeholder={t('medical_records.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -136,11 +138,11 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                 name="provider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Provider *</FormLabel>
+        <FormLabel>{t('medical_records.provider')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select provider" />
+          <SelectValue placeholder={t('medical_records.select_provider')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -162,11 +164,11 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Record Type *</FormLabel>
+        <FormLabel>{t('medical_records.record_type')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+          <SelectValue placeholder={t('medical_records.select_type')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -186,7 +188,7 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+        <FormLabel>{t('common.date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -195,7 +197,7 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+            {field.value ? format(field.value, "PPP") : <span>{t('medical_records.pick_a_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -216,9 +218,9 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
               name="complaint"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chief Complaint</FormLabel>
+      <FormLabel>{t('medical_records.chief_complaint')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Tooth pain on upper right" {...field} />
+        <Input placeholder={t('medical_records.complaint_placeholder')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -228,16 +230,16 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+      <FormLabel>{t('medical_records.notes')}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Add subjective, objective, assessment, and plan notes here." className="min-h-[120px]" {...field} />
+        <Textarea placeholder={t('medical_records.notes_placeholder')} className="min-h-[120px]" {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Record</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('medical_records.save_record')}</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -4,6 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Tooth, ToothCondition } from "@/app/dental-chart/page";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const upperJawTeeth = [
   { id: 18, x: 50, y: 50 }, { id: 17, x: 80, y: 45 }, { id: 16, x: 110, y: 42 }, { id: 15, x: 140, y: 40 }, { id: 14, x: 170, y: 40 }, { id: 13, x: 200, y: 42 }, { id: 12, x: 230, y: 45 }, { id: 11, x: 260, y: 50 },
@@ -67,14 +68,15 @@ interface InteractiveDentalChartProps {
 }
 
 export default function InteractiveDentalChart({ chartData, selectedToothId, highlightedCondition, onToothSelect }: InteractiveDentalChartProps) {
+  const { t } = useLanguage();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Interactive Dental Chart</CardTitle>
+        <CardTitle>{t('dental_chart.interactive_chart')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
         <svg viewBox="0 0 550 220" className="w-full">
-          <text x="275" y="20" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">Upper Jaw (Maxilla)</text>
+          <text x="275" y="20" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">{t('dental_chart.upper_jaw')}</text>
           <path d="M 30 60 Q 275 100 520 60" stroke="hsl(var(--border))" fill="none" strokeWidth="1" />
           {upperJawTeeth.map(tooth => {
             const currentCondition = chartData[tooth.id]?.condition || 'healthy';
@@ -90,7 +92,7 @@ export default function InteractiveDentalChart({ chartData, selectedToothId, hig
             )
           })}
 
-          <text x="275" y="195" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">Lower Jaw (Mandible)</text>
+          <text x="275" y="195" textAnchor="middle" className="text-sm font-semibold fill-muted-foreground">{t('dental_chart.lower_jaw')}</text>
           <path d="M 30 140 Q 275 100 520 140" stroke="hsl(var(--border))" fill="none" strokeWidth="1" />
           {lowerJawTeeth.map(tooth => {
              const currentCondition = chartData[tooth.id]?.condition || 'healthy';

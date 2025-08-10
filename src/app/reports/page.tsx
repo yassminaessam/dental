@@ -2,35 +2,36 @@
 'use client';
 
 import React from 'react';
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import { Button } from "../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../../components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+} from "../../components/ui/select";
+import { cn } from "../../lib/utils";
 import { Download, DollarSign, Users, Calendar, TrendingUp, Loader2 } from "lucide-react";
-import RevenueTrendChart from "@/components/reports/revenue-trend-chart";
-import PatientGrowthChart from "@/components/reports/patient-growth-chart";
-import TreatmentsByTypeChart from "@/components/reports/treatments-by-type-chart";
-import AppointmentDistributionChart from "@/components/reports/appointment-distribution-chart";
-import { useToast } from '@/hooks/use-toast';
-import { getCollection } from '@/services/firestore';
+import RevenueTrendChart from "../../components/reports/revenue-trend-chart";
+import PatientGrowthChart from "../../components/reports/patient-growth-chart";
+import TreatmentsByTypeChart from "../../components/reports/treatments-by-type-chart";
+import AppointmentDistributionChart from "../../components/reports/appointment-distribution-chart";
+import { useToast } from '../../hooks/use-toast';
+import { getCollection } from '../../services/firestore';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
 import { format, startOfMonth, isValid } from 'date-fns';
 import { Treatment } from '../treatments/page';
 import { Transaction } from '../financial/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const iconMap = {
     DollarSign,
@@ -46,6 +47,9 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = React.useState('30');
   const [exportFormat, setExportFormat] = React.useState('csv');
   const { toast } = useToast();
+  const { t, language } = useLanguage();
+  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
+  const currencyFmt = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 });
 
   const [totalRevenue, setTotalRevenue] = React.useState(0);
   const [newPatients, setNewPatients] = React.useState(0);
@@ -82,7 +86,12 @@ export default function ReportsPage() {
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        setNewPatients(patients.filter(p => isValid(p.lastVisit) && p.lastVisit > thirtyDaysAgo).length);
+        setNewPatients(
+          patients.filter(p => {
+            const last = new Date((p as any).lastVisit);
+            return isValid(last) && last > thirtyDaysAgo;
+          }).length
+        );
 
         setTotalAppointments(appointments.length);
         
@@ -151,44 +160,44 @@ export default function ReportsPage() {
 
   const reportsPageStats = [
     {
-      title: "Total Revenue",
-      value: `EGP ${totalRevenue.toLocaleString()}`,
-      description: "All time revenue",
+      title: t('reports.total_revenue'),
+      value: currencyFmt.format(totalRevenue),
+      description: t('reports.all_time_revenue'),
       icon: "DollarSign",
     },
     {
-      title: "New Patients",
+      title: t('reports.new_patients'),
       value: `${newPatients}`,
-      description: "In the last 30 days",
+      description: t('reports.last_30_days'),
       icon: "Users",
     },
     {
-      title: "Total Appointments",
+      title: t('reports.total_appointments'),
       value: `${totalAppointments}`,
-      description: "All time",
+      description: t('reports.all_time'),
       icon: "Calendar",
     },
     {
-      title: "Appointment Show Rate",
+      title: t('reports.appointment_show_rate'),
       value: `${showRate.toFixed(1)}%`,
-      description: "Confirmed appointments",
+      description: t('reports.confirmed_appointments'),
       icon: "TrendingUp",
     },
   ];
 
   const handleExport = () => {
     toast({
-        title: "Exporting Report",
-        description: `Your report for the last ${dateRange} days is being generated as a ${exportFormat.toUpperCase()} file.`,
+        title: t('reports.toast.generating_report'),
+        description: t('reports.toast.generating_report_desc'),
     });
   };
 
   if (loading) {
     return (
-      <DashboardLayout>
+  <DashboardLayout>
         <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin" />
-            <p className="text-muted-foreground">Generating reports...</p>
+    <p className="text-muted-foreground">{t('reports.generating_reports')}</p>
         </main>
       </DashboardLayout>
     )
@@ -196,33 +205,33 @@ export default function ReportsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+      <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
           <div className="flex items-center gap-2">
             <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Last 30 days" />
+        <SelectValue placeholder={t('reports.last_30_days')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="60">Last 60 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
+        <SelectItem value="30">{t('reports.last_30_days')}</SelectItem>
+        <SelectItem value="60">{t('reports.last_60_days')}</SelectItem>
+        <SelectItem value="90">{t('reports.last_90_days')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={exportFormat} onValueChange={setExportFormat}>
               <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="CSV" />
+        <SelectValue placeholder={t('reports.csv')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="csv">CSV</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="png">PNG</SelectItem>
+        <SelectItem value="csv">{t('reports.csv')}</SelectItem>
+        <SelectItem value="pdf">{t('reports.pdf')}</SelectItem>
+        <SelectItem value="png">{t('reports.png')}</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
-              Export Report
+      {t('reports.export_report')}
             </Button>
           </div>
         </div>
@@ -246,9 +255,9 @@ export default function ReportsPage() {
         </div>
         
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card>
+      <Card>
                 <CardHeader>
-                    <CardTitle>Revenue Trend</CardTitle>
+        <CardTitle>{t('reports.revenue_trend')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <RevenueTrendChart data={revenueTrendData} />
@@ -256,7 +265,7 @@ export default function ReportsPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Patient Growth</CardTitle>
+        <CardTitle>{t('reports.patient_growth')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <PatientGrowthChart data={patientGrowthData} />
@@ -264,7 +273,7 @@ export default function ReportsPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Treatments by Type</CardTitle>
+        <CardTitle>{t('reports.treatments_by_type')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <TreatmentsByTypeChart data={treatmentsByTypeData} />
@@ -272,7 +281,7 @@ export default function ReportsPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Appointment Distribution</CardTitle>
+        <CardTitle>{t('reports.appointment_distribution')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <AppointmentDistributionChart data={appointmentDistributionData} />

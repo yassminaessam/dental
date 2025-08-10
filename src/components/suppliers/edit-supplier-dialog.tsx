@@ -18,11 +18,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Supplier } from '@/app/suppliers/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const supplierSchema = z.object({
-  name: z.string().min(1, 'Supplier name is required'),
+  name: z.string().min(1, 'suppliers.validation.name_required'),
   phone: z.string().optional(),
-  email: z.string().email('Invalid email address').optional(),
+  email: z.string().email('suppliers.validation.invalid_email').optional(),
   address: z.string().optional(),
   category: z.string().optional(),
   paymentTerms: z.string().optional(),
@@ -41,6 +42,7 @@ interface EditSupplierDialogProps {
 }
 
 export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: EditSupplierDialogProps) {
+  const { t } = useLanguage();
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
   });
@@ -71,9 +73,9 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Supplier</DialogTitle>
+          <DialogTitle>{t('suppliers.edit_supplier')}</DialogTitle>
           <DialogDescription>
-            Update the details for this supplier.
+            {t('suppliers.edit_supplier_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -83,11 +85,13 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supplier Name *</FormLabel>
+                  <FormLabel>{t('suppliers.supplier_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., MedPharma Supplies" {...field} />
+                    <Input placeholder={t('suppliers.placeholder.supplier_name')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name?.message && t(String(form.formState.errors.name.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -97,9 +101,9 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('suppliers.phone') || t('common.phone')}</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1-555-0123" {...field} />
+                      <Input type="tel" placeholder={t('suppliers.phone_placeholder') || '+1-555-0123'} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -109,11 +113,13 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('suppliers.email') || 'Email'}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="orders@medpharma.com" {...field} />
+                      <Input type="email" placeholder={t('suppliers.placeholder.email')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.email?.message && t(String(form.formState.errors.email.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -123,9 +129,9 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t('suppliers.address') || 'Address'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Medical District" {...field} />
+                    <Input placeholder={t('suppliers.placeholder.address')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -136,9 +142,9 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('suppliers.category')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Equipment" {...field} />
+                      <Input placeholder={t('suppliers.placeholder.category')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -148,11 +154,11 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                 name="paymentTerms"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Terms</FormLabel>
+                    <FormLabel>{t('suppliers.payment_terms')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select terms" />
+                          <SelectValue placeholder={t('suppliers.select_payment_terms')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -172,24 +178,24 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>{t('common.status')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder={t('common.select_status')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="active">{t('common.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

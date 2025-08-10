@@ -33,6 +33,7 @@ import type { MedicalRecord } from '@/app/medical-records/page';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import { getCollection } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({
   patient: z.string({ required_error: "Patient is required." }),
@@ -56,6 +57,7 @@ interface EditRecordDialogProps {
 }
 
 export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRecordDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
@@ -124,24 +126,22 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Medical Record</DialogTitle>
-          <DialogDescription>
-            Update the details for record {record?.id}.
-          </DialogDescription>
+          <DialogTitle>{t('medical_records.edit_record')}</DialogTitle>
+          <DialogDescription>{t('medical_records.update_record')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+                    <FormLabel>{t('common.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+                          <SelectValue placeholder={t('medical_records.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -161,11 +161,11 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                 name="provider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Provider *</FormLabel>
+                    <FormLabel>{t('medical_records.provider')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select provider" />
+                          <SelectValue placeholder={t('medical_records.select_provider')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -187,11 +187,11 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Record Type *</FormLabel>
+                    <FormLabel>{t('medical_records.record_type')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder={t('medical_records.select_type')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -211,7 +211,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+                    <FormLabel>{t('common.date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -220,7 +220,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            {field.value ? format(field.value, "PPP") : <span>{t('medical_records.pick_a_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -241,9 +241,9 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
               name="complaint"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chief Complaint</FormLabel>
+                  <FormLabel>{t('medical_records.chief_complaint')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Tooth pain on upper right" {...field} />
+                    <Input placeholder={t('medical_records.complaint_placeholder')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -253,10 +253,10 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>{t('medical_records.notes')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Add subjective, objective, assessment, and plan notes here." 
+                      placeholder={t('medical_records.notes_placeholder')} 
                       className="min-h-[120px]" 
                       {...field} 
                     />
@@ -269,16 +269,16 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
+                    <FormLabel>{t('common.status')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder={t('medical_records.select_status')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Draft">Draft</SelectItem>
-                        <SelectItem value="Final">Final</SelectItem>
+                        <SelectItem value="Draft">{t('medical_records.status_draft')}</SelectItem>
+                        <SelectItem value="Final">{t('medical_records.status_final')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -286,8 +286,8 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                 )}
               />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Camera, Calendar, ExternalLink, Plus, AlertCircle, Eye, Download, Link as LinkIcon } from "lucide-react";
 import { ClinicalImage } from '@/app/medical-records/page';
 import { toothNames } from '@/lib/data/dental-chart-data';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ToothImagesDialogProps {
   open: boolean;
@@ -38,7 +39,8 @@ export function ToothImagesDialog({
   onLinkNewImage,
   onNavigateToUploadImages
 }: ToothImagesDialogProps) {
-  const toothName = toothNames[toothNumber] || `Tooth #${toothNumber}`;
+  const { t } = useLanguage();
+  const toothName = toothNames[toothNumber] || t('dental_chart.tooth_number_display', { id: toothNumber });
 
   const getImageTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -69,10 +71,10 @@ export function ToothImagesDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Clinical Images for {toothName}
+            {t('dental_chart.clinical_images')} {t('common.for') ? t('common.for') : ''} {toothName}
           </DialogTitle>
           <DialogDescription>
-            All clinical images linked to {toothName} for patient {patientName}
+            {t('dental_chart.image_linked_success_desc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -82,7 +84,7 @@ export function ToothImagesDialog({
             <Card className="p-3">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{images.length}</div>
-                <div className="text-xs text-muted-foreground">Total Images</div>
+                <div className="text-xs text-muted-foreground">{t('dental_chart.images_tab')}</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -90,7 +92,7 @@ export function ToothImagesDialog({
                 <div className="text-2xl font-bold text-blue-600">
                   {(groupedImages['X-Ray'] || []).length + (groupedImages['Radiograph'] || []).length}
                 </div>
-                <div className="text-xs text-muted-foreground">X-Rays</div>
+                <div className="text-xs text-muted-foreground">X-Ray</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -98,7 +100,7 @@ export function ToothImagesDialog({
                 <div className="text-2xl font-bold text-green-600">
                   {(groupedImages['Intraoral'] || []).length + (groupedImages['Clinical Photo'] || []).length}
                 </div>
-                <div className="text-xs text-muted-foreground">Clinical Photos</div>
+                <div className="text-xs text-muted-foreground">{t('dental_chart.clinical_images')}</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -106,7 +108,7 @@ export function ToothImagesDialog({
                 <div className="text-2xl font-bold text-purple-600">
                   {Object.keys(groupedImages).length}
                 </div>
-                <div className="text-xs text-muted-foreground">Image Types</div>
+                <div className="text-xs text-muted-foreground">{t('dental_chart.available_images')}</div>
               </div>
             </Card>
           </div>
@@ -114,18 +116,18 @@ export function ToothImagesDialog({
           {/* Images by Type */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium">All Images ({images.length})</h4>
+      <h4 className="font-medium">{t('dental_chart.images_tab')} ({images.length})</h4>
               <div className="flex gap-2">
                 {onLinkNewImage && (
                   <Button variant="outline" size="sm" onClick={onLinkNewImage}>
                     <LinkIcon className="h-4 w-4 mr-1" />
-                    Link Image
+        {t('dental_chart.link_image')}
                   </Button>
                 )}
                 {onNavigateToUploadImages && (
                   <Button variant="outline" size="sm" onClick={onNavigateToUploadImages}>
                     <ExternalLink className="h-4 w-4 mr-1" />
-                    Medical Records
+        {t('dental_chart.medical_records')}
                   </Button>
                 )}
               </div>
@@ -139,7 +141,7 @@ export function ToothImagesDialog({
                       <div className="flex items-center gap-2">
                         <h5 className="font-medium text-sm">{type}</h5>
                         <Badge variant="outline" className="text-xs">
-                          {typeImages.length} image{typeImages.length > 1 ? 's' : ''}
+                          {typeImages.length} {typeImages.length > 1 ? t('dental_chart.images_tab') : t('newImage')}
                         </Badge>
                       </div>
                       
@@ -196,13 +198,13 @@ export function ToothImagesDialog({
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <div className="text-center space-y-2">
+                    <div className="text-center space-y-2">
                                         <Camera className="h-8 w-8 text-muted-foreground mx-auto" />
                                         <div className="text-xs text-muted-foreground">
-                                          {image.type} Image
+                      {image.type}
                                         </div>
                                         <div className="text-xs text-red-500">
-                                          Image URL not available
+                      {t('dental_chart.error_loading_images')}
                                         </div>
                                       </div>
                                     </div>
@@ -212,16 +214,14 @@ export function ToothImagesDialog({
                                 {image.caption && (
                                   <div>
                                     <h6 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                      Caption
+                    {t('imageCaption')}
                                     </h6>
                                     <p className="text-sm">{image.caption}</p>
                                   </div>
                                 )}
 
                                 <div className="flex items-center justify-between pt-2">
-                                  <div className="text-xs text-muted-foreground">
-                                    Linked to {toothName}
-                                  </div>
+                  <div className="text-xs text-muted-foreground">{t('dental_chart.image_linked_success')}</div>
                                   <div className="flex gap-1">
                                     {onViewFullImage && (
                                       <Button
@@ -230,7 +230,7 @@ export function ToothImagesDialog({
                                         onClick={() => onViewFullImage(image)}
                                         className="h-auto p-0 text-xs"
                                       >
-                                        View Full →
+                    {t('table.view')} →
                                       </Button>
                                     )}
                                   </div>
@@ -248,15 +248,13 @@ export function ToothImagesDialog({
                   <div className="text-center space-y-3">
                     <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
                     <div>
-                      <h4 className="font-medium">No Clinical Images</h4>
-                      <p className="text-sm text-muted-foreground">
-                        No clinical images have been linked to {toothName} yet.
-                      </p>
+            <h4 className="font-medium">{t('dental_chart.no_clinical_images')}</h4>
+            <p className="text-sm text-muted-foreground">{t('dental_chart.no_unlinked_images_for_patient')}</p>
                     </div>
                     {onLinkNewImage && (
                       <Button variant="outline" onClick={onLinkNewImage}>
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        Link First Image
+            {t('dental_chart.link_image')}
                       </Button>
                     )}
                   </div>
@@ -268,12 +266,10 @@ export function ToothImagesDialog({
           {/* Quick Actions */}
           <Separator />
           <div className="flex justify-between items-center pt-2">
-            <div className="text-sm text-muted-foreground">
-              Images are automatically synced between dental chart and medical records
-            </div>
+      <div className="text-sm text-muted-foreground">{t('dental_chart.integration_warning')}</div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Close
+        {t('common.close')}
               </Button>
             </div>
           </div>

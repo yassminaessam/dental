@@ -8,29 +8,35 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  appointments: {
-    label: "Appointments",
-    color: "hsl(var(--chart-4))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    appointments: {
+      label: t('appointments.title'),
+      color: "hsl(var(--chart-4))",
+    },
+  } satisfies ChartConfig;
+}
 
 interface StaffPerformanceChartProps {
     data: { name: string; appointments: number; }[]
 }
 
 export default function StaffPerformanceChart({ data }: StaffPerformanceChartProps) {
-    if (!data || data.length === 0) {
-        return (
-            <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
-                No staff performance data available.
-            </div>
-        );
-    }
+  const { t, language } = useLanguage();
+  const chartConfig = useChartConfig();
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
+        {t('analytics.empty.staff_performance')}
+      </div>
+    );
+  }
 
   return (
-    <ChartContainer config={chartConfig} className="h-[350px] w-full">
+  <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
         accessibilityLayer
         data={data}
@@ -55,6 +61,7 @@ export default function StaffPerformanceChart({ data }: StaffPerformanceChartPro
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(Number(v))}
         />
         <ChartTooltip
           cursor={false}

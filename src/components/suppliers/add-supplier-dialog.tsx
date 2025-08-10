@@ -20,11 +20,12 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const supplierSchema = z.object({
-  name: z.string().min(1, 'Supplier name is required'),
+  name: z.string().min(1, 'suppliers.validation.name_required'),
   phone: z.string().optional(),
-  email: z.string().email('Invalid email address').optional(),
+  email: z.string().email('suppliers.validation.invalid_email').optional(),
   address: z.string().optional(),
   category: z.string().optional(),
   paymentTerms: z.string().optional(),
@@ -40,6 +41,7 @@ interface AddSupplierDialogProps {
 
 export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { t } = useLanguage();
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
@@ -63,14 +65,14 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Add Supplier
+          {t('suppliers.add_supplier')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Add New Supplier</DialogTitle>
+          <DialogTitle>{t('suppliers.add_new_supplier')}</DialogTitle>
           <DialogDescription>
-            Enter the details of the new supplier.
+            {t('suppliers.add_supplier_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -80,11 +82,13 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supplier Name *</FormLabel>
+                  <FormLabel>{t('suppliers.supplier_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Nile Medical Supplies" {...field} />
+                    <Input placeholder={t('suppliers.placeholder.supplier_name')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name?.message && t(String(form.formState.errors.name.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -94,9 +98,9 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('suppliers.phone') || t('common.phone')}</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                      <Input type="tel" placeholder={t('suppliers.phone_placeholder') || '01xxxxxxxxx'} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -106,11 +110,13 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('suppliers.email') || 'Email'}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="sales@nilemedical.com" {...field} />
+                      <Input type="email" placeholder={t('suppliers.placeholder.email')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.email?.message && t(String(form.formState.errors.email.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -120,9 +126,9 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t('suppliers.address') || 'Address'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="45 Industrial Zone, 6th of October City" {...field} />
+                    <Input placeholder={t('suppliers.placeholder.address')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -133,9 +139,9 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('suppliers.category')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Medication" {...field} />
+                      <Input placeholder={t('suppliers.placeholder.category')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -145,11 +151,11 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                 name="paymentTerms"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Terms</FormLabel>
+                    <FormLabel>{t('suppliers.payment_terms')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select terms" />
+                          <SelectValue placeholder={t('suppliers.select_payment_terms')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -165,8 +171,8 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Supplier</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('suppliers.save_supplier')}</Button>
             </DialogFooter>
           </form>
         </Form>

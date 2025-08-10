@@ -48,6 +48,7 @@ import { ComprehensivePatientHistory } from '@/components/patients/comprehensive
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ResponsiveTableWrapper, MobileCard, MobileCardField } from '@/components/ui/responsive-table';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type Patient = {
   id: string;
@@ -90,6 +91,7 @@ export default function PatientsPage() {
   const [showHistory, setShowHistory] = React.useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
 
   React.useEffect(() => {
     async function fetchPatients() {
@@ -97,13 +99,13 @@ export default function PatientsPage() {
         const data = await getCollection<any>('patients');
         setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
       } catch (error) {
-        toast({ title: 'Error fetching patients', description: 'Could not load patient data from the database.', variant: 'destructive' });
+    toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     }
     fetchPatients();
-  }, [toast]);
+  }, [toast, t]);
   
   const patientPageStats = React.useMemo(() => {
     const totalPatients = patients.length;
@@ -116,13 +118,13 @@ export default function PatientsPage() {
     const inactivePatients = patients.filter(p => p.status === 'Inactive').length;
     const averageAge = totalPatients > 0 ? Math.round(patients.reduce((acc, p) => acc + p.age, 0) / totalPatients) : 0;
 
-    return [
-       { title: "Total Patients", value: totalPatients, icon: "User", description: "All patients in the system" },
-       { title: "New Patients (30d)", value: newPatients, icon: "UserPlus", description: "Patients with recent visits", valueClassName: "text-green-600" },
-       { title: "Inactive Patients", value: inactivePatients, icon: "UserMinus", description: "Patients marked as inactive", valueClassName: "text-red-600" },
-       { title: "Average Age", value: averageAge, icon: "UserCheck", description: "Average patient age" },
-    ];
-  }, [patients]);
+   return [
+     { title: t('patients.total_patients'), value: totalPatients, icon: "User", description: t('patients.all_patients_description') },
+     { title: t('patients.new_patients_30d'), value: newPatients, icon: "UserPlus", description: t('patients.recent_visits_description'), valueClassName: "text-green-600" },
+     { title: t('patients.inactive_patients'), value: inactivePatients, icon: "UserMinus", description: t('patients.inactive_description'), valueClassName: "text-red-600" },
+     { title: t('patients.average_age'), value: averageAge, icon: "UserCheck", description: t('patients.average_age_description') },
+   ];
+  }, [patients, t]);
 
 
   const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
@@ -130,9 +132,9 @@ export default function PatientsPage() {
         const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
         await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
         setPatients(prev => [newPatient, ...prev]);
-        toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
+  toast({ title: t('patients.patient_added'), description: t('patients.patient_added_description') });
     } catch (error) {
-        toast({ title: "Error adding patient", variant: "destructive" });
+  toast({ title: t('patients.error_adding'), variant: "destructive" });
     }
   };
 
@@ -141,9 +143,9 @@ export default function PatientsPage() {
         await updateDocument('patients', updatedPatient.id, { ...updatedPatient, dob: updatedPatient.dob.toISOString() });
         setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
         setPatientToEdit(null);
-        toast({ title: "Patient Updated", description: `${updatedPatient.name}'s record has been updated.` });
+  toast({ title: t('patients.patient_updated'), description: t('patients.patient_updated_description') });
     } catch (error) {
-        toast({ title: "Error updating patient", variant: "destructive" });
+  toast({ title: t('patients.error_updating'), variant: "destructive" });
     }
   };
 
@@ -152,10 +154,10 @@ export default function PatientsPage() {
       try {
         await deleteDocument('patients', patientToDelete.id);
         setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
-        toast({ title: "Patient Deleted", description: `${patientToDelete.name}'s record has been deleted.`, variant: "destructive" });
+  toast({ title: t('patients.patient_deleted'), description: t('patients.patient_deleted_description'), variant: "destructive" });
         setPatientToDelete(null);
       } catch (error) {
-        toast({ title: "Error deleting patient", variant: "destructive" });
+  toast({ title: t('patients.error_deleting'), variant: "destructive" });
       }
     }
   };
@@ -178,271 +180,202 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold">Patients</h1>
-          <AddPatientDialog onSave={handleSavePatient} />
-        </div>
+        <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl sm:text-3xl font-bold">{t('patients.title')}</h1>
+            <AddPatientDialog onSave={handleSavePatient} />
+          </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-          {patientPageStats.map((stat) => {
-            const Icon = iconMap[stat.icon as IconKey];
-            return (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className={cn("text-lg sm:text-2xl font-bold", stat.valueClassName)}>
-                    {stat.value}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+            {patientPageStats.map((stat) => {
+              const Icon = iconMap[stat.icon as IconKey];
+              return (
+                <Card key={stat.title}>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </CardTitle>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className={cn('text-lg sm:text-2xl font-bold', stat.valueClassName)}>
+                      {stat.value}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="text-lg sm:text-xl">Patient Directory</CardTitle>
-            <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
-              <div className="relative w-full md:w-auto">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search patients..."
-                  className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+          <Card>
+            <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-lg sm:text-xl">{t('patients.patient_directory')}</CardTitle>
+              <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+                <div className="relative w-full md:w-auto">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder={t('patients.search_patients')}
+                    className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[150px] h-9 sm:h-10">
+                    <SelectValue placeholder={t('patients.select_status')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('common.all_status')}</SelectItem>
+                    <SelectItem value="active">{t('common.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[150px] h-9 sm:h-10">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 sm:p-6">
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : isMobile ? (
-              // Mobile Card View
-              <div className="space-y-4 p-4">
-                {filteredPatients.length > 0 ? (
-                  filteredPatients.map((patient) => (
-                    <MobileCard key={patient.id}>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                          <User className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{`${patient.name} ${patient.lastName}`}</div>
-                          <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setPatientToView(patient)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => setPatientToDelete(patient)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <div className="space-y-2">
-                        <MobileCardField label="Email" value={patient.email} />
-                        <MobileCardField label="Phone" value={patient.phone} />
-                        <MobileCardField label="Status" value={patient.status} />
-                        <MobileCardField label="Last Visit" value={patient.lastVisit} />
-                      </div>
-                    </MobileCard>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <User className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-2 text-sm font-semibold">No patients found</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Try adjusting your search or filters.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Desktop Table View
-              <ResponsiveTableWrapper>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="whitespace-nowrap">Patient</TableHead>
-                      <TableHead className="whitespace-nowrap">Email</TableHead>
-                      <TableHead className="whitespace-nowrap">Phone</TableHead>
-                      <TableHead className="whitespace-nowrap">Date of Birth</TableHead>
-                      <TableHead className="whitespace-nowrap">Address</TableHead>
-                      <TableHead className="whitespace-nowrap">Emergency Contact</TableHead>
-                      <TableHead className="whitespace-nowrap">Insurance Provider</TableHead>
-                      <TableHead className="whitespace-nowrap">Policy Number</TableHead>
-                      <TableHead className="whitespace-nowrap">Medical History</TableHead>
-                      <TableHead className="whitespace-nowrap">Last Visit</TableHead>
-                      <TableHead className="whitespace-nowrap">Status</TableHead>
-                      <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPatients.length > 0 ? (
-                      filteredPatients.map((patient) => (
-                        <TableRow key={patient.id}>
-                          <TableCell className="whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+            </CardHeader>
+            <CardContent className="p-0 sm:p-6">
+              {loading ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  {t('common.loading')}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.email')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('common.phone')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.date_of_birth')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.address')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.emergency_contact')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.insurance_provider')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.policy_number')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.medical_history')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.last_visit')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('common.status')}</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">{t('table.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPatients.length > 0 ? (
+                        filteredPatients.map((patient) => (
+                          <TableRow key={patient.id}>
+                            <TableCell className="whitespace-nowrap">
+                              <div className="flex items-center gap-3">
                                 <User className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                  <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
+                                  <div className="text-xs text-muted-foreground">{t('patients.age')}: {patient.age}</div>
+                                </div>
                               </div>
-                              <div>
-                                <div className="font-medium">{`${patient.name} ${patient.lastName}`}</div>
-                                <div className="text-xs text-muted-foreground">Age: {patient.age}</div>
-                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.phone || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">{format(patient.dob, 'PPP')}</TableCell>
+                            <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <div>{patient.ecName || t('common.na')}</div>
+                              <div className="text-xs text-muted-foreground">{patient.ecPhone || t('common.na')} {patient.ecRelationship ? `(${patient.ecRelationship})` : ''}</div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.insuranceProvider || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.policyNumber || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap max-w-xs truncate">
+                              {patient.medicalHistory && patient.medicalHistory.length > 0
+                                ? patient.medicalHistory.map((h) => h.condition).join(', ')
+                                : t('common.na')}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.status === 'Active' ? t('common.active') : t('common.inactive')}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">{t('table.actions')}</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setPatientToView(patient)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    {t('table.view_details')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPatientForHistory(patient)}>
+                                    <History className="mr-2 h-4 w-4" />
+                                    {t('patients.complete_history')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    {t('table.edit')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {t('table.delete')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={12} className="h-24 text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <User className="h-12 w-12 text-muted-foreground mb-2" />
+                              <h3 className="text-sm font-semibold">{t('patients.no_patients_found')}</h3>
+                              <p className="text-sm text-muted-foreground">{t('patients.adjust_search_filters')}</p>
                             </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.phone}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {format(patient.dob, 'PPP')}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || 'N/A'}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <div>{patient.ecName || 'N/A'}</div>
-                            <div className="text-xs text-muted-foreground">{patient.ecPhone} ({patient.ecRelationship})</div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.insuranceProvider || 'N/A'}</TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.policyNumber || 'N/A'}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {patient.medicalHistory && patient.medicalHistory.length > 0
-                              ? patient.medicalHistory.map(h => h.condition).join(', ')
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
-                          <TableCell className="whitespace-nowrap">{patient.status}</TableCell>
-                          <TableCell className="text-right whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setPatientToView(patient)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPatientForHistory(patient)}>
-                                  <History className="mr-2 h-4 w-4" />
-                                  Complete History
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPatientToEdit(patient)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => setPatientToDelete(patient)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={12} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <User className="h-12 w-12 text-muted-foreground mb-2" />
-                            <h3 className="text-sm font-semibold">No patients found</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Try adjusting your search or filters.
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ResponsiveTableWrapper>
-            )}
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
           </CardContent>
-        </Card>
-      </main>
+          </Card>
+        </main>
 
-      <ViewPatientDialog
-        patient={patientToView}
-        open={!!patientToView}
-        onOpenChange={(isOpen) => !isOpen && setPatientToView(null)}
-      />
-
-      {patientForHistory && (
-        <ComprehensivePatientHistory 
-          patient={patientForHistory}
-          open={!!patientForHistory}
-          onOpenChange={(isOpen) => !isOpen && setPatientForHistory(null)}
+        <ViewPatientDialog
+          patient={patientToView}
+          open={!!patientToView}
+          onOpenChange={(isOpen) => !isOpen && setPatientToView(null)}
         />
-      )}
 
-      {patientToEdit && (
-        <EditPatientDialog
-          patient={patientToEdit}
-          onSave={handleUpdatePatient}
-          open={!!patientToEdit}
-          onOpenChange={(isOpen) => !isOpen && setPatientToEdit(null)}
-        />
-      )}
+        {patientForHistory && (
+          <ComprehensivePatientHistory
+            patient={patientForHistory}
+            open={!!patientForHistory}
+            onOpenChange={(isOpen) => !isOpen && setPatientForHistory(null)}
+          />
+        )}
 
-      <AlertDialog open={!!patientToDelete} onOpenChange={(isOpen) => !isOpen && setPatientToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the patient's record.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePatient}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </DashboardLayout>
+        {patientToEdit && (
+          <EditPatientDialog
+            patient={patientToEdit}
+            onSave={handleUpdatePatient}
+            open={!!patientToEdit}
+            onOpenChange={(isOpen) => !isOpen && setPatientToEdit(null)}
+          />
+        )}
+
+        <AlertDialog open={!!patientToDelete} onOpenChange={(isOpen) => !isOpen && setPatientToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('patients.delete_confirmation')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeletePatient}>{t('common.delete')}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

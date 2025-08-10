@@ -7,27 +7,32 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-    color: "hsl(var(--chart-2))",
-  },
-  expenses: {
-    label: "Expenses",
-    color: "hsl(var(--chart-5))",
-  },
-  profit: {
-    label: "Profit",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    revenue: {
+      label: t('financial.revenue'),
+      color: "hsl(var(--chart-2))",
+    },
+    expenses: {
+      label: t('common.expenses'),
+      color: "hsl(var(--chart-5))",
+    },
+    profit: {
+      label: t('financial.profit'),
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+}
 
 interface RevenueVsExpensesChartProps {
   data: { month: string; revenue: number; expenses: number; profit: number }[];
 }
 
 export default function RevenueVsExpensesChart({ data }: RevenueVsExpensesChartProps) {
+  const chartConfig = useChartConfig();
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart

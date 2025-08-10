@@ -23,12 +23,14 @@ import { useToast } from '@/hooks/use-toast';
 import { updateDocument, getCollection } from '@/services/firestore';
 import { format } from 'date-fns';
 import type { Appointment } from '@/app/appointments/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PendingAppointmentsProps {
   onAppointmentConfirmed?: () => void;
 }
 
 export default function PendingAppointmentsManager({ onAppointmentConfirmed }: PendingAppointmentsProps) {
+  const { t, language } = useLanguage();
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmingIds, setConfirmingIds] = useState<Set<string>>(new Set());
@@ -55,8 +57,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     } catch (error) {
       console.error('Error fetching pending appointments:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch pending appointments",
+        title: t('common.error'),
+        description: t('dashboard.pending.error_fetching'),
         variant: "destructive"
       });
     } finally {
@@ -75,8 +77,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
       });
       
       toast({
-        title: "Appointment Confirmed",
-        description: "The patient will be notified of the confirmation."
+        title: t('dashboard.appointment_confirmed'),
+        description: t('dashboard.appointment_confirmed_desc')
       });
       
       // Remove from pending list
@@ -88,8 +90,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     } catch (error) {
       console.error('Error confirming appointment:', error);
       toast({
-        title: "Error",
-        description: "Failed to confirm appointment. Please try again.",
+        title: t('common.error'),
+        description: t('dashboard.failed_confirm_appointment'),
         variant: "destructive"
       });
     } finally {
@@ -105,8 +107,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     const notes = rejectionNotes[appointmentId];
     if (!notes || notes.trim() === '') {
       toast({
-        title: "Rejection Note Required",
-        description: "Please provide a reason for rejecting this appointment.",
+        title: t('dashboard.reason_for_rejection'),
+        description: t('dashboard.rejection_reason_placeholder'),
         variant: "destructive"
       });
       return;
@@ -123,8 +125,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
       });
       
       toast({
-        title: "Appointment Rejected",
-        description: "The patient will be notified with the reason provided."
+        title: t('dashboard.appointment_rejected'),
+        description: t('dashboard.appointment_rejected_desc')
       });
       
       // Remove from pending list
@@ -143,8 +145,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     } catch (error) {
       console.error('Error rejecting appointment:', error);
       toast({
-        title: "Error",
-        description: "Failed to reject appointment. Please try again.",
+        title: t('common.error'),
+        description: t('dashboard.failed_reject_appointment'),
         variant: "destructive"
       });
     } finally {
@@ -162,13 +164,13 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
         <CardHeader>
           <CardTitle className="flex items-center">
             <Clock className="h-5 w-5 mr-2" />
-            Pending Appointments
+            {t('dashboard.pending_appointments_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-6">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
-            Loading pending appointments...
+            {t('dashboard.loading_pending_appointments')}
           </div>
         </CardContent>
       </Card>
@@ -181,14 +183,14 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
         <CardHeader>
           <CardTitle className="flex items-center">
             <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-            Pending Appointments
+            {t('dashboard.pending_appointments_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert>
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              No pending appointments at this time. All appointment requests have been reviewed.
+              {t('dashboard.all_requests_processed')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -199,13 +201,13 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+    <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <AlertCircle className="h-5 w-5 mr-2 text-orange-500" />
-            Pending Appointments
+      {t('dashboard.pending_appointments_title')}
           </div>
           <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-            {pendingAppointments.length} pending
+      {t('dashboard.pending_count')}: {pendingAppointments.length}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -256,7 +258,7 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="h-3 w-3 text-gray-600" />
-                        <span>Dr. {appointment.doctor}</span>
+                        <span>{t('appointments.doctor')}: {appointment.doctor}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <FileText className="h-3 w-3 text-gray-600" />
@@ -267,7 +269,7 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
                     {/* Notes */}
                     {appointment.notes && (
                       <div className="bg-white/50 p-2 rounded border-l-2 border-orange-300">
-                        <Label className="text-xs text-gray-600">Patient Notes:</Label>
+                        <Label className="text-xs text-gray-600">{t('appointments.notes')}:</Label>
                         <p className="text-sm">{appointment.notes}</p>
                       </div>
                     )}
@@ -275,11 +277,11 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
                     {/* Rejection Notes Input */}
                     <div className="space-y-2">
                       <Label htmlFor={`rejection-notes-${appointment.id}`} className="text-sm">
-                        Rejection Reason (if declining):
+                        {t('dashboard.reason_for_rejection')} ({t('common.if_applicable') || ''}):
                       </Label>
                       <Textarea
                         id={`rejection-notes-${appointment.id}`}
-                        placeholder="Provide a reason for rejecting this appointment..."
+                        placeholder={t('dashboard.rejection_reason_placeholder')}
                         value={rejectionNotes[appointment.id] || ''}
                         onChange={(e) => setRejectionNotes(prev => ({
                           ...prev,
@@ -302,7 +304,7 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
                         ) : (
                           <CheckCircle className="h-4 w-4 mr-2" />
                         )}
-                        Confirm Appointment
+                        {t('appointments.menu.mark_confirmed')}
                       </Button>
                       <Button
                         variant="outline"
@@ -315,7 +317,7 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
                         ) : (
                           <XCircle className="h-4 w-4 mr-2" />
                         )}
-                        Reject
+                        {t('appointments.menu.cancel')}
                       </Button>
                     </div>
                   </div>

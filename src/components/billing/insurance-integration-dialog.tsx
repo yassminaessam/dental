@@ -25,6 +25,7 @@ import { Shield, FileText, DollarSign, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocument } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InsuranceClaim {
   id: string;
@@ -48,6 +49,7 @@ interface InsuranceIntegrationDialogProps {
 export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: InsuranceIntegrationDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const { t, language, isRTL } = useLanguage();
 
   const processableClaims = claims.filter(claim => 
     claim.status === 'Approved' && claim.approvedAmount && !claim.statusReason
@@ -63,18 +65,18 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
 
       // Mark claim as processed
       await updateDocument('insurance-claims', claim.id, {
-        statusReason: 'Applied to patient account'
+        statusReason: t('insurance.applied_to_account')
       });
 
       onClaimProcessed(claim.id, approvedAmount);
       
       toast({
-        title: "Insurance Credit Applied",
-        description: `EGP ${approvedAmount.toFixed(2)} credit applied to ${claim.patient}'s account.`,
+        title: t('insurance.credit_applied'),
+        description: t('insurance.credit_applied_desc', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(approvedAmount), patient: claim.patient }),
       });
     } catch (error) {
       toast({
-        title: "Error applying insurance credit",
+        title: t('insurance.error_applying_credit'),
         variant: "destructive",
       });
     }
@@ -91,8 +93,8 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
-          <Shield className="mr-2 h-4 w-4" />
-          Insurance Integration
+          <Shield className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+          {t('insurance.integration')}
           {processableClaims.length > 0 && (
             <Badge className="ml-2" variant="secondary">
               {processableClaims.length}
@@ -102,9 +104,9 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
       </DialogTrigger>
       <DialogContent className="sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Insurance Claims Integration</DialogTitle>
+          <DialogTitle>{t('insurance.claims_integration')}</DialogTitle>
           <DialogDescription>
-            Review and apply insurance claim approvals to patient billing.
+            {t('insurance.claims_integration_desc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -115,12 +117,12 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Total Claims
+                  {t('insurance.total_claims')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{claims.length}</div>
-                <p className="text-xs text-muted-foreground">All insurance claims</p>
+                <p className="text-xs text-muted-foreground">{t('insurance.all_insurance_claims')}</p>
               </CardContent>
             </Card>
 
@@ -128,12 +130,12 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" />
-                  Ready to Apply
+                  {t('insurance.ready_to_apply')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{processableClaims.length}</div>
-                <p className="text-xs text-muted-foreground">Approved claims</p>
+                <p className="text-xs text-muted-foreground">{t('insurance.approved_claims')}</p>
               </CardContent>
             </Card>
 
@@ -141,14 +143,14 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  Pending Credit
+                  {t('insurance.pending_credit')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  EGP {totalPendingInsurance.toLocaleString()}
+                  {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(totalPendingInsurance)}
                 </div>
-                <p className="text-xs text-muted-foreground">Available to apply</p>
+                <p className="text-xs text-muted-foreground">{t('insurance.available_to_apply')}</p>
               </CardContent>
             </Card>
           </div>
@@ -158,13 +160,13 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Insurance</TableHead>
-                  <TableHead>Procedure</TableHead>
-                  <TableHead>Claim Amount</TableHead>
-                  <TableHead>Approved Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('insurance.patient')}</TableHead>
+                  <TableHead>{t('insurance.insurance')}</TableHead>
+                  <TableHead>{t('insurance.procedure')}</TableHead>
+                  <TableHead>{t('insurance.claim_amount')}</TableHead>
+                  <TableHead>{t('insurance.approved_amount')}</TableHead>
+                  <TableHead>{t('insurance.status')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -198,7 +200,7 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                             claim.status === 'Processing' && 'bg-yellow-100 text-yellow-800'
                           )}
                         >
-                          {claim.status}
+                          {claim.status === 'Approved' ? t('insurance.status.approved') : claim.status === 'Denied' ? t('insurance.status.denied') : t('insurance.status.processing')}
                         </Badge>
                         {claim.statusReason && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -212,13 +214,13 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                             size="sm"
                             onClick={() => handleApplyInsuranceCredit(claim)}
                           >
-                            Apply Credit
+                            {t('insurance.apply_credit')}
                           </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            {claim.status === 'Processing' ? 'Pending' : 
-                             claim.status === 'Denied' ? 'Denied' :
-                             claim.statusReason ? 'Applied' : 'N/A'}
+                            {claim.status === 'Processing' ? t('insurance.action.pending') : 
+                             claim.status === 'Denied' ? t('insurance.action.denied') :
+                             claim.statusReason ? t('insurance.action.applied') : t('common.na')}
                           </span>
                         )}
                       </TableCell>
@@ -227,7 +229,7 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      No insurance claims found.
+                      {t('insurance.no_claims_found')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -238,7 +240,7 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Close
+            {t('common.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

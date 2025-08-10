@@ -18,6 +18,7 @@ import type { Appointment } from '@/app/appointments/page';
 import type { StaffMember } from '@/app/staff/page';
 import type { Invoice } from '@/app/billing/page';
 import type { Treatment } from '@/app/treatments/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const iconMap = {
   Users,
@@ -31,13 +32,14 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function OverviewStats() {
+  const { t } = useLanguage();
     const [stats, setStats] = React.useState([
-        { title: "Total Patients", value: "0", description: "All patients in system", icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-        { title: "Today's Appointments", value: "0", description: "Scheduled for today", icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
-        { title: "Total Revenue", value: "EGP 0", description: "All-time revenue", icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-        { title: "Active Staff", value: "0", description: "Currently on duty", icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-        { title: "Pending Appointments", value: "0", description: "Awaiting confirmation", icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-        { title: "Completed Treatments", value: "0", description: "Finished treatment plans", icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+    { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+    { title: t('dashboard.todays_appointments'), value: "0", description: t('dashboard.scheduled_today'), icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
+    { title: t('dashboard.total_revenue'), value: "EGP 0", description: t('dashboard.all_time_revenue'), icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
+    { title: t('dashboard.active_staff'), value: "0", description: t('dashboard.currently_on_duty'), icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+    { title: t('dashboard.pending_appointments'), value: "0", description: t('dashboard.awaiting_confirmation'), icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
+    { title: t('dashboard.completed_treatments'), value: "0", description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
     ]);
 
     React.useEffect(() => {
@@ -58,21 +60,21 @@ export default function OverviewStats() {
                 const pendingAppointments = appointments.filter(a => a.status === 'Pending').length;
                 const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
                 
-                setStats([
-                    { title: "Total Patients", value: `${totalPatients}`, description: "All patients in system", icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-                    { title: "Today's Appointments", value: `${todaysAppointments}`, description: "Scheduled for today", icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
-                    { title: "Total Revenue", value: `EGP ${totalRevenue.toLocaleString()}`, description: "All-time revenue", icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-                    { title: "Active Staff", value: `${activeStaff}`, description: "Currently on duty", icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-                    { title: "Pending Appointments", value: `${pendingAppointments}`, description: "Awaiting confirmation", icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-                    { title: "Completed Treatments", value: `${completedTreatments}`, description: "Finished treatment plans", icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
-                ]);
+        setStats([
+          { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+          { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
+          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
+          { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+          { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
+          { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+        ]);
 
             } catch (error) {
                 console.error("Failed to fetch overview stats:", error);
             }
         }
-        fetchStats();
-    }, []);
+    fetchStats();
+  }, [t]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

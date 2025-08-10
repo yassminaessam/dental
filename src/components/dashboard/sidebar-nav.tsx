@@ -35,23 +35,25 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleSignOut = async () => {
     try {
       await signOut();
       toast({
-        title: "Signed out",
-        description: "You have been signed out successfully.",
+        title: t('message.signed_out'),
+        description: t('message.signed_out_desc'),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to sign out",
+        title: t('message.sign_out_error'),
+        description: t('message.sign_out_error_desc'),
         variant: "destructive",
       });
     }
@@ -62,128 +64,128 @@ export function SidebarNav() {
     {
       href: "/",
       icon: LayoutGrid,
-      label: "Dashboard",
+  label: t('nav.dashboard'),
       permission: null, // Everyone can access dashboard
     },
     {
       href: "/patients",
       icon: Users,
-      label: "Patients",
+  label: t('nav.patients'),
       permission: "view_patients",
     },
     {
       href: "/appointments",
       icon: Calendar,
-      label: "Appointments",
+  label: t('nav.appointments'),
       permission: "view_appointments",
     },
     {
       href: "/treatments",
       icon: Stethoscope,
-      label: "Treatments",
+  label: t('nav.treatments'),
       permission: "view_treatments",
     },
     {
       href: "/billing",
       icon: Receipt,
-      label: "Billing",
+  label: t('nav.billing'),
       permission: "view_billing",
     },
     {
       href: "/dental-chart",
       icon: LineChart,
-      label: "Dental Chart",
+  label: t('nav.dental_chart'),
       permission: "view_dental_chart",
     },
     {
       href: "/staff",
       icon: UsersRound,
-      label: "Staff",
+  label: t('nav.staff'),
       permission: "view_staff",
     },
     {
       href: "/medical-records",
       icon: FolderArchive,
-      label: "Medical Records",
+  label: t('nav.medical_records'),
       permission: "view_medical_records",
     },
     {
       href: "/financial",
       icon: Landmark,
-      label: "Financial",
+  label: t('nav.financial'),
       permission: "view_billing",
     },
     {
       href: "/inventory",
       icon: Package,
-      label: "Inventory",
+  label: t('nav.inventory'),
       permission: "view_inventory",
     },
     {
       href: "/pharmacy",
       icon: Pill,
-      label: "Pharmacy",
+  label: t('nav.pharmacy'),
       permission: "view_inventory",
     },
     {
       href: "/suppliers",
       icon: Truck,
-      label: "Suppliers",
+  label: t('nav.suppliers'),
       permission: "view_inventory",
     },
     {
       href: "/communications",
       icon: MessageSquare,
-      label: "Communications",
+  label: t('nav.communications'),
       permission: "view_communications",
     },
     {
       href: "/patient-home-admin",
       icon: Globe,
-      label: "Patient Portal",
+  label: t('nav.patient_portal'),
       permission: "view_patient_portal",
     },
     {
       href: "/patient-portal",
       icon: Globe,
-      label: "Patient Portal",
+  label: t('nav.patient_portal'),
       permission: user?.role === 'patient' ? "view_own_data" : "view_patients",
     },
     {
       href: "/referrals",
       icon: Send,
-      label: "Referrals",
+  label: t('nav.referrals'),
       permission: "view_patients",
     },
     {
       href: "/insurance",
       icon: FileText,
-      label: "Insurance",
+  label: t('nav.insurance'),
       permission: "view_insurance",
     },
     {
       href: "/analytics",
       icon: BarChart,
-      label: "Analytics",
+  label: t('nav.analytics'),
       permission: "view_analytics",
     },
     {
       href: "/reports",
       icon: FileSpreadsheet,
-      label: "Reports",
+  label: t('nav.reports'),
       permission: "view_reports",
     },
     {
       href: "/admin/users",
       icon: Shield,
-      label: "User Management",
+  label: t('nav.user_management'),
       permission: null,
       roleRequired: "admin",
     },
     {
       href: "/settings",
       icon: Settings,
-      label: "Settings",
+  label: t('nav.settings'),
       permission: "view_settings",
     },
   ];
@@ -237,7 +239,7 @@ export function SidebarNav() {
               onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              {t('nav.sign_out')}
             </Button>
           </SidebarMenuButton>
         </SidebarMenuItem>

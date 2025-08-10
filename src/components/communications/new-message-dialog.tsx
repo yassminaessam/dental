@@ -30,12 +30,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { GenerateMessageAi } from './generate-message-ai';
 import { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const messageSchema = z.object({
-  patient: z.string({ required_error: 'Please select a patient.' }),
-  type: z.enum(['Email', 'SMS'], { required_error: 'Please select a message type.' }),
-  subject: z.string().min(1, 'Subject is required.'),
-  message: z.string().min(1, 'Message is required.'),
+  patient: z.string({ required_error: 'communications.select_patient' }),
+  type: z.enum(['Email', 'SMS'], { required_error: 'communications.message_type' }),
+  subject: z.string().min(1, 'communications.subject'),
+  message: z.string().min(1, 'communications.message'),
 });
 
 type MessageFormData = z.infer<typeof messageSchema>;
@@ -54,13 +55,14 @@ interface NewMessageDialogProps {
 export function NewMessageDialog({ 
   open: controlledOpen,
   onOpenChange: setControlledOpen,
-  triggerButtonText = "New Message",
-  dialogTitle = "Create New Message",
-  dialogDescription = "Compose and send a new message to a patient.",
+  triggerButtonText,
+  dialogTitle,
+  dialogDescription,
   onSend,
   isReply = false,
   initialData = null,
 }: NewMessageDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   
@@ -121,8 +123,8 @@ export function NewMessageDialog({
     setOpen(false);
   };
 
-  const dialogTitleText = isReply ? `Reply to ${initialData?.patientName}` : dialogTitle;
-  const dialogDescriptionText = isReply ? `Replying to the message: "${initialData?.subject}"` : dialogDescription;
+  const dialogTitleText = isReply ? `${t('communications.reply_to')} ${initialData?.patientName}` : (dialogTitle || t('communications.send_message'));
+  const dialogDescriptionText = isReply ? `${t('communications.replying_to_message')}: "${initialData?.subject}"` : (dialogDescription || t('communications.content'));
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -130,11 +132,11 @@ export function NewMessageDialog({
         <DialogTrigger asChild>
           <Button>
             <MessageSquareIcon className="mr-2 h-4 w-4" />
-            {triggerButtonText}
+            {triggerButtonText ?? t('communications.send_message')}
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[625px]" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle>{dialogTitleText}</DialogTitle>
           <DialogDescription>
@@ -157,11 +159,11 @@ export function NewMessageDialog({
               name="patient"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Patient</FormLabel>
+                  <FormLabel>{t('communications.patient')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={isReply}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a patient" />
+                        <SelectValue placeholder={t('communications.select_patient')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -172,7 +174,13 @@ export function NewMessageDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.patient;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -181,7 +189,7 @@ export function NewMessageDialog({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Type</FormLabel>
+                  <FormLabel>{t('communications.type')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -192,17 +200,23 @@ export function NewMessageDialog({
                         <FormControl>
                           <RadioGroupItem value="Email" id="r-email" />
                         </FormControl>
-                        <FormLabel htmlFor="r-email">Email</FormLabel>
+                        <FormLabel htmlFor="r-email">{t('communications.email')}</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
                           <RadioGroupItem value="SMS" id="r-sms" />
                         </FormControl>
-                        <FormLabel htmlFor="r-sms">SMS</FormLabel>
+                        <FormLabel htmlFor="r-sms">{t('communications.sms')}</FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.type;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -211,11 +225,17 @@ export function NewMessageDialog({
               name="subject"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subject</FormLabel>
+                  <FormLabel>{t('communications.subject')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Your Appointment Reminder" {...field} />
+                    <Input placeholder={t('communications.subject_placeholder')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.subject;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -224,17 +244,23 @@ export function NewMessageDialog({
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Message</FormLabel>
+                  <FormLabel>{t('communications.message')}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Type your message here." className="min-h-[120px]" {...field} />
+                    <Textarea placeholder={t('communications.message_placeholder')} className="min-h-[120px]" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.message;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Send Message</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('communications.send_message')}</Button>
             </DialogFooter>
           </form>
         </Form>

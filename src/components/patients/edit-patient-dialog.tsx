@@ -32,25 +32,33 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { Patient } from '@/app/patients/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const patientSchema = z.object({
-  name: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-  email: z.string().email({ message: 'Invalid email address' }),
-  phone: z.string().min(1, { message: 'Phone number is required' }),
-  dob: z.date({ required_error: 'Date of birth is required' }),
-  status: z.enum(['Active', 'Inactive']),
-  address: z.string().optional(),
-  ecName: z.string().optional(),
-  ecPhone: z.string().optional(),
-  ecRelationship: z.string().optional(),
-  insuranceProvider: z.string().optional(),
-  policyNumber: z.string().optional(),
-  medicalHistory: z.array(z.object({ condition: z.string().min(1, 'Condition cannot be empty') })).optional(),
-});
+const buildPatientSchema = (t: (key: string, params?: Record<string, string | number>) => string) =>
+  z.object({
+    name: z.string().min(1, { message: t('patients.validation.first_name_required') }),
+    lastName: z.string().min(1, { message: t('patients.validation.last_name_required') }),
+    email: z.string().email({ message: t('validation.invalid_email') }),
+    phone: z.string().min(1, { message: t('patients.validation.phone_required') }),
+    dob: z.date({ required_error: t('patients.validation.dob_required') }),
+    status: z.enum(['Active', 'Inactive']),
+    address: z.string().optional(),
+    ecName: z.string().optional(),
+    ecPhone: z.string().optional(),
+    ecRelationship: z.string().optional(),
+    insuranceProvider: z.string().optional(),
+    policyNumber: z.string().optional(),
+    medicalHistory: z
+      .array(
+        z.object({
+          condition: z.string().min(1, t('patients.validation.condition_required')),
+        })
+      )
+      .optional(),
+  });
 
 
-type PatientFormData = z.infer<typeof patientSchema>;
+type PatientFormData = z.infer<ReturnType<typeof buildPatientSchema>>;
 
 interface EditPatientDialogProps {
   patient: Patient;
@@ -60,19 +68,20 @@ interface EditPatientDialogProps {
 }
 
 const emergencyContactRelationships = [
-    'Spouse',
-    'Parent',
-    'Child',
-    'Sibling',
-    'Friend',
-    'Other',
+  { value: 'spouse', key: 'patients.relationship.spouse' },
+  { value: 'parent', key: 'patients.relationship.parent' },
+  { value: 'child', key: 'patients.relationship.child' },
+  { value: 'sibling', key: 'patients.relationship.sibling' },
+  { value: 'friend', key: 'patients.relationship.friend' },
+  { value: 'other', key: 'patients.relationship.other' },
 ];
 
 
 export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditPatientDialogProps) {
+  const { t } = useLanguage();
   const [dobOpen, setDobOpen] = React.useState(false);
   const form = useForm<PatientFormData>({
-    resolver: zodResolver(patientSchema),
+    resolver: zodResolver(buildPatientSchema(t)),
   });
 
    const { fields, append, remove } = useFieldArray({
@@ -113,9 +122,9 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit Patient Details</DialogTitle>
+          <DialogTitle>{t('patients.edit_patient_details')}</DialogTitle>
           <DialogDescription>
-            Update the details for {patient.name}.
+            {t('patients.update_details_for', { name: patient.name })}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-grow pr-6 -mr-6">
@@ -127,7 +136,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="name"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>First Name *</FormLabel>
+                        <FormLabel>{t('patients.first_name')} *</FormLabel>
                         <FormControl>
                         <Input placeholder="Ahmed" {...field} />
                         </FormControl>
@@ -140,7 +149,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="lastName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
+                        <FormLabel>{t('patients.last_name')} *</FormLabel>
                         <FormControl>
                         <Input placeholder="Ali" {...field} />
                         </FormControl>
@@ -153,9 +162,9 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="email"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Email *</FormLabel>
+                        <FormLabel>{t('patients.email')} *</FormLabel>
                         <FormControl>
-                        <Input type="email" placeholder="ahmed.ali@example.com" {...field} />
+                        <Input type="email" placeholder={t('patients.email_placeholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -166,9 +175,9 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="phone"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Phone *</FormLabel>
+                        <FormLabel>{t('patients.phone')} *</FormLabel>
                         <FormControl>
-                        <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                        <Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -179,7 +188,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="dob"
                     render={({ field }) => (
                     <FormItem className="flex flex-col">
-                        <FormLabel>Date of Birth *</FormLabel>
+                        <FormLabel>{t('patients.date_of_birth')} *</FormLabel>
                         <Popover open={dobOpen} onOpenChange={setDobOpen}>
                         <PopoverTrigger asChild>
                             <FormControl>
@@ -191,7 +200,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                                 )}
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+                                {field.value ? format(field.value, "PPP") : <span>{t('patients.dob_placeholder')}</span>}
                             </Button>
                             </FormControl>
                         </PopoverTrigger>
@@ -220,16 +229,16 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="status"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Status *</FormLabel>
+                        <FormLabel>{t('common.status')} *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
+                                    <SelectValue placeholder={t('common.select_status')} />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Active">Active</SelectItem>
-                                <SelectItem value="Inactive">Inactive</SelectItem>
+                                <SelectItem value="Active">{t('common.active')}</SelectItem>
+                                <SelectItem value="Inactive">{t('common.inactive')}</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -241,9 +250,9 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="address"
                     render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>{t('patients.address')}</FormLabel>
                         <FormControl>
-                        <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} />
+                        <Textarea placeholder={t('patients.address_placeholder')} {...field} />
                         </FormControl>
                     </FormItem>
                     )}
@@ -251,56 +260,60 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                 </div>
 
                 <div>
-                    <h3 className="mb-4 text-lg font-medium">Emergency Contact</h3>
+                    <h3 className="mb-4 text-lg font-medium">{t('patients.emergency_contact')}</h3>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <FormField control={form.control} name="ecName" render={({ field }) => (
-                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="Fatima Ali" {...field} /></FormControl></FormItem>
+                            <FormItem><FormLabel>{t('patients.ec_name')}</FormLabel><FormControl><Input placeholder={t('patients.emergency_name_placeholder')} {...field} /></FormControl></FormItem>
                         )}/>
                         <FormField control={form.control} name="ecPhone" render={({ field }) => (
-                            <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" placeholder="01xxxxxxxxx" {...field} /></FormControl></FormItem>
+                            <FormItem><FormLabel>{t('patients.ec_phone')}</FormLabel><FormControl><Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} /></FormControl></FormItem>
                         )}/>
                         <FormField control={form.control} name="ecRelationship" render={({ field }) => (
-                            <FormItem><FormLabel>Relationship</FormLabel>
+                            <FormItem><FormLabel>{t('patients.relationship')}</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Select relationship" /></SelectTrigger></FormControl>
-                                <SelectContent>{emergencyContactRelationships.map((rel) => (<SelectItem key={rel} value={rel.toLowerCase()}>{rel}</SelectItem>))}</SelectContent>
+                                <FormControl><SelectTrigger><SelectValue placeholder={t('patients.select_relationship')} /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  {emergencyContactRelationships.map((rel) => (
+                                    <SelectItem key={rel.value} value={rel.value}>{t(rel.key)}</SelectItem>
+                                  ))}
+                                </SelectContent>
                             </Select>
                             </FormItem>
                         )}/>
                     </div>
                 </div>
                 <div>
-                  <h3 className="mb-4 text-lg font-medium">Insurance Information</h3>
+                  <h3 className="mb-4 text-lg font-medium">{t('patients.insurance_information')}</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField control={form.control} name="insuranceProvider" render={({ field }) => (
-                          <FormItem><FormLabel>Insurance Provider</FormLabel><FormControl><Input placeholder="Misr Insurance" {...field} /></FormControl></FormItem>
+                          <FormItem><FormLabel>{t('patients.insurance_provider')}</FormLabel><FormControl><Input placeholder={t('patients.insurance_provider_placeholder')} {...field} /></FormControl></FormItem>
                       )}/>
                       <FormField control={form.control} name="policyNumber" render={({ field }) => (
-                          <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input placeholder="MISR123456789" {...field} /></FormControl></FormItem>
+                          <FormItem><FormLabel>{t('patients.policy_number')}</FormLabel><FormControl><Input placeholder={t('patients.policy_number_placeholder')} {...field} /></FormControl></FormItem>
                       )}/>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="mb-2 text-lg font-medium">Medical History</h3>
+                  <h3 className="mb-2 text-lg font-medium">{t('patients.medical_history')}</h3>
                   <div className="space-y-2">
                     {fields.map((field, index) => (
                       <div key={field.id} className="flex items-center gap-2">
                          <FormField control={form.control} name={`medicalHistory.${index}.condition`} render={({ field }) => (
-                              <FormItem className="flex-grow"><FormControl><Input placeholder="e.g., Diabetes, Hypertension" {...field} /></FormControl><FormMessage /></FormItem>
+                              <FormItem className="flex-grow"><FormControl><Input placeholder={t('patients.medical_condition_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>
                          )}/>
                         <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     ))}
-                    <Button type="button" variant="outline" onClick={() => append({ condition: '' })}><Plus className="mr-2 h-4 w-4" />Add medical condition</Button>
+                    <Button type="button" variant="outline" onClick={() => append({ condition: '' })}><Plus className="mr-2 h-4 w-4" />{t('patients.add_medical_condition')}</Button>
                   </div>
                 </div>
             </form>
           </Form>
         </ScrollArea>
         <DialogFooter className="border-t pt-4">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" form="edit-patient-form">Save Changes</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button type="submit" form="edit-patient-form">{t('common.save_changes')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

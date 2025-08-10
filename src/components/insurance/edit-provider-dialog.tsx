@@ -17,6 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { InsuranceProvider } from '@/app/insurance/page';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 
 const providerSchema = z.object({
   name: z.string().min(1, 'Provider name is required.'),
@@ -35,6 +37,7 @@ interface EditProviderDialogProps {
 }
 
 export function EditProviderDialog({ onSave, open, onOpenChange, provider }: EditProviderDialogProps) {
+  const { t, isRTL } = useLanguage();
   const form = useForm<ProviderFormData>({
     resolver: zodResolver(providerSchema),
   });
@@ -59,9 +62,9 @@ export function EditProviderDialog({ onSave, open, onOpenChange, provider }: Edi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Insurance Provider</DialogTitle>
+          <DialogTitle>{t('insurance.edit_insurance_provider')}</DialogTitle>
           <DialogDescription>
-            Update the details for {provider.name}.
+            {t('insurance.update_provider_details', { name: provider.name })}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -71,9 +74,9 @@ export function EditProviderDialog({ onSave, open, onOpenChange, provider }: Edi
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Provider Name *</FormLabel>
+                  <FormLabel>{t('insurance.provider_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Misr Insurance" {...field} />
+                    <Input placeholder={t('insurance.placeholder.provider_name_example')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,9 +87,9 @@ export function EditProviderDialog({ onSave, open, onOpenChange, provider }: Edi
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t('insurance.phone')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., 19001" {...field} />
+                    <Input placeholder={t('insurance.placeholder.phone_example')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -96,9 +99,9 @@ export function EditProviderDialog({ onSave, open, onOpenChange, provider }: Edi
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('insurance.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g., claims@misr.com" {...field} />
+                    <Input type="email" placeholder={t('insurance.placeholder.email_example')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -109,18 +112,18 @@ export function EditProviderDialog({ onSave, open, onOpenChange, provider }: Edi
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t('insurance.address')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., 123 Nile St, Cairo" {...field} />
+                    <Input placeholder={t('insurance.placeholder.address_example')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

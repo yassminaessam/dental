@@ -38,6 +38,7 @@ import { InsuranceIntegrationDialog } from '@/components/billing/insurance-integ
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type InvoiceLineItem = {
     id: string;
@@ -73,6 +74,7 @@ export type Invoice = {
 
 export default function BillingPage() {
   const { user } = useAuth();
+  const { t, language, isRTL } = useLanguage();
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -111,14 +113,14 @@ export default function BillingPage() {
             setTreatments(treatmentData);
             setAppointments(appointmentData.map(a => ({...a, dateTime: new Date(a.dateTime)})));
             setInsuranceClaims(claimData);
-        } catch (error) {
-            toast({ title: 'Error fetching data', variant: 'destructive' });
+    } catch (error) {
+      toast({ title: t('billing.toast.error_fetching'), variant: 'destructive' });
         } finally {
             setLoading(false);
         }
     }
     fetchData();
-  }, [toast]);
+  }, [toast, t]);
   
   const billingPageStats = React.useMemo(() => {
     const totalBilled = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
@@ -142,15 +144,16 @@ export default function BillingPage() {
       return acc + amount;
     }, 0);
     
-    return [
-        { title: "Total Billed", value: `EGP ${totalBilled.toLocaleString()}`, description: "All invoices created", valueClassName: "" },
-        { title: "Outstanding", value: `EGP ${outstanding.toLocaleString()}`, description: "Total amount unpaid", valueClassName: "text-orange-500" },
-        { title: "Overdue", value: `EGP ${overdue.toLocaleString()}`, description: "Past due date", valueClassName: "text-red-600" },
-        { title: "Paid (All Time)", value: `EGP ${totalPaid.toLocaleString()}`, description: "Total collected", valueClassName: "text-green-600" },
-        { title: "Unbilled Treatments", value: unbilledTreatments, description: "Completed treatments not invoiced", valueClassName: "text-blue-600" },
-        { title: "Pending Insurance", value: `EGP ${pendingInsurance.toLocaleString()}`, description: "Insurance claims pending", valueClassName: "text-purple-600" },
-    ];
-  }, [invoices, treatments, insuranceClaims]);
+  const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
+  return [
+    { title: t('billing.stats.total_billed'), value: currency.format(totalBilled), description: t('billing.stats.desc.total_billed'), valueClassName: "" },
+    { title: t('billing.stats.outstanding'), value: currency.format(outstanding), description: t('billing.stats.desc.outstanding'), valueClassName: "text-orange-500" },
+    { title: t('billing.stats.overdue'), value: currency.format(overdue), description: t('billing.stats.desc.overdue'), valueClassName: "text-red-600" },
+    { title: t('billing.stats.paid_all_time'), value: currency.format(totalPaid), description: t('billing.stats.desc.paid_all_time'), valueClassName: "text-green-600" },
+    { title: t('billing.stats.unbilled_treatments'), value: unbilledTreatments, description: t('billing.stats.desc.unbilled_treatments'), valueClassName: "text-blue-600" },
+    { title: t('billing.stats.pending_insurance'), value: currency.format(pendingInsurance), description: t('billing.stats.desc.pending_insurance'), valueClassName: "text-purple-600" },
+  ];
+  }, [invoices, treatments, insuranceClaims, language, t]);
 
 
   const handleSaveInvoice = async (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
@@ -177,9 +180,9 @@ export default function BillingPage() {
         };
         await setDocument('invoices', newInvoice.id, newInvoice);
         setInvoices(prev => [newInvoice, ...prev]);
-        toast({ title: "Invoice Created", description: `New invoice for ${newInvoice.patient} has been created.` });
+  toast({ title: t('billing.toast.invoice_created'), description: t('billing.toast.invoice_created_for_patient_desc', { patient: newInvoice.patient }) });
     } catch(e) {
-        toast({ title: "Error creating invoice", variant: 'destructive' });
+  toast({ title: t('billing.toast.error_creating'), variant: 'destructive' });
     }
   };
 
@@ -187,19 +190,19 @@ export default function BillingPage() {
     try {
       const treatment = treatments.find(t => t.id === treatmentId);
       if (!treatment) {
-        toast({ title: "Treatment not found", variant: 'destructive' });
+        toast({ title: t('billing.toast.treatment_not_found'), variant: 'destructive' });
         return;
       }
 
       // Check if invoice already exists
       if (invoices.some(inv => inv.treatmentId === treatmentId)) {
-        toast({ title: "Invoice already exists for this treatment", variant: 'destructive' });
+        toast({ title: t('billing.toast.invoice_exists'), variant: 'destructive' });
         return;
       }
 
       const patient = patients.find(p => p.name === treatment.patient);
       if (!patient) {
-        toast({ title: "Patient not found", variant: 'destructive' });
+        toast({ title: t('billing.toast.patient_not_found'), variant: 'destructive' });
         return;
       }
 
@@ -207,7 +210,7 @@ export default function BillingPage() {
       const costMatch = treatment.cost.match(/[\d,]+/);
       const amount = costMatch ? parseFloat(costMatch[0].replace(/,/g, '')) : 0;
 
-      const currentTime = new Date().toLocaleString('en-US', {
+  const currentTime = new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -221,8 +224,8 @@ export default function BillingPage() {
         id: `INV-${Date.now()}`,
         patient: treatment.patient,
         patientId: patient.id,
-        issueDate: new Date().toLocaleDateString(),
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(), // 30 days from now
+  issueDate: new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'), // 30 days from now
         totalAmount: amount,
         amountPaid: 0,
         status: 'Unpaid',
@@ -243,11 +246,11 @@ export default function BillingPage() {
       await setDocument('invoices', newInvoice.id, newInvoice);
       setInvoices(prev => [newInvoice, ...prev]);
       toast({ 
-        title: "Invoice Created from Treatment", 
-        description: `Invoice ${newInvoice.id} created for ${treatment.patient}'s ${treatment.procedure}` 
+        title: t('billing.toast.invoice_from_treatment'), 
+        description: t('billing.toast.invoice_from_treatment_desc_detailed', { id: newInvoice.id, patient: treatment.patient, procedure: treatment.procedure }) 
       });
     } catch (e) {
-      toast({ title: "Error creating invoice from treatment", variant: 'destructive' });
+      toast({ title: t('billing.toast.error_creating_from_treatment'), variant: 'destructive' });
     }
   };
 
@@ -258,7 +261,7 @@ export default function BillingPage() {
       );
 
       if (unbilledTreatments.length === 0) {
-        toast({ title: "No unbilled treatments found", description: "All completed treatments have been invoiced." });
+        toast({ title: t('billing.toast.no_unbilled_treatments'), description: t('billing.toast.no_unbilled_treatments_desc') });
         return;
       }
 
@@ -267,11 +270,11 @@ export default function BillingPage() {
       }
 
       toast({ 
-        title: "Bulk Invoice Creation Complete", 
-        description: `Created ${unbilledTreatments.length} invoices from completed treatments.` 
+        title: t('billing.toast.bulk_creation_complete'), 
+        description: t('billing.toast.bulk_creation_desc') 
       });
     } catch (e) {
-      toast({ title: "Error creating bulk invoices", variant: 'destructive' });
+      toast({ title: t('billing.toast.error_bulk_creation'), variant: 'destructive' });
     }
   };
 
@@ -289,8 +292,8 @@ export default function BillingPage() {
 
       if (patientInvoices.length === 0) {
         toast({
-          title: "No Outstanding Invoices",
-          description: `${claim.patient} has no outstanding balances to apply insurance credit to.`,
+          title: t('billing.toast.no_outstanding'),
+          description: t('billing.toast.no_outstanding_desc'),
         });
         return;
       }
@@ -319,13 +322,14 @@ export default function BillingPage() {
         )
       );
 
+      const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
       toast({
-        title: "Insurance Credit Applied",
-        description: `EGP ${creditToApply.toFixed(2)} applied to invoice ${oldestInvoice.id}`,
+        title: t('billing.toast.insurance_applied'),
+        description: `${currency.format(creditToApply)} ${t('billing.amount_paid')} - ${oldestInvoice.id}`,
       });
     } catch (error) {
       toast({
-        title: "Error applying insurance credit",
+        title: t('billing.toast.error_insurance'),
         variant: "destructive",
       });
     }
@@ -339,7 +343,7 @@ export default function BillingPage() {
       const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
       const newStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
       
-      const currentTime = new Date().toLocaleString('en-US', {
+  const currentTime = new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -362,9 +366,10 @@ export default function BillingPage() {
         prev.map(invoice => invoice.id === invoiceId ? { ...invoice, ...updatedData } : invoice)
       );
       setInvoiceToPay(null);
-      toast({ title: "Payment Recorded", description: `Payment of EGP ${paymentAmount.toFixed(2)} recorded for invoice ${invoiceId}.` });
+      const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
+      toast({ title: t('billing.toast.payment_recorded'), description: `${currency.format(paymentAmount)} - ${invoiceId}` });
     } catch (e) {
-        toast({ title: "Error recording payment", variant: 'destructive' });
+        toast({ title: t('billing.toast.error_recording_payment'), variant: 'destructive' });
     }
   };
 
@@ -375,12 +380,12 @@ export default function BillingPage() {
       setInvoices(prev => prev.filter(invoice => invoice.id !== invoiceToDelete.id));
       setInvoiceToDelete(null);
       toast({
-        title: "Invoice Deleted",
-        description: `Invoice ${invoiceToDelete.id} has been permanently deleted.`,
+        title: t('billing.toast.invoice_deleted'),
+        description: t('billing.toast.invoice_deleted_desc'),
         variant: "destructive",
       });
     } catch (e) {
-      toast({ title: "Error deleting invoice", variant: "destructive" });
+      toast({ title: t('billing.toast.error_deleting'), variant: "destructive" });
     }
   };
 
@@ -434,7 +439,7 @@ export default function BillingPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Billing & Invoices</h1>
+      <h1 className="text-3xl font-bold">{t('billing.title')}</h1>
           <div className="flex gap-2">
             <InsuranceIntegrationDialog 
               claims={insuranceClaims} 
@@ -447,8 +452,8 @@ export default function BillingPage() {
                 t.status === 'Completed' && !invoices.some(inv => inv.treatmentId === t.id)
               ).length === 0}
             >
-              <DollarSign className="mr-2 h-4 w-4" />
-              Bill All Completed Treatments
+        <DollarSign className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+        {t('billing.bill_all_completed_treatments')}
             </Button>
             <NewInvoiceDialog onSave={handleSaveInvoice} patients={patients} />
           </div>
@@ -480,7 +485,7 @@ export default function BillingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-blue-600" />
-                Unbilled Completed Treatments
+        {t('billing.unbilled_completed_treatments')}
                 <Badge variant="secondary" className="ml-auto">
                   {treatments.filter(t => t.status === 'Completed' && !invoices.some(inv => inv.treatmentId === t.id)).length}
                 </Badge>
@@ -490,12 +495,12 @@ export default function BillingPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Procedure</TableHead>
-                    <TableHead>Doctor</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+          <TableHead>{t('common.patient')}</TableHead>
+          <TableHead>{t('common.procedure')}</TableHead>
+          <TableHead>{t('common.doctor')}</TableHead>
+          <TableHead>{t('common.date')}</TableHead>
+          <TableHead>{t('common.cost')}</TableHead>
+          <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -513,8 +518,8 @@ export default function BillingPage() {
                             size="sm"
                             onClick={() => handleCreateInvoiceFromTreatment(treatment.id)}
                           >
-                            <FileText className="mr-2 h-4 w-4" />
-                            Create Invoice
+                            <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {t('billing.create_invoice')}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -527,13 +532,13 @@ export default function BillingPage() {
 
         <Card>
           <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Patient Invoices</CardTitle>
+            <CardTitle>{t('billing.patient_invoices')}</CardTitle>
             <div className="relative w-full md:w-auto">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
               <Input
                 type="search"
-                placeholder="Search by invoice or patient..."
-                className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                placeholder={t('billing.search_by_invoice_or_patient')}
+                className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -543,16 +548,16 @@ export default function BillingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Issue Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Amount Paid</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('billing.invoiceId')}</TableHead>
+                  <TableHead>{t('common.patient')}</TableHead>
+                  <TableHead>{t('common.phone')}</TableHead>
+                  <TableHead>{t('billing.issue_date')}</TableHead>
+                  <TableHead>{t('billing.due_date')}</TableHead>
+                  <TableHead>{t('billing.total_amount')}</TableHead>
+                  <TableHead>{t('billing.amount_paid')}</TableHead>
+                  <TableHead>{t('billing.status')}</TableHead>
+                  <TableHead>{t('billing.source')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -561,15 +566,16 @@ export default function BillingPage() {
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
                     const patient = patients.find(p => p.name === invoice.patient);
+                    const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
                     return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.id}</TableCell>
                       <TableCell>{invoice.patient}</TableCell>
-                      <TableCell>{patient?.phone || 'N/A'}</TableCell>
+                      <TableCell>{patient?.phone || t('common.na')}</TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
-                      <TableCell>EGP {invoice.totalAmount.toFixed(2)}</TableCell>
-                      <TableCell>EGP {invoice.amountPaid.toFixed(2)}</TableCell>
+                      <TableCell>{currency.format(invoice.totalAmount)}</TableCell>
+                      <TableCell>{currency.format(invoice.amountPaid)}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
@@ -581,21 +587,21 @@ export default function BillingPage() {
                             invoice.status === 'Partially Paid' && 'bg-yellow-100 text-yellow-800'
                           )}
                         >
-                          {invoice.status}
+                          {invoice.status === 'Paid' ? t('billing.paid') : invoice.status === 'Overdue' ? t('billing.overdue') : invoice.status === 'Partially Paid' ? t('billing.partial') : t('billing.unpaid')}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {invoice.treatmentId ? (
                           <Badge variant="outline" className="text-xs">
-                            Treatment
+                            {t('billing.source.treatment')}
                           </Badge>
                         ) : invoice.appointmentId ? (
                           <Badge variant="outline" className="text-xs">
-                            Appointment
+                            {t('billing.source.appointment')}
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="text-xs">
-                            Manual
+                            {t('billing.source.manual')}
                           </Badge>
                         )}
                       </TableCell>
@@ -608,19 +614,19 @@ export default function BillingPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setInvoiceToPay(invoice)}>
-                              <DollarSign className="mr-2 h-4 w-4" /> Record Payment
+                              <DollarSign className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('billing.record_payment')}
                             </DropdownMenuItem>
                              <DropdownMenuItem onClick={() => setInvoiceToView(invoice)}>
-                              <Eye className="mr-2 h-4 w-4" /> View Details
+                              <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('table.view_details')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePrintInvoice(invoice.id)}>
-                              <Printer className="mr-2 h-4 w-4" /> Print Invoice
+                              <Printer className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('billing.print_invoice')}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => setInvoiceToDelete(invoice)} 
                               className="text-destructive"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('common.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -631,7 +637,7 @@ export default function BillingPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={10} className="h-24 text-center">
-                      No invoices found.
+                      {t('billing.no_invoices_found')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -669,14 +675,14 @@ export default function BillingPage() {
       <AlertDialog open={!!invoiceToDelete} onOpenChange={(isOpen) => !isOpen && setInvoiceToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the invoice and all payment records associated with it.
+              {t('billing.delete_invoice_confirmation')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteInvoice}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteInvoice}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

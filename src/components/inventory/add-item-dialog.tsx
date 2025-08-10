@@ -31,13 +31,14 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Supplier } from '@/app/suppliers/page';
 import { getCollection } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const itemSchema = z.object({
-  name: z.string().min(1, 'Item name is required'),
+  name: z.string().min(1, 'inventory.validation.item_name_required'),
   category: z.string().optional(),
   supplier: z.string().optional(),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
-  unitCost: z.coerce.number().min(0, 'Unit cost cannot be negative'),
+  stock: z.coerce.number().min(0, 'inventory.validation.stock_non_negative'),
+  unitCost: z.coerce.number().min(0, 'inventory.validation.unit_cost_non_negative'),
   location: z.string().optional(),
   expires: z.date().optional(),
 });
@@ -51,6 +52,7 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps) {
+  const { t, language } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
@@ -89,15 +91,15 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
         <DialogTrigger asChild>
             <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Item
+            {t('inventory.add_item')}
             </Button>
         </DialogTrigger>
        )}
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Add New Inventory Item</DialogTitle>
+          <DialogTitle>{t('inventory.add_item')}</DialogTitle>
           <DialogDescription>
-            Enter the details for the new inventory item.
+            {t('inventory.enter_item_details')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -107,11 +109,13 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item Name *</FormLabel>
+                  <FormLabel>{t('inventory.item_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Dental Composite Resin" {...field} />
+                    <Input placeholder={t('inventory.item_name_placeholder')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name?.message && t(String(form.formState.errors.name.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -121,9 +125,9 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('inventory.category')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Restorative Materials" {...field} />
+                      <Input placeholder={t('inventory.category_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -133,11 +137,11 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                 name="supplier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier</FormLabel>
+                    <FormLabel>{t('inventory.supplier')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select supplier" />
+                          <SelectValue placeholder={t('suppliers.select_supplier')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -158,11 +162,13 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initial Stock *</FormLabel>
+                    <FormLabel>{t('inventory.initial_stock')} *</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="0" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.stock?.message && t(String(form.formState.errors.stock.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -171,11 +177,13 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                 name="unitCost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Cost *</FormLabel>
+                    <FormLabel>{t('inventory.unit_cost')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder={t('inventory.unit_cost_placeholder')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.unitCost?.message && t(String(form.formState.errors.unitCost.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -184,9 +192,9 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t('inventory.location')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Storage Room A" {...field} />
+                      <Input placeholder={t('inventory.location_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -197,7 +205,7 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
               name="expires"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Expiry Date</FormLabel>
+                  <FormLabel>{t('inventory.expiry_date')}</FormLabel>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -206,7 +214,7 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
                           className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_a_date')}</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -222,8 +230,8 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Item</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('inventory.save_item')}</Button>
             </DialogFooter>
           </form>
         </Form>

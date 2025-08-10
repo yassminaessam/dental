@@ -6,17 +6,18 @@ import {
   generateMessage,
   type GenerateMessageInput,
   type GenerateMessageOutput,
-} from '@/ai/flows/generate-message-flow';
-import { Button } from '@/components/ui/button';
+} from '../../ai/flows/generate-message-flow';
+import { Button } from '../ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '../ui/select';
 import { Wand2, Loader2 } from 'lucide-react';
 import { Label } from '../ui/label';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface GenerateMessageAiProps {
   patientName: string;
@@ -35,6 +36,7 @@ export function GenerateMessageAi({
   patientName,
   onGeneration,
 }: GenerateMessageAiProps) {
+  const { t, isRTL } = useLanguage();
   const [context, setContext] =
     React.useState<GenerateMessageInput['context']>('appointment-reminder');
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -42,7 +44,7 @@ export function GenerateMessageAi({
   const handleGenerate = async () => {
     if (!patientName) {
       // Ideally, you'd show a toast or inline error here
-      alert('Please select a patient first.');
+      alert(t('communications.select_patient'));
       return;
     }
 
@@ -56,30 +58,28 @@ export function GenerateMessageAi({
     } catch (error) {
       console.error('Failed to generate message:', error);
       // Ideally, you'd show a toast error here
-      alert('Failed to generate message. Please try again.');
+      alert(t('communications.toast.error_sending_message'));
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="rounded-lg border bg-secondary/50 p-4">
+    <div className="rounded-lg border bg-secondary/50 p-4" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="grid gap-4 md:grid-cols-2 md:items-end">
         <div className="grid w-full items-center gap-1.5">
-          <Label htmlFor="message-context">Message Context</Label>
+          <Label htmlFor="message-context">{t('communications.message_type')}</Label>
           <Select
             value={context}
-            onValueChange={(
-              value: GenerateMessageInput['context'] | undefined
-            ) => value && setContext(value)}
+            onValueChange={(value: string) => setContext(value as GenerateMessageInput['context'])}
           >
             <SelectTrigger id="message-context">
-              <SelectValue placeholder="Select context" />
+              <SelectValue placeholder={t('communications.message_type')} />
             </SelectTrigger>
             <SelectContent>
               {messageContexts.map((ctx) => (
                 <SelectItem key={ctx.value} value={ctx.value}>
-                  {ctx.label}
+                  {t('communications.' + ctx.value).startsWith('communications.') ? ctx.label : t('communications.' + ctx.value)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -95,7 +95,7 @@ export function GenerateMessageAi({
           ) : (
             <Wand2 className="mr-2 h-4 w-4" />
           )}
-          Ask AI to Write
+          {t('ai.generate') ?? 'Ask AI to Write'}
         </Button>
       </div>
     </div>

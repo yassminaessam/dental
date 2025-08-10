@@ -8,29 +8,35 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  score: {
-    label: "Satisfaction Score",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    score: {
+      label: t('analytics.patient_satisfaction'),
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig;
+}
 
 interface PatientSatisfactionChartProps {
     data: { month: string; score: number; }[]
 }
 
 export default function PatientSatisfactionChart({ data }: PatientSatisfactionChartProps) {
-    if (!data || data.length === 0) {
-        return (
-            <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
-                No patient satisfaction data available.
-            </div>
-        );
-    }
+  const { t } = useLanguage();
+  const chartConfig = useChartConfig();
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
+        {t('analytics.empty.patient_satisfaction')}
+      </div>
+    );
+  }
     
   return (
-    <ChartContainer config={chartConfig} className="h-[350px] w-full">
+  <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <AreaChart
         accessibilityLayer
         data={data}

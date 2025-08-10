@@ -14,6 +14,7 @@ import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-r
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument } from '@/services/firestore';
 import type { Appointment } from '@/app/appointments/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BookingFormData {
   appointmentType: string;
@@ -54,6 +55,7 @@ const timeSlots = [
 export default function PatientAppointmentBooking() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, language, isRTL } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -159,8 +161,8 @@ export default function PatientAppointmentBooking() {
       });
 
       toast({
-        title: "Appointment Request Submitted",
-        description: "Your appointment request has been submitted. You'll receive a confirmation once it's reviewed by our staff."
+        title: t('appointments.toast.request_submitted') || t('analytics.toast.exporting_report'),
+        description: t('appointments.toast.request_submitted_desc') || t('appointments.schedule_description')
       });
 
       // Reset form and close dialog
@@ -177,8 +179,8 @@ export default function PatientAppointmentBooking() {
 
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit appointment request",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('appointments.toast.error_scheduling'),
         variant: "destructive"
       });
     } finally {
@@ -199,7 +201,7 @@ export default function PatientAppointmentBooking() {
       <DialogTrigger asChild>
         <Button size="lg" className="w-full">
           <Calendar className="h-5 w-5 mr-2" />
-          Book New Appointment
+          {t('appointments.schedule_appointment')}
         </Button>
       </DialogTrigger>
       
@@ -207,7 +209,7 @@ export default function PatientAppointmentBooking() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Book New Appointment
+            {t('appointments.schedule_appointment')}
           </DialogTitle>
         </DialogHeader>
 
@@ -217,13 +219,13 @@ export default function PatientAppointmentBooking() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Personal Information
+                {t('patient_portal.section.portal_users')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Name</Label>
+                  <Label>{t('patients.name')}</Label>
                   <Input 
                     value={`${user?.firstName} ${user?.lastName}`} 
                     disabled 
@@ -231,7 +233,7 @@ export default function PatientAppointmentBooking() {
                   />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>{t('patient_portal.table.email')}</Label>
                   <Input 
                     value={user?.email} 
                     disabled 
@@ -240,13 +242,13 @@ export default function PatientAppointmentBooking() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone">{t('common.phone')} *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="Your phone number"
+                  placeholder={t('common.phone')}
                   required
                 />
               </div>
@@ -258,18 +260,18 @@ export default function PatientAppointmentBooking() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Appointment Details
+                {t('appointments.appointment_details')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="appointmentType">Appointment Type *</Label>
+                <Label htmlFor="appointmentType">{t('appointments.treatment_type')} *</Label>
                 <Select 
                   value={formData.appointmentType} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, appointmentType: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select appointment type" />
+                    <SelectValue placeholder={t('appointments.select_treatment')} />
                   </SelectTrigger>
                   <SelectContent>
                     {appointmentTypes.map((type) => (
@@ -281,7 +283,7 @@ export default function PatientAppointmentBooking() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="preferredDate">Preferred Date *</Label>
+          <Label htmlFor="preferredDate">{t('appointments.pick_date')} *</Label>
                   <Input
                     id="preferredDate"
                     type="date"
@@ -292,14 +294,14 @@ export default function PatientAppointmentBooking() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="preferredTime">Preferred Time *</Label>
+          <Label htmlFor="preferredTime">{t('appointments.time')} *</Label>
                   <Select 
                     value={formData.preferredTime} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, preferredTime: value }))}
                     disabled={!formData.preferredDate}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select time" />
+            <SelectValue placeholder={t('appointments.select_time')} />
                     </SelectTrigger>
                     <SelectContent>
                       {getAvailableTimeSlots().map((time) => (
@@ -311,14 +313,14 @@ export default function PatientAppointmentBooking() {
                   </Select>
                   {formData.preferredDate && getAvailableTimeSlots().length === 0 && (
                     <p className="text-sm text-red-500 mt-1">
-                      No available time slots for this date
+            {t('appointments.no_available_time_slots')}
                     </p>
                   )}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="urgency">Urgency Level</Label>
+    <Label htmlFor="urgency">{t('appointments.urgency')}</Label>
                 <Select 
                   value={formData.urgency} 
                   onValueChange={(value: 'Low' | 'Medium' | 'High') => setFormData(prev => ({ ...prev, urgency: value }))}
@@ -329,20 +331,20 @@ export default function PatientAppointmentBooking() {
                   <SelectContent>
                     <SelectItem value="Low">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary">Low</Badge>
-                        <span>Routine care</span>
+      <Badge variant="secondary">{t('appointments.urgency.low')}</Badge>
+      <span>{t('appointments.urgency.routine')}</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="Medium">
                       <div className="flex items-center gap-2">
-                        <Badge variant="default">Medium</Badge>
-                        <span>Standard priority</span>
+      <Badge variant="default">{t('appointments.urgency.medium')}</Badge>
+      <span>{t('appointments.urgency.standard')}</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="High">
                       <div className="flex items-center gap-2">
-                        <Badge variant="destructive">High</Badge>
-                        <span>Urgent care needed</span>
+      <Badge variant="destructive">{t('appointments.urgency.high')}</Badge>
+      <span>{t('appointments.urgency.urgent')}</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -350,24 +352,24 @@ export default function PatientAppointmentBooking() {
               </div>
 
               <div>
-                <Label htmlFor="reason">Reason for Visit *</Label>
+                <Label htmlFor="reason">{t('dashboard.appointment_reason')} *</Label>
                 <Textarea
                   id="reason"
                   value={formData.reason}
                   onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
-                  placeholder="Please describe the reason for your appointment..."
+                  placeholder={t('dashboard.rejection_reason_placeholder')}
                   rows={3}
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="notes">Additional Notes</Label>
+                <Label htmlFor="notes">{t('appointments.notes')}</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Any additional information or special requests..."
+                  placeholder={t('appointments.notes_placeholder')}
                   rows={2}
                 />
               </div>
@@ -393,7 +395,7 @@ export default function PatientAppointmentBooking() {
           {/* Submit Button */}
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button 
               type="submit" 
@@ -403,12 +405,12 @@ export default function PatientAppointmentBooking() {
               {isLoading ? (
                 <>
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  Submitting...
+                  {t('common.loading')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Submit Request
+                  {t('appointments.submit_request')}
                 </>
               )}
             </Button>

@@ -43,6 +43,7 @@ import { EditAppointmentDialog } from '@/components/appointments/edit-appointmen
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
 import { setDocument, updateDocument, listenToCollection } from '@/services/firestore';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type Appointment = {
   id: string;
@@ -69,6 +70,7 @@ export default function AppointmentsPage() {
   const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   React.useEffect(() => {
     const unsubscribe = listenToCollection<any>('appointments', (data) => {
@@ -78,12 +80,12 @@ export default function AppointmentsPage() {
       setAppointments(sortedData);
       if (loading) setLoading(false);
     }, (error) => {
-      toast({ title: 'Error fetching appointments', variant: 'destructive', description: error.message });
+      toast({ title: t('appointments.toast.error_fetching'), variant: 'destructive', description: error.message });
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast, loading]);
+  }, [toast, loading, t]);
 
   const appointmentPageStats = React.useMemo(() => {
     const total = appointments.length;
@@ -92,12 +94,12 @@ export default function AppointmentsPage() {
     const todays = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
 
     return [
-      { title: "Total Appointments", value: total, description: "All scheduled appointments" },
-      { title: "Pending Appointments", value: pending, description: "Awaiting confirmation", valueClassName: "text-orange-500" },
-      { title: "Confirmed Appointments", value: confirmed, description: "Ready for visit", valueClassName: "text-green-600" },
-      { title: "Today's Appointments", value: todays, description: "Scheduled for today" },
+      { title: t('reports.total_appointments'), value: total, description: t('appointments.stats.all_scheduled') },
+      { title: t('appointments.stats.pending'), value: pending, description: t('appointments.stats.awaiting_confirmation'), valueClassName: "text-orange-500" },
+      { title: t('appointments.stats.confirmed'), value: confirmed, description: t('appointments.stats.ready_for_visit'), valueClassName: "text-green-600" },
+      { title: t('dashboard.todays_appointments'), value: todays, description: t('appointments.stats.scheduled_for_today') },
     ];
-  }, [appointments]);
+  }, [appointments, t]);
 
   const handleSaveAppointment = async (data: Omit<Appointment, 'id' | 'status'>) => {
     try {
@@ -107,9 +109,9 @@ export default function AppointmentsPage() {
         status: 'Confirmed',
       };
       await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
-      toast({ title: "Appointment Scheduled", description: `An appointment for ${newAppointment.patient} has been scheduled.` });
+      toast({ title: t('appointments.toast.scheduled'), description: t('appointments.toast.scheduled_desc') });
     } catch (error) {
-        toast({ title: "Error scheduling appointment", variant: "destructive" });
+        toast({ title: t('appointments.toast.error_scheduling'), variant: "destructive" });
     }
   };
 
@@ -117,18 +119,18 @@ export default function AppointmentsPage() {
     try {
       await updateDocument('appointments', updatedAppointment.id, { ...updatedAppointment, dateTime: updatedAppointment.dateTime.toISOString() });
       setAppointmentToEdit(null);
-      toast({ title: "Appointment Updated", description: `Appointment for ${updatedAppointment.patient} has been updated.` });
+      toast({ title: t('appointments.toast.updated'), description: t('appointments.toast.updated_desc') });
     } catch (error) {
-        toast({ title: "Error updating appointment", variant: "destructive" });
+        toast({ title: t('appointments.toast.error_updating'), variant: "destructive" });
     }
   };
 
   const handleStatusChange = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
       await updateDocument('appointments', appointmentId, { status: newStatus });
-      toast({ title: "Status Updated", description: `Appointment ${appointmentId} has been marked as ${newStatus}.` });
+      toast({ title: t('appointments.toast.status_updated'), description: t('appointments.toast.status_updated_desc') });
     } catch (error) {
-        toast({ title: "Error updating status", variant: "destructive" });
+        toast({ title: t('appointments.toast.error_status'), variant: "destructive" });
     }
   };
 
@@ -149,7 +151,7 @@ export default function AppointmentsPage() {
       <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold">Appointments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t('appointments.title')}</h1>
           <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
         </div>
 
@@ -181,7 +183,7 @@ export default function AppointmentsPage() {
               className="flex-1 sm:flex-initial h-9 sm:h-10"
             >
               <Calendar className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-sm">Calendar</span>
+              <span className="text-sm">{t('appointments.view.calendar')}</span>
             </Button>
             <Button 
               variant={activeView === 'list' ? 'default' : 'outline'} 
@@ -189,7 +191,7 @@ export default function AppointmentsPage() {
               className="flex-1 sm:flex-initial h-9 sm:h-10"
             >
               <List className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-sm">List</span>
+              <span className="text-sm">{t('appointments.view.list')}</span>
             </Button>
           </div>
         </div>
@@ -199,13 +201,13 @@ export default function AppointmentsPage() {
             <div className="lg:col-span-3">
               <Card>
                 <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
-                  <CardTitle className="text-lg sm:text-xl">Appointment Schedule</CardTitle>
+      <CardTitle className="text-lg sm:text-xl">{t('appointments.title')}</CardTitle>
                   <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                     <div className="relative w-full md:w-auto">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="search"
-                        placeholder="Search appointments..."
+        placeholder={t('appointments.search_placeholder')}
                         className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -213,14 +215,14 @@ export default function AppointmentsPage() {
                     </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-full md:w-[150px] h-9 sm:h-10">
-                        <SelectValue placeholder="All Status" />
+        <SelectValue placeholder={t('common.all_status')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+        <SelectItem value="all">{t('appointments.filter.all_status')}</SelectItem>
+        <SelectItem value="confirmed">{t('appointments.filter.confirmed')}</SelectItem>
+        <SelectItem value="pending">{t('appointments.filter.pending')}</SelectItem>
+        <SelectItem value="completed">{t('appointments.filter.completed')}</SelectItem>
+        <SelectItem value="cancelled">{t('appointments.filter.cancelled')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -246,42 +248,42 @@ export default function AppointmentsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
-                                    View Details
+                                    {t('appointments.menu.view_details')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                    <Pencil className="mr-2 h-4 w-4" /> {t('appointments.menu.edit')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
-                                    Mark as Confirmed
+                                    {t('appointments.menu.mark_confirmed')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
-                                    <CheckCircle className="mr-2 h-4 w-4" /> Complete
+                                    <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.complete')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
-                                    Cancel
+                                    {t('appointments.menu.cancel')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                               <div>
-                                <span className="font-medium">Date:</span> {appt.dateTime.toLocaleDateString()}
+                                <span className="font-medium">{t('appointments.date')}:</span> {appt.dateTime.toLocaleDateString()}
                               </div>
                               <div>
-                                <span className="font-medium">Time:</span> {appt.dateTime.toLocaleTimeString()}
+                                <span className="font-medium">{t('appointments.time')}:</span> {appt.dateTime.toLocaleTimeString()}
                               </div>
                               <div>
-                                <span className="font-medium">Doctor:</span> {appt.doctor}
+                                <span className="font-medium">{t('appointments.doctor')}:</span> {appt.doctor}
                               </div>
                               <div>
-                                <span className="font-medium">Type:</span> {appt.type}
+                                <span className="font-medium">{t('appointments.type')}:</span> {appt.type}
                               </div>
                               <div>
-                                <span className="font-medium">Duration:</span> {appt.duration}
+                                <span className="font-medium">{t('appointments.duration')}:</span> {appt.duration}
                               </div>
                               <div>
-                                <span className="font-medium">Status:</span>
+                                <span className="font-medium">{t('appointments.status')}:</span>
                                 <Badge variant={
                                   appt.status === 'Cancelled' ? 'destructive' :
                                   appt.status === 'Completed' ? 'default' :
@@ -290,7 +292,15 @@ export default function AppointmentsPage() {
                                   "ml-1 text-xs",
                                   appt.status === 'Completed' && 'bg-green-100 text-green-800'
                                 )}>
-                                  {appt.status}
+                                  {t(
+                                    appt.status === 'Cancelled'
+                                      ? 'appointments.filter.cancelled'
+                                      : appt.status === 'Completed'
+                                      ? 'appointments.filter.completed'
+                                      : appt.status === 'Confirmed'
+                                      ? 'appointments.filter.confirmed'
+                                      : 'appointments.filter.pending'
+                                  )}
                                 </Badge>
                               </div>
                             </div>
@@ -299,10 +309,8 @@ export default function AppointmentsPage() {
                       ) : (
                         <div className="text-center py-8">
                           <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-                          <h3 className="mt-2 text-sm font-semibold">No appointments found</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Try adjusting your search or filters.
-                          </p>
+                          <h3 className="mt-2 text-sm font-semibold">{t('appointments.no_appointments_found')}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">{t('appointments.try_adjusting_filters')}</p>
                         </div>
                       )}
                     </div>
@@ -313,13 +321,13 @@ export default function AppointmentsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="whitespace-nowrap">Date & Time</TableHead>
-                          <TableHead className="whitespace-nowrap">Patient</TableHead>
-                          <TableHead className="whitespace-nowrap">Doctor</TableHead>
-                          <TableHead className="whitespace-nowrap">Type</TableHead>
-                          <TableHead className="whitespace-nowrap">Duration</TableHead>
-                          <TableHead className="whitespace-nowrap">Status</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('appointments.date')} &amp; {t('appointments.time')}</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('appointments.doctor')}</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('appointments.type')}</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('appointments.duration')}</TableHead>
+                          <TableHead className="whitespace-nowrap">{t('appointments.status')}</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">{t('table.actions')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -341,7 +349,15 @@ export default function AppointmentsPage() {
                                 } className={cn(
                                   appt.status === 'Completed' && 'bg-green-100 text-green-800'
                                 )}>
-                                  {appt.status}
+                                  {t(
+                                    appt.status === 'Cancelled'
+                                      ? 'appointments.filter.cancelled'
+                                      : appt.status === 'Completed'
+                                      ? 'appointments.filter.completed'
+                                      : appt.status === 'Confirmed'
+                                      ? 'appointments.filter.confirmed'
+                                      : 'appointments.filter.pending'
+                                  )}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right whitespace-nowrap">
@@ -349,28 +365,28 @@ export default function AppointmentsPage() {
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                       <MoreHorizontal className="h-4 w-4" />
-                                      <span className="sr-only">Actions</span>
+                                      <span className="sr-only">{t('table.actions')}</span>
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
-                                      View Details
+                                      {t('appointments.menu.view_details')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
-                                      <Pencil className="mr-2 h-4 w-4" /> Edit
+                                      <Pencil className="mr-2 h-4 w-4" /> {t('appointments.menu.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
-                                      Mark as Confirmed
+                                      {t('appointments.menu.mark_confirmed')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
-                                      Mark as Pending
+                                      {t('appointments.menu.mark_pending')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
-                                      <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                                      <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.mark_completed')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
-                                      Mark as Cancelled
+                                      {t('appointments.menu.mark_cancelled')}
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -382,10 +398,8 @@ export default function AppointmentsPage() {
                             <TableCell colSpan={7} className="h-24 text-center">
                               <div className="flex flex-col items-center justify-center">
                                 <Calendar className="h-12 w-12 text-muted-foreground mb-2" />
-                                <h3 className="text-sm font-semibold">No appointments found</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Try adjusting your search or filters.
-                                </p>
+                                <h3 className="text-sm font-semibold">{t('appointments.no_appointments_found')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('appointments.try_adjusting_filters')}</p>
                               </div>
                             </TableCell>
                           </TableRow>

@@ -58,6 +58,7 @@ import { ViewImageDialog } from '@/components/medical-records/view-image-dialog'
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type MedicalRecord = {
   id: string;
@@ -89,6 +90,7 @@ export type ClinicalImage = {
 const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
 export default function MedicalRecordsPage() {
+  const { t, isRTL } = useLanguage();
   const [records, setRecords] = React.useState<MedicalRecord[]>([]);
   const [images, setImages] = React.useState<ClinicalImage[]>([]);
   const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>([]);
@@ -151,7 +153,7 @@ export default function MedicalRecordsPage() {
             setTemplates(templatesData);
         } catch (e) {
             console.error('Error fetching data:', e);
-            toast({ title: 'Error fetching data', variant: 'destructive' });
+            toast({ title: t('medical_records.toast.error_fetching'), variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -164,10 +166,10 @@ export default function MedicalRecordsPage() {
   const medicalRecordsPageStats = React.useMemo(() => {
     const draftRecords = records.filter(r => r.status === 'Draft').length;
     return [
-      { title: "Total Records", value: records.length, description: "All patient records" },
-      { title: "Clinical Images", value: images.length, description: "All uploaded images" },
-      { title: "Templates Available", value: templates.length, description: "For faster documentation" },
-      { title: "Draft Records", value: draftRecords, description: "Awaiting finalization", valueClassName: "text-orange-500" },
+      { title: t('medical_records.total_records'), value: records.length, description: t('medical_records.all_patient_records') },
+      { title: t('medical_records.clinical_images'), value: images.length, description: t('medical_records.all_uploaded_images') },
+      { title: t('medical_records.templates'), value: templates.length, description: t('medical_records.for_faster_documentation') },
+      { title: t('medical_records.draft_records'), value: draftRecords, description: t('medical_records.awaiting_finalization'), valueClassName: "text-orange-500" },
     ];
   }, [records, images, templates]);
 
@@ -181,11 +183,11 @@ export default function MedicalRecordsPage() {
       await setDocument('medical-records', newRecord.id, newRecord);
       setRecords(prev => [newRecord, ...prev]);
       toast({
-        title: "Medical Record Created",
-        description: `New record for ${newRecord.patient} has been created.`,
+        title: t('medical_records.toast.record_created'),
+        description: t('medical_records.toast.record_created_desc'),
       });
     } catch(e) {
-      toast({ title: 'Error creating record', variant: 'destructive' });
+      toast({ title: t('medical_records.toast.error_creating_record'), variant: 'destructive' });
     }
   };
 
@@ -195,11 +197,11 @@ export default function MedicalRecordsPage() {
       setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
       setRecordToEdit(null);
       toast({
-        title: "Medical Record Updated",
-        description: `Record ${updatedRecord.id} has been updated.`,
+        title: t('medical_records.toast.record_updated'),
+        description: t('medical_records.toast.record_updated_desc'),
       });
     } catch(e) {
-      toast({ title: 'Error updating record', variant: 'destructive' });
+      toast({ title: t('medical_records.toast.error_updating_record'), variant: 'destructive' });
     }
   };
 
@@ -210,12 +212,12 @@ export default function MedicalRecordsPage() {
       setRecords(prev => prev.filter(record => record.id !== recordToDelete.id));
       setRecordToDelete(null);
       toast({
-        title: "Medical Record Deleted",
-        description: `Record ${recordToDelete.id} has been permanently deleted.`,
+        title: t('medical_records.toast.record_deleted'),
+        description: t('medical_records.toast.record_deleted_desc'),
         variant: "destructive",
       });
     } catch (e) {
-      toast({ title: "Error deleting record", variant: "destructive" });
+      toast({ title: t('medical_records.toast.error_deleting_record'), variant: "destructive" });
     }
   };
 
@@ -234,11 +236,11 @@ export default function MedicalRecordsPage() {
       await setDocument('clinical-images', newImage.id, newImage);
       setImages(prev => [newImage, ...prev]);
       toast({
-        title: "Image Uploaded",
-        description: `A new ${data.type} image for ${data.patientName} has been uploaded.`,
+        title: t('medical_records.toast.image_uploaded'),
+        description: t('medical_records.toast.image_uploaded_desc'),
       });
      } catch(e) {
-        toast({ title: 'Error uploading image', variant: 'destructive' });
+        toast({ title: t('medical_records.toast.error_uploading_image'), variant: 'destructive' });
      }
   };
 
@@ -258,11 +260,11 @@ export default function MedicalRecordsPage() {
       setImages(prev => prev.map(img => img.id === imageId ? updatedImageData : img));
       
       toast({
-        title: "Image Replaced",
-        description: `The ${updatedImage.type} image has been successfully replaced.`,
+        title: t('medical_records.toast.image_replaced'),
+        description: t('medical_records.toast.image_replaced_desc'),
       });
     } catch (e) {
-      toast({ title: 'Error replacing image', variant: 'destructive' });
+      toast({ title: t('medical_records.toast.error_replacing_image'), variant: 'destructive' });
     }
   };
 
@@ -282,19 +284,19 @@ export default function MedicalRecordsPage() {
       setImageToDelete(null);
       
       toast({
-        title: "Image Deleted",
-        description: `The ${imageToDelete.type} image for ${imageToDelete.patient} has been permanently deleted.`,
+        title: t('medical_records.toast.image_deleted'),
+        description: t('medical_records.toast.image_deleted_desc'),
         variant: "destructive",
       });
     } catch (e) {
-      toast({ title: 'Error deleting image', variant: 'destructive' });
+      toast({ title: t('medical_records.toast.error_deleting_image'), variant: 'destructive' });
     }
   };
   
   const handleDownloadRecord = (recordId: string) => {
     toast({
-      title: "Downloading Record",
-      description: `Record ${recordId} is being prepared for download.`
+      title: t('medical_records.toast.downloading_record'),
+      description: t('medical_records.toast.downloading_record_desc')
     });
   };
 
@@ -326,9 +328,9 @@ export default function MedicalRecordsPage() {
   return (
     <ErrorBoundary>
       <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Medical Records</h1>
+          <h1 className="text-3xl font-bold">{t('medical_records.title')}</h1>
           <div className="flex items-center gap-2">
             <UploadImageDialog onUpload={handleImageUpload} />
             <NewRecordDialog onSave={handleSaveRecord} />
@@ -357,31 +359,31 @@ export default function MedicalRecordsPage() {
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="medical-records">Medical Records</TabsTrigger>
-            <TabsTrigger value="clinical-images">Clinical Images</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="medical-records">{t('medical_records.medical_records')}</TabsTrigger>
+            <TabsTrigger value="clinical-images">{t('medical_records.clinical_images')}</TabsTrigger>
+            <TabsTrigger value="templates">{t('medical_records.templates')}</TabsTrigger>
           </TabsList>
           <TabsContent value="medical-records" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Patient Medical Records</CardTitle>
+                <CardTitle>{t('medical_records.patient_medical_records')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                     <Input
                       type="search"
-                      placeholder="Search records..."
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      placeholder={t('medical_records.search_records')}
+                      className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
                       value={recordSearchTerm}
                       onChange={(e) => setRecordSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={recordTypeFilter} onValueChange={setRecordTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Types" />
+                      <SelectValue placeholder={t('medical_records.all_types')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="all">{t('medical_records.all_types')}</SelectItem>
                       {medicalRecordTypes.map(type => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -393,14 +395,14 @@ export default function MedicalRecordsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Record ID</TableHead>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Chief Complaint</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('medical_records.record_id')}</TableHead>
+                      <TableHead>{t('common.patient')}</TableHead>
+                      <TableHead>{t('medical_records.type')}</TableHead>
+                      <TableHead>{t('medical_records.chief_complaint')}</TableHead>
+                      <TableHead>{t('medical_records.provider')}</TableHead>
+                      <TableHead>{t('common.date')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className="text-right">{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -423,32 +425,32 @@ export default function MedicalRecordsPage() {
                           <TableCell>{record.provider}</TableCell>
                           <TableCell>{record.date}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{record.status}</Badge>
+                            <Badge variant="outline">{record.status === 'Draft' ? t('medical_records.draft') : t('medical_records.final')}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                   <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
+                                  <span className="sr-only">{t('common.actions')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setRecordToView(record)}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  {t('table.view')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setRecordToEdit(record)}>
                                   <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
+                                  {t('table.edit')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDownloadRecord(record.id)}>
                                   <Download className="mr-2 h-4 w-4" />
-                                  Download
+                                  {t('table.download')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setRecordToDelete(record)} className="text-destructive">
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
+                                  {t('table.delete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -458,7 +460,7 @@ export default function MedicalRecordsPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={8} className="h-24 text-center">
-                          No medical records found.
+                          {t('medical_records.no_records_found')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -471,13 +473,13 @@ export default function MedicalRecordsPage() {
              <Card>
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>Clinical Images</CardTitle>
+                        <CardTitle>{t('medical_records.clinical_images')}</CardTitle>
                         <div className="relative w-full md:w-auto">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                             <Input
                             type="search"
-                            placeholder="Search images..."
-                            className="w-full rounded-lg bg-background pl-8 md:w-[250px] lg:w-[336px]"
+                            placeholder={t('medical_records.search_images') + '...'}
+                            className={cn("w-full rounded-lg bg-background md:w-[250px] lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
                             value={imageSearchTerm}
                             onChange={(e) => setImageSearchTerm(e.target.value)}
                             />
@@ -525,29 +527,29 @@ export default function MedicalRecordsPage() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Open menu</span>
+                                            <span className="sr-only">{t('common.open_menu')}</span>
                                             <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('table.actions')}</DropdownMenuLabel>
                                         <DropdownMenuItem onClick={() => setImageToView(image)}>
                                             <Eye className="mr-2 h-4 w-4" />
-                                            View Full Image
+                                            {t('medical_records.view_full_image')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => {
                                             setImageToReplace(image);
                                             setIsReplaceDialogOpen(true);
                                         }}>
                                             <Replace className="mr-2 h-4 w-4" />
-                                            Replace Image
+                                            {t('medical_records.replace_image')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => {
                                             setImageToLink(image);
                                             setIsLinkDialogOpen(true);
                                         }}>
                                             <LinkIcon className="mr-2 h-4 w-4" />
-                                            Link to Tooth
+                                            {t('medical_records.link_to_tooth')}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem 
@@ -555,7 +557,7 @@ export default function MedicalRecordsPage() {
                                             className="text-destructive"
                                         >
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete Image
+                                            {t('medical_records.delete_image')}
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -566,7 +568,7 @@ export default function MedicalRecordsPage() {
                     ) : (
                     <div className="h-48 text-center text-muted-foreground flex flex-col items-center justify-center p-6 gap-4">
                         <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
-                        <span>No clinical images found.</span>
+                        <span>{t('dental_chart.no_clinical_images')}</span>
                     </div>
                     )}
                 </CardContent>
@@ -576,13 +578,13 @@ export default function MedicalRecordsPage() {
             <Card>
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>Record Templates</CardTitle>
+                        <CardTitle>{t('medical_records.templates')}</CardTitle>
                         <div className="relative w-full md:w-auto">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                             <Input
                             type="search"
-                            placeholder="Search templates..."
-                            className="w-full rounded-lg bg-background pl-8 md:w-[250px] lg:w-[336px]"
+                            placeholder={t('medical_records.search_templates')}
+                            className={cn("w-full rounded-lg bg-background md:w-[250px] lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
                             value={templateSearchTerm}
                             onChange={(e) => setTemplateSearchTerm(e.target.value)}
                             />
@@ -609,7 +611,7 @@ export default function MedicalRecordsPage() {
                         </CardContent>
                         <CardFooter className="flex justify-end gap-2">
                         <Button variant="outline" size="sm">
-                            Use Template
+                            {t('medical_records.use_template')}
                         </Button>
                         </CardFooter>
                     </Card>
@@ -617,7 +619,7 @@ export default function MedicalRecordsPage() {
                 </div>
                 ) : (
                 <div className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    <p>No templates found.</p>
+                    <p>{t('medical_records.no_templates_found')}</p>
                 </div>
                 )}
                 </CardContent>
@@ -654,15 +656,15 @@ export default function MedicalRecordsPage() {
         onOpenChange={(isOpen) => !isOpen && setImageToView(null)}
       />
 
-      <LinkImageToToothDialog
+  <LinkImageToToothDialog
         image={imageToLink}
         open={isLinkDialogOpen}
         onOpenChange={setIsLinkDialogOpen}
         onSuccess={() => {
           setImageToLink(null);
           toast({
-            title: "Image Linked",
-            description: "Clinical image has been successfully linked to the tooth.",
+    title: t('medical_records.toast.image_linked'),
+    description: t('medical_records.toast.image_linked_desc'),
           });
         }}
       />
@@ -670,14 +672,14 @@ export default function MedicalRecordsPage() {
       <AlertDialog open={!!recordToDelete} onOpenChange={(isOpen) => !isOpen && setRecordToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the medical record and all associated data.
+              {t('medical_records.confirm_delete_record_desc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteRecord}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRecord}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -685,16 +687,15 @@ export default function MedicalRecordsPage() {
       <AlertDialog open={!!imageToDelete} onOpenChange={(isOpen) => !isOpen && setImageToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Clinical Image</AlertDialogTitle>
+            <AlertDialogTitle>{t('medical_records.delete_clinical_image_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {imageToDelete?.type} image for {imageToDelete?.patient}? 
-              This action cannot be undone and will permanently remove the image from storage.
+              {t('medical_records.confirm_delete_image_desc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteImage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete Image
+              {t('medical_records.delete_image')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

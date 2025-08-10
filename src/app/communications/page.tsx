@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
 import type { Message } from '@/lib/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -42,6 +43,22 @@ export default function CommunicationsPage() {
   const [loading, setLoading] = React.useState(true);
   const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
+  const getStatusLabel = React.useCallback((status: string) => {
+    switch (status) {
+      case 'Sent':
+        return t('communications.sent');
+      case 'Delivered':
+      case 'Read':
+        return t('communications.delivered');
+      case 'Queued':
+        return t('communications.queued');
+      case 'Failed':
+        return t('communications.failed');
+      default:
+        return status;
+    }
+  }, [t]);
 
   React.useEffect(() => {
     async function fetchData() {
@@ -53,7 +70,7 @@ export default function CommunicationsPage() {
         setMessages(messageData);
         setTemplates(templateData);
       } catch (error) {
-        toast({ title: 'Error fetching data', variant: 'destructive' });
+  toast({ title: t('communications.toast.error_fetching'), variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -69,12 +86,12 @@ export default function CommunicationsPage() {
       : 0;
 
     return [
-      { title: "Messages Sent (All Time)", value: totalMessages, description: "Total messages sent via Email & SMS" },
-      { title: "Templates Created", value: totalTemplates, description: "Reusable message templates" },
-      { title: "Delivered Rate", value: `${deliveredRate.toFixed(1)}%`, description: "Successful delivery rate", valueClassName: "text-green-600" },
-      { title: "Automations", value: 0, description: "Automated message workflows" }
+      { title: t('communications.messages_sent'), value: totalMessages, description: t('communications.total_messages_desc') },
+      { title: t('communications.templates_created'), value: totalTemplates, description: t('communications.reusable_templates') },
+      { title: t('communications.delivered_rate'), value: `${deliveredRate.toFixed(1)}%`, description: t('communications.successful_delivery'), valueClassName: "text-green-600" },
+      { title: t('communications.automations'), value: 0, description: t('communications.automated_workflows') }
     ];
-  }, [messages, templates]);
+  }, [messages, templates, t]);
   
   const handleSendMessage = async (data: any) => {
     try {
@@ -96,11 +113,11 @@ export default function CommunicationsPage() {
       await setDocument('messages', newMessage.id, newMessage);
       setMessages(prev => [newMessage, ...prev]);
       toast({
-        title: "Message Sent",
-        description: `A new ${newMessage.type} has been sent to ${newMessage.patient}.`,
+        title: t('communications.toast.message_sent'),
+        description: t('communications.toast.message_sent_desc'),
       });
     } catch (error) {
-      toast({ title: 'Error sending message', variant: 'destructive' });
+      toast({ title: t('communications.toast.error_sending_message'), variant: 'destructive' });
     }
   };
 
@@ -113,11 +130,11 @@ export default function CommunicationsPage() {
       await setDocument('templates', newTemplate.id, newTemplate);
       setTemplates(prev => [...prev, newTemplate]);
       toast({
-        title: "Template Saved",
-        description: `The "${data.name}" template has been saved.`,
+  title: t('communications.toast.template_saved'),
+  description: t('communications.toast.template_saved_desc'),
       });
     } catch (error) {
-       toast({ title: 'Error saving template', variant: 'destructive' });
+       toast({ title: t('communications.toast.error_saving_template'), variant: 'destructive' });
     }
   };
 
@@ -127,22 +144,22 @@ export default function CommunicationsPage() {
         await deleteDocument('templates', templateToDelete.id);
         setTemplates(prev => prev.filter(t => t.id !== templateToDelete.id));
         toast({
-          title: "Template Deleted",
-          description: `The "${templateToDelete.name}" template has been deleted.`,
+          title: t('communications.toast.template_deleted'),
+          description: t('communications.toast.template_deleted_desc'),
           variant: "destructive",
         });
         setTemplateToDelete(null);
       } catch(e) {
-        toast({ title: 'Error deleting template', variant: 'destructive' });
+        toast({ title: t('communications.toast.error_deleting_template'), variant: 'destructive' });
       }
     }
   };
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
+      <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold">Communications</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t('communications.title')}</h1>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
             <NewTemplateDialog onSave={handleSaveTemplate} />
             <NewMessageDialog onSend={handleSendMessage} />
@@ -172,18 +189,18 @@ export default function CommunicationsPage() {
         <Tabs defaultValue="history" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="history" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Message </span>History
+              {t('communications.history')}
             </TabsTrigger>
-            <TabsTrigger value="templates" className="text-xs sm:text-sm">Templates</TabsTrigger>
+            <TabsTrigger value="templates" className="text-xs sm:text-sm">{t('communications.templates')}</TabsTrigger>
             <TabsTrigger value="automated" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Automated</span>
-              <span className="sm:hidden">Auto</span>
+              <span className="hidden sm:inline">{t('communications.automated')}</span>
+              <span className="sm:hidden">{t('communications.auto')}</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="history" className="mt-4">
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">Recent Messages</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">{t('communications.recent_messages')}</CardTitle>
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
                 <div className="block sm:hidden">
@@ -200,21 +217,21 @@ export default function CommunicationsPage() {
                             <div className="font-medium text-sm">{message.patient}</div>
                             <Badge variant={
                               message.status === 'Sent' ? 'default' :
-                              message.status === 'Delivered' ? 'secondary' :
+                              message.status === 'Delivered' || message.status === 'Read' ? 'secondary' :
                               'destructive'
                             }>
-                              {message.status}
+                              {getStatusLabel(message.status as unknown as string)}
                             </Badge>
                           </div>
                           <div className="space-y-2 text-xs text-muted-foreground">
                             <div>
-                              <span className="font-medium">Type:</span> {message.type}
+                              <span className="font-medium">{t('communications.type')}:</span> {message.type === 'SMS' ? t('communications.sms') : t('communications.email')}
                             </div>
                             <div>
-                              <span className="font-medium">Content:</span> {message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content}
+                              <span className="font-medium">{t('communications.content')}:</span> {message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content}
                             </div>
                             <div>
-                              <span className="font-medium">Sent:</span> {new Date(message.sent).toLocaleDateString()}
+                              <span className="font-medium">{t('communications.sent')}:</span> {new Date(message.sent).toLocaleDateString()}
                             </div>
                           </div>
                         </Card>
@@ -222,10 +239,8 @@ export default function CommunicationsPage() {
                     ) : (
                       <div className="text-center py-8">
                         <MessageSquareIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-2 text-sm font-semibold">No messages found</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Send your first message to get started.
-                        </p>
+                        <h3 className="mt-2 text-sm font-semibold">{t('communications.no_messages_found')}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{t('communications.send_first_message')}</p>
                       </div>
                     )}
                   </div>
@@ -236,11 +251,11 @@ export default function CommunicationsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="whitespace-nowrap">Patient</TableHead>
-                        <TableHead className="whitespace-nowrap">Type</TableHead>
-                        <TableHead className="whitespace-nowrap">Content</TableHead>
-                        <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="whitespace-nowrap">Sent</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('communications.patient')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('communications.type')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('communications.content')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('communications.status')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('communications.sent')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -257,7 +272,7 @@ export default function CommunicationsPage() {
                                 ) : (
                                   <Mail className="h-4 w-4 text-muted-foreground" />
                                 )}
-                                <span>{message.type}</span>
+                                <span>{message.type === 'SMS' ? t('communications.sms') : t('communications.email')}</span>
                               </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap max-w-xs truncate">
@@ -276,12 +291,12 @@ export default function CommunicationsPage() {
                                   (message.status === "Delivered" || message.status === "Read") && "bg-foreground text-background hover:bg-foreground/80",
                                 )}
                               >
-                                {message.status === "Sent" ? (
-                                  <Clock className="mr-1 h-3 w-3" />
+                                {message.status === 'Sent' ? (
+                                  <Clock className={cn(isRTL ? 'ml-1' : 'mr-1', 'h-3 w-3')} />
                                 ) : (
-                                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                                  <CheckCircle2 className={cn(isRTL ? 'ml-1' : 'mr-1', 'h-3 w-3')} />
                                 )}
-                                {message.status}
+                                {getStatusLabel(message.status as unknown as string)}
                               </Badge>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">{new Date(message.sent).toLocaleString()}</TableCell>
@@ -292,10 +307,8 @@ export default function CommunicationsPage() {
                           <TableCell colSpan={5} className="h-24 text-center">
                             <div className="flex flex-col items-center justify-center">
                               <MessageSquareIcon className="h-12 w-12 text-muted-foreground mb-2" />
-                              <h3 className="text-sm font-semibold">No messages found</h3>
-                              <p className="text-sm text-muted-foreground">
-                                Send your first message to get started.
-                              </p>
+                              <h3 className="text-sm font-semibold">{t('communications.no_messages_found')}</h3>
+                              <p className="text-sm text-muted-foreground">{t('communications.send_first_message')}</p>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -325,12 +338,12 @@ export default function CommunicationsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2 p-4 sm:p-6 pt-0">
                       <Button variant="outline" size="sm" disabled>
-                        <Pencil className="mr-1 sm:mr-2 h-3 w-3" />
-                        <span className="hidden sm:inline">Edit</span>
+                        <Pencil className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
+                        <span className="hidden sm:inline">{t('communications.edit')}</span>
                       </Button>
                        <Button variant="destructive" size="sm" onClick={() => setTemplateToDelete(template)}>
-                        <Trash2 className="mr-1 sm:mr-2 h-3 w-3" />
-                        <span className="hidden sm:inline">Delete</span>
+                        <Trash2 className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
+                        <span className="hidden sm:inline">{t('communications.delete')}</span>
                       </Button>
                     </CardFooter>
                   </Card>
@@ -339,7 +352,7 @@ export default function CommunicationsPage() {
             ) : (
               <Card>
                 <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-4 sm:p-6">
-                  {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : 'No templates found. Create one to get started.'}
+                  {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : t('communications.no_templates_found')}
                 </CardContent>
               </Card>
             )}
@@ -347,7 +360,7 @@ export default function CommunicationsPage() {
           <TabsContent value="automated">"
             <Card>
               <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                No automated messages configured.
+                {t('communications.no_automated_messages')}
               </CardContent>
             </Card>
           </TabsContent>
@@ -357,15 +370,14 @@ export default function CommunicationsPage() {
       <AlertDialog open={!!templateToDelete} onOpenChange={(isOpen) => !isOpen && setTemplateToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('communications.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the template
-              "{templateToDelete?.name}".
+              {t('communications.template_delete_warning')} "{templateToDelete?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTemplate}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

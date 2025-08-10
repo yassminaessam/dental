@@ -24,12 +24,13 @@ import {
 } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Invoice } from '@/app/billing/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const paymentMethods = ['Cash', 'Vodafone Cash', 'Fawry', 'InstaPay', 'Bank Transfer'];
+const paymentMethods = ['billing.payment_method_cash', 'billing.payment_method_vodafone', 'billing.payment_method_fawry', 'billing.payment_method_instapay', 'billing.payment_method_bank'];
 
 const paymentSchema = z.object({
-  amount: z.coerce.number().positive("Amount must be greater than zero."),
-  paymentMethod: z.string({ required_error: 'Payment method is required.' }),
+  amount: z.coerce.number().positive('billing.validation.amount_positive'),
+  paymentMethod: z.string({ required_error: 'billing.validation.payment_method_required' }),
   notes: z.string().optional(),
 });
 
@@ -48,6 +49,7 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
   });
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
+  const { t, language } = useLanguage();
 
   React.useEffect(() => {
     form.reset({
@@ -62,7 +64,7 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
     if (data.amount > amountDue) {
         form.setError("amount", {
             type: "manual",
-            message: `Payment cannot exceed amount due (EGP ${amountDue.toFixed(2)}).`
+            message: t('billing.payment_exceeds_due', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(amountDue) })
         });
         return;
     }
@@ -73,9 +75,9 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Record Payment for Invoice {invoice.id}</DialogTitle>
+          <DialogTitle>{t('billing.record_payment_for_invoice')} {invoice.id}</DialogTitle>
           <DialogDescription>
-            Patient: {invoice.patient} | Amount Due: EGP {amountDue.toFixed(2)}
+            {t('common.patient')}: {invoice.patient} | {t('billing.amount_due')}: {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(amountDue)}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -85,9 +87,9 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Amount *</FormLabel>
+                  <FormLabel>{t('billing.payment_amount')} *</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                    <Input type="number" step="0.01" placeholder={t('billing.amount_placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -98,13 +100,13 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Method *</FormLabel>
+                  <FormLabel>{t('billing.payment_method')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('billing.select_payment_method')} /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {paymentMethods.map(method => <SelectItem key={method} value={method}>{method}</SelectItem>)}
+                      {paymentMethods.map(method => <SelectItem key={method} value={method}>{t(method)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -116,16 +118,16 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Notes</FormLabel>
+                  <FormLabel>{t('billing.payment_notes')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Reference ID, etc." {...field} />
+                    <Input placeholder={t('billing.payment_notes_placeholder')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Record Payment</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('billing.record_payment')}</Button>
             </DialogFooter>
           </form>
         </Form>

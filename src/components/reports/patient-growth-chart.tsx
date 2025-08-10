@@ -2,29 +2,15 @@
 "use client";
 
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-
-const chartConfig = {
-  total: {
-    label: "Total Patients",
-    color: "hsl(var(--chart-2))",
-  },
-  new: {
-    label: "New Patients",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
-
-interface PatientGrowthChartProps {
-    data: { month: string; total: number; new: number }[];
-}
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function PatientGrowthChart({ data }: PatientGrowthChartProps) {
+  const { t } = useLanguage();
+  const chartConfig = {
+    total: { label: t('analytics.total_patients_system'), color: "hsl(var(--chart-2))" },
+    new: { label: t('patients.new_patients_30d'), color: "hsl(var(--chart-1))" },
+  } satisfies ChartConfig;
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <LineChart
@@ -69,4 +55,8 @@ export default function PatientGrowthChart({ data }: PatientGrowthChartProps) {
       </LineChart>
     </ChartContainer>
   );
+}
+
+interface PatientGrowthChartProps {
+  data: { month: string; total: number; new: number }[];
 }

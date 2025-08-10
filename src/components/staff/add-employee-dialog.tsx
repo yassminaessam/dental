@@ -30,18 +30,20 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { StaffMember } from '@/app/staff/page';
 
-const employeeSchema = z.object({
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Invalid email address."),
-  phone: z.string().optional(),
-  role: z.string({ required_error: "Role is required." }),
-  hireDate: z.date({ required_error: "Hire date is required." }),
-  salary: z.string().min(1, "Salary is required."),
-});
-
-type EmployeeFormData = z.infer<typeof employeeSchema>;
+// Schema will be built inside component to use localized messages
+// Define the form data type explicitly to avoid referencing schema before declaration
+type EmployeeFormData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  role: string;
+  hireDate: Date;
+  salary: string;
+};
 
 const staffRoles = [
   { name: "Dentist" },
@@ -52,10 +54,20 @@ const staffRoles = [
 ];
 
 interface AddEmployeeDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => void;
 }
 
 export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
+  const { t, isRTL } = useLanguage();
+  const employeeSchema = React.useMemo(() => z.object({
+    firstName: z.string().min(1, t('staff.validation.first_name_required')),
+    lastName: z.string().min(1, t('staff.validation.last_name_required')),
+    email: z.string().email(t('staff.validation.invalid_email')),
+    phone: z.string().optional(),
+    role: z.string({ required_error: t('staff.validation.role_required') }),
+    hireDate: z.date({ required_error: t('staff.validation.hire_date_required') }),
+    salary: z.string().min(1, t('staff.validation.salary_required')),
+  }), [t]);
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<EmployeeFormData>({
@@ -70,7 +82,14 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   });
 
   const onSubmit = (data: EmployeeFormData) => {
-    onSave({ ...data, name: `${data.firstName} ${data.lastName}` });
+    onSave({
+      name: `${data.firstName} ${data.lastName}`,
+      role: data.role,
+      email: data.email,
+      phone: data.phone || '',
+      salary: data.salary,
+      hireDate: data.hireDate.toISOString(),
+    });
     form.reset();
     setOpen(false);
   };
@@ -79,15 +98,15 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Employee
+          <Plus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+          {t('staff.add_employee')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Add New Employee</DialogTitle>
+          <DialogTitle>{t('staff.add_employee')}</DialogTitle>
           <DialogDescription>
-            Enter the details for the new staff member.
+            {t('staff.add_employee_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -98,9 +117,9 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name *</FormLabel>
+                    <FormLabel>{t('staff.first_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Youssef" {...field} />
+                      <Input placeholder={t('staff.first_name_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -111,9 +130,9 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
+                    <FormLabel>{t('staff.last_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Hassan" {...field} />
+                      <Input placeholder={t('staff.last_name_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -126,9 +145,9 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email *</FormLabel>
+                    <FormLabel>{t('staff.email')} *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="youssef.hassan@cairodental.com" {...field} />
+                      <Input type="email" placeholder={t('staff.email_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,9 +158,9 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('staff.phone')}</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                      <Input type="tel" placeholder={t('staff.phone_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -153,17 +172,17 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
+                    <FormLabel>{t('staff.role')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
+                          <SelectValue placeholder={t('staff.select_role')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {staffRoles.map((role) => (
                           <SelectItem key={role.name} value={role.name}>
-                            {role.name}
+                            {t(`roles.${role.name.toLowerCase()}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -177,7 +196,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="hireDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Hire Date *</FormLabel>
+                    <FormLabel>{t('staff.hire_date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -185,8 +204,8 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                             variant={"outline"}
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('staff.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -212,17 +231,17 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
               name="salary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Salary (per year)</FormLabel>
+                  <FormLabel>{t('staff.salary_per_year')}</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="EGP 120,000" {...field} />
+                    <Input type="number" placeholder={t('staff.salary_placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Employee</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('staff.save_employee')}</Button>
             </DialogFooter>
           </form>
         </Form>

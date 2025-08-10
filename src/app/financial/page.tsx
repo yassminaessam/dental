@@ -55,6 +55,7 @@ import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditTransactionDialog } from '@/components/financial/edit-transaction-dialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type Transaction = {
   id: string;
@@ -78,6 +79,7 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
+  const { t, isRTL } = useLanguage();
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -120,13 +122,13 @@ export default function FinancialPage() {
         setChartData(sortedChartData);
 
       } catch (error) {
-        toast({ title: "Error fetching transactions", variant: "destructive" });
+    toast({ title: t('financial.toast.error_fetching'), variant: "destructive" });
       } finally {
         setLoading(false);
       }
     }
     fetchTransactions();
-  }, [toast]);
+  }, [toast, t]);
 
   const financialPageStats = React.useMemo(() => {
     const revenue = transactions.filter(t => t.type === 'Revenue').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
@@ -136,27 +138,27 @@ export default function FinancialPage() {
 
     return [
       {
-        title: "Total Revenue",
+        titleKey: 'financial.total_revenue',
         value: `EGP ${revenue.toLocaleString()}`,
-        description: "Total revenue recorded",
+        descriptionKey: 'financial.total_revenue_desc',
         icon: "TrendingUp",
       },
       {
-        title: "Total Expenses",
+        titleKey: 'financial.total_expenses',
         value: `EGP ${expenses.toLocaleString()}`,
-        description: "Total expenses recorded",
+        descriptionKey: 'financial.total_expenses_desc',
         icon: "TrendingDown",
       },
       {
-        title: "Net Profit",
+        titleKey: 'financial.net_profit',
         value: `EGP ${netProfit.toLocaleString()}`,
-        description: "Revenue minus expenses",
+        descriptionKey: 'financial.net_profit_desc',
         icon: "DollarSign",
       },
       {
-        title: "Pending Payments",
+        titleKey: 'financial.pending_payments',
         value: `EGP ${pending.toLocaleString()}`,
-        description: "From pending transactions",
+        descriptionKey: 'financial.pending_payments_desc',
         icon: "Wallet",
       },
     ];
@@ -176,7 +178,18 @@ export default function FinancialPage() {
 
     const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--muted))"];
     return Object.entries(categoryTotals).map(([name, value], index) => ({
-      name,
+      name: (
+        {
+          'Patient Payment': t('financial.category.patient_payment'),
+          'Insurance Payment': t('financial.category.insurance_payment'),
+          'Supplies': t('financial.category.supplies'),
+          'Salary': t('financial.category.salary'),
+          'Rent': t('financial.category.rent'),
+          'Utilities': t('financial.category.utilities'),
+          'Marketing': t('financial.category.marketing'),
+          'Other': t('financial.category.other'),
+        } as Record<string, string>
+      )[name] || name,
       value,
       color: colors[index % colors.length],
     }));
@@ -199,11 +212,11 @@ export default function FinancialPage() {
       await setDocument('transactions', newTransaction.id, { ...newTransaction, date: newTransaction.date.toISOString() });
       setTransactions(prev => [...prev, newTransaction]);
       toast({
-        title: "Transaction Added",
-        description: `New ${newTransaction.type.toLowerCase()} of ${newTransaction.amount} has been recorded.`,
+        title: t('financial.toast.transaction_added'),
+        description: t('financial.toast.transaction_added_desc'),
       });
     } catch (e) {
-      toast({ title: "Error adding transaction", variant: "destructive" });
+      toast({ title: t('financial.toast.error_adding_transaction'), variant: "destructive" });
     }
   };
   
@@ -213,11 +226,11 @@ export default function FinancialPage() {
       setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
       setTransactionToEdit(null);
       toast({
-        title: "Transaction Updated",
-        description: `Transaction ${updatedTransaction.id} has been successfully updated.`,
+        title: t('financial.toast.transaction_updated'),
+        description: t('financial.toast.transaction_updated_desc'),
       });
     } catch (e) {
-      toast({ title: 'Error updating transaction', variant: 'destructive' });
+      toast({ title: t('financial.toast.error_updating_transaction'), variant: 'destructive' });
     }
   };
 
@@ -227,13 +240,13 @@ export default function FinancialPage() {
         await deleteDocument('transactions', transactionToDelete.id);
         setTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id));
         toast({
-          title: "Transaction Deleted",
-          description: `Transaction ${transactionToDelete.id} has been deleted.`,
+          title: t('financial.toast.transaction_deleted'),
+          description: t('financial.toast.transaction_deleted_desc'),
           variant: "destructive",
         });
         setTransactionToDelete(null);
       } catch (e) {
-        toast({ title: 'Error deleting transaction', variant: 'destructive' });
+        toast({ title: t('financial.toast.error_deleting_transaction'), variant: 'destructive' });
       }
     }
   };
@@ -253,11 +266,11 @@ export default function FinancialPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Financial Management</h1>
+      <h1 className="text-3xl font-bold">{t('financial.title')}</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline">
-              <FileText className="mr-2 h-4 w-4" />
-              Generate Report
+        <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+        {t('reports.export_report')}
             </Button>
             <AddTransactionDialog onSave={handleSaveTransaction} />
           </div>
@@ -267,10 +280,10 @@ export default function FinancialPage() {
           {financialPageStats.map((stat) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (
-              <Card key={stat.title}>
+              <Card key={stat.titleKey}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
+                    {t(stat.titleKey as string)}
                   </CardTitle>
                   <Icon
                     className={cn(
@@ -282,9 +295,9 @@ export default function FinancialPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  {stat.description && (
+                  {stat.descriptionKey && (
                     <p className="text-xs text-muted-foreground">
-                      {stat.description}
+                      {t(stat.descriptionKey as string)}
                     </p>
                   )}
                 </CardContent>
@@ -296,7 +309,7 @@ export default function FinancialPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Revenue vs Expenses</CardTitle>
+              <CardTitle>{t('financial.revenue_vs_expenses')}</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
               <RevenueVsExpensesChart data={chartData} />
@@ -304,7 +317,7 @@ export default function FinancialPage() {
           </Card>
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Expenses by Category</CardTitle>
+              <CardTitle>{t('financial.expenses_by_category')}</CardTitle>
             </CardHeader>
             <CardContent className="h-[350px]">
               <ExpensesByCategoryChart data={expensesByCategory} />
@@ -314,34 +327,37 @@ export default function FinancialPage() {
 
         <Tabs defaultValue="all">
           <TabsList className="grid w-full grid-cols-2 md:w-auto md:grid-cols-4">
-            <TabsTrigger value="all">All Transactions</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="all">{t('financial.all_transactions')}</TabsTrigger>
+            <TabsTrigger value="revenue">{t('financial.revenue')}</TabsTrigger>
+            <TabsTrigger value="expenses">{t('common.expenses')}</TabsTrigger>
+            <TabsTrigger value="reports">{t('nav.reports')}</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Transaction History</CardTitle>
+                <CardTitle>{t('financial.transaction_history')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                     <Input
                       type="search"
-                      placeholder="Search transactions..."
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      placeholder={t('financial.search_transactions')}
+                      className={cn(
+                        "w-full rounded-lg bg-background lg:w-[336px]",
+                        isRTL ? 'pr-8 text-right' : 'pl-8'
+                      )}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Types" />
+                      <SelectValue placeholder={t('common.all_types')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="revenue">Revenue</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
+                      <SelectItem value="all">{t('common.all_types')}</SelectItem>
+                      <SelectItem value="revenue">{t('financial.revenue')}</SelectItem>
+                      <SelectItem value="expense">{t('financial.expense')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -350,14 +366,14 @@ export default function FinancialPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Payment Method</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('common.date')}</TableHead>
+                      <TableHead>{t('common.description')}</TableHead>
+                      <TableHead>{t('financial.category')}</TableHead>
+                      <TableHead>{t('financial.type')}</TableHead>
+                      <TableHead>{t('financial.amount')}</TableHead>
+                      <TableHead>{t('financial.payment_method')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -366,10 +382,14 @@ export default function FinancialPage() {
                     ) : filteredTransactions.length > 0 ? (
                       filteredTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{isValid(transaction.date) ? format(transaction.date, 'PPP') : 'Invalid Date'}</TableCell>
+                          <TableCell>{isValid(transaction.date) ? format(transaction.date, 'PPP') : t('common.na')}</TableCell>
                           <TableCell>
                             <div className="font-medium">{transaction.description}</div>
-                            {transaction.patient && <div className="text-xs text-muted-foreground">Patient: {transaction.patient}</div>}
+                            {transaction.patient && (
+                              <div className="text-xs text-muted-foreground">
+                                {t('common.patient')}: {transaction.patient}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>{transaction.category}</TableCell>
                           <TableCell>
@@ -384,7 +404,7 @@ export default function FinancialPage() {
                                 transaction.type === 'Expense' && 'bg-red-100 text-red-800'
                               )}
                             >
-                              {transaction.type}
+                              {transaction.type === 'Revenue' ? t('financial.revenue') : t('financial.expense')}
                             </Badge>
                           </TableCell>
                           <TableCell>{transaction.amount}</TableCell>
@@ -397,10 +417,10 @@ export default function FinancialPage() {
                                   : "secondary"
                               }
                             >
-                              {transaction.status}
+                              {transaction.status === 'Completed' ? t('common.completed') : t('common.pending')}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon">
@@ -409,12 +429,12 @@ export default function FinancialPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={() => setTransactionToEdit(transaction)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Edit
+                                    <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('table.edit')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setTransactionToDelete(transaction)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
+                                    <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('table.delete')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -424,7 +444,7 @@ export default function FinancialPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={8} className="h-24 text-center">
-                          No transactions found.
+                          {t('table.no_records_found')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -436,21 +456,21 @@ export default function FinancialPage() {
           <TabsContent value="revenue" className="mt-4">
             <Card>
               <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                <p>Revenue-specific information will be available here.</p>
+                <p>{t('financial.empty.revenue_info')}</p>
               </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="expenses" className="mt-4">
             <Card>
               <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                <p>Expense-specific information will be available here.</p>
+                <p>{t('financial.empty.expense_info')}</p>
               </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="reports" className="mt-4">
             <Card>
               <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                <p>Financial reports will be available here.</p>
+                <p>{t('financial.empty.reports_info')}</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -469,14 +489,14 @@ export default function FinancialPage() {
       <AlertDialog open={!!transactionToDelete} onOpenChange={(isOpen) => !isOpen && setTransactionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the transaction.
+              {t('financial.confirm_delete_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTransaction}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTransaction}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -8,27 +8,24 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  appointments: {
-    label: "Appointments",
-    color: "hsl(var(--chart-1))",
-  },
-  noShows: {
-    label: "No Shows",
-    color: "hsl(var(--chart-5))",
-  },
-  cancellations: {
-    label: "Cancellations",
-    color: "hsl(var(--chart-3))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    appointments: { label: t('appointments.title'), color: "hsl(var(--chart-1))" },
+    noShows: { label: t('reports.appointment_show_rate'), color: "hsl(var(--chart-5))" },
+    cancellations: { label: t('appointments.filter.cancelled'), color: "hsl(var(--chart-3))" },
+  } satisfies ChartConfig;
+}
 
 interface AppointmentAnalyticsChartProps {
     data: { time: string; appointments: number; noShows: number; cancellations: number; }[]
 }
 
 export default function AppointmentAnalyticsChart({ data }: AppointmentAnalyticsChartProps) {
+  const { language } = useLanguage();
+  const chartConfig = useChartConfig();
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
@@ -47,11 +44,13 @@ export default function AppointmentAnalyticsChart({ data }: AppointmentAnalytics
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => String(v)}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(Number(v))}
         />
         <ChartTooltip
           cursor={false}

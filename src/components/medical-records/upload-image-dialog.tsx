@@ -29,6 +29,7 @@ import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const imageSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -66,6 +67,7 @@ export function UploadImageDialog({
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   // Use external open state if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -129,8 +131,8 @@ export function UploadImageDialog({
       setOpen(false);
       
       toast({
-        title: "Image Uploaded Successfully",
-        description: `Clinical image for ${selectedPatient.name} has been uploaded to storage.`,
+        title: t('medical_records.toast.image_uploaded'),
+        description: t('medical_records.toast.image_uploaded_desc'),
       });
     } catch (error) {
       console.error('Upload error details:', error);
@@ -151,7 +153,7 @@ export function UploadImageDialog({
       }
       
       toast({
-        title: "Upload Failed",
+        title: t('medical_records.toast.error_uploading_image'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -171,16 +173,16 @@ export function UploadImageDialog({
         <DialogTrigger asChild>
           <Button variant="outline">
             <Upload className="mr-2 h-4 w-4" />
-            Upload Image
+    {t('medical_records.upload_image')}
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[525px]">
+  <DialogContent className="sm:max-w-[525px]" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle>Upload Clinical Image</DialogTitle>
-          <DialogDescription>
-            Select a patient and upload a new clinical image like an X-ray or photo.
-          </DialogDescription>
+      <DialogTitle>{t('medical_records.upload_clinical_image')}</DialogTitle>
+      <DialogDescription>
+    {t('medical_records.upload_image_description')}
+      </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
@@ -189,11 +191,11 @@ export function UploadImageDialog({
               name="patient"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Patient *</FormLabel>
+      <FormLabel>{t('common.patient')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select patient" />
+        <SelectValue placeholder={t('medical_records.select_patient')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -213,11 +215,11 @@ export function UploadImageDialog({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image Type *</FormLabel>
+      <FormLabel>{t('medical_records.image_type')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select image type" />
+        <SelectValue placeholder={t('medical_records.select_image_type')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -237,7 +239,7 @@ export function UploadImageDialog({
               name="file"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image File *</FormLabel>
+      <FormLabel>{t('medical_records.image_file')} *</FormLabel>
                    <FormControl>
                     <Input type="file" accept="image/*" {...form.register("file")} />
                   </FormControl>
@@ -250,27 +252,27 @@ export function UploadImageDialog({
               name="caption"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Caption</FormLabel>
+      <FormLabel>{t('medical_records.caption')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Upper right molar X-ray" {...field} />
+        <Input placeholder={t('medical_records.upper_right_molar_placeholder')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
-                Cancel
+      <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
+        {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={uploading}>
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+        {t('medical_records.uploading')}
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload
+        {t('medical_records.upload')}
                   </>
                 )}
               </Button>

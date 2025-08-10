@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { ScrollArea } from '../ui/scroll-area';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -64,6 +65,7 @@ const emergencyContactRelationships = [
 ];
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dobOpen, setDobOpen] = React.useState(false);
   const form = useForm<PatientFormData>({
@@ -118,15 +120,15 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">New Patient</span>
-          <span className="sm:hidden">Add Patient</span>
+          <span className="hidden sm:inline">{t('patients.new_patient')}</span>
+          <span className="sm:hidden">{t('patients.add_patient')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Add New Patient</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{t('patients.add_patient')}</DialogTitle>
           <DialogDescription className="text-sm">
-            Enter patient details to create a new record
+            {t('patients.enter_patient_details')}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-grow pr-2 sm:pr-6 -mr-2 sm:-mr-6">
@@ -138,9 +140,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">First Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.first_name')} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ahmed" {...field} className="h-10" />
+                          <Input placeholder={t('patients.first_name_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -151,9 +153,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Last Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.last_name')} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ali" {...field} className="h-10" />
+                          <Input placeholder={t('patients.last_name_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -164,9 +166,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Email *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.email')} *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="ahmed.ali@example.com" {...field} className="h-10" />
+                          <Input type="email" placeholder={t('patients.email_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -177,9 +179,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Phone *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.phone')} *</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="01xxxxxxxxx" {...field} className="h-10" />
+                          <Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -190,7 +192,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="dob"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel className="text-sm font-medium">Date of Birth *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.date_of_birth')} *</FormLabel>
                         <Popover open={dobOpen} onOpenChange={setDobOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -202,7 +204,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                                 )}
                               >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+                                {field.value ? format(field.value, "PPP") : <span>{t('patients.dob_placeholder')}</span>}
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -231,9 +233,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="address"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel className="text-sm font-medium">Address</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.address')}</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="123 Nile St, Zamalek, Cairo" {...field} className="min-h-[80px]" />
+                          <Textarea placeholder={t('patients.address_placeholder')} {...field} className="min-h-[80px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -241,16 +243,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">Emergency Contact</h3>
+                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.emergency_contact')}</h3>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="ecName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Name</FormLabel>
+                          <FormLabel className="text-sm font-medium">{t('patients.name')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Fatima Ali" {...field} className="h-10" />
+                            <Input placeholder={t('patients.emergency_name_placeholder')} {...field} className="h-10" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -260,9 +262,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       name="ecPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Phone</FormLabel>
+                          <FormLabel className="text-sm font-medium">{t('patients.phone')}</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="01xxxxxxxxx" {...field} className="h-10" />
+                            <Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -272,11 +274,11 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       name="ecRelationship"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Relationship</FormLabel>
+                          <FormLabel className="text-sm font-medium">{t('patients.relationship')}</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="h-10">
-                                <SelectValue placeholder="Select relationship" />
+                                <SelectValue placeholder={t('patients.select_relationship')} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -294,16 +296,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">Insurance Information</h3>
+                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.insurance_information')}</h3>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
                         name="insuranceProvider"
                         render={({ field }) => (
                           <FormItem>
-                              <FormLabel className="text-sm font-medium">Insurance Provider</FormLabel>
+                              <FormLabel className="text-sm font-medium">{t('patients.insurance_provider')}</FormLabel>
                               <FormControl>
-                                <Input placeholder="Misr Insurance" {...field} className="h-10" />
+                                <Input placeholder={t('patients.insurance_provider_placeholder')} {...field} className="h-10" />
                               </FormControl>
                           </FormItem>
                         )}
@@ -313,9 +315,9 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                         name="policyNumber"
                         render={({ field }) => (
                           <FormItem>
-                              <FormLabel className="text-sm font-medium">Policy Number</FormLabel>
+                              <FormLabel className="text-sm font-medium">{t('patients.policy_number')}</FormLabel>
                               <FormControl>
-                                <Input placeholder="MISR123456789" {...field} className="h-10" />
+                                <Input placeholder={t('patients.policy_number_placeholder')} {...field} className="h-10" />
                               </FormControl>
                           </FormItem>
                         )}
@@ -324,7 +326,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
                 
                 <div>
-                  <h3 className="mb-2 text-base sm:text-lg font-medium">Medical History</h3>
+                  <h3 className="mb-2 text-base sm:text-lg font-medium">{t('patients.medical_history')}</h3>
                   <div className="space-y-2">
                     {fields.map((field, index) => (
                       <div key={field.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
@@ -334,7 +336,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                             render={({ field }) => (
                               <FormItem className="flex-grow">
                                 <FormControl>
-                                    <Input placeholder="e.g., Diabetes, Hypertension" {...field} className="h-10" />
+                                    <Input placeholder={t('patients.medical_condition_placeholder')} {...field} className="h-10" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -352,7 +354,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       className="w-full sm:w-auto"
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add medical condition
+                      {t('patients.add_medical_condition')}
                     </Button>
                   </div>
                 </div>
@@ -360,8 +362,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           </Form>
         </ScrollArea>
         <DialogFooter className="border-t pt-3 sm:pt-4 gap-2">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">Cancel</Button>
-          <Button type="submit" form="add-patient-form" className="flex-1 sm:flex-none">Save Patient</Button>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">{t('common.cancel')}</Button>
+          <Button type="submit" form="add-patient-form" className="flex-1 sm:flex-none">{t('patients.save_patient')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

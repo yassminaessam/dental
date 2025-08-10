@@ -3,6 +3,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,7 @@ export type Specialist = {
 }
 
 export default function ReferralsPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [referrals, setReferrals] = React.useState<Referral[]>([]);
   const [specialists, setSpecialists] = React.useState<Specialist[]>([]);
@@ -92,14 +94,14 @@ export default function ReferralsPage() {
             setReferrals(referralsData);
             setSpecialists(specialistsData);
             setPatients(patientsData);
-        } catch (e) {
-            toast({ title: 'Error fetching data', variant: 'destructive' });
+    } catch (e) {
+      toast({ title: t('referrals.toast.error_fetching'), variant: 'destructive' });
         } finally {
             setLoading(false);
         }
     }
     fetchData();
-  }, [toast]);
+  }, [toast, t]);
 
   const referralPageStats = React.useMemo(() => {
     const totalReferrals = referrals.length;
@@ -108,12 +110,12 @@ export default function ReferralsPage() {
     const specialistCount = specialists.length;
     
     return [
-      { title: "Total Referrals", value: totalReferrals, description: "All outgoing referrals", valueClassName: "text-blue-500" },
-      { title: "Pending Referrals", value: pendingReferrals, description: "Awaiting specialist action", valueClassName: "text-orange-500" },
-      { title: "Completed Referrals", value: completedReferrals, description: "Finished referral cases", valueClassName: "text-green-500" },
-      { title: "Specialist Network", value: specialistCount, description: "Total specialists in network", valueClassName: "" },
+      { title: t('referrals.total_referrals'), value: totalReferrals, description: t('referrals.all_outgoing_referrals'), valueClassName: "text-blue-500" },
+      { title: t('referrals.pending_referrals'), value: pendingReferrals, description: t('referrals.awaiting_specialist_action'), valueClassName: "text-orange-500" },
+      { title: t('referrals.completed_referrals'), value: completedReferrals, description: t('referrals.finished_referral_cases'), valueClassName: "text-green-500" },
+      { title: t('referrals.specialist_network'), value: specialistCount, description: t('referrals.total_specialists_in_network'), valueClassName: "" },
     ];
-  }, [referrals, specialists]);
+  }, [referrals, specialists, t]);
 
   const handleSaveReferral = async (data: Omit<Referral, 'id'|'specialty'|'date'|'apptDate'|'status'>) => {
     const specialistDetails = specialists.find(s => s.id === data.specialist);
@@ -134,11 +136,11 @@ export default function ReferralsPage() {
         await setDocument('referrals', newReferral.id, newReferral);
         setReferrals(prev => [newReferral, ...prev]);
         toast({
-          title: "Referral Sent",
-          description: `Referral for ${newReferral.patient} to ${newReferral.specialist} has been sent.`,
+          title: t('referrals.toast.referral_sent'),
+          description: t('referrals.toast.referral_sent_desc'),
         });
     } catch(e) {
-        toast({ title: 'Error sending referral', variant: 'destructive' });
+  toast({ title: t('referrals.toast.error_sending_referral'), variant: 'destructive' });
     }
   };
 
@@ -151,11 +153,11 @@ export default function ReferralsPage() {
         await setDocument('specialists', newSpecialist.id, newSpecialist);
         setSpecialists(prev => [newSpecialist, ...prev]);
         toast({
-          title: "Specialist Added",
-          description: `${newSpecialist.name} has been added to your network.`,
+          title: t('referrals.toast.specialist_added'),
+          description: t('referrals.toast.specialist_added_desc'),
         });
     } catch(e) {
-        toast({ title: 'Error adding specialist', variant: 'destructive' });
+  toast({ title: t('referrals.toast.error_adding_specialist'), variant: 'destructive' });
     }
   };
 
@@ -164,12 +166,12 @@ export default function ReferralsPage() {
         await updateDocument('specialists', updatedSpecialist.id, updatedSpecialist);
         setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
         setSpecialistToEdit(null);
-        toast({
-            title: "Specialist Updated",
-            description: `${updatedSpecialist.name}'s details have been updated.`
-        });
+    toast({
+      title: t('referrals.toast.specialist_updated'),
+      description: t('referrals.toast.specialist_updated_desc')
+    });
     } catch(e) {
-        toast({ title: 'Error updating specialist', variant: 'destructive' });
+  toast({ title: t('referrals.toast.error_updating_specialist'), variant: 'destructive' });
     }
   };
 
@@ -178,23 +180,23 @@ export default function ReferralsPage() {
         try {
             await deleteDocument('specialists', specialistToDelete.id);
             setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
-            toast({
-                title: "Specialist Deleted",
-                description: `${specialistToDelete.name} has been removed from your network.`,
-                variant: "destructive",
-            });
+      toast({
+        title: t('referrals.toast.specialist_deleted'),
+        description: t('referrals.toast.specialist_deleted_desc'),
+        variant: "destructive",
+      });
             setSpecialistToDelete(null);
         } catch(e) {
-            toast({ title: 'Error deleting specialist', variant: 'destructive' });
+            toast({ title: t('referrals.toast.error_deleting_specialist'), variant: 'destructive' });
         }
     }
   };
   
   const handleFollowUp = (referral: Referral) => {
-    toast({
-        title: "Follow-up Sent",
-        description: `A follow-up message has been sent regarding the referral for ${referral.patient}.`
-    });
+  toast({
+    title: t('referrals.toast.followup_sent'),
+    description: t('referrals.toast.followup_sent_desc')
+  });
   };
 
   const filteredReferrals = React.useMemo(() => {
@@ -220,7 +222,7 @@ export default function ReferralsPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Referral Management</h1>
+          <h1 className="text-3xl font-bold">{t('referrals.title')}</h1>
           <div className="flex items-center gap-2">
             <AddSpecialistDialog onSave={handleSaveSpecialist} />
             <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} patients={patients} />
@@ -247,23 +249,23 @@ export default function ReferralsPage() {
           ))}
         </div>
 
-        <Tabs defaultValue="outgoing">
+    <Tabs defaultValue="outgoing">
           <TabsList>
-            <TabsTrigger value="outgoing">Outgoing Referrals</TabsTrigger>
-            <TabsTrigger value="incoming">Incoming Referrals</TabsTrigger>
-            <TabsTrigger value="network">Specialist Network</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+      <TabsTrigger value="outgoing">{t('referrals.tabs.outgoing')}</TabsTrigger>
+      <TabsTrigger value="incoming">{t('referrals.tabs.incoming')}</TabsTrigger>
+      <TabsTrigger value="network">{t('referrals.tabs.network')}</TabsTrigger>
+      <TabsTrigger value="analytics">{t('referrals.tabs.analytics')}</TabsTrigger>
           </TabsList>
           <TabsContent value="outgoing" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Outgoing Referrals</CardTitle>
+        <CardTitle>{t('referrals.outgoing_referrals')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Search referrals..."
+            placeholder={t('referrals.search_referrals')}
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -271,14 +273,14 @@ export default function ReferralsPage() {
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
+            <SelectValue placeholder={t('referrals.all_status')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="all">{t('referrals.all_status')}</SelectItem>
+            <SelectItem value="scheduled">{t('referrals.scheduled')}</SelectItem>
+            <SelectItem value="completed">{t('common.completed')}</SelectItem>
+            <SelectItem value="pending">{t('common.pending')}</SelectItem>
+            <SelectItem value="cancelled">{t('common.cancelled')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -287,13 +289,13 @@ export default function ReferralsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Specialist</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Urgency</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Referral Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('referrals.patient')}</TableHead>
+            <TableHead>{t('referrals.specialist')}</TableHead>
+            <TableHead>{t('referrals.reason')}</TableHead>
+            <TableHead>{t('referrals.urgency')}</TableHead>
+            <TableHead>{t('referrals.status')}</TableHead>
+            <TableHead>{t('referrals.referral_date')}</TableHead>
+            <TableHead className="text-right">{t('referrals.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -310,7 +312,9 @@ export default function ReferralsPage() {
                           <TableCell className="max-w-[300px] truncate">{referral.reason}</TableCell>
                           <TableCell>
                             <Badge variant={referral.urgency === 'urgent' ? 'destructive' : 'outline'} className="capitalize">
-                              {referral.urgency}
+                {referral.urgency === 'routine' && t('referrals.urgency.routine')}
+                {referral.urgency === 'urgent' && t('referrals.urgency.urgent')}
+                {referral.urgency === 'emergency' && t('referrals.urgency.emergency')}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -326,7 +330,10 @@ export default function ReferralsPage() {
                                     referral.status === 'completed' && 'bg-green-100 text-green-800 border-transparent hover:bg-green-100/80',
                                 )}
                                 >
-                                {referral.status}
+                {referral.status === 'scheduled' && t('referrals.scheduled')}
+                {referral.status === 'completed' && t('common.completed')}
+                {referral.status === 'pending' && t('common.pending')}
+                {referral.status === 'cancelled' && t('common.cancelled')}
                                 </Badge>
                           </TableCell>
                           <TableCell>
@@ -337,11 +344,11 @@ export default function ReferralsPage() {
                             <div className="flex items-center justify-end gap-2">
                               <Button variant="outline" size="sm" onClick={() => setReferralToView(referral)}>
                                 <Eye className="mr-2 h-3 w-3" />
-                                View
+                {t('referrals.actions.view')}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleFollowUp(referral)}>
                                 <Send className="mr-2 h-3 w-3" />
-                                Follow Up
+                {t('referrals.actions.follow_up')}
                               </Button>
                             </div>
                           </TableCell>
@@ -350,7 +357,7 @@ export default function ReferralsPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                          No outgoing referrals found.
+              {t('referrals.no_outgoing_referrals')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -362,19 +369,19 @@ export default function ReferralsPage() {
           <TabsContent value="incoming" className="mt-4">
             <Card>
               <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                <p>No incoming referrals found.</p>
+        <p>{t('referrals.no_incoming_referrals')}</p>
               </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="network" className="mt-4">
              <Card>
                 <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                    <CardTitle>Specialist Network</CardTitle>
+          <CardTitle>{t('referrals.specialist_network')}</CardTitle>
                     <div className="relative w-full md:w-auto">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                         type="search"
-                        placeholder="Search specialists..."
+            placeholder={t('referrals.search_specialists')}
                         className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                         value={specialistSearchTerm}
                         onChange={(e) => setSpecialistSearchTerm(e.target.value)}
@@ -385,10 +392,10 @@ export default function ReferralsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Specialist</TableHead>
-                                <TableHead>Specialty</TableHead>
-                                <TableHead>Contact Info</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('referrals.specialist')}</TableHead>
+                <TableHead>{t('referrals.specialty')}</TableHead>
+                <TableHead>{t('referrals.contact_info')}</TableHead>
+                <TableHead className="text-right">{t('referrals.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -424,8 +431,8 @@ export default function ReferralsPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => setSpecialistToEdit(specialist)}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setSpecialistToDelete(specialist)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSpecialistToEdit(specialist)}><Pencil className="mr-2 h-4 w-4" />{t('referrals.edit')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSpecialistToDelete(specialist)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />{t('referrals.delete')}</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -434,7 +441,7 @@ export default function ReferralsPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">
-                                        No specialists found.
+                    {t('referrals.no_specialists_found')}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -446,7 +453,7 @@ export default function ReferralsPage() {
           <TabsContent value="analytics" className="mt-4">
             <Card>
               <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-                <p>Referral analytics will be available here.</p>
+        <p>{t('referrals.analytics_placeholder')}</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -469,19 +476,19 @@ export default function ReferralsPage() {
         )}
 
         <AlertDialog open={!!specialistToDelete} onOpenChange={(isOpen) => !isOpen && setSpecialistToDelete(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete "{specialistToDelete?.name}" from your specialist network.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteSpecialist}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('referrals.confirm_delete')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('referrals.specialist_delete_warning')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSpecialist}>{t('referrals.delete')}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
     </DashboardLayout>
   );

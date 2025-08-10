@@ -62,6 +62,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type InventoryItem = {
   id: string;
@@ -79,6 +80,10 @@ export type InventoryItem = {
 };
 
 export default function InventoryPage() {
+  const { t, language } = useLanguage();
+  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
+  const currencyFmt = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 });
+  const numberFmt = new Intl.NumberFormat(locale);
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
@@ -94,13 +99,13 @@ export default function InventoryPage() {
             const data = await getCollection<InventoryItem>('inventory');
             setInventory(data);
         } catch (error) {
-            toast({ title: "Error fetching inventory", variant: 'destructive'});
+            toast({ title: t('inventory.toast.error_fetching'), variant: 'destructive'});
         } finally {
             setLoading(false);
         }
     }
     fetchInventory();
-  }, [toast]);
+  }, [toast, t]);
 
   const inventoryCategories = React.useMemo(() => {
     return [...new Set(inventory.map((i) => i.category))];
@@ -118,12 +123,12 @@ export default function InventoryPage() {
     }, 0);
 
     return [
-      { title: "Total Items", value: totalItems, description: "All items in inventory" },
-      { title: "Low Stock Items", value: lowStockCount, description: "Items needing attention", valueClassName: "text-red-500" },
-      { title: "Categories", value: categoryCount, description: "Total item categories" },
-      { title: "Total Value", value: `EGP ${totalValue.toLocaleString()}`, description: "Estimated inventory value" }
+      { title: t('inventory.total_items'), value: numberFmt.format(totalItems), description: t('inventory.all_items_in_inventory') },
+      { title: t('inventory.low_stock_items'), value: numberFmt.format(lowStockCount), description: t('inventory.items_needing_attention'), valueClassName: "text-red-500" },
+      { title: t('inventory.categories'), value: numberFmt.format(categoryCount), description: t('inventory.total_item_categories') },
+      { title: t('inventory.total_value'), value: currencyFmt.format(totalValue), description: t('inventory.estimated_inventory_value') }
     ];
-  }, [inventory, lowStockItems, inventoryCategories]);
+  }, [inventory, lowStockItems, inventoryCategories, t, numberFmt, currencyFmt]);
 
   const handleSaveItem = async (data: any) => {
     try {
@@ -143,11 +148,11 @@ export default function InventoryPage() {
         await setDocument('inventory', newItem.id, newItem);
         setInventory(prev => [newItem, ...prev]);
         toast({
-          title: "Item Added",
-          description: `${newItem.name} has been added to inventory.`,
+          title: t('inventory.toast.item_added'),
+          description: t('inventory.toast.item_added_desc'),
         });
     } catch(e) {
-        toast({ title: 'Error adding item', variant: 'destructive'});
+        toast({ title: t('inventory.toast.error_adding'), variant: 'destructive'});
     }
   };
 
@@ -157,11 +162,11 @@ export default function InventoryPage() {
         setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
         setItemToEdit(null);
         toast({
-          title: "Item Updated",
-          description: `${updatedItem.name} has been successfully updated.`,
+          title: t('inventory.toast.item_updated'),
+          description: t('inventory.toast.item_updated_desc'),
         });
     } catch(e) {
-        toast({ title: 'Error updating item', variant: 'destructive'});
+        toast({ title: t('inventory.toast.error_updating'), variant: 'destructive'});
     }
   };
 
@@ -171,21 +176,21 @@ export default function InventoryPage() {
         await deleteDocument('inventory', itemToDelete.id);
         setInventory(prev => prev.filter(item => item.id !== itemToDelete.id));
         toast({
-          title: "Item Deleted",
-          description: `${itemToDelete.name} has been removed from inventory.`,
+          title: t('inventory.toast.item_deleted'),
+          description: t('inventory.toast.item_deleted_desc'),
           variant: "destructive",
         });
         setItemToDelete(null);
       } catch(e) {
-        toast({ title: 'Error deleting item', variant: 'destructive'});
+        toast({ title: t('inventory.toast.error_deleting'), variant: 'destructive'});
       }
     }
   };
   
   const handleAnalytics = () => {
     toast({
-        title: "Loading Analytics",
-        description: "Inventory analytics dashboard is being prepared.",
+        title: t('inventory.toast.analytics_loading'),
+        description: t('inventory.toast.analytics_loading_desc'),
     });
   };
   
@@ -210,15 +215,14 @@ export default function InventoryPage() {
       };
 
       await setDocument('purchase-orders', `PO-${Date.now()}`, newPurchaseOrder);
-      
       toast({
-        title: "Purchase Order Created",
-        description: `Purchase order for ${item.name} (${orderQuantity} units) has been created automatically.`,
+        title: t('inventory.toast.purchase_order_created'),
+        description: t('inventory.toast.purchase_order_created_desc'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create purchase order",
+        title: t('inventory.toast.error_purchase_order'),
+        description: t('inventory.toast.error_purchase_order_desc'),
         variant: "destructive",
       });
     }
@@ -242,11 +246,11 @@ export default function InventoryPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Inventory Management</h1>
+      <h1 className="text-3xl font-bold">{t('inventory.title')}</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={handleAnalytics}>
               <BarChart className="mr-2 h-4 w-4" />
-              Analytics
+        {t('nav.analytics')}
             </Button>
             <AddItemDialog 
               onSave={handleSaveItem} 
@@ -276,11 +280,11 @@ export default function InventoryPage() {
           ))}
         </div>
 
-        <Card className="border-destructive bg-destructive/10">
+    <Card className="border-destructive bg-destructive/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Low Stock Alert ({lowStockItems.length} items)
+      {t('purchase_orders.low_stock_alert')} ({numberFmt.format(lowStockItems.length)})
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
@@ -292,10 +296,10 @@ export default function InventoryPage() {
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Stock: {item.stock} / Min: {item.min}
+        {t('inventory.stock')}: {numberFmt.format(item.stock)} / {t('inventory.min')}: {numberFmt.format(item.min)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Supplier: {item.supplier}
+        {t('inventory.supplier')}: {item.supplier}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -305,11 +309,11 @@ export default function InventoryPage() {
                     onClick={() => createQuickPurchaseOrder(item)}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
-                    Auto Order
+        {t('inventory.quick_order')}
                   </Button>
                   <Button variant="destructive" size="sm" onClick={() => handleRestock(item)}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Manual Order
+        {t('inventory.manual_order')}
                   </Button>
                 </div>
               </div>
@@ -319,13 +323,13 @@ export default function InventoryPage() {
 
         <Card>
           <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Inventory Items</CardTitle>
+            <CardTitle>{t('inventory.all_items_in_inventory')}</CardTitle>
             <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
               <div className="relative w-full md:w-auto">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search items..."
+                  placeholder={t('inventory.search_items')}
                   className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -333,10 +337,10 @@ export default function InventoryPage() {
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder={t('common.all_categories')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t('common.all_categories')}</SelectItem>
                   {inventoryCategories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -350,14 +354,14 @@ export default function InventoryPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[300px]">Item</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Unit Cost</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[300px]">{t('inventory.item')}</TableHead>
+                  <TableHead>{t('inventory.category')}</TableHead>
+                  <TableHead>{t('inventory.stock')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                  <TableHead>{t('inventory.unit_cost')}</TableHead>
+                  <TableHead>{t('inventory.supplier')}</TableHead>
+                  <TableHead>{t('inventory.location')}</TableHead>
+                  <TableHead className="text-right">{t('table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -375,7 +379,7 @@ export default function InventoryPage() {
                             <div className="font-medium">{item.name}</div>
                             {item.expires !== "N/A" && (
                               <div className="text-xs text-muted-foreground">
-                                Expires: {item.expires}
+                                {t('inventory.expiry_date')}: {item.expires}
                               </div>
                             )}
                           </div>
@@ -387,7 +391,7 @@ export default function InventoryPage() {
                       <TableCell>
                         <div className="font-medium">{item.stock}</div>
                         <div className="text-xs text-muted-foreground">
-                          Min: {item.min} | Max: {item.max}
+                          {t('inventory.min')}: {numberFmt.format(item.min)} | {t('inventory.max')}: {numberFmt.format(item.max)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -398,7 +402,7 @@ export default function InventoryPage() {
                               : "secondary"
                           }
                         >
-                          {item.status}
+                          {item.status === 'Low Stock' ? t('inventory.status.low_stock') : item.status === 'Out of Stock' ? t('inventory.status.out_of_stock') : t('inventory.status.normal')}
                         </Badge>
                       </TableCell>
                       <TableCell>{item.unitCost}</TableCell>
@@ -409,30 +413,30 @@ export default function InventoryPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
+                              <span className="sr-only">{t('table.actions')}</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setItemToEdit(item)}>
                               <Pencil className="mr-2 h-4 w-4" />
-                              Edit
+                              {t('common.edit')}
                             </DropdownMenuItem>
                             {(item.status === 'Low Stock' || item.status === 'Out of Stock') && (
                               <DropdownMenuItem onClick={() => createQuickPurchaseOrder(item)}>
                                 <ShoppingCart className="mr-2 h-4 w-4" />
-                                Quick Order
+                                {t('inventory.quick_order')}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => toast({
-                              title: "Supplier Info",
-                              description: `${item.supplier} - Contact supplier for bulk orders or special pricing.`
+                              title: t('inventory.supplier_info'),
+                              description: t('inventory.supplier_contact_desc')
                             })}>
                               <Star className="mr-2 h-4 w-4" />
-                              Supplier Info
+                              {t('inventory.supplier_info')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              {t('common.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -442,7 +446,7 @@ export default function InventoryPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
-                      No inventory items found.
+                      {t('inventory.no_items_found')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -464,15 +468,14 @@ export default function InventoryPage() {
       <AlertDialog open={!!itemToDelete} onOpenChange={(isOpen) => !isOpen && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the item
-              "{itemToDelete?.name}" from your inventory.
+              {t('purchase_orders.confirm_delete_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteItem}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

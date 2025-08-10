@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Specialist } from '@/app/referrals/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const specialistSchema = z.object({
   name: z.string().min(1, 'Specialist name is required.'),
@@ -39,6 +40,7 @@ interface EditSpecialistDialogProps {
 }
 
 export function EditSpecialistDialog({ onSave, open, onOpenChange, specialist }: EditSpecialistDialogProps) {
+  const { t } = useLanguage();
   const form = useForm<SpecialistFormData>({
     resolver: zodResolver(specialistSchema),
   });
@@ -64,9 +66,9 @@ export function EditSpecialistDialog({ onSave, open, onOpenChange, specialist }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Edit Specialist</DialogTitle>
+          <DialogTitle>{t('referrals.specialist.edit')}</DialogTitle>
           <DialogDescription>
-            Update the details for this specialist.
+            {t('referrals.specialist.edit_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -76,7 +78,7 @@ export function EditSpecialistDialog({ onSave, open, onOpenChange, specialist }:
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Specialist Name *</FormLabel>
+                  <FormLabel>{t('referrals.specialist.name')} *</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Dr. Robert Chen" {...field} />
                   </FormControl>
@@ -89,11 +91,11 @@ export function EditSpecialistDialog({ onSave, open, onOpenChange, specialist }:
               name="specialty"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Specialty *</FormLabel>
+                  <FormLabel>{t('referrals.specialty')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select specialty" />
+                        <SelectValue placeholder={t('referrals.specialist.select_specialty')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

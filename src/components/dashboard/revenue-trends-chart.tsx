@@ -8,23 +8,24 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-    color: "hsl(var(--chart-1))",
-  },
-  expenses: {
-    label: "Expenses",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RevenueTrendsChartProps {
     data: { month: string; revenue: number; expenses: number }[];
 }
 
 export default function RevenueTrendsChart({ data }: RevenueTrendsChartProps) {
+  const { t } = useLanguage();
+  const chartConfig: ChartConfig = {
+    revenue: {
+      label: t('common.revenue'),
+      color: "hsl(var(--chart-1))",
+    },
+    expenses: {
+      label: t('common.expenses'),
+      color: "hsl(var(--chart-5))",
+    },
+  };
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart

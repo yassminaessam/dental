@@ -6,6 +6,7 @@ import {
   ChartConfig,
   ChartContainer,
 } from "@/components/ui/chart";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const chartConfig = {
   "Check-up": { label: "Check-up", color: "hsl(var(--chart-1))" },
@@ -49,6 +50,13 @@ interface AppointmentTypesChartProps {
 }
 
 export default function AppointmentTypesChart({ data }: AppointmentTypesChartProps) {
+  const { t } = useLanguage();
+  // Map display labels to localized if matching common treatment types exist
+  const localizedData = data.map(d => ({
+    ...d,
+    // attempt to translate via treatments namespace; fall back to original
+    name: t(`treatments.${d.name.toLowerCase().replace(/\s+/g,'_')}`) || d.name,
+  }));
   return (
     <ChartContainer
       config={chartConfig}
@@ -56,14 +64,14 @@ export default function AppointmentTypesChart({ data }: AppointmentTypesChartPro
     >
       <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <Pie
-          data={data}
+          data={localizedData}
           dataKey="value"
           nameKey="name"
           labelLine={false}
           label={renderCustomizedLabel}
           outerRadius={100}
         >
-          {data.map((entry) => (
+          {localizedData.map((entry) => (
             <Cell key={`cell-${entry.name}`} fill={entry.color} />
           ))}
         </Pie>

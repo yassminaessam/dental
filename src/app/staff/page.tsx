@@ -44,6 +44,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { ViewEmployeeDialog } from '@/components/staff/view-employee-dialog';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type StaffMember = {
   id: string;
@@ -74,6 +75,7 @@ export default function StaffPage() {
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   React.useEffect(() => {
     async function fetchStaff() {
@@ -81,13 +83,13 @@ export default function StaffPage() {
         const data = await getCollection<StaffMember>('staff');
         setStaff(data);
       } catch (error) {
-        toast({ title: "Error fetching staff data", variant: "destructive" });
+        toast({ title: t('staff.toast.error_fetching'), variant: "destructive" });
       } finally {
         setLoading(false);
       }
     }
     fetchStaff();
-  }, [toast]);
+  }, [toast, t]);
   
   const staffPageStats = React.useMemo(() => {
     const totalStaff = staff.length;
@@ -100,11 +102,11 @@ export default function StaffPage() {
     }).length;
 
     return [
-      { title: "Total Staff", value: totalStaff, description: "All clinic employees" },
-      { title: "Active Staff", value: activeStaff, description: "Currently working employees" },
-      { title: "New Hires (30d)", value: newHires, description: "Joined in the last month" },
+      { title: t('staff.total_staff'), value: totalStaff, description: t('staff.all_employees_description') },
+      { title: t('staff.active_staff'), value: activeStaff, description: t('staff.currently_working_description') },
+      { title: t('staff.new_hires_30d'), value: newHires, description: t('staff.joined_last_month_description') },
     ];
-  }, [staff]);
+  }, [staff, t]);
 
 
   const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
@@ -123,11 +125,11 @@ export default function StaffPage() {
       await setDocument('staff', newEmployee.id, newEmployee);
       setStaff(prev => [newEmployee, ...prev]);
       toast({
-        title: "Employee Added",
-        description: `${newEmployee.name} has been added to the staff.`,
+        title: t('staff.toast.employee_added'),
+        description: t('staff.toast.employee_added_desc'),
       });
     } catch (e) {
-      toast({ title: "Error adding employee", variant: "destructive" });
+      toast({ title: t('staff.toast.error_adding'), variant: "destructive" });
     }
   };
   
@@ -137,11 +139,11 @@ export default function StaffPage() {
       setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
       setStaffToEdit(null);
       toast({
-        title: "Employee Updated",
-        description: `${updatedStaff.name}'s record has been updated.`,
+        title: t('staff.toast.employee_updated'),
+        description: t('staff.toast.employee_updated_desc'),
       });
     } catch(e) {
-      toast({ title: "Error updating employee", variant: "destructive" });
+      toast({ title: t('staff.toast.error_updating'), variant: "destructive" });
     }
   };
 
@@ -151,13 +153,13 @@ export default function StaffPage() {
         await deleteDocument('staff', staffToDelete.id);
         setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
         toast({
-          title: "Employee Deleted",
-          description: `${staffToDelete.name}'s record has been deleted.`,
+          title: t('staff.toast.employee_deleted'),
+          description: t('staff.toast.employee_deleted_desc'),
           variant: "destructive"
         });
         setStaffToDelete(null);
       } catch(e) {
-        toast({ title: "Error deleting employee", variant: "destructive" });
+        toast({ title: t('staff.toast.error_deleting'), variant: "destructive" });
       }
     }
   };
@@ -175,9 +177,9 @@ export default function StaffPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+    <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Staff Management</h1>
+      <h1 className="text-3xl font-bold">{t('staff.title')}</h1>
           <AddEmployeeDialog onSave={handleSaveEmployee} />
         </div>
 
@@ -203,9 +205,7 @@ export default function StaffPage() {
           {staffRoles.map((role) => (
             <Card key={role.name}>
               <CardContent className="p-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  {role.name}
-                </div>
+        <div className="text-sm font-medium text-muted-foreground">{t(`roles.${role.name.toLowerCase()}`)}</div>
                 <div className="flex items-baseline justify-between">
                   <span className="text-2xl font-bold">{staff.filter(s => s.role === role.name).length}</span>
                   <Badge
@@ -214,7 +214,7 @@ export default function StaffPage() {
                       role.color
                     )}
                   >
-                    Active
+          {t('common.active')}
                   </Badge>
                 </div>
               </CardContent>
@@ -226,13 +226,13 @@ export default function StaffPage() {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Staff Directory</CardTitle>
+                <CardTitle>{t('staff.directory')}</CardTitle>
                 <div className="relative w-full md:w-auto">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                   <Input
                     type="search"
-                    placeholder="Search staff..."
-                    className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                    placeholder={t('staff.search_placeholder')}
+                    className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -242,14 +242,14 @@ export default function StaffPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Schedule</TableHead>
-                      <TableHead>Salary</TableHead>
-                      <TableHead>Hire Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('staff.employee')}</TableHead>
+                      <TableHead>{t('staff.role')}</TableHead>
+                      <TableHead>{t('staff.contact_info')}</TableHead>
+                      <TableHead>{t('staff.schedule')}</TableHead>
+                      <TableHead>{t('staff.salary')}</TableHead>
+                      <TableHead>{t('staff.hire_date')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -266,7 +266,7 @@ export default function StaffPage() {
                               <div className="font-medium">{member.name}</div>
                             </div>
                           </TableCell>
-                          <TableCell>{member.role}</TableCell>
+                          <TableCell>{t(`roles.${member.role.toLowerCase()}`) || member.role}</TableCell>
                           <TableCell>
                             <div>{member.email}</div>
                             <div className="text-xs text-muted-foreground">{member.phone}</div>
@@ -275,28 +275,30 @@ export default function StaffPage() {
                           <TableCell>{member.salary}</TableCell>
                           <TableCell>{member.hireDate}</TableCell>
                           <TableCell>
-                            <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>{member.status}</Badge>
+                            <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>
+                              {member.status === 'Active' ? t('common.active') : t('common.inactive')}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                         <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Actions</span>
+                                        <span className="sr-only">{t('table.actions')}</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setStaffToView(member)}>
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        View
+                                        <Eye className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                                        {t('table.view_details')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setStaffToEdit(member)}>
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Edit
+                                        <Pencil className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                                        {t('table.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setStaffToDelete(member)} className="text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
+                                        <Trash2 className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                                        {t('table.delete')}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -305,9 +307,7 @@ export default function StaffPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-24 text-center">
-                          No staff found.
-                        </TableCell>
+                        <TableCell colSpan={8} className="h-24 text-center">{t('staff.no_staff_found')}</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -338,14 +338,14 @@ export default function StaffPage() {
       <AlertDialog open={!!staffToDelete} onOpenChange={(isOpen) => !isOpen && setStaffToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('staff.confirm_delete_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the staff member's record.
+              {t('staff.confirm_delete_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteEmployee}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEmployee}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

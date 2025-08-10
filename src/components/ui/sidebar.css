@@ -1,0 +1,9 @@
+/* Sidebar CSS variable classes to replace inline styles */
+.sidebar-vars {
+  --sidebar-width: 16rem; /* fallback; overridden in JS via data attrs if needed */
+  --sidebar-width-icon: 3.5rem;
+}
+
+.sidebar-vars-mobile {
+  --sidebar-width: 18rem;
+}

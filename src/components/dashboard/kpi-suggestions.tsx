@@ -19,22 +19,24 @@ import { Lightbulb, ListChecks, Loader2 } from "lucide-react";
 import { getCollection } from "@/services/firestore";
 import type { Invoice } from "@/app/billing/page";
 import type { Patient } from "@/app/patients/page";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const initialState: KpiSuggestionsState = {};
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const { t } = useLanguage();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Generating...
+          {t('dashboard.kpi.generating')}
         </>
       ) : (
         <>
           <Lightbulb className="mr-2 h-4 w-4" />
-          Get Suggestions
+          {t('dashboard.kpi.get_suggestions')}
         </>
       )}
     </Button>
@@ -42,6 +44,7 @@ function SubmitButton() {
 }
 
 export default function KpiSuggestions() {
+  const { t } = useLanguage();
   const [state, formAction] = useActionState(getKpiSuggestionsAction, initialState);
   const [kpiData, setKpiData] = useState({
     currentRevenue: 0,
@@ -67,20 +70,19 @@ export default function KpiSuggestions() {
     <Card>
       <form action={formAction}>
         <CardHeader>
-          <CardTitle>AI-Powered KPI Suggestions</CardTitle>
+          <CardTitle>{t('dashboard.kpi.title')}</CardTitle>
           <CardDescription>
-            Enter your key performance indicators to get AI-powered suggestions
-            for improvement.
+            {t('dashboard.kpi.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <div className="grid gap-3">
-            <Label htmlFor="currentRevenue">Current Monthly Revenue</Label>
+            <Label htmlFor="currentRevenue">{t('dashboard.kpi.current_monthly_revenue')}</Label>
             <Input
               id="currentRevenue"
               name="currentRevenue"
               type="number"
-              placeholder="e.g., 45000"
+              placeholder={t('dashboard.kpi.revenue_placeholder')}
               defaultValue={kpiData.currentRevenue}
               key={kpiData.currentRevenue} // Re-render when value changes
               aria-invalid={!!state?.fieldErrors?.currentRevenue}
@@ -89,12 +91,12 @@ export default function KpiSuggestions() {
              {state?.fieldErrors?.currentRevenue && <p id="currentRevenue-error" className="text-sm font-medium text-destructive">{state.fieldErrors.currentRevenue}</p>}
           </div>
           <div className="grid gap-3">
-            <Label htmlFor="patientCount">Total Monthly Patients</Label>
+            <Label htmlFor="patientCount">{t('dashboard.kpi.total_monthly_patients')}</Label>
             <Input
               id="patientCount"
               name="patientCount"
               type="number"
-              placeholder="e.g., 2350"
+              placeholder={t('dashboard.kpi.patients_placeholder')}
               defaultValue={kpiData.patientCount}
               key={kpiData.patientCount} // Re-render when value changes
               aria-invalid={!!state?.fieldErrors?.patientCount}
@@ -104,13 +106,13 @@ export default function KpiSuggestions() {
           </div>
           <div className="grid gap-3">
             <Label htmlFor="newPatientAcquisitionCost">
-              New Patient Acquisition Cost
+              {t('dashboard.kpi.new_patient_acquisition_cost')}
             </Label>
             <Input
               id="newPatientAcquisitionCost"
               name="newPatientAcquisitionCost"
               type="number"
-              placeholder="e.g., 150"
+              placeholder={t('dashboard.kpi.acquisition_placeholder')}
               defaultValue={kpiData.newPatientAcquisitionCost}
               aria-invalid={!!state?.fieldErrors?.newPatientAcquisitionCost}
               aria-describedby="newPatientAcquisitionCost-error"
@@ -118,12 +120,12 @@ export default function KpiSuggestions() {
             {state?.fieldErrors?.newPatientAcquisitionCost && <p id="newPatientAcquisitionCost-error" className="text-sm font-medium text-destructive">{state.fieldErrors.newPatientAcquisitionCost}</p>}
           </div>
           <div className="grid gap-3">
-            <Label htmlFor="marketingSpend">Total Marketing Spend</Label>
+            <Label htmlFor="marketingSpend">{t('dashboard.kpi.total_marketing_spend')}</Label>
             <Input
               id="marketingSpend"
               name="marketingSpend"
               type="number"
-              placeholder="e.g., 5000"
+              placeholder={t('dashboard.kpi.marketing_placeholder')}
               defaultValue={kpiData.marketingSpend}
               aria-invalid={!!state?.fieldErrors?.marketingSpend}
               aria-describedby="marketingSpend-error"
@@ -138,7 +140,7 @@ export default function KpiSuggestions() {
             <div className="mt-4 w-full rounded-lg border bg-secondary/50 p-4" role="alert">
               <h4 className="mb-2 flex items-center font-semibold">
                 <ListChecks className="mr-2 size-5" />
-                Recommendations
+                {t('dashboard.kpi.recommendations')}
               </h4>
               <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                 {state.suggestions.map((suggestion, index) => (

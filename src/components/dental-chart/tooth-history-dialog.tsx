@@ -13,6 +13,7 @@ import type { Tooth } from '@/app/dental-chart/page';
 import { toothNames } from '@/lib/data/dental-chart-data';
 import { ScrollArea } from '../ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ToothHistoryDialogProps {
   tooth: Tooth | null;
@@ -21,24 +22,25 @@ interface ToothHistoryDialogProps {
 }
 
 export function ToothHistoryDialog({ tooth, open, onOpenChange }: ToothHistoryDialogProps) {
+  const { t } = useLanguage();
   if (!tooth) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Full History for Tooth #{tooth.id}</DialogTitle>
+          <DialogTitle>{t('dental_chart.full_history_for_tooth', { id: tooth.id })}</DialogTitle>
           <DialogDescription>
-            {toothNames[tooth.id] || 'Unknown Tooth'}
+            {toothNames[tooth.id] || t('dental_chart.unknown_tooth')}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-72">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Condition</TableHead>
-                        <TableHead>Notes</TableHead>
+                        <TableHead>{t('common.date')}</TableHead>
+                        <TableHead>{t('dental_chart.condition')}</TableHead>
+                        <TableHead>{t('dental_chart.notes')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -46,14 +48,25 @@ export function ToothHistoryDialog({ tooth, open, onOpenChange }: ToothHistoryDi
                         tooth.history.slice().reverse().map((entry, index) => (
                             <TableRow key={index}>
                                 <TableCell>{entry.date}</TableCell>
-                                <TableCell className="capitalize">{entry.condition.replace('-', ' ')}</TableCell>
+                                <TableCell className="capitalize">
+                                  {(() => {
+                                    switch (entry.condition) {
+                                      case 'healthy': return t('dental_chart.healthy');
+                                      case 'cavity': return t('dental_chart.cavity');
+                                      case 'filling': return t('dental_chart.filled');
+                                      case 'crown': return t('dental_chart.crowned');
+                                      case 'missing': return t('dental_chart.missing');
+                                      case 'root-canal': return t('dental_chart.root_canal');
+                                    }
+                                  })()}
+                                </TableCell>
                                 <TableCell>{entry.notes}</TableCell>
                             </TableRow>
                         ))
                     ) : (
                          <TableRow>
                             <TableCell colSpan={3} className="h-24 text-center">
-                                No history found for this tooth.
+                                {t('dental_chart.no_history_for_tooth', { id: tooth.id })}
                             </TableCell>
                         </TableRow>
                     )}

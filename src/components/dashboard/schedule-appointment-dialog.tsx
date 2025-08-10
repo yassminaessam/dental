@@ -32,13 +32,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
 import { StaffMember } from '@/app/staff/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 const appointmentSchema = z.object({
-  patient: z.string({ required_error: "Patient is required." }),
-  doctor: z.string({ required_error: "Doctor is required." }),
-  date: z.date({ required_error: "Date is required." }),
-  time: z.string({ required_error: "Time is required." }),
+  patient: z.string({ required_error: "" }),
+  doctor: z.string({ required_error: "" }),
+  date: z.date({ required_error: "" }),
+  time: z.string({ required_error: "" }),
   type: z.string().default('Check-up'),
   duration: z.string().default('1 hour'),
   notes: z.string().optional(),
@@ -70,6 +71,7 @@ interface ScheduleAppointmentDialogProps {
 }
 
 export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -109,15 +111,15 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
       <DialogTrigger asChild>
         <Button className="h-9 sm:h-10">
           <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">New Appointment</span>
-          <span className="sm:hidden">Appointment</span>
+          <span className="hidden sm:inline">{t('appointments.new_appointment')}</span>
+          <span className="sm:hidden">{t('appointments.appointment')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader className="space-y-1 sm:space-y-2">
-          <DialogTitle className="text-lg sm:text-xl">Schedule Appointment</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{t('appointments.schedule_appointment')}</DialogTitle>
           <DialogDescription className="text-sm">
-            Schedule a new appointment for a patient
+            {t('appointments.schedule_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -128,11 +130,11 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Patient *</FormLabel>
+        <FormLabel className="text-sm font-medium">{t('appointments.patient_name')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select patient" />
+          <SelectValue placeholder={t('appointments.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -152,11 +154,11 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="doctor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Doctor *</FormLabel>
+        <FormLabel className="text-sm font-medium">{t('appointments.doctor')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select doctor" />
+          <SelectValue placeholder={t('appointments.select_practitioner')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -179,7 +181,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel className="text-sm font-medium">Date *</FormLabel>
+                    <FormLabel className="text-sm font-medium">{t('appointments.date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -191,7 +193,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_a_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -217,11 +219,11 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Time *</FormLabel>
+        <FormLabel className="text-sm font-medium">{t('appointments.time')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select time" />
+          <SelectValue placeholder={t('appointments.select_time')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -244,11 +246,11 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Appointment Type *</FormLabel>
+        <FormLabel className="text-sm font-medium">{t('appointments.treatment_type')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select type" />
+          <SelectValue placeholder={t('appointments.select_type')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -268,11 +270,11 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Duration *</FormLabel>
+        <FormLabel className="text-sm font-medium">{t('appointments.duration')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder="Select duration" />
+          <SelectValue placeholder={t('appointments.select_duration')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -294,10 +296,10 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Notes</FormLabel>
+                  <FormLabel className="text-sm font-medium">{t('appointments.notes')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Additional notes or special instructions"
+                      placeholder={t('appointments.notes_placeholder')}
                       className="resize-none h-20 sm:h-24"
                       {...field}
                     />
@@ -314,13 +316,13 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 className="w-full sm:w-auto order-2 sm:order-1"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button 
                 type="submit" 
                 className="w-full sm:w-auto order-1 sm:order-2"
               >
-                Schedule Appointment
+                {t('appointments.schedule_appointment')}
               </Button>
             </DialogFooter>
           </form>

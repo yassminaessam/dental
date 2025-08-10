@@ -8,19 +8,25 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  count: {
-    label: "Treatments",
-    color: "hsl(var(--chart-3))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    count: {
+      label: t('treatments.title'),
+      color: "hsl(var(--chart-3))",
+    },
+  } satisfies ChartConfig;
+}
 
 interface TreatmentVolumeChartProps {
     data: { month: string; count: number }[];
 }
 
 export default function TreatmentVolumeChart({ data }: TreatmentVolumeChartProps) {
+  const { language } = useLanguage();
+  const chartConfig = useChartConfig();
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart
@@ -39,11 +45,13 @@ export default function TreatmentVolumeChart({ data }: TreatmentVolumeChartProps
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => String(v).slice(0, 3)}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(Number(v))}
         />
         <ChartTooltip
           cursor={false}

@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -61,6 +62,7 @@ const initialSettings: ClinicSettings = {
 };
 
 export default function SettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = React.useState<ClinicSettings>(initialSettings);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
@@ -77,14 +79,14 @@ export default function SettingsPage() {
           // Optionally, create the document if it doesn't exist
           await setDocument('clinic-settings', 'main', initialSettings);
         }
-      } catch (error) {
-        toast({ title: "Error fetching settings", variant: "destructive" });
+  } catch (error) {
+    toast({ title: t('settings.toast.error_fetching'), variant: "destructive" });
       } finally {
         setLoading(false);
       }
     }
     fetchSettings();
-  }, [toast]);
+  }, [toast, t]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -103,11 +105,11 @@ export default function SettingsPage() {
     try {
       await setDocument('clinic-settings', 'main', settings);
       toast({
-        title: "Settings Saved",
-        description: "Your clinic settings have been successfully updated.",
+        title: t('settings.toast.settings_saved'),
+        description: t('settings.toast.settings_saved_desc'),
       });
     } catch (error) {
-      toast({ title: "Error saving settings", variant: "destructive" });
+      toast({ title: t('settings.toast.error_saving'), variant: "destructive" });
     }
   };
 
@@ -116,7 +118,7 @@ export default function SettingsPage() {
       <DashboardLayout>
         <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground">Loading settings...</p>
+          <p className="text-muted-foreground">{t('settings.loading')}</p>
         </main>
       </DashboardLayout>
     );
@@ -126,18 +128,18 @@ export default function SettingsPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <Button onClick={handleSaveChanges}>Save Changes</Button>
+          <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
+          <Button onClick={handleSaveChanges}>{t('settings.save_changes')}</Button>
         </div>
 
         <Tabs defaultValue="clinic">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
-            <TabsTrigger value="clinic">Clinic</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="backup">Backup</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="clinic">{t('settings.tabs.clinic')}</TabsTrigger>
+            <TabsTrigger value="users">{t('settings.tabs.users')}</TabsTrigger>
+            <TabsTrigger value="notifications">{t('settings.tabs.notifications')}</TabsTrigger>
+            <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
+            <TabsTrigger value="backup">{t('settings.tabs.backup')}</TabsTrigger>
+            <TabsTrigger value="appearance">{t('settings.tabs.appearance')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="clinic" className="mt-6">
@@ -146,54 +148,50 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Building className="h-5 w-5" />
-                    Clinic Information
+                    {t('settings.clinic.title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="clinicName">Clinic Name</Label>
+                    <Label htmlFor="clinicName">{t('settings.clinic.name')}</Label>
                     <Input id="clinicName" value={settings.clinicName} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Label htmlFor="phoneNumber">{t('settings.clinic.phone')}</Label>
                     <Input id="phoneNumber" value={settings.phoneNumber} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('settings.clinic.email')}</Label>
                     <Input id="email" type="email" value={settings.email} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website">{t('settings.clinic.website')}</Label>
                     <Input id="website" value={settings.website} onChange={handleInputChange} />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">{t('settings.clinic.address')}</Label>
                     <Input id="address" value={settings.address} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="businessHours">Business Hours</Label>
+                    <Label htmlFor="businessHours">{t('settings.clinic.business_hours')}</Label>
                     <Select value={settings.businessHours} onValueChange={(value) => handleSelectChange('businessHours', value)}>
                       <SelectTrigger id="businessHours">
-                        <SelectValue placeholder="Select hours" />
+                        <SelectValue placeholder={t('settings.clinic.select_hours')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="mon-fri-8-6">
-                          Sun-Thu 9AM-7PM
-                        </SelectItem>
-                        <SelectItem value="mon-fri-9-5">
-                          Sun-Thu 10AM-6PM
-                        </SelectItem>
+                        <SelectItem value="mon-fri-8-6">{t('settings.clinic.sun_thu_9_7')}</SelectItem>
+                        <SelectItem value="mon-fri-9-5">{t('settings.clinic.sun_thu_10_6')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="timezone">Timezone</Label>
+                    <Label htmlFor="timezone">{t('settings.clinic.timezone')}</Label>
                     <Select value={settings.timezone} onValueChange={(value) => handleSelectChange('timezone', value)}>
                       <SelectTrigger id="timezone">
-                        <SelectValue placeholder="Select timezone" />
+                        <SelectValue placeholder={t('settings.clinic.select_timezone')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="eastern">Egypt Standard Time (EET)</SelectItem>
+                        <SelectItem value="eastern">{t('settings.clinic.egypt_time')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -202,48 +200,40 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Appointment Settings</CardTitle>
+                  <CardTitle>{t('settings.clinic.appointment_settings')}</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="appointmentDuration">
-                      Default Appointment Duration
-                    </Label>
+                    <Label htmlFor="appointmentDuration">{t('settings.clinic.default_duration')}</Label>
                     <Select value={settings.appointmentDuration} onValueChange={(value) => handleSelectChange('appointmentDuration', value)}>
                       <SelectTrigger id="appointmentDuration">
-                        <SelectValue placeholder="Select duration" />
+                        <SelectValue placeholder={t('settings.clinic.select_duration')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">60 minutes</SelectItem>
-                        <SelectItem value="90">90 minutes</SelectItem>
+                        <SelectItem value="30">{t('settings.clinic.30_minutes')}</SelectItem>
+                        <SelectItem value="60">{t('settings.clinic.60_minutes')}</SelectItem>
+                        <SelectItem value="90">{t('settings.clinic.90_minutes')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="bookingLimit">
-                      Advance Booking Limit
-                    </Label>
+                    <Label htmlFor="bookingLimit">{t('settings.clinic.advance_booking_limit')}</Label>
                     <Select value={settings.bookingLimit} onValueChange={(value) => handleSelectChange('bookingLimit', value)}>
                       <SelectTrigger id="bookingLimit">
-                        <SelectValue placeholder="Select limit" />
+                        <SelectValue placeholder={t('settings.clinic.select_limit')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="60">60 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
+                        <SelectItem value="30">{t('settings.clinic.30_days')}</SelectItem>
+                        <SelectItem value="60">{t('settings.clinic.60_days')}</SelectItem>
+                        <SelectItem value="90">{t('settings.clinic.90_days')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex items-center space-x-4 rounded-md border p-4 md:col-span-2">
                     <Switch id="allowOnlineBooking" checked={settings.allowOnlineBooking} onCheckedChange={(checked) => handleSwitchChange('allowOnlineBooking', checked)} />
                     <div className="flex flex-col">
-                      <Label htmlFor="allowOnlineBooking">
-                        Allow Online Booking
-                      </Label>
-                      <span className="text-sm text-muted-foreground">
-                        Let patients book appointments online
-                      </span>
+                      <Label htmlFor="allowOnlineBooking">{t('settings.clinic.allow_online_booking')}</Label>
+                      <span className="text-sm text-muted-foreground">{t('settings.clinic.online_booking_desc')}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -256,7 +246,7 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Users className="h-5 w-5" />
-                    User Management
+                    {t('settings.users.title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6">
@@ -324,7 +314,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Bell className="h-5 w-5" />
-                  Notification Preferences
+                  {t('settings.notifications.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-6">
@@ -400,7 +390,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Shield className="h-5 w-5" />
-                  Security Settings
+                  {t('settings.security.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-6">
@@ -454,7 +444,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Database className="h-5 w-5" />
-                  Backup & Recovery
+                  {t('settings.backup.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-6">
@@ -516,7 +506,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Palette className="h-5 w-5" />
-                  Appearance Settings
+                  {t('settings.appearance.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">

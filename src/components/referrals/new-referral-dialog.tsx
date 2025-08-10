@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Specialist } from '@/app/referrals/page';
 import type { Patient } from '@/app/patients/page';
@@ -47,6 +48,7 @@ interface NewReferralDialogProps {
 
 export function NewReferralDialog({ onSave, specialists, patients }: NewReferralDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { t } = useLanguage();
   const form = useForm<ReferralFormData>({
     resolver: zodResolver(referralSchema),
   });
@@ -62,14 +64,14 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
       <DialogTrigger asChild>
         <Button>
           <Send className="mr-2 h-4 w-4" />
-          New Referral
+          {t('referrals.new_referral')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Create New Referral</DialogTitle>
+          <DialogTitle>{t('referrals.create_new_referral')}</DialogTitle>
           <DialogDescription>
-            Fill out the form to refer a patient to a specialist.
+            {t('referrals.create_new_referral_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -80,11 +82,11 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+        <FormLabel>{t('referrals.form.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+          <SelectValue placeholder={t('referrals.placeholder.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -104,11 +106,11 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
                 name="specialist"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Specialist *</FormLabel>
+        <FormLabel>{t('referrals.form.specialist')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select specialist" />
+          <SelectValue placeholder={t('referrals.placeholder.select_specialist')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -129,10 +131,10 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason for Referral *</FormLabel>
+                  <FormLabel>{t('referrals.form.reason')} *</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Provide a detailed reason for the referral."
+                      placeholder={t('referrals.placeholder.reason_detail')}
                       className="min-h-[100px]"
                       {...field}
                     />
@@ -146,19 +148,17 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
               name="urgency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Urgency *</FormLabel>
+                  <FormLabel>{t('referrals.form.urgency')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select urgency level" />
+                        <SelectValue placeholder={t('referrals.placeholder.select_urgency')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {referralUrgency.map((urgency) => (
-                        <SelectItem key={urgency} value={urgency.toLowerCase() as 'routine' | 'urgent' | 'emergency'}>
-                          <span className="capitalize">{urgency}</span>
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="routine">{t('referrals.urgency.routine')}</SelectItem>
+                      <SelectItem value="urgent">{t('referrals.urgency.urgent')}</SelectItem>
+                      <SelectItem value="emergency">{t('referrals.urgency.emergency')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -166,8 +166,8 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Send Referral</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('referrals.actions.send_referral')}</Button>
             </DialogFooter>
           </form>
         </Form>

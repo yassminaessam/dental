@@ -32,18 +32,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import type { Transaction } from '@/app/financial/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const transactionSchema = z.object({
-  date: z.date({ required_error: 'Date is required' }),
-  amount: z.string().min(1, 'Amount is required'),
-  description: z.string().min(1, 'Description is required'),
-  category: z.string({ required_error: 'Category is required' }),
-  paymentMethod: z.string({ required_error: 'Payment method is required' }),
-  type: z.enum(['Revenue', 'Expense'], { required_error: 'Type is required' }),
-  patient: z.string().optional(),
-});
-
-type TransactionFormData = z.infer<typeof transactionSchema>;
+type TransactionFormData = {
+  date: Date;
+  amount: string;
+  description: string;
+  category: string;
+  paymentMethod: string;
+  type: 'Revenue' | 'Expense';
+  patient?: string;
+};
 
 const transactionCategories = ['Patient Payment', 'Insurance Payment', 'Supplies', 'Salary', 'Rent', 'Utilities', 'Marketing', 'Other'];
 const paymentMethods = ['Credit Card', 'Cash', 'Vodafone Cash', 'Fawry', 'Bank Transfer'];
@@ -56,11 +55,22 @@ interface EditTransactionDialogProps {
 }
 
 export function EditTransactionDialog({ transaction, onSave, open, onOpenChange }: EditTransactionDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
 
+  const schema = React.useMemo(() => z.object({
+    date: z.date({ required_error: t('validation.date_required') }),
+    amount: z.string().min(1, t('validation.amount_required')),
+    description: z.string().min(1, t('validation.description_required')),
+    category: z.string({ required_error: t('validation.category_required') }),
+    paymentMethod: z.string({ required_error: t('billing.validation.payment_method_required') }),
+    type: z.enum(['Revenue', 'Expense'], { required_error: t('validation.type_required') }),
+    patient: z.string().optional(),
+  }), [t]);
+
   const form = useForm<TransactionFormData>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(schema),
   });
   
   React.useEffect(() => {
@@ -110,9 +120,9 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Transaction</DialogTitle>
+          <DialogTitle>{t('financial.edit_transaction')}</DialogTitle>
           <DialogDescription>
-            Update the details for transaction {transaction.id}.
+            {t('financial.edit_transaction_desc', { id: transaction.id })}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -123,16 +133,16 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+                    <FormLabel>{t('common.date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-start font-normal", !field.value && "text-muted-foreground", isRTL ? 'flex-row-reverse text-right' : 'text-left')}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -152,9 +162,9 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount *</FormLabel>
+                    <FormLabel>{t('financial.amount')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="EGP 0.00" {...field} />
+                      <Input type="number" placeholder="EGP 0.00" {...field} className={cn(isRTL && 'text-right')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -166,9 +176,9 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel>{t('common.description')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Patient payment for cleaning" {...field} />
+                    <Input placeholder={t('common.description')} {...field} className={cn(isRTL && 'text-right')} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,11 +190,11 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient (Optional)</FormLabel>
+                    <FormLabel>{t('common.patient')} ({t('common.if_applicable')})</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a patient" />
+                          <SelectValue placeholder={t('patients.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -203,19 +213,31 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category *</FormLabel>
+                    <FormLabel>{t('financial.category')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder={t('inventory.category_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {transactionCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
+                        {transactionCategories.map((cat) => {
+                          const label = ({
+                            'Patient Payment': t('financial.category.patient_payment'),
+                            'Insurance Payment': t('financial.category.insurance_payment'),
+                            'Supplies': t('financial.category.supplies'),
+                            'Salary': t('financial.category.salary'),
+                            'Rent': t('financial.category.rent'),
+                            'Utilities': t('financial.category.utilities'),
+                            'Marketing': t('financial.category.marketing'),
+                            'Other': t('financial.category.other'),
+                          } as Record<string, string>)[cat] || cat;
+                          return (
+                            <SelectItem key={cat} value={cat}>
+                              {label}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -229,19 +251,28 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                     name="paymentMethod"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Payment Method *</FormLabel>
+                        <FormLabel>{t('financial.payment_method')} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                            <SelectValue placeholder="Select a method" />
+                            <SelectValue placeholder={t('billing.select_payment_method')} />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {paymentMethods.map((method) => (
-                            <SelectItem key={method} value={method}>
-                                {method}
-                            </SelectItem>
-                            ))}
+                            {paymentMethods.map((method) => {
+                              const label = ({
+                                'Credit Card': t('billing.payment_method_credit_card'),
+                                'Cash': t('billing.payment_method_cash'),
+                                'Vodafone Cash': t('billing.payment_method_vodafone'),
+                                'Fawry': t('billing.payment_method_fawry'),
+                                'Bank Transfer': t('billing.payment_method_bank'),
+                              } as Record<string, string>)[method] || method;
+                              return (
+                                <SelectItem key={method} value={method}>
+                                  {label}
+                                </SelectItem>
+                              );
+                            })}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -253,7 +284,7 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                     name="type"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Type *</FormLabel>
+                        <FormLabel>{t('financial.type')} *</FormLabel>
                         <FormControl>
                             <RadioGroup
                             onValueChange={field.onChange}
@@ -264,13 +295,13 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                                 <FormControl>
                                 <RadioGroupItem value="Revenue" id="r-revenue" />
                                 </FormControl>
-                                <FormLabel htmlFor="r-revenue">Revenue</FormLabel>
+                                <FormLabel htmlFor="r-revenue">{t('financial.revenue')}</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl>
                                 <RadioGroupItem value="Expense" id="r-expense" />
                                 </FormControl>
-                                <FormLabel htmlFor="r-expense">Expense</FormLabel>
+                                <FormLabel htmlFor="r-expense">{t('financial.expense')}</FormLabel>
                             </FormItem>
                             </RadioGroup>
                         </FormControl>
@@ -281,8 +312,8 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import type { Appointment } from '@/app/appointments/page';
 import { Badge } from '../ui/badge';
-import { isSameDay, format } from 'date-fns';
+import { isSameDay } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AppointmentCalendarViewProps {
     appointments: Appointment[];
@@ -15,6 +16,7 @@ interface AppointmentCalendarViewProps {
 
 export default function AppointmentCalendarView({ appointments, onAppointmentClick }: AppointmentCalendarViewProps) {
     const [date, setDate] = React.useState<Date | undefined>(new Date());
+    const { t, language } = useLanguage();
 
     const appointmentsOnSelectedDate = React.useMemo(() => {
         if (!date) return [];
@@ -47,7 +49,7 @@ export default function AppointmentCalendarView({ appointments, onAppointmentCli
                 <Card>
                     <CardHeader>
                         <CardTitle>
-                            Appointments on {date ? format(date, 'PPP') : '...'}
+                            {t('appointments.on_date_title', { date: date ? date.toLocaleDateString(language) : '...' })}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -55,16 +57,18 @@ export default function AppointmentCalendarView({ appointments, onAppointmentCli
                             appointmentsOnSelectedDate.map(appt => (
                                 <div key={appt.id} className="p-3 bg-secondary/50 rounded-lg border cursor-pointer hover:bg-secondary" onClick={() => onAppointmentClick(appt)}>
                                     <p className="font-semibold">{appt.patient}</p>
-                                    <p className="text-sm text-muted-foreground">{appt.type} with {appt.doctor}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {t('appointments.type')}: {appt.type} • {t('appointments.doctor')}: {appt.doctor}
+                                    </p>
                                     <div className="flex items-center justify-between mt-2">
-                                        <Badge variant="outline">{format(appt.dateTime, 'p')}</Badge>
-                                        <Badge variant={appt.status === 'Cancelled' ? 'destructive' : 'default'}>{appt.status}</Badge>
+                                        <Badge variant="outline">{appt.dateTime.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}</Badge>
+                                        <Badge variant={appt.status === 'Cancelled' ? 'destructive' : 'default'}>{t(`common.${appt.status.toLowerCase()}`)}</Badge>
                                     </div>
                                 </div>
                             ))
                         ) : (
                             <p className="text-center text-muted-foreground py-8">
-                                No appointments on this day.
+                                {t('appointments.none_this_day')}
                             </p>
                         )}
                     </CardContent>

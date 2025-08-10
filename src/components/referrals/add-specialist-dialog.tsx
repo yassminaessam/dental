@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const specialistSchema = z.object({
   name: z.string().min(1, 'Specialist name is required.'),
@@ -38,6 +39,7 @@ interface AddSpecialistDialogProps {
 
 export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { t } = useLanguage();
   const form = useForm<SpecialistFormData>({
     resolver: zodResolver(specialistSchema),
     defaultValues: {
@@ -60,14 +62,14 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline">
           <UserPlus className="mr-2 h-4 w-4" />
-          Add Specialist
+          {t('referrals.specialist.add')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Add New Specialist</DialogTitle>
+          <DialogTitle>{t('referrals.specialist.add_new')}</DialogTitle>
           <DialogDescription>
-            Add a new specialist to your referral network.
+            {t('referrals.specialist.add_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -77,7 +79,7 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Specialist Name *</FormLabel>
+                  <FormLabel>{t('referrals.specialist.name')} *</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Dr. Robert Chen" {...field} />
                   </FormControl>
@@ -90,11 +92,11 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
               name="specialty"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Specialty *</FormLabel>
+      <FormLabel>{t('referrals.specialty')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select specialty" />
+        <SelectValue placeholder={t('referrals.specialist.select_specialty')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -115,9 +117,9 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>{t('referrals.specialist.phone')}</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                        <Input type="tel" placeholder="(555) 123-4567" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -127,9 +129,9 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                      <FormLabel>{t('referrals.specialist.email')}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="specialist@example.com" {...field} />
+                        <Input type="email" placeholder="specialist@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,7 +143,7 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
               name="clinicName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Clinic/Practice Name</FormLabel>
+                  <FormLabel>{t('referrals.specialist.clinic_name')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., City Oral Surgery" {...field} />
                   </FormControl>
@@ -149,8 +151,8 @@ export function AddSpecialistDialog({ onSave }: AddSpecialistDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Specialist</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('referrals.specialist.save')}</Button>
             </DialogFooter>
           </form>
         </Form>

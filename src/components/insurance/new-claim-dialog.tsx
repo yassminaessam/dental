@@ -29,29 +29,46 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Patient } from '@/app/patients/page';
 import { getCollection } from '@/services/firestore';
 import type { InsuranceProvider } from '@/app/insurance/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const claimSchema = z.object({
-  patient: z.string({ required_error: 'Patient is required.' }),
-  insurance: z.string({ required_error: 'Insurance provider is required.' }),
-  procedure: z.string().min(1, 'Procedure is required.'),
-  procedureCode: z.string().optional(),
-  amount: z.string().min(1, 'Amount is required.'),
-  submitDate: z.date({ required_error: 'Submit date is required.' }),
-});
-
-type ClaimFormData = z.infer<typeof claimSchema>;
+// Schema will be constructed inside the component to use translations
+// Define the form data type explicitly since the schema is created inside the component
+type ClaimFormData = {
+  patient: string;
+  insurance: string;
+  procedure: string;
+  procedureCode?: string;
+  amount: string;
+  submitDate: Date;
+};
 
 interface NewClaimDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: {
+    patient: string; // patient name
+    insurance: string; // provider name
+    procedure: string;
+    procedureCode?: string;
+    amount: string; // numeric string
+    submitDate: Date;
+  }) => void;
 }
 
 export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
+  const { t, isRTL } = useLanguage();
+  const claimSchema = React.useMemo(() => z.object({
+    patient: z.string({ required_error: t('validation.patient_required') }),
+    insurance: z.string({ required_error: t('validation.provider_required') }),
+    procedure: z.string().min(1, t('validation.procedure_required')),
+    procedureCode: z.string().optional(),
+    amount: z.string().min(1, t('validation.amount_required')),
+    submitDate: z.date({ required_error: t('validation.date_required') }),
+  }), [t]);
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
-  const [patients, setPatients] = React.useState<Patient[]>([]);
+  // Only need id and name to populate the select
+  const [patients, setPatients] = React.useState<Array<{ id: string; name: string }>>([]);
   const [providers, setProviders] = React.useState<InsuranceProvider[]>([]);
 
   const form = useForm<ClaimFormData>({
@@ -67,13 +84,13 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   });
 
   React.useEffect(() => {
-    async function fetchData() {
+  async function fetchData() {
         if (open) {
             const [patientData, providerData] = await Promise.all([
-                getCollection<any>('patients'),
+        getCollection<{ id: string; name: string }>('patients'),
                 getCollection<InsuranceProvider>('insurance-providers')
             ]);
-            setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
+      setPatients(patientData.map((p) => ({ id: p.id, name: p.name })));
             setProviders(providerData);
         }
     }
@@ -83,7 +100,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const onSubmit = (data: ClaimFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const providerName = providers.find(p => p.id === data.insurance)?.name;
-    onSave({ ...data, patient: patientName, insurance: providerName });
+    onSave({ ...data, patient: patientName ?? '', insurance: providerName ?? '' });
     form.reset();
     setOpen(false);
   };
@@ -92,15 +109,15 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Claim
+          <Plus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+          {t('insurance.new_claim')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Submit New Insurance Claim</DialogTitle>
+          <DialogTitle>{t('insurance.submit_new_claim')}</DialogTitle>
           <DialogDescription>
-            Fill out the details to submit a new insurance claim.
+            {t('insurance.submit_new_claim_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -111,11 +128,11 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+                    <FormLabel>{t('common.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+                          <SelectValue placeholder={t('patients.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -135,11 +152,11 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="insurance"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Insurance Provider *</FormLabel>
+                    <FormLabel>{t('patients.insurance_provider')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select provider" />
+                          <SelectValue placeholder={t('insurance.select_provider')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -161,9 +178,9 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="procedure"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Procedure *</FormLabel>
+                    <FormLabel>{t('common.procedure')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Routine Cleaning" {...field} />
+                      <Input placeholder={t('insurance.placeholder.procedure_example')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,9 +191,9 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="procedureCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Procedure Code</FormLabel>
+                    <FormLabel>{t('insurance.procedure_code')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., D1110" {...field} />
+                      <Input placeholder={t('insurance.placeholder.procedure_code_example')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -188,9 +205,9 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount *</FormLabel>
+                    <FormLabel>{t('financial.amount')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="$0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder={t('insurance.placeholder.amount_egp')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +218,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 name="submitDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Submit Date *</FormLabel>
+                    <FormLabel>{t('insurance.submit_date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -209,8 +226,8 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                             variant={"outline"}
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -227,8 +244,8 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Submit Claim</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('insurance.submit_claim')}</Button>
             </DialogFooter>
           </form>
         </Form>

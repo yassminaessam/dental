@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Calendar, User, ExternalLink, Plus, AlertCircle } from "lucide-react";
 import { MedicalRecord } from '@/app/medical-records/page';
 import { toothNames } from '@/lib/data/dental-chart-data';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ToothRecordsDialogProps {
   open: boolean;
@@ -38,7 +39,8 @@ export function ToothRecordsDialog({
   onCreateNewRecord,
   onNavigateToMedicalRecords
 }: ToothRecordsDialogProps) {
-  const toothName = toothNames[toothNumber] || `Tooth #${toothNumber}`;
+  const { t } = useLanguage();
+  const toothName = toothNames[toothNumber] || t('dental_chart.tooth_number_display', { id: toothNumber });
 
   const getRecordTypeColor = (type: string) => {
     switch (type) {
@@ -56,10 +58,10 @@ export function ToothRecordsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Medical Records for {toothName}
+            {t('dental_chart.medical_records')} {t('common.for') ? t('common.for') : ''} {toothName}
           </DialogTitle>
           <DialogDescription>
-            All medical records related to {toothName} for patient {patientName}
+            {t('dental_chart.full_history_for_tooth', { id: toothNumber })}
           </DialogDescription>
         </DialogHeader>
 
@@ -69,7 +71,7 @@ export function ToothRecordsDialog({
             <Card className="p-3">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{records.length}</div>
-                <div className="text-xs text-muted-foreground">Total Records</div>
+                <div className="text-xs text-muted-foreground">{t('dental_chart.records_tab')}</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -77,7 +79,7 @@ export function ToothRecordsDialog({
                 <div className="text-2xl font-bold text-green-600">
                   {records.filter(r => r.type === 'Treatment Plan').length}
                 </div>
-                <div className="text-xs text-muted-foreground">Treatment Plans</div>
+                <div className="text-xs text-muted-foreground">{t('treatmentPlan')}</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -85,7 +87,7 @@ export function ToothRecordsDialog({
                 <div className="text-2xl font-bold text-blue-600">
                   {records.filter(r => r.type === 'SOAP').length}
                 </div>
-                <div className="text-xs text-muted-foreground">SOAP Notes</div>
+                <div className="text-xs text-muted-foreground">SOAP</div>
               </div>
             </Card>
             <Card className="p-3">
@@ -93,7 +95,7 @@ export function ToothRecordsDialog({
                 <div className="text-2xl font-bold text-orange-600">
                   {records.filter(r => r.type === 'Consultation').length}
                 </div>
-                <div className="text-xs text-muted-foreground">Consultations</div>
+                <div className="text-xs text-muted-foreground">{t('consultation')}</div>
               </div>
             </Card>
           </div>
@@ -101,18 +103,18 @@ export function ToothRecordsDialog({
           {/* Records List */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium">All Records ({records.length})</h4>
+      <h4 className="font-medium">{t('dental_chart.records_tab')} ({records.length})</h4>
               <div className="flex gap-2">
                 {onCreateNewRecord && (
                   <Button variant="outline" size="sm" onClick={onCreateNewRecord}>
                     <Plus className="h-4 w-4 mr-1" />
-                    New Record
+        {t('newRecord')}
                   </Button>
                 )}
                 {onNavigateToMedicalRecords && (
                   <Button variant="outline" size="sm" onClick={onNavigateToMedicalRecords}>
                     <ExternalLink className="h-4 w-4 mr-1" />
-                    Medical Records
+        {t('dental_chart.medical_records')}
                   </Button>
                 )}
               </div>
@@ -166,17 +168,13 @@ export function ToothRecordsDialog({
                         <div className="space-y-2">
                           {record.complaint && (
                             <div>
-                              <h6 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                Chief Complaint
-                              </h6>
+                              <h6 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t('chiefComplaint')}</h6>
                               <p className="text-sm">{record.complaint}</p>
                             </div>
                           )}
                           
                           <div>
-                            <h6 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Chief Complaint
-                            </h6>
+                            <h6 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t('chiefComplaint')}</h6>
                             <p className="text-sm line-clamp-3">{record.complaint}</p>
                           </div>
 
@@ -198,7 +196,7 @@ export function ToothRecordsDialog({
                                 onClick={() => onViewFullRecord(record)}
                                 className="h-auto p-0 text-xs"
                               >
-                                View Details →
+                                {t('table.view_details')} →
                               </Button>
                             )}
                           </div>
@@ -212,15 +210,13 @@ export function ToothRecordsDialog({
                   <div className="text-center space-y-3">
                     <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
                     <div>
-                      <h4 className="font-medium">No Medical Records</h4>
-                      <p className="text-sm text-muted-foreground">
-                        No medical records have been created for {toothName} yet.
-                      </p>
+                      <h4 className="font-medium">{t('dental_chart.no_medical_records')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('dental_chart.no_medical_records')}</p>
                     </div>
                     {onCreateNewRecord && (
                       <Button variant="outline" onClick={onCreateNewRecord}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create First Record
+                        {t('newRecord')}
                       </Button>
                     )}
                   </div>
@@ -232,12 +228,10 @@ export function ToothRecordsDialog({
           {/* Quick Actions */}
           <Separator />
           <div className="flex justify-between items-center pt-2">
-            <div className="text-sm text-muted-foreground">
-              Records are automatically synced with the dental chart system
-            </div>
+      <div className="text-sm text-muted-foreground">{t('dental_chart.integration_warning')}</div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Close
+        {t('common.close')}
               </Button>
             </div>
           </div>

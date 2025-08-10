@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,45 +13,60 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+} from '../ui/dialog';
+import { Input } from '../ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { Treatment, TreatmentAppointment } from '@/app/treatments/page';
-import { getCollection } from '@/services/firestore';
-import { Patient } from '@/app/patients/page';
-import { StaffMember } from '@/app/staff/page';
+import type { Treatment } from '../../app/treatments/page';
+import { getCollection } from '../../services/firestore';
+import { Patient } from '../../app/patients/page';
+import { StaffMember } from '../../app/staff/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { Calendar } from '../ui/calendar';
-import { format } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
-import { Appointment } from '@/app/appointments/page';
+import { Trash2 } from 'lucide-react';
+import { Appointment } from '../../app/appointments/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const appointmentSchema = z.object({
+const buildAppointmentSchema = (t: (k: string) => string) =>
+  z.object({
     date: z.date(),
-    time: z.string().min(1, "Time is required."),
-    duration: z.string().min(1, "Duration is required."),
+    time: z.string().min(1, t('appointments.validation.time_required')),
+    duration: z.string().min(1, t('appointments.validation.duration_required')),
     appointmentId: z.string().optional(),
     status: z.custom<Appointment['status']>().optional(),
-});
+  });
 
-const planSchema = z.object({
-  patient: z.string({ required_error: "Patient is required." }),
-  doctor: z.string({ required_error: "Doctor is required." }),
-  procedure: z.string().min(1, "Procedure name is required."),
-  cost: z.string().min(1, "Cost is required."),
-  notes: z.string().optional(),
-  appointments: z.array(appointmentSchema).min(1, "At least one appointment is required."),
-});
+const buildPlanSchema = (t: (k: string) => string) =>
+  z.object({
+    patient: z.string({ required_error: t('validation.patient_required') }),
+    doctor: z.string({ required_error: t('appointments.validation.doctor_required') }),
+    procedure: z.string().min(1, t('treatments.validation.procedure_required')),
+    cost: z.string().min(1, t('treatments.validation.cost_required')),
+    notes: z.string().optional(),
+    appointments: z.array(buildAppointmentSchema(t)).min(1, t('treatments.validation.at_least_one_appointment')),
+  });
 
-type PlanFormData = z.infer<typeof planSchema>;
+type PlanFormData = {
+  patient: string;
+  doctor: string;
+  procedure: string;
+  cost: string;
+  notes?: string;
+  appointments: Array<{
+    date: Date;
+    time: string;
+    duration: string;
+    appointmentId?: string;
+    status?: Appointment['status'];
+  }>;
+};
 
 const availableTimeSlots = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"
@@ -68,9 +83,11 @@ interface EditTreatmentDialogProps {
 export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: EditTreatmentDialogProps) {
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const { t, language } = useLanguage();
+  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
 
   const form = useForm<PlanFormData>({
-    resolver: zodResolver(planSchema),
+    resolver: zodResolver(buildPlanSchema(t)),
     defaultValues: {
         patient: '',
         doctor: '',
@@ -82,12 +99,12 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
   });
 
   const { control, reset, formState: { errors } } = form;
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray<PlanFormData, 'appointments', 'id'>({
     control,
     name: "appointments"
   });
 
-  const selectedDates = React.useMemo(() => fields.map(f => f.date), [fields]);
+  const selectedDates: Date[] = React.useMemo(() => fields.map(f => f.date as Date), [fields]);
   
   React.useEffect(() => {
     async function fetchData() {
@@ -123,8 +140,10 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
   const handleDateSelect = (days: Date[] | undefined) => {
     const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());
     const newAppointments = sortedDays.map(day => {
-        const existing = fields.find(f => f.date.getTime() === day.getTime());
-        return existing || { date: day, time: '09:00', duration: '1 hour', status: 'Confirmed' };
+        const existing = fields.find(f => (f.date as Date).getTime() === day.getTime());
+        return existing
+          ? { date: existing.date as Date, time: existing.time as string, duration: existing.duration as string, appointmentId: existing.appointmentId as string | undefined, status: existing.status as Appointment['status'] | undefined }
+          : { date: day, time: '09:00', duration: '1 hour', status: 'Confirmed' as Appointment['status'] };
     });
     replace(newAppointments);
   };
@@ -140,7 +159,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
         procedure: data.procedure,
         cost: `EGP ${data.cost}`,
         notes: data.notes || '',
-        appointments: data.appointments.map(a => ({
+  appointments: data.appointments.map((a: PlanFormData['appointments'][number]) => ({
             date: a.date.toISOString(),
             time: a.time,
             duration: a.duration,
@@ -155,10 +174,10 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Edit Treatment Plan</DialogTitle>
-          <DialogDescription>
-            Update the details for this treatment plan.
-          </DialogDescription>
+      <DialogTitle>{t('treatments.edit_dialog.title')}</DialogTitle>
+      <DialogDescription>
+      {t('treatments.edit_dialog.description')}
+      </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-3 gap-6 py-4">
@@ -168,10 +187,10 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     name="patient"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Patient *</FormLabel>
+            <FormLabel>{t('treatments.patient')} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t('treatments.select_patient')} /></SelectTrigger>
                         </FormControl>
                         <SelectContent>{patients.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}</SelectContent>
                         </Select>
@@ -184,10 +203,10 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     name="doctor"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Doctor *</FormLabel>
+            <FormLabel>{t('treatments.doctor')} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t('treatments.select_doctor')} /></SelectTrigger>
                         </FormControl>
                         <SelectContent>{doctors.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent>
                         </Select>
@@ -200,8 +219,8 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     name="procedure"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Treatment Name *</FormLabel>
-                        <FormControl><Input placeholder="e.g., Full Mouth Restoration" {...field} /></FormControl>
+            <FormLabel>{t('treatments.treatment_name')} *</FormLabel>
+            <FormControl><Input placeholder={t('treatments.treatment_name_placeholder')} {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -211,8 +230,8 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     name="cost"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Cost *</FormLabel>
-                        <FormControl><Input type="text" placeholder="EGP 0.00" {...field} /></FormControl>
+            <FormLabel>{t('treatments.cost')} *</FormLabel>
+            <FormControl><Input type="text" placeholder="EGP 0.00" {...field} /></FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -222,10 +241,10 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     name="notes"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Notes</FormLabel>
+            <FormLabel>{t('treatments.notes')}</FormLabel>
                         <FormControl>
                         <Textarea
-                            placeholder="Describe the treatment plan, goals, and steps."
+              placeholder={t('treatments.notes_placeholder')}
                             className="resize-none h-24"
                             {...field}
                             value={field.value ?? ''}
@@ -237,7 +256,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
             </div>
              <div className="col-span-2">
                 <FormItem>
-                    <FormLabel>Appointment Dates *</FormLabel>
+          <FormLabel>{t('appointments.appointment_dates')} *</FormLabel>
                     <div className="flex gap-4">
                         <Calendar
                             mode="multiple"
@@ -246,12 +265,12 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                             className="rounded-md border"
                             />
                         <div className="flex-1">
-                            <h4 className="mb-2 text-sm font-medium">Selected Appointments</h4>
+              <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
                              <ScrollArea className="h-72 rounded-md border p-2">
                                {fields.length > 0 ? (
                                 fields.map((field, index) => (
                                     <div key={field.id} className="grid grid-cols-12 gap-2 items-center mb-2">
-                                       <p className="col-span-4 text-sm font-medium">{format(field.date, 'PPP')}</p>
+                     <p className="col-span-4 text-sm font-medium">{(field.date as Date).toLocaleDateString(locale, { dateStyle: 'medium' })}</p>
                                        <FormField
                                             control={control}
                                             name={`appointments.${index}.time`}
@@ -282,7 +301,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                                     </div>
                                 ))
                                ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Select dates from the calendar.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t('treatments.select_dates_from_calendar')}</p>
                                )}
                              </ScrollArea>
                         </div>
@@ -291,8 +310,8 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                 </FormItem>
             </div>
             <DialogFooter className="col-span-3">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+        <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

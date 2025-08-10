@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { StaffMember } from '@/app/staff/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const employeeSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -66,6 +67,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
   });
+  const { t, isRTL } = useLanguage();
 
   React.useEffect(() => {
     if (staffMember) {
@@ -103,9 +105,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Employee Details</DialogTitle>
+          <DialogTitle>{t('staff.edit_employee')}</DialogTitle>
           <DialogDescription>
-            Update the details for the staff member.
+            {t('staff.edit_employee_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -116,9 +118,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name *</FormLabel>
+                    <FormLabel>{t('staff.first_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" {...field} />
+                      <Input placeholder={t('staff.first_name_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -129,9 +131,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
+                    <FormLabel>{t('staff.last_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" {...field} />
+                      <Input placeholder={t('staff.last_name_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,9 +146,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email *</FormLabel>
+                    <FormLabel>{t('staff.email')} *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john.doe@dentalpro.com" {...field} />
+                      <Input type="email" placeholder={t('staff.email_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -157,9 +159,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('staff.phone')}</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="01xxxxxxxxx" {...field} />
+                      <Input type="tel" placeholder={t('staff.phone_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -171,17 +173,17 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
+                    <FormLabel>{t('staff.role')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
+                          <SelectValue placeholder={t('staff.select_role')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {staffRoles.map((role) => (
                           <SelectItem key={role.name} value={role.name}>
-                            {role.name}
+                            {t(`roles.${role.name.toLowerCase()}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -195,7 +197,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="hireDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Hire Date *</FormLabel>
+        <FormLabel>{t('staff.hire_date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -203,8 +205,8 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                             variant={"outline"}
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+          <CalendarIcon className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+          {field.value ? format(field.value, "PPP") : <span>{t('staff.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -231,9 +233,9 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                     name="salary"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Salary (per year) *</FormLabel>
+                        <FormLabel>{t('staff.salary_per_year')}</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="EGP 500,000" {...field} />
+                          <Input type="number" placeholder={t('staff.salary_placeholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -244,16 +246,16 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                     name="status"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Status *</FormLabel>
+            <FormLabel>{t('common.status')} *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
+                  <SelectValue placeholder={t('staff.select_status')} />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Active">Active</SelectItem>
-                                <SelectItem value="Inactive">Inactive</SelectItem>
+                <SelectItem value="Active">{t('common.active')}</SelectItem>
+                <SelectItem value="Inactive">{t('common.inactive')}</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -266,10 +268,10 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>{t('staff.notes')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Add notes about the employee, performance, or other relevant information..." 
+                      placeholder={t('staff.notes_placeholder')} 
                       className="min-h-[100px]" 
                       {...field} 
                     />
@@ -278,8 +280,8 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

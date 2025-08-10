@@ -32,13 +32,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { InventoryItem } from '@/app/inventory/page';
 import { getCollection } from '@/services/firestore';
 import { Supplier } from '@/app/suppliers/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const itemSchema = z.object({
-  name: z.string().min(1, 'Item name is required'),
+  name: z.string().min(1, 'inventory.validation.item_name_required'),
   category: z.string().optional(),
   supplier: z.string().optional(),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
-  unitCost: z.coerce.number().min(0, 'Unit cost cannot be negative'),
+  stock: z.coerce.number().min(0, 'inventory.validation.stock_non_negative'),
+  unitCost: z.coerce.number().min(0, 'inventory.validation.unit_cost_non_negative'),
   location: z.string().optional(),
   expires: z.date().optional(),
   notes: z.string().optional(),
@@ -54,6 +55,7 @@ interface EditItemDialogProps {
 }
 
 export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDialogProps) {
+  const { t } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
@@ -106,9 +108,9 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Inventory Item</DialogTitle>
+          <DialogTitle>{t('inventory.edit_item')}</DialogTitle>
           <DialogDescription>
-            Update the details for the inventory item.
+            {t('inventory.update_item_details')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -118,11 +120,13 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item Name *</FormLabel>
+                  <FormLabel>{t('inventory.item_name')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Dental Composite Resin" {...field} />
+                    <Input placeholder={t('inventory.item_name_placeholder')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name?.message && t(String(form.formState.errors.name.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -132,9 +136,9 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('inventory.category')}</FormLabel>
                      <FormControl>
-                      <Input placeholder="e.g., Restorative Materials" {...field} />
+                      <Input placeholder={t('inventory.category_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -144,11 +148,11 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 name="supplier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier</FormLabel>
+                    <FormLabel>{t('inventory.supplier')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select supplier" />
+                          <SelectValue placeholder={t('suppliers.select_supplier')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -169,11 +173,13 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock *</FormLabel>
+                    <FormLabel>{t('inventory.stock')} *</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="0" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.stock?.message && t(String(form.formState.errors.stock.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -182,11 +188,13 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 name="unitCost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Cost *</FormLabel>
+                    <FormLabel>{t('inventory.unit_cost')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder={t('inventory.unit_cost_placeholder')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.unitCost?.message && t(String(form.formState.errors.unitCost.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -195,9 +203,9 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t('inventory.location')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Storage Room A" {...field} />
+                      <Input placeholder={t('inventory.location_placeholder')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -208,7 +216,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
               name="expires"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Expiry Date</FormLabel>
+                  <FormLabel>{t('inventory.expiry_date')}</FormLabel>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -217,7 +225,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
                           className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_a_date')}</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -237,10 +245,10 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>{t('common.notes')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Add notes about storage conditions, handling instructions, or other relevant information..." 
+                      placeholder={t('inventory.notes_placeholder')} 
                       className="min-h-[100px]" 
                       {...field} 
                     />
@@ -249,8 +257,8 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,44 +13,45 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+} from '../ui/dialog';
+import { Label } from '../ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, ShoppingCart, Plus, Trash2 } from 'lucide-react';
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { InventoryItem } from '@/app/inventory/page';
-import type { Supplier } from '@/app/suppliers/page';
+import type { InventoryItem } from '../../app/inventory/page';
+import type { Supplier } from '../../app/suppliers/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const orderItemSchema = z.object({
-  itemId: z.string().min(1, "Item is required"),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+  itemId: z.string().min(1, 'suppliers.validation.item_required'),
+  quantity: z.coerce.number().min(1, 'suppliers.validation.quantity_min'),
+  unitPrice: z.coerce.number().min(0, 'suppliers.validation.price_positive'),
 });
 
 const purchaseOrderSchema = z.object({
-  supplier: z.string({ required_error: 'Supplier is required.' }),
-  orderDate: z.date({ required_error: 'Order date is required.' }),
+  supplier: z.string({ required_error: 'suppliers.validation.supplier_required' }),
+  orderDate: z.date({ required_error: 'suppliers.validation.order_date_required' }),
   deliveryDate: z.date().optional(),
   notes: z.string().optional(),
-  items: z.array(orderItemSchema).min(1, "At least one item is required."),
+  items: z.array(orderItemSchema).min(1, 'suppliers.validation.at_least_one_item'),
 });
 
 type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
 
 interface NewPurchaseOrderDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: unknown) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialSupplierId?: string;
@@ -60,6 +61,7 @@ interface NewPurchaseOrderDialogProps {
 }
 
 export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems, suppliers, onAddItem }: NewPurchaseOrderDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [orderDateOpen, setOrderDateOpen] = React.useState(false);
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -99,9 +101,9 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
-          <DialogTitle>Create New Purchase Order</DialogTitle>
+          <DialogTitle>{t('suppliers.new_purchase_order')}</DialogTitle>
           <DialogDescription>
-            Create a new purchase order for a supplier.
+            {t('suppliers.create_purchase_order_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -112,11 +114,11 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                 name="supplier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier *</FormLabel>
+                    <FormLabel>{t('suppliers.supplier')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select supplier" />
+                          <SelectValue placeholder={t('suppliers.select_supplier')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -127,7 +129,9 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.supplier?.message && t(String(form.formState.errors.supplier.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -136,7 +140,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                 name="orderDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Order Date *</FormLabel>
+                    <FormLabel>{t('suppliers.order_date')} *</FormLabel>
                     <Popover open={orderDateOpen} onOpenChange={setOrderDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -144,8 +148,8 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                             variant={"outline"}
                             className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_a_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -156,23 +160,25 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                         }} initialFocus />
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.orderDate?.message && t(String(form.formState.errors.orderDate.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Order Items *</h3>
+                <h3 className="text-sm font-medium">{t('suppliers.order_items')} *</h3>
                 <Button type="button" size="sm" variant="outline" onClick={onAddItem}>
-                    <Plus className="mr-2 h-4 w-4" /> New Item
+                    <Plus className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} /> {t('inventory.add_item')}
                 </Button>
               </div>
               <div className="rounded-lg border p-2 space-y-2">
                   <div className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-6"><Label>Item Description</Label></div>
-                      <div className="col-span-2"><Label>Qty</Label></div>
-                      <div className="col-span-3"><Label>Unit Price</Label></div>
+                      <div className="col-span-6"><Label>{t('inventory.item')}</Label></div>
+                      <div className="col-span-2"><Label>{t('suppliers.quantity')}</Label></div>
+                      <div className="col-span-3"><Label>{t('suppliers.unit_price')}</Label></div>
                       <div className="col-span-1"></div>
                   </div>
                   {fields.map((field, index) => (
@@ -185,7 +191,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                            <SelectValue placeholder="Select item" />
+                                            <SelectValue placeholder={t('inventory.select_item')} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -196,6 +202,9 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <FormMessage>
+                                      {form.formState.errors.items?.[index]?.itemId?.message && t(String(form.formState.errors.items?.[index]?.itemId?.message))}
+                                    </FormMessage>
                                 </FormItem>
                             )}
                         />
@@ -207,6 +216,9 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                                     <FormControl>
                                         <Input type="number" placeholder="1" {...field} />
                                     </FormControl>
+                                    <FormMessage>
+                                      {form.formState.errors.items?.[index]?.quantity?.message && t(String(form.formState.errors.items?.[index]?.quantity?.message))}
+                                    </FormMessage>
                                 </FormItem>
                             )}
                         />
@@ -216,8 +228,11 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                             render={({ field }) => (
                                 <FormItem className="col-span-3">
                                     <FormControl>
-                                        <Input type="number" placeholder="EGP 0.00" {...field} />
+                                        <Input type="number" placeholder={t('inventory.unit_cost_placeholder')} {...field} />
                                     </FormControl>
+                                    <FormMessage>
+                                      {form.formState.errors.items?.[index]?.unitPrice?.message && t(String(form.formState.errors.items?.[index]?.unitPrice?.message))}
+                                    </FormMessage>
                                 </FormItem>
                             )}
                         />
@@ -234,12 +249,18 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                     type="button"
                     onClick={() => append({ itemId: '', quantity: 1, unitPrice: 0 })}
                   >
-                      <Plus className="mr-2 h-4 w-4" /> Add Item
+                      <Plus className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} /> {t('inventory.add_item')}
                   </Button>
                   <Controller
                     control={form.control}
                     name="items"
-                    render={({ fieldState }) => fieldState.error && <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p>}
+                    render={({ fieldState }) => (
+                      <>
+                        {fieldState.error ? (
+                          <p className="text-sm font-medium text-destructive">{t(String(fieldState.error.message))}</p>
+                        ) : null}
+                      </>
+                    )}
                   />
               </div>
             </div>
@@ -248,16 +269,16 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>{t('common.notes')}</FormLabel>
                    <FormControl>
-                    <Textarea id="notes" placeholder="Add any special instructions or notes for the supplier." {...field} />
+                    <Textarea id="notes" placeholder={t('suppliers.po_notes_placeholder')} {...field} />
                    </FormControl>
                 </FormItem>
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Create Purchase Order</Button>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+                <Button type="submit">{t('suppliers.create_purchase_order')}</Button>
             </DialogFooter>
           </form>
         </Form>

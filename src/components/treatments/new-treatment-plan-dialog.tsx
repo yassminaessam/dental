@@ -32,22 +32,32 @@ import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import { ScrollArea } from '../ui/scroll-area';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const appointmentSchema = z.object({
+// Schema builders to localize validation messages
+const buildAppointmentSchema = (t: (k: string) => string) =>
+  z.object({
     date: z.date(),
-    time: z.string().min(1, "Time is required."),
-    duration: z.string().min(1, "Duration is required."),
-});
+    time: z.string().min(1, t('appointments.validation.time_required')),
+    duration: z.string().min(1, t('appointments.validation.duration_required')),
+  });
 
-const planSchema = z.object({
-  patient: z.string({ required_error: "Patient is required." }),
-  doctor: z.string({ required_error: "Doctor is required." }),
-  treatmentName: z.string().min(1, "Treatment name is required."),
-  appointments: z.array(appointmentSchema).min(1, "At least one appointment is required."),
-  notes: z.string().optional(),
-});
+const buildPlanSchema = (t: (k: string) => string) =>
+  z.object({
+    patient: z.string({ required_error: t('validation.patient_required') }),
+    doctor: z.string({ required_error: t('appointments.validation.doctor_required') }),
+    treatmentName: z.string().min(1, t('treatments.validation.treatment_name_required')),
+    appointments: z.array(buildAppointmentSchema(t)).min(1, t('treatments.validation.at_least_one_appointment')),
+    notes: z.string().optional(),
+  });
 
-type PlanFormData = z.infer<typeof planSchema>;
+type PlanFormData = {
+  patient: string;
+  doctor: string;
+  treatmentName: string;
+  notes?: string;
+  appointments: Array<{ date: Date; time: string; duration: string }>;
+};
 
 const availableTimeSlots = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"
@@ -63,9 +73,11 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const [open, setOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const { t, language } = useLanguage();
+  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
 
   const form = useForm<PlanFormData>({
-    resolver: zodResolver(planSchema),
+    resolver: zodResolver(buildPlanSchema(t)),
     defaultValues: {
       treatmentName: '',
       notes: '',
@@ -115,14 +127,14 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          New Treatment Plan
+          {t('treatments.new_treatment_plan')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Create New Treatment Plan</DialogTitle>
+          <DialogTitle>{t('treatments.create_new_treatment_plan')}</DialogTitle>
           <DialogDescription>
-            Outline a new treatment plan and schedule all related appointments at once.
+            {t('treatments.outline_treatment_plan_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -133,11 +145,11 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+                    <FormLabel>{t('treatments.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+                          <SelectValue placeholder={t('treatments.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -157,11 +169,11 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 name="doctor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Doctor *</FormLabel>
+                    <FormLabel>{t('treatments.doctor')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select doctor" />
+                          <SelectValue placeholder={t('treatments.select_doctor')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -181,9 +193,9 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 name="treatmentName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Treatment Name *</FormLabel>
+                    <FormLabel>{t('treatments.treatment_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Full Mouth Restoration" {...field} />
+                      <Input placeholder={t('treatments.treatment_name_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,10 +206,10 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes</FormLabel>
+                    <FormLabel>{t('treatments.notes')}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe the treatment plan, goals, and steps."
+                        placeholder={t('treatments.notes_placeholder')}
                         className="resize-none h-24"
                         {...field}
                       />
@@ -209,7 +221,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
 
             <div className="col-span-2">
                 <FormItem>
-                    <FormLabel>Appointment Dates *</FormLabel>
+                    <FormLabel>{t('appointments.appointment_dates')} *</FormLabel>
                     <div className="flex gap-4">
                         <Calendar
                             mode="multiple"
@@ -218,12 +230,12 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                             className="rounded-md border"
                             />
                         <div className="flex-1">
-                            <h4 className="mb-2 text-sm font-medium">Selected Appointments</h4>
+                            <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
                              <ScrollArea className="h-72 rounded-md border p-2">
                                {fields.length > 0 ? (
                                 fields.map((field, index) => (
                                     <div key={field.id} className="grid grid-cols-12 gap-2 items-center mb-2">
-                                       <p className="col-span-4 text-sm font-medium">{format(field.date, 'PPP')}</p>
+                                       <p className="col-span-4 text-sm font-medium">{field.date.toLocaleDateString(locale, { dateStyle: 'medium' })}</p>
                                        <FormField
                                             control={form.control}
                                             name={`appointments.${index}.time`}
@@ -254,7 +266,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                                     </div>
                                 ))
                                ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Select dates from the calendar.</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">{t('treatments.select_dates_from_calendar')}</p>
                                )}
                              </ScrollArea>
                         </div>
@@ -264,8 +276,8 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
             </div>
             
             <DialogFooter className="col-span-3">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Plan and Schedule</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('treatments.save_plan_and_schedule')}</Button>
             </DialogFooter>
           </form>
         </Form>

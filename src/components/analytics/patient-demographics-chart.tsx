@@ -8,19 +8,25 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const chartConfig = {
-  count: {
-    label: "Patients",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
+function useChartConfig(): ChartConfig {
+  const { t } = useLanguage();
+  return {
+    count: {
+      label: t('patients.title'),
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+}
 
 interface PatientDemographicsChartProps {
   data: { ageGroup: string; count: number }[];
 }
 
 export default function PatientDemographicsChart({ data }: PatientDemographicsChartProps) {
+  const { language } = useLanguage();
+  const chartConfig = useChartConfig();
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
@@ -44,6 +50,7 @@ export default function PatientDemographicsChart({ data }: PatientDemographicsCh
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(v) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(Number(v))}
         />
         <ChartTooltip
           cursor={false}

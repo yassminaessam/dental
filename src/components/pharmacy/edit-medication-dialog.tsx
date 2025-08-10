@@ -22,14 +22,15 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Medication } from '@/app/pharmacy/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const medicationSchema = z.object({
-  name: z.string().min(1, 'Medication name is required'),
+  name: z.string().min(1, 'pharmacy.validation.medication_name_required'),
   category: z.string().optional(),
   form: z.string().optional(),
   strength: z.string().optional(),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
-  unitPrice: z.coerce.number().min(0, 'Price cannot be negative'),
+  stock: z.coerce.number().min(0, 'pharmacy.validation.stock_non_negative'),
+  unitPrice: z.coerce.number().min(0, 'pharmacy.validation.price_non_negative'),
   expiryDate: z.date().optional(),
 });
 
@@ -43,6 +44,7 @@ interface EditMedicationDialogProps {
 }
 
 export function EditMedicationDialog({ medication, onSave, open, onOpenChange }: EditMedicationDialogProps) {
+  const { t } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const form = useForm<MedicationFormData>({
     resolver: zodResolver(medicationSchema),
@@ -82,9 +84,9 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Medication</DialogTitle>
+          <DialogTitle>{t('pharmacy.edit_medication')}</DialogTitle>
           <DialogDescription>
-            Update the details for this medication.
+            {t('pharmacy.update_medication_details')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -95,11 +97,13 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medication Name *</FormLabel>
+                    <FormLabel>{t('pharmacy.medication_name')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Amoxicillin" {...field} />
+                      <Input placeholder={t('pharmacy.placeholder.medication_name')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.name?.message && t(String(form.formState.errors.name.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -108,9 +112,9 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t('pharmacy.category')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Antibiotic" {...field} />
+                      <Input placeholder={t('pharmacy.placeholder.category')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -122,9 +126,9 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="form"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Form</FormLabel>
+                    <FormLabel>{t('pharmacy.form')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Tablet" {...field} />
+                      <Input placeholder={t('pharmacy.placeholder.form')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -134,9 +138,9 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="strength"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Strength</FormLabel>
+                    <FormLabel>{t('pharmacy.strength')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 500mg" {...field} />
+                      <Input placeholder={t('pharmacy.placeholder.strength')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -148,11 +152,13 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Level *</FormLabel>
+                    <FormLabel>{t('pharmacy.stock_level')} *</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="0" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.stock?.message && t(String(form.formState.errors.stock.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -161,11 +167,13 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                 name="unitPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Price *</FormLabel>
+                    <FormLabel>{t('pharmacy.unit_price')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="EGP 0.00" {...field} />
+                      <Input type="number" step="0.01" placeholder={t('pharmacy.placeholder.unit_price')} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.unitPrice?.message && t(String(form.formState.errors.unitPrice.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -175,7 +183,7 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
               name="expiryDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Expiry Date</FormLabel>
+                  <FormLabel>{t('pharmacy.expiry_date')}</FormLabel>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -184,7 +192,7 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
                           className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -200,8 +208,8 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

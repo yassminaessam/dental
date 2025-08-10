@@ -39,6 +39,7 @@ import type { Appointment } from '../appointments/page';
 import type { Treatment } from '../treatments/page';
 import { format, isToday } from 'date-fns';
 import { Transaction } from '../financial/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const iconMap = {
     DollarSign,
@@ -51,6 +52,11 @@ type IconKey = keyof typeof iconMap;
 
 
 export default function AnalyticsPage() {
+    const { t, language } = useLanguage();
+    const locale = language === 'ar' ? 'ar-EG' : 'en-US';
+    const currencyFmt = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 });
+    const numberFmt = new Intl.NumberFormat(locale);
+    const percentFmt = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 });
   const [dateRange, setDateRange] = React.useState('30');
   const { toast } = useToast();
   const [totalRevenue, setTotalRevenue] = React.useState(0);
@@ -63,7 +69,7 @@ export default function AnalyticsPage() {
   const [revenueTrendData, setRevenueTrendData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
 
 
-  React.useEffect(() => {
+    React.useEffect(() => {
     async function fetchData() {
         const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
           getCollection<Invoice>('invoices'),
@@ -164,7 +170,7 @@ export default function AnalyticsPage() {
         // Process revenue data for chart
         const monthlyRevenue: Record<string, { revenue: number, expenses: number }> = {};
         transactions.forEach(t => {
-            const month = new Date(t.date).toLocaleString('default', { month: 'short' });
+            const month = new Date(t.date).toLocaleString(locale, { month: 'short' });
             if (!monthlyRevenue[month]) {
                 monthlyRevenue[month] = { revenue: 0, expenses: 0 };
             }
@@ -184,61 +190,61 @@ export default function AnalyticsPage() {
 
     }
     fetchData();
-  }, [])
+  }, [language])
 
-  const analyticsPageStats = [
+    const analyticsPageStats = [
     {
-        title: "Total Revenue",
-        value: `EGP ${totalRevenue.toLocaleString()}`,
-        description: "All time revenue",
+                title: t('analytics.total_revenue'),
+                value: currencyFmt.format(totalRevenue),
+                description: t('analytics.all_time_revenue'),
         icon: "DollarSign"
     },
     {
-        title: "Patient Acquisition",
-        value: `${patientCount}`,
-        description: "Total patients in system",
+                title: t('analytics.patient_acquisition'),
+                value: `${numberFmt.format(patientCount)}`,
+                description: t('analytics.total_patients_system'),
         icon: "Users"
     },
     {
-        title: "Appointment Show Rate",
-        value: `${showRate.toFixed(1)}%`,
-        description: "Confirmed / Total appointments",
+                title: t('analytics.appointment_show_rate'),
+                value: `${percentFmt.format(showRate / 100)}`,
+                description: t('analytics.confirmed_total_appointments'),
         icon: "TrendingUp"
     },
     {
-        title: "Average Treatment Value",
-        value: `EGP ${avgTreatmentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-        description: "Based on completed treatments",
+                title: t('analytics.average_treatment_value'),
+                value: `${currencyFmt.format(avgTreatmentValue)}`,
+                description: t('analytics.based_completed_treatments'),
         icon: "Activity"
     }
   ];
 
   const handleExport = () => {
     toast({
-        title: "Exporting Report",
-        description: "Your analytics report is being generated and will be downloaded shortly.",
+                title: t('analytics.toast.exporting_report'),
+                description: t('analytics.toast.exporting_report_desc'),
     });
   };
 
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 className="text-3xl font-bold">{t('nav.analytics')}</h1>
           <div className="flex items-center gap-2">
             <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Last 30 days" />
+                                <SelectValue placeholder={t('analytics.last_30_days')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="60">Last 60 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
+                                <SelectItem value="30">{t('analytics.last_30_days')}</SelectItem>
+                                <SelectItem value="60">{t('analytics.last_60_days')}</SelectItem>
+                                <SelectItem value="90">{t('analytics.last_90_days')}</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
-              Export Report
+                            {t('analytics.export_report')}
             </Button>
           </div>
         </div>
@@ -263,17 +269,17 @@ export default function AnalyticsPage() {
 
         <Tabs defaultValue="overview">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="treatments">Treatments</TabsTrigger>
-            <TabsTrigger value="staff">Staff</TabsTrigger>
-            <TabsTrigger value="satisfaction">Satisfaction</TabsTrigger>
+            <TabsTrigger value="overview">{t('analytics.overview')}</TabsTrigger>
+            <TabsTrigger value="patients">{t('patients.title')}</TabsTrigger>
+            <TabsTrigger value="treatments">{t('treatments.title')}</TabsTrigger>
+            <TabsTrigger value="staff">{t('nav.staff')}</TabsTrigger>
+            <TabsTrigger value="satisfaction">{t('analytics.satisfaction')}</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-4">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
                 <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle>Revenue Trend</CardTitle>
+                        <CardTitle>{t('analytics.revenue_trend')}</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <RevenueTrendsChart data={revenueTrendData} />
@@ -281,7 +287,7 @@ export default function AnalyticsPage() {
                 </Card>
                 <Card className="lg:col-span-2">
                     <CardHeader>
-                        <CardTitle>Appointment Analytics</CardTitle>
+                        <CardTitle>{t('analytics.appointment_analytics')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <AppointmentAnalyticsChart data={appointmentAnalyticsData} />
@@ -292,7 +298,7 @@ export default function AnalyticsPage() {
           <TabsContent value="patients">
              <Card>
                 <CardHeader>
-                    <CardTitle>Patient Demographics</CardTitle>
+                    <CardTitle>{t('analytics.patient_demographics')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <PatientDemographicsChart data={patientDemographicsData} />
@@ -302,7 +308,7 @@ export default function AnalyticsPage() {
           <TabsContent value="treatments">
              <Card>
                 <CardHeader>
-                    <CardTitle>Treatment Volume</CardTitle>
+                    <CardTitle>{t('analytics.treatment_volume')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <TreatmentVolumeChart data={treatmentVolumeData} />
@@ -312,7 +318,7 @@ export default function AnalyticsPage() {
            <TabsContent value="staff">
              <Card>
                 <CardHeader>
-                    <CardTitle>Staff Performance</CardTitle>
+                    <CardTitle>{t('analytics.staff_performance')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <StaffPerformanceChart data={[]} />
@@ -322,7 +328,7 @@ export default function AnalyticsPage() {
            <TabsContent value="satisfaction">
              <Card>
                 <CardHeader>
-                    <CardTitle>Patient Satisfaction</CardTitle>
+                    <CardTitle>{t('analytics.patient_satisfaction')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <PatientSatisfactionChart data={[]} />

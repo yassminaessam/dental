@@ -41,6 +41,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type TreatmentAppointment = {
     date: string;
@@ -73,28 +74,29 @@ export default function TreatmentsPage() {
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
   const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
+  const { t } = useLanguage();
 
 
   React.useEffect(() => {
-    const unsubscribeTreatments = listenToCollection<any>('treatments', (data) => {
+  const unsubscribeTreatments = listenToCollection<any>('treatments', (data) => {
         setTreatments(data);
         if (loading) setLoading(false);
     }, (error) => {
-        toast({ title: "Error fetching treatments", variant: "destructive", description: error.message });
+    toast({ title: t('treatments.toast.error_fetching'), variant: "destructive", description: error.message });
         setLoading(false);
     });
 
-    const unsubscribeAppointments = listenToCollection<any>('appointments', (data) => {
+  const unsubscribeAppointments = listenToCollection<any>('appointments', (data) => {
         setAllAppointments(data.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
     }, (error) => {
-        toast({ title: "Error fetching appointments", variant: "destructive", description: error.message });
+    toast({ title: t('appointments.toast.error_fetching'), variant: "destructive", description: error.message });
     });
 
     return () => {
         unsubscribeTreatments();
         unsubscribeAppointments();
     };
-  }, [toast, loading]);
+  }, [toast, loading, t]);
   
   const treatmentPageStats = React.useMemo(() => {
     const total = treatments.length;
@@ -103,12 +105,12 @@ export default function TreatmentsPage() {
     const pending = treatments.filter(t => t.status === 'Pending').length;
 
     return [
-      { title: "Total Treatments", value: total, description: "All recorded treatments" },
-      { title: "Completed Treatments", value: completed, description: "Finished treatment plans" },
-      { title: "In Progress", value: inProgress, description: "Ongoing treatments" },
-      { title: "Pending Treatments", value: pending, description: "Awaiting start" },
+      { title: t('treatments.total_treatments'), value: total, description: t('treatments.all_recorded_treatments') },
+      { title: t('treatments.completed_treatments'), value: completed, description: t('treatments.finished_treatment_plans') },
+      { title: t('treatments.in_progress'), value: inProgress, description: t('treatments.ongoing_treatments') },
+      { title: t('treatments.pending_treatments'), value: pending, description: t('treatments.awaiting_start') },
     ];
-  }, [treatments]);
+  }, [treatments, t]);
 
   const treatmentsWithAppointmentDetails = React.useMemo(() => {
     return treatments.map(treatment => {
@@ -187,19 +189,19 @@ export default function TreatmentsPage() {
       await batch.commit();
 
       toast({
-        title: "Treatment Plan Created",
-        description: `A new plan for ${newTreatment.patient} has been created.`,
+        title: t('treatments.toast.plan_created'),
+        description: t('treatments.toast.plan_created_desc'),
       });
 
       if ((data.appointments || []).length > 0) {
         toast({
-          title: "Appointments Scheduled",
-          description: `${(data.appointments || []).length} appointments for "${data.treatmentName}" have been added to the calendar.`,
+          title: t('treatments.toast.appointments_scheduled'),
+          description: t('treatments.toast.appointments_scheduled_desc', { count: (data.appointments || []).length, treatment: data.treatmentName }),
         });
       }
 
     } catch (e) {
-      toast({ title: "Error creating plan", variant: "destructive" });
+  toast({ title: t('treatments.toast.error_creating_plan'), variant: "destructive" });
     }
   };
   
@@ -259,11 +261,11 @@ export default function TreatmentsPage() {
         await batch.commit();
         setTreatmentToEdit(null);
         toast({
-            title: "Treatment Updated",
-            description: `Treatment for ${updatedTreatment.patient} and its appointments have been updated.`,
+            title: t('treatments.toast.plan_updated'),
+            description: t('treatments.toast.plan_updated_desc'),
         });
     } catch(e) {
-      toast({ title: "Error updating treatment", variant: "destructive" });
+      toast({ title: t('treatments.toast.error_updating'), variant: "destructive" });
     }
   };
   
@@ -278,18 +280,18 @@ export default function TreatmentsPage() {
         });
         await batch.commit();
 
-        await deleteDocument('treatments', treatmentToDelete.id);
+  await deleteDocument('treatments', treatmentToDelete.id);
 
         setTreatmentToDelete(null);
 
-        toast({
-            title: "Treatment Plan Deleted",
-            description: `Plan for ${treatmentToDelete.patient} and associated appointments have been deleted.`,
-            variant: "destructive",
-        });
+    toast({
+      title: t('treatments.toast.plan_deleted'),
+      description: t('treatments.toast.plan_deleted_desc'),
+      variant: "destructive",
+    });
 
     } catch (e) {
-        toast({ title: "Error deleting treatment plan", variant: "destructive" });
+    toast({ title: t('treatments.toast.error_deleting'), variant: "destructive" });
     }
   };
 
@@ -307,10 +309,10 @@ export default function TreatmentsPage() {
   const handleViewAppointment = (appointmentId?: string) => {
     if (!appointmentId) return;
     const appointment = allAppointments.find(a => a.id === appointmentId);
-    if (appointment) {
+  if (appointment) {
         setAppointmentToView(appointment);
     } else {
-        toast({ title: 'Appointment not found', variant: 'destructive'});
+    toast({ title: t('treatments.toast.appointment_not_found'), variant: 'destructive'});
     }
   };
 
@@ -319,7 +321,7 @@ export default function TreatmentsPage() {
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">Treatments</h1>
+          <h1 className="text-3xl font-bold">{t('treatments.title')}</h1>
           <NewTreatmentPlanDialog onSave={handleSavePlan} />
         </div>
 
@@ -344,14 +346,14 @@ export default function TreatmentsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-3">
             <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Treatment Records</CardTitle>
+        <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+        <CardTitle>{t('treatments.treatment_records')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Search treatments..."
+            placeholder={t('treatments.search_placeholder')}
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -359,13 +361,13 @@ export default function TreatmentsPage() {
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
+            <SelectValue placeholder={t('treatments.all_status')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="all">{t('treatments.all_status')}</SelectItem>
+            <SelectItem value="in_progress">{t('treatments.in_progress_status')}</SelectItem>
+            <SelectItem value="completed">{t('treatments.completed_status')}</SelectItem>
+            <SelectItem value="pending">{t('treatments.pending_status')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -374,12 +376,12 @@ export default function TreatmentsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Procedure</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Cost</TableHead>
-                      <TableHead>Appointments</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('common.patient')}</TableHead>
+            <TableHead>{t('treatments.procedure')}</TableHead>
+            <TableHead>{t('common.doctor')}</TableHead>
+            <TableHead>{t('common.cost')}</TableHead>
+            <TableHead>{t('treatments.appointments')}</TableHead>
+            <TableHead className="text-right">{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -394,25 +396,36 @@ export default function TreatmentsPage() {
                           <TableCell>{treatment.cost}</TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-2">
-                                {(treatment.appointments || []).map((appt, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                            {format(new Date(appt.date), 'PPP')} @ {appt.time}
-                                        </span>
-                                        <Badge variant={
-                                        appt.status === 'Cancelled' ? 'destructive' :
-                                        appt.status === 'Completed' ? 'default' :
-                                        'secondary'
-                                       } className={cn(
-                                           'capitalize h-5 text-xs',
-                                           appt.status === 'Completed' && 'bg-green-100 text-green-800'
-                                       )}>
-                                        {appt.status}
-                                       </Badge>
-                                    </div>
-                                ))}
+                                {(treatment.appointments || []).map((appt, index) => {
+                                    const statusLabel =
+                                      appt.status === 'Cancelled' ? t('appointments.filter.cancelled') :
+                                      appt.status === 'Completed' ? t('appointments.filter.completed') :
+                                      appt.status === 'Confirmed' ? t('appointments.filter.confirmed') :
+                                      appt.status === 'Pending' ? t('appointments.filter.pending') :
+                                      appt.status;
+                                    return (
+                                      <div key={index} className="flex items-center gap-2">
+                                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                              {format(new Date(appt.date), 'PPP')} @ {appt.time}
+                                          </span>
+                                          <Badge
+                                            variant={
+                                              appt.status === 'Cancelled' ? 'destructive' :
+                                              appt.status === 'Completed' ? 'default' :
+                                              'secondary'
+                                            }
+                                            className={cn(
+                                              'capitalize h-5 text-xs',
+                                              appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                                            )}
+                                          >
+                                            {statusLabel}
+                                          </Badge>
+                                      </div>
+                                    );
+                                })}
                                 {(!treatment.appointments || treatment.appointments.length === 0) && (
-                                    <span className="text-xs text-muted-foreground">No appointments scheduled</span>
+                  <span className="text-xs text-muted-foreground">{t('treatments.no_appointments')}</span>
                                 )}
                             </div>
                           </TableCell>
@@ -424,15 +437,15 @@ export default function TreatmentsPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setTreatmentToView(treatment)}>
-                                        <Eye className="mr-2 h-4 w-4" /> View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setTreatmentToEdit(treatment)}>
-                                        <Pencil className="mr-2 h-4 w-4" /> Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setTreatmentToDelete(treatment)} className="text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                    </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTreatmentToView(treatment)}>
+                    <Eye className="mr-2 h-4 w-4" /> {t('table.view_details')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTreatmentToEdit(treatment)}>
+                    <Pencil className="mr-2 h-4 w-4" /> {t('table.edit')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTreatmentToDelete(treatment)} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" /> {t('table.delete')}
+                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -441,7 +454,7 @@ export default function TreatmentsPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
-                          No records found.
+              {t('table.no_records_found')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -477,14 +490,14 @@ export default function TreatmentsPage() {
       <AlertDialog open={!!treatmentToDelete} onOpenChange={(isOpen) => !isOpen && setTreatmentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the treatment plan and all of its associated appointments.
+              {t('treatments.delete_confirmation')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTreatment}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTreatment}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

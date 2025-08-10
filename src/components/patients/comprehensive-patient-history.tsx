@@ -37,6 +37,7 @@ import { format } from 'date-fns';
 import { getCollection } from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Add custom styles for visible scrollbars
 const scrollAreaStyles = `
@@ -83,6 +84,55 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
   const [historyData, setHistoryData] = React.useState<PatientHistoryData | null>(null);
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
+  // Local helpers to translate common dynamic statuses
+  const trMedicalRecordStatus = React.useCallback(
+    (status: string) => {
+      switch (status) {
+        case 'Final':
+          return t('medical_records.final');
+        case 'Draft':
+          return t('medical_records.draft');
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
+
+  const trMessageStatus = React.useCallback(
+    (status: string) => {
+      switch (status) {
+        case 'Sent':
+          return t('communications.sent');
+        case 'Delivered':
+          return t('communications.delivered');
+        case 'Queued':
+          return t('communications.queued');
+        case 'Failed':
+          return t('communications.failed');
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
+
+  const trInvoiceStatus = React.useCallback(
+    (status: string) => {
+      switch (status) {
+        case 'Paid':
+          return t('billing.paid');
+        case 'Partial':
+          return t('billing.partial');
+        case 'Overdue':
+          return t('billing.overdue');
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
 
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -135,8 +185,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     } catch (error) {
       console.error('Error fetching patient history:', error);
       toast({
-        title: "Error Loading Patient History",
-        description: "Failed to load comprehensive patient data.",
+        title: t('patients.toast.error_loading_history'),
+        description: t('patients.toast.error_loading_history_desc'),
         variant: "destructive"
       });
     } finally {
@@ -236,7 +286,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
         type: 'billing',
         date: new Date(invoice.issueDate),
         title: `Invoice ${invoice.id}`,
-        description: `EGP ${invoice.totalAmount} - ${invoice.status}`,
+  description: `EGP ${invoice.totalAmount} - ${trInvoiceStatus(invoice.status)}`,
         status: invoice.status,
         icon: DollarSign,
         color: 'red'
@@ -296,14 +346,14 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
           {children}
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-[98vw] sm:max-w-6xl lg:max-w-7xl h-[98vh] sm:h-[90vh] overflow-hidden flex flex-col p-2 sm:p-4 lg:p-6">
+  <DialogContent className="max-w-[98vw] sm:max-w-6xl lg:max-w-7xl h-[98vh] sm:h-[90vh] overflow-hidden flex flex-col p-2 sm:p-4 lg:p-6">
         <DialogHeader className="flex-shrink-0 pb-2 sm:pb-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
             <User className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="truncate">Comprehensive Patient History - {patient.name} {patient.lastName}</span>
+    <span className="truncate">{t('patients.comprehensive_history_title')} - {patient.name} {patient.lastName}</span>
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
-            Complete medical, dental, and billing history for patient ID: {patient.id}
+    {t('patients.comprehensive_history_desc', { id: patient.id })}
           </DialogDescription>
         </DialogHeader>
 
@@ -311,7 +361,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
           <div className="flex items-center justify-center flex-1">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p>Loading comprehensive patient history...</p>
+      <p>{t('patients.loading_history')}</p>
             </div>
           </div>
         ) : historyData && stats ? (
@@ -320,98 +370,98 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-1 pr-4">
                 {/* Patient Overview Stats */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-2 sm:gap-4">
-                <Card className="p-2 sm:p-3">
+        <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalVisits}</div>
-                    <div className="text-xs text-muted-foreground">Total Visits</div>
+          <div className="text-xs text-muted-foreground">{t('patients.total_visits')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Stethoscope className="h-4 w-4 sm:h-6 sm:w-6 text-green-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.completedTreatments}</div>
-                    <div className="text-xs text-muted-foreground">Treatments</div>
+          <div className="text-xs text-muted-foreground">{t('treatments.title')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <FileText className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalRecords}</div>
-                    <div className="text-xs text-muted-foreground">Records</div>
+          <div className="text-xs text-muted-foreground">{t('patients.records_count_label')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Image className="h-4 w-4 sm:h-6 sm:w-6 text-orange-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalImages}</div>
-                    <div className="text-xs text-muted-foreground">Images</div>
+          <div className="text-xs text-muted-foreground">{t('patients.images_count_label')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-red-600 mx-auto mb-1" />
                     <div className="text-sm sm:text-xl font-bold">EGP {stats.totalSpent.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Total Paid</div>
+          <div className="text-xs text-muted-foreground">{t('patients.total_paid_label')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-indigo-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.activeClaims}</div>
-                    <div className="text-xs text-muted-foreground">Active Claims</div>
+          <div className="text-xs text-muted-foreground">{t('patients.active_claims')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Mail className="h-4 w-4 sm:h-6 sm:w-6 text-cyan-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalMessages}</div>
-                    <div className="text-xs text-muted-foreground">Messages</div>
+          <div className="text-xs text-muted-foreground">{t('patients.messages')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Heart className="h-4 w-4 sm:h-6 sm:w-6 text-pink-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.activePrescriptions}</div>
-                    <div className="text-xs text-muted-foreground">Rx Active</div>
+          <div className="text-xs text-muted-foreground">{t('patients.rx_active')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-violet-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalReferrals}</div>
-                    <div className="text-xs text-muted-foreground">Referrals</div>
+          <div className="text-xs text-muted-foreground">{t('patients.referrals')}</div>
                   </div>
                 </Card>
                 <Card className="p-2 sm:p-3">
                   <div className="text-center">
                     <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-gray-600 mx-auto mb-1" />
                     <div className="text-xs sm:text-sm font-bold">{stats.lastVisit}</div>
-                    <div className="text-xs text-muted-foreground">Last Visit</div>
+          <div className="text-xs text-muted-foreground">{t('patients.last_visit')}</div>
                   </div>
                 </Card>
               </div>
 
-              <Tabs defaultValue="timeline" className="w-full">
+        <Tabs defaultValue="timeline" className="w-full">
                 {/* Horizontal scrollable tab list */}
                 <div className="relative border-b">
                   <ScrollArea className="w-full" orientation="horizontal">
                     <div className="w-full overflow-x-auto">
                       <TabsList className="inline-flex h-10 items-center justify-start rounded-none bg-transparent p-0 w-max min-w-full">
-                        <TabsTrigger value="timeline" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Timeline</TabsTrigger>
-                        <TabsTrigger value="personal" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Personal</TabsTrigger>
-                        <TabsTrigger value="medical" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Medical</TabsTrigger>
-                        <TabsTrigger value="dental" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Dental</TabsTrigger>
-                        <TabsTrigger value="billing" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Billing</TabsTrigger>
-                        <TabsTrigger value="images" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Images</TabsTrigger>
-                        <TabsTrigger value="communications" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Messages</TabsTrigger>
-                        <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Prescriptions</TabsTrigger>
-                        <TabsTrigger value="referrals" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">Referrals</TabsTrigger>
+            <TabsTrigger value="timeline" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.timeline')}</TabsTrigger>
+            <TabsTrigger value="personal" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.personal')}</TabsTrigger>
+            <TabsTrigger value="medical" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.medical')}</TabsTrigger>
+            <TabsTrigger value="dental" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.dental')}</TabsTrigger>
+            <TabsTrigger value="billing" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.billing')}</TabsTrigger>
+            <TabsTrigger value="images" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.images')}</TabsTrigger>
+            <TabsTrigger value="communications" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.communications')}</TabsTrigger>
+            <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.prescriptions')}</TabsTrigger>
+            <TabsTrigger value="referrals" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.referrals')}</TabsTrigger>
                       </TabsList>
                     </div>
                   </ScrollArea>
                   <div className="sm:hidden text-center py-1 text-xs text-muted-foreground bg-muted/30">
-                    ← Swipe tabs horizontally →
+          ← {t('patients.hint.swipe_tabs')} →
                   </div>
                 </div>
 
@@ -421,7 +471,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader className="pb-3 sm:pb-6">
                     <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <History className="h-4 w-4 sm:h-5 sm:w-5" />
-                      Patient Activity Timeline
+                      {t('patients.patient_history')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -458,9 +508,9 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       })}
                       </div>
                     </ScrollArea>
-                    {timeline.length > 5 && (
+          {timeline.length > 5 && (
                       <div className="text-center py-2 text-xs text-muted-foreground border-t mt-2">
-                        ↕ Scroll vertically to see all {timeline.length} timeline events
+            ↕ {t('patients.hint.scroll_vertical_events', { count: timeline.length })}
                       </div>
                     )}
                   </CardContent>
@@ -474,7 +524,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     <CardHeader className="pb-3 sm:pb-6">
                       <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                         <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                        Personal Details
+                        {t('patients.personal_details')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 sm:space-y-3 pt-0">
@@ -488,7 +538,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                        <span className="text-sm">{format(patient.dob, 'PPP')} ({patient.age} years old)</span>
+                        <span className="text-sm">{format(patient.dob, 'PPP')} ({t('patients.years_old', { age: patient.age })})</span>
                       </div>
                       {patient.address && (
                         <div className="flex items-center gap-2">
@@ -503,27 +553,27 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Heart className="h-5 w-5" />
-                        Emergency Contact
+                        {t('patients.emergency_contact')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {patient.ecName ? (
                         <>
                           <div>
-                            <span className="text-sm font-medium">Name: </span>
+                            <span className="text-sm font-medium">{t('patients.ec_name')}: </span>
                             <span className="text-sm">{patient.ecName}</span>
                           </div>
                           <div>
-                            <span className="text-sm font-medium">Phone: </span>
+                            <span className="text-sm font-medium">{t('patients.ec_phone')}: </span>
                             <span className="text-sm">{patient.ecPhone}</span>
                           </div>
                           <div>
-                            <span className="text-sm font-medium">Relationship: </span>
-                            <span className="text-sm capitalize">{patient.ecRelationship}</span>
+                            <span className="text-sm font-medium">{t('patients.relationship')}: </span>
+                            <span className="text-sm capitalize">{patient.ecRelationship ? t(`patients.relationship.${patient.ecRelationship}`) : ''}</span>
                           </div>
                         </>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No emergency contact information</p>
+                        <p className="text-sm text-muted-foreground">{t('patients.no_emergency_contact')}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -532,23 +582,23 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5" />
-                        Insurance Information
+                        {t('patients.insurance_information')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {patient.insuranceProvider ? (
                         <>
                           <div>
-                            <span className="text-sm font-medium">Provider: </span>
+                            <span className="text-sm font-medium">{t('patients.insurance_provider')}: </span>
                             <span className="text-sm">{patient.insuranceProvider}</span>
                           </div>
                           <div>
-                            <span className="text-sm font-medium">Policy Number: </span>
+                            <span className="text-sm font-medium">{t('patients.policy_number')}: </span>
                             <span className="text-sm">{patient.policyNumber}</span>
                           </div>
                         </>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No insurance information</p>
+                        <p className="text-sm text-muted-foreground">{t('patients.no_insurance_info')}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -557,18 +607,18 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Activity className="h-5 w-5" />
-                        Patient Status
+                        {t('patients.status')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Status:</span>
+                        <span className="text-sm font-medium">{t('patients.status')}:</span>
                         <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>
-                          {patient.status}
+                          {t(patient.status === 'Active' ? 'common.active' : 'common.inactive')}
                         </Badge>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Last Visit: </span>
+                        <span className="text-sm font-medium">{t('patients.last_visit')}: </span>
                         <span className="text-sm">{patient.lastVisit}</span>
                       </div>
                     </CardContent>
@@ -581,7 +631,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Heart className="h-5 w-5" />
-                        Medical History
+                        {t('patients.medical_history')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -601,7 +651,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      Medical Records ({historyData.medicalRecords.length})
+                      {t('medical_records.medical_records')} ({historyData.medicalRecords.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -617,15 +667,15 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                   <span className="text-xs text-muted-foreground">{record.date}</span>
                                 </div>
                                 <h4 className="font-medium">{record.complaint}</h4>
-                                <p className="text-sm text-muted-foreground">Provider: {record.provider}</p>
+        <p className="text-sm text-muted-foreground">{t('medical_records.provider')}: {record.provider}</p>
                                 <Badge className="mt-2" variant={record.status === 'Final' ? 'default' : 'secondary'}>
-                                  {record.status}
+                                  {trMedicalRecordStatus(record.status)}
                                 </Badge>
                               </Card>
                             ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">No medical records found</div>
+      <div className="text-center py-8 text-muted-foreground">{t('medical_records.no_records_found')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>
@@ -640,7 +690,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Stethoscope className="h-5 w-5" />
-                          Treatments ({historyData.treatments.length})
+                          {t('treatments.title')} ({historyData.treatments.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -667,7 +717,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 ))}
                             </div>
                           ) : (
-                            <div className="text-center py-8 text-muted-foreground">No treatments found</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('treatments.toast.error_fetching')}</div>
                           )}
                         </ScrollArea>
                       </CardContent>
@@ -677,7 +727,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Calendar className="h-5 w-5" />
-                          Appointments ({historyData.appointments.length})
+                          {t('appointments.title')} ({historyData.appointments.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -705,7 +755,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 ))}
                             </div>
                           ) : (
-                            <div className="text-center py-8 text-muted-foreground">No appointments found</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('appointments.no_appointments_found')}</div>
                           )}
                         </ScrollArea>
                       </CardContent>
@@ -713,7 +763,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   </div>
                 </ScrollArea>
                 <div className="md:hidden text-center py-1 text-xs text-muted-foreground bg-muted/30 rounded">
-                  ↔ Scroll horizontally to see all cards
+                  ↔ {t('patients.hint.scroll_horizontal_cards')}
                 </div>
               </TabsContent>
 
@@ -725,7 +775,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <DollarSign className="h-5 w-5" />
-                          Invoices ({historyData.invoices.length})
+                          {t('billing.title')} ({historyData.invoices.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -746,15 +796,15 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                       </Badge>
                                     </div>
                                     <div className="text-xs text-muted-foreground space-y-1">
-                                      <p>Total: EGP {invoice.totalAmount?.toFixed(2) || '0.00'}</p>
-                                      <p>Paid: EGP {invoice.amountPaid?.toFixed(2) || '0.00'}</p>
+                                      <p>{t('common.total')}: EGP {invoice.totalAmount?.toFixed(2) || '0.00'}</p>
+                                      <p>{t('billing.paid')}: EGP {invoice.amountPaid?.toFixed(2) || '0.00'}</p>
                                       <p>Date: {invoice.issueDate}</p>
                                     </div>
                                   </div>
                                 ))}
                             </div>
                           ) : (
-                            <div className="text-center py-8 text-muted-foreground">No invoices found</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('billing.no_invoices_found')}</div>
                           )}
                         </ScrollArea>
                       </CardContent>
@@ -764,7 +814,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Shield className="h-5 w-5" />
-                          Insurance Claims ({historyData.insuranceClaims.length})
+                          {t('insurance.insurance_claims')} ({historyData.insuranceClaims.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -794,7 +844,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 ))}
                             </div>
                           ) : (
-                            <div className="text-center py-8 text-muted-foreground">No insurance claims found</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('insurance.no_claims_found')}</div>
                           )}
                         </ScrollArea>
                       </CardContent>
@@ -802,7 +852,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   </div>
                 </ScrollArea>
                 <div className="md:hidden text-center py-1 text-xs text-muted-foreground bg-muted/30 rounded">
-                  ↔ Scroll horizontally to see all cards
+                  ↔ {t('patients.hint.scroll_horizontal_cards')}
                 </div>
               </TabsContent>
 
@@ -812,7 +862,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader className="pb-3 sm:pb-6">
                     <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <Image className="h-4 w-4 sm:h-5 sm:w-5" />
-                      Clinical Images ({historyData.clinicalImages.length})
+                      {t('dental_chart.clinical_images')} ({historyData.clinicalImages.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -853,11 +903,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                             </div>
                           </ScrollArea>
                           <div className="text-center py-2 text-xs text-muted-foreground border-t mt-2">
-                            ↔ Scroll horizontally and ↕ vertically to see all {historyData.clinicalImages.length} images
+                            ↔ {t('patients.hint.scroll_images_multi', { count: historyData.clinicalImages.length })}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">No clinical images found</div>
+                        <div className="text-center py-8 text-muted-foreground">{t('dental_chart.no_clinical_images')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>
@@ -870,7 +920,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Mail className="h-5 w-5" />
-                      Communications ({historyData.messages.length})
+                      {t('communications.title')} ({historyData.messages.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -893,13 +943,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 <h4 className="font-medium">{message.subject}</h4>
                                 <p className="text-sm text-muted-foreground mb-2">{message.snippet}</p>
                                 <Badge variant={message.status === 'Sent' ? 'default' : 'secondary'}>
-                                  {message.status}
+                                  {trMessageStatus(message.status)}
                                 </Badge>
                               </Card>
                             ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">No messages found</div>
+                        <div className="text-center py-8 text-muted-foreground">{t('communications.no_messages_found')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>
@@ -912,7 +962,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Heart className="h-5 w-5" />
-                      Prescriptions ({historyData.prescriptions.length})
+                      {t('pharmacy.prescriptions')} ({historyData.prescriptions.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -930,17 +980,17 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                   </Badge>
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
-                                  <p><strong>Dosage:</strong> {prescription.dosage}</p>
-                                  <p><strong>Duration:</strong> {prescription.duration}</p>
-                                  <p><strong>Refills:</strong> {prescription.refills}</p>
-                                  <p><strong>Prescribed by:</strong> {prescription.doctor}</p>
-                                  <p><strong>Date:</strong> {prescription.date}</p>
+                                  <p><strong>{t('pharmacy.dosage')}:</strong> {prescription.dosage}</p>
+                                  <p><strong>{t('appointments.duration')}:</strong> {prescription.duration}</p>
+                                  <p><strong>{t('pharmacy.refills')}:</strong> {prescription.refills}</p>
+                                  <p><strong>{t('appointments.doctor')}:</strong> {prescription.doctor}</p>
+                                  <p><strong>{t('common.date')}:</strong> {prescription.date}</p>
                                 </div>
                               </Card>
                             ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">No prescriptions found</div>
+                        <div className="text-center py-8 text-muted-foreground">{t('pharmacy.no_prescriptions_found')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>
@@ -953,7 +1003,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5" />
-                      Specialist Referrals ({historyData.referrals.length})
+                      {t('referrals.specialist_network')} ({historyData.referrals.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -979,16 +1029,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                   </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
-                                  <p><strong>Specialty:</strong> {referral.specialty}</p>
-                                  <p><strong>Reason:</strong> {referral.reason}</p>
-                                  <p><strong>Referral Date:</strong> {referral.date}</p>
-                                  {referral.apptDate && <p><strong>Appointment:</strong> {referral.apptDate}</p>}
+                                  <p><strong>{t('referrals.specialty')}:</strong> {referral.specialty}</p>
+                                  <p><strong>{t('referrals.reason')}:</strong> {referral.reason}</p>
+                                  <p><strong>{t('referrals.referral_date')}:</strong> {referral.date}</p>
+                                  {referral.apptDate && <p><strong>{t('appointments.appointment')}:</strong> {referral.apptDate}</p>}
                                 </div>
                               </Card>
                             ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">No referrals found</div>
+                        <div className="text-center py-8 text-muted-foreground">{t('referrals.pending_referrals')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>
@@ -1000,7 +1050,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No data available for this patient</p>
+            <p className="text-muted-foreground">{t('patients.no_data_for_patient')}</p>
           </div>
         )}
       </DialogContent>

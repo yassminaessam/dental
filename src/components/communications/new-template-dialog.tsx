@@ -20,12 +20,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const templateSchema = z.object({
-  name: z.string().min(1, 'Template name is required.'),
-  type: z.enum(['Email', 'SMS'], { required_error: 'Template type is required.' }),
+  name: z.string().min(1, 'communications.templates'),
+  type: z.enum(['Email', 'SMS'], { required_error: 'communications.type' }),
   subject: z.string().optional(),
-  body: z.string().min(1, 'Template body is required.'),
+  body: z.string().min(1, 'communications.content'),
 });
 
 export type Template = z.infer<typeof templateSchema> & { id: string };
@@ -36,6 +37,7 @@ interface NewTemplateDialogProps {
 
 export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { t, isRTL } = useLanguage();
   const form = useForm<Omit<Template, 'id'>>({
     resolver: zodResolver(templateSchema),
     defaultValues: {
@@ -57,14 +59,14 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="mr-2 h-4 w-4" />
-          New Template
+          {t('communications.templates')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[625px]" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle>Create New Template</DialogTitle>
+          <DialogTitle>{t('communications.templates')}</DialogTitle>
           <DialogDescription>
-            Design a reusable message template for emails or SMS.
+            {t('communications.reusable_templates')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -75,10 +77,17 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Template Name *</FormLabel>
+                  <FormLabel>{t('communications.templates')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Appointment Confirmation" {...field} />
+                    <Input placeholder={t('communications.subject_placeholder')} {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.name;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -88,6 +97,7 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type *</FormLabel>
+                  <FormLabel>{t('communications.type')} *</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -99,6 +109,7 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
                           <RadioGroupItem value="Email" id="t-email" />
                         </FormControl>
                         <FormLabel htmlFor="t-email">Email</FormLabel>
+                        <FormLabel htmlFor="t-email">{t('communications.email')}</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -106,9 +117,16 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
                         </FormControl>
                         <FormLabel htmlFor="t-sms">SMS</FormLabel>
                       </FormItem>
+                          <FormLabel htmlFor="t-sms">{t('communications.sms')}</FormLabel>
                     </RadioGroup>
                   </FormControl>
-                  <FormMessage />
+                    <FormMessage>
+                      {(() => {
+                        const err = form.formState.errors.type;
+                        if (!err) return null;
+                        return t(String(err.message));
+                      })()}
+                    </FormMessage>
                 </FormItem>
               )}
             />
@@ -118,8 +136,9 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Subject</FormLabel>
+                  <FormLabel>{t('communications.subject')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Your Appointment is Confirmed" {...field} />
+                    <Input placeholder={t('communications.subject_placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,20 +150,27 @@ export function NewTemplateDialog({ onSave }: NewTemplateDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Template Body *</FormLabel>
+                  <FormLabel>{t('communications.content')} *</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Use placeholders like {{patient_name}} or {{appointment_date}}." 
+                      placeholder={t('communications.message_placeholder')} 
                       className="min-h-[120px]" 
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {(() => {
+                      const err = form.formState.errors.body;
+                      if (!err) return null;
+                      return t(String(err.message));
+                    })()}
+                  </FormMessage>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Template</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('common.save')}</Button>
             </DialogFooter>
           </form>
         </Form>

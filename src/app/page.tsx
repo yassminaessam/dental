@@ -26,11 +26,13 @@ import { getCollection, setDocument } from '@/services/firestore';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 import type { Transaction } from '@/app/financial/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function DashboardPage() {
     const { user, isLoading, isAuthenticated } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
+  const { t } = useLanguage();
     const [revenueData, setRevenueData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
     const [appointmentTypes, setAppointmentTypes] = React.useState<{ name: string; value: number; color: string }[]>([]);
 
@@ -93,9 +95,9 @@ export default function DashboardPage() {
         try {
             const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
             await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
-            toast({ title: "Patient Added", description: `${newPatient.name} has been successfully added.` });
+            toast({ title: t('dashboard.toast.patient_added'), description: t('dashboard.toast.patient_added_desc', { name: newPatient.name }) });
         } catch (error) {
-            toast({ title: "Error adding patient", variant: "destructive" });
+            toast({ title: t('dashboard.toast.error_adding_patient'), variant: "destructive" });
         }
     };
     
@@ -108,9 +110,9 @@ export default function DashboardPage() {
                 status: 'Confirmed',
             };
             await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
-            toast({ title: "Appointment Scheduled", description: `Appointment for ${newAppointment.patient} has been scheduled.` });
+            toast({ title: t('dashboard.toast.appointment_scheduled'), description: t('dashboard.toast.appointment_scheduled_desc', { patient: newAppointment.patient }) });
         } catch (error) {
-            toast({ title: "Error scheduling appointment", variant: "destructive" });
+            toast({ title: t('dashboard.toast.error_scheduling'), variant: "destructive" });
         }
     };
 
@@ -120,7 +122,7 @@ export default function DashboardPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                    <p className="text-muted-foreground">Redirecting to your patient portal...</p>
+                    <p className="text-muted-foreground">{t('dashboard.redirecting_patient')}</p>
                 </div>
             </div>
         );
@@ -131,7 +133,7 @@ export default function DashboardPage() {
       <DashboardLayout>
         <main className="flex w-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6 max-w-screen-2xl mx-auto">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
               <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
               <AddPatientDialog onSave={handleSavePatient} />
@@ -139,9 +141,9 @@ export default function DashboardPage() {
           </div>
           <OverviewStats />
           <div className="grid gap-4 md:gap-6 lg:grid-cols-5">
-            <Card className="lg:col-span-3">
+      <Card className="lg:col-span-3">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Revenue Trend</CardTitle>
+        <CardTitle className="text-lg sm:text-xl">{t('analytics.revenue_trend')}</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <RevenueTrendsChart data={revenueData} />
@@ -149,7 +151,7 @@ export default function DashboardPage() {
             </Card>
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Appointments by Type</CardTitle>
+        <CardTitle className="text-lg sm:text-xl">{t('dashboard.appointments_by_type')}</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-center p-4">
                 <AppointmentTypesChart data={appointmentTypes} />

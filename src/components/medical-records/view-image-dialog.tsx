@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { ClinicalImage } from '@/app/medical-records/page';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ViewImageDialogProps {
   image: ClinicalImage | null;
@@ -26,6 +27,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
   const [rotation, setRotation] = React.useState(0);
   const { toast } = useToast();
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
+  const { t, isRTL } = useLanguage();
 
   // Reset zoom and rotation when dialog opens/closes or image changes
   React.useEffect(() => {
@@ -67,22 +69,22 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center gap-3">
             <DialogTitle className="text-xl">
-              {image.caption || `${image.type} Image`}
+              {image.caption || `${image.type} ${t('medical_records.image')}`}
             </DialogTitle>
             <Badge variant="secondary">{image.type}</Badge>
           </div>
           <DialogDescription className="sr-only">
-            View clinical image for {image.patient} - {image.type} taken on {image.date}
+            {t('medical_records.view_image_for', { patient: image.patient, type: image.type, date: image.date })}
           </DialogDescription>
           
           {/* Image controls */}
           <div className="flex items-center justify-between gap-2 pt-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Patient:</span>
+              <span className="text-sm text-muted-foreground">{t('common.patient')}:</span>
               <span className="text-sm font-medium">{image.patient}</span>
               <span className="text-sm text-muted-foreground">•</span>
               <span className="text-sm text-muted-foreground">{image.date}</span>
@@ -120,7 +122,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
                 size="sm"
                 onClick={handleReset}
               >
-                Reset
+                {t('common.reset')}
               </Button>
             </div>
           </div>
@@ -134,7 +136,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
           >
             <Image
               src={image.imageUrl}
-              alt={image.caption || `Clinical image for ${image.patient}`}
+              alt={image.caption || t('medical_records.clinical_image_for', { patient: image.patient })}
               width={800}
               height={600}
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
@@ -147,7 +149,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
         {image.caption && (
           <div className="flex-shrink-0 pt-4 border-t">
             <div className="space-y-2">
-              <div className="text-sm font-medium">Image Caption:</div>
+              <div className="text-sm font-medium">{t('medical_records.image_caption')}:</div>
               <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
                 {image.caption}
               </div>

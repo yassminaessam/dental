@@ -32,16 +32,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const transactionSchema = z.object({
-  date: z.date({ required_error: 'Date is required' }),
-  amount: z.string().min(1, 'Amount is required'),
-  description: z.string().min(1, 'Description is required'),
-  category: z.string({ required_error: 'Category is required' }),
-  paymentMethod: z.string({ required_error: 'Payment method is required' }),
-  type: z.enum(['Revenue', 'Expense'], { required_error: 'Type is required' }),
-  patient: z.string().optional(),
-});
+const transactionSchema = (() => {
+  // Note: We can't use hooks here; we build a schema factory and call inside component if needed.
+  return z.object({
+    date: z.date({ required_error: 'Date is required' }),
+    amount: z.string().min(1, 'Amount is required'),
+    description: z.string().min(1, 'Description is required'),
+    category: z.string({ required_error: 'Category is required' }),
+    paymentMethod: z.string({ required_error: 'Payment method is required' }),
+    type: z.enum(['Revenue', 'Expense'], { required_error: 'Type is required' }),
+    patient: z.string().optional(),
+  });
+})();
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -53,12 +57,23 @@ interface AddTransactionDialogProps {
 }
 
 export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
+  const { t, isRTL } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
 
+  const schema = React.useMemo(() => z.object({
+    date: z.date({ required_error: t('validation.date_required') }),
+    amount: z.string().min(1, t('validation.amount_required')),
+    description: z.string().min(1, t('validation.description_required')),
+    category: z.string({ required_error: t('validation.category_required') }),
+    paymentMethod: z.string({ required_error: t('billing.validation.payment_method_required') }),
+    type: z.enum(['Revenue', 'Expense'], { required_error: t('validation.type_required') }),
+    patient: z.string().optional(),
+  }), [t]);
+
   const form = useForm<TransactionFormData>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       date: new Date(),
       type: 'Revenue',
@@ -91,15 +106,15 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Transaction
+          <Plus className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+          {t('financial.add_transaction')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>{t('financial.add_new_transaction')}</DialogTitle>
           <DialogDescription>
-            Record a new financial transaction for the clinic.
+            {t('financial.add_transaction_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -110,16 +125,16 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+                    <FormLabel>{t('common.date')} *</FormLabel>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-start font-normal", !field.value && "text-muted-foreground", isRTL ? 'flex-row-reverse text-right' : 'text-left')}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -139,9 +154,9 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount *</FormLabel>
+                    <FormLabel>{t('financial.amount')} *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="EGP 0.00" {...field} />
+                      <Input type="number" placeholder="EGP 0.00" {...field} className={cn(isRTL && 'text-right')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,9 +168,9 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel>{t('common.description')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Patient payment for cleaning" {...field} />
+                    <Input placeholder={t('common.description')} {...field} className={cn(isRTL && 'text-right')} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,11 +182,11 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient (Optional)</FormLabel>
+                    <FormLabel>{t('common.patient')} ({t('common.if_applicable')})</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a patient" />
+                          <SelectValue placeholder={t('patients.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -190,19 +205,31 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category *</FormLabel>
+                    <FormLabel>{t('financial.category')} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder={t('inventory.category_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {transactionCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
+                        {transactionCategories.map((cat) => {
+                          const label = ({
+                            'Patient Payment': t('financial.category.patient_payment'),
+                            'Insurance Payment': t('financial.category.insurance_payment'),
+                            'Supplies': t('financial.category.supplies'),
+                            'Salary': t('financial.category.salary'),
+                            'Rent': t('financial.category.rent'),
+                            'Utilities': t('financial.category.utilities'),
+                            'Marketing': t('financial.category.marketing'),
+                            'Other': t('financial.category.other'),
+                          } as Record<string, string>)[cat] || cat;
+                          return (
+                            <SelectItem key={cat} value={cat}>
+                              {label}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -216,19 +243,28 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                     name="paymentMethod"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Payment Method *</FormLabel>
+                        <FormLabel>{t('financial.payment_method')} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                            <SelectValue placeholder="Select a method" />
+                            <SelectValue placeholder={t('billing.select_payment_method')} />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {paymentMethods.map((method) => (
-                            <SelectItem key={method} value={method}>
-                                {method}
-                            </SelectItem>
-                            ))}
+                            {paymentMethods.map((method) => {
+                              const label = ({
+                                'Credit Card': t('billing.payment_method_credit_card'),
+                                'Cash': t('billing.payment_method_cash'),
+                                'Vodafone Cash': t('billing.payment_method_vodafone'),
+                                'Fawry': t('billing.payment_method_fawry'),
+                                'Bank Transfer': t('billing.payment_method_bank'),
+                              } as Record<string, string>)[method] || method;
+                              return (
+                                <SelectItem key={method} value={method}>
+                                  {label}
+                                </SelectItem>
+                              );
+                            })}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -240,7 +276,7 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                     name="type"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Type *</FormLabel>
+                        <FormLabel>{t('financial.type')} *</FormLabel>
                         <FormControl>
                             <RadioGroup
                             onValueChange={field.onChange}
@@ -251,13 +287,13 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                                 <FormControl>
                                 <RadioGroupItem value="Revenue" id="r-revenue" />
                                 </FormControl>
-                                <FormLabel htmlFor="r-revenue">Revenue</FormLabel>
+                                <FormLabel htmlFor="r-revenue">{t('financial.revenue')}</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl>
                                 <RadioGroupItem value="Expense" id="r-expense" />
                                 </FormControl>
-                                <FormLabel htmlFor="r-expense">Expense</FormLabel>
+                                <FormLabel htmlFor="r-expense">{t('financial.expense')}</FormLabel>
                             </FormItem>
                             </RadioGroup>
                         </FormControl>
@@ -268,8 +304,8 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Transaction</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('financial.save_transaction')}</Button>
             </DialogFooter>
           </form>
         </Form>

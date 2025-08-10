@@ -32,13 +32,14 @@ import type { Appointment } from '@/app/appointments/page';
 import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 const appointmentSchema = z.object({
-  patient: z.string({ required_error: "Patient is required." }),
-  doctor: z.string({ required_error: "Doctor is required." }),
-  date: z.date({ required_error: "Date is required." }),
-  time: z.string({ required_error: "Time is required." }),
+  patient: z.string({ required_error: "appointments.validation.patient_required" }),
+  doctor: z.string({ required_error: "appointments.validation.doctor_required" }),
+  date: z.date({ required_error: "validation.date_required" }),
+  time: z.string({ required_error: "appointments.validation.time_required" }),
   type: z.string(),
   duration: z.string(),
   notes: z.string().optional(),
@@ -73,6 +74,7 @@ interface EditAppointmentDialogProps {
 }
 
 export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange }: EditAppointmentDialogProps) {
+  const { t, language } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
@@ -133,11 +135,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
-        <DialogHeader>
-          <DialogTitle>Edit Appointment</DialogTitle>
-          <DialogDescription>
-            Update the details for the appointment.
-          </DialogDescription>
+    <DialogHeader>
+      <DialogTitle>{t('appointments.edit_appointment')}</DialogTitle>
+      <DialogDescription>
+    {t('appointments.update_appointment_details')}
+      </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-6 py-4">
@@ -146,11 +148,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="patient"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Patient *</FormLabel>
+      <FormLabel>{t('appointments.patient_name')} *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select patient" />
+        <SelectValue placeholder={t('appointments.select_patient')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -170,11 +172,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="doctor"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Doctor *</FormLabel>
+      <FormLabel>{t('appointments.doctor')} *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select doctor" />
+        <SelectValue placeholder={t('appointments.select_practitioner')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -194,7 +196,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date *</FormLabel>
+      <FormLabel>{t('appointments.date')} *</FormLabel>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -206,7 +208,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>mm/dd/yyyy</span>}
+          {field.value ? field.value.toLocaleDateString(language) : <span>{t('patients.dob_placeholder')}</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -231,11 +233,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="time"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Time *</FormLabel>
+      <FormLabel>{t('appointments.time')} *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select time" />
+        <SelectValue placeholder={t('appointments.select_time')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -255,11 +257,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Appointment Type *</FormLabel>
+      <FormLabel>{t('appointments.treatment_type')} *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+        <SelectValue placeholder={t('appointments.select_type')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -279,11 +281,11 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="duration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Duration *</FormLabel>
+      <FormLabel>{t('appointments.duration')} *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
+        <SelectValue placeholder={t('appointments.select_duration')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -303,10 +305,10 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               name="notes"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Notes</FormLabel>
+      <FormLabel>{t('appointments.notes')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Additional notes or special instructions"
+          placeholder={t('appointments.notes_placeholder')}
                       className="resize-none"
                       {...field}
                     />
@@ -316,8 +318,8 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               )}
             />
             <DialogFooter className="col-span-2">
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+      <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+      <Button type="submit">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

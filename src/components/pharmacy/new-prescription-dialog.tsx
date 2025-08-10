@@ -34,25 +34,28 @@ import { getCollection } from '@/services/firestore';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import type { Medication } from '@/app/pharmacy/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const prescriptionSchema = z.object({
-  patient: z.string({ required_error: 'Patient is required.' }),
-  doctor: z.string({ required_error: 'Doctor is required.' }),
-  medication: z.string({ required_error: 'Medication is required.' }),
+  patient: z.string({ required_error: 'validation.patient_required' }),
+  doctor: z.string({ required_error: 'validation.provider_required' }),
+  medication: z.string({ required_error: 'pharmacy.validation.medication_required' }),
   dosage: z.string().optional(),
   refills: z.coerce.number().default(0),
   instructions: z.string().optional(),
-  date: z.date({ required_error: 'Date is required.' }),
+  date: z.date({ required_error: 'validation.date_required' }),
 });
 
 type PrescriptionFormData = z.infer<typeof prescriptionSchema>;
 
+type NewPrescriptionPayload = PrescriptionFormData & { patient?: string; doctor?: string; medication?: string; strength?: string };
 interface NewPrescriptionDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: NewPrescriptionPayload) => void;
   medications: Medication[];
 }
 
 export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDialogProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -84,10 +87,10 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
     const medicationDetails = medications.find(m => m.id === data.medication);
     onSave({ 
       ...data, 
-      patient: patientName, 
-      doctor: doctorName, 
-      medication: medicationDetails?.name,
-      strength: medicationDetails?.strength,
+      patient: patientName ?? '', 
+      doctor: doctorName ?? '', 
+      medication: medicationDetails?.name ?? '',
+      strength: medicationDetails?.strength ?? '',
     });
     form.reset();
     setOpen(false);
@@ -98,14 +101,14 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
       <DialogTrigger asChild>
         <Button variant="outline">
           <ClipboardPen className="mr-2 h-4 w-4" />
-          New Prescription
+          {t('pharmacy.new_prescription')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Create New Prescription</DialogTitle>
+          <DialogTitle>{t('pharmacy.create_new_prescription')}</DialogTitle>
           <DialogDescription>
-            Fill out the form to create a new prescription for a patient.
+            {t('pharmacy.create_new_prescription_desc')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -116,11 +119,11 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 name="patient"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient *</FormLabel>
+                    <FormLabel>{t('common.patient')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select patient" />
+                          <SelectValue placeholder={t('patients.select_patient')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -131,7 +134,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.patient?.message && t(String(form.formState.errors.patient.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -140,11 +145,11 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 name="doctor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Doctor *</FormLabel>
+                    <FormLabel>{t('common.doctor')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select doctor" />
+                          <SelectValue placeholder={t('staff.select_doctor')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -155,7 +160,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.doctor?.message && t(String(form.formState.errors.doctor.message))}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -165,11 +172,11 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
               name="medication"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medication *</FormLabel>
+                  <FormLabel>{t('pharmacy.medication')} *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select medication" />
+                        <SelectValue placeholder={t('pharmacy.select_medication')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -180,7 +187,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.medication?.message && t(String(form.formState.errors.medication.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -190,9 +199,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 name="dosage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Dosage</FormLabel>
+                    <FormLabel>{t('pharmacy.dosage')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 500mg" {...field} />
+                      <Input placeholder={t('pharmacy.placeholder.dosage')} {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -202,7 +211,7 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 name="refills"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Refills</FormLabel>
+                    <FormLabel>{t('pharmacy.refills')}</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -215,9 +224,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
               name="instructions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Instructions</FormLabel>
+                  <FormLabel>{t('pharmacy.instructions')}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Take one tablet three times a day for 7 days." {...field} />
+                    <Textarea placeholder={t('pharmacy.placeholder.instructions')} {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -227,7 +236,7 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date *</FormLabel>
+                  <FormLabel>{t('common.date')} *</FormLabel>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -236,7 +245,7 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                           className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -247,13 +256,15 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                       }} initialFocus />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.date?.message && t(String(form.formState.errors.date.message))}
+                  </FormMessage>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Create Prescription</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit">{t('pharmacy.create_prescription')}</Button>
             </DialogFooter>
           </form>
         </Form>

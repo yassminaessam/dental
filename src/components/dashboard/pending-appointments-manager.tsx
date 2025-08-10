@@ -14,6 +14,7 @@ import { Clock, User, Phone, AlertTriangle, CheckCircle, XCircle, Calendar } fro
 import { useToast } from '@/hooks/use-toast';
 import { getCollection, updateDocument } from '@/services/firestore';
 import type { Appointment } from '@/app/appointments/page';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const doctors = [
   { id: '1', name: 'Dr. Smith', specialization: 'General Dentistry' },
@@ -32,6 +33,7 @@ export default function PendingAppointmentsManager({
   refreshTrigger, 
   onAppointmentUpdate 
 }: PendingAppointmentsManagerProps) {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
@@ -69,8 +71,8 @@ export default function PendingAppointmentsManager({
     } catch (error) {
       console.error('Error fetching pending appointments:', error);
       toast({
-        title: "Error",
-        description: "Failed to load pending appointments",
+  title: t('common.error'),
+  description: t('dashboard.pending.failed_to_load'),
         variant: "destructive"
       });
     } finally {
@@ -90,16 +92,16 @@ export default function PendingAppointmentsManager({
       });
 
       toast({
-        title: "Appointment Confirmed",
-        description: `Appointment has been confirmed and assigned to ${assignedDoctor}`
+  title: t('dashboard.appointment_confirmed'),
+  description: t('dashboard.appointment_confirmed_desc')
       });
 
       fetchPendingAppointments();
       onAppointmentUpdate?.();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to confirm appointment",
+  title: t('common.error'),
+  description: t('dashboard.failed_confirm_appointment'),
         variant: "destructive"
       });
     } finally {
@@ -119,16 +121,16 @@ export default function PendingAppointmentsManager({
       });
 
       toast({
-        title: "Appointment Rejected",
-        description: "The appointment request has been rejected"
+  title: t('dashboard.appointment_rejected'),
+  description: t('dashboard.appointment_rejected_desc')
       });
 
       fetchPendingAppointments();
       onAppointmentUpdate?.();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to reject appointment",
+  title: t('common.error'),
+  description: t('dashboard.failed_reject_appointment'),
         variant: "destructive"
       });
     } finally {
@@ -172,12 +174,12 @@ export default function PendingAppointmentsManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Pending Appointments
+            {t('dashboard.pending_appointments_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div className="animate-pulse">Loading pending appointments...</div>
+            <div className="animate-pulse">{t('dashboard.loading_pending_appointments')}</div>
           </div>
         </CardContent>
       </Card>
@@ -190,14 +192,14 @@ export default function PendingAppointmentsManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Pending Appointments
+            {t('dashboard.pending_appointments_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-            <p>No pending appointments</p>
-            <p className="text-sm">All appointment requests have been processed</p>
+            <p>{t('dashboard.no_pending_appointments')}</p>
+            <p className="text-sm">{t('dashboard.all_requests_processed')}</p>
           </div>
         </CardContent>
       </Card>
@@ -210,10 +212,10 @@ export default function PendingAppointmentsManager({
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Pending Appointments
+            {t('dashboard.pending_appointments_title')}
           </div>
           <Badge variant="destructive">
-            {pendingAppointments.length} pending
+            {pendingAppointments.length} {t('dashboard.pending_count')}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -259,6 +261,7 @@ function AppointmentCard({
   onReject: (id: string, reason: string) => void;
   getUrgencyColor: (urgency: string) => "default" | "destructive" | "outline" | "secondary";
 }) {
+  const { t, isRTL } = useLanguage();
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -272,7 +275,14 @@ function AppointmentCard({
             <User className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{appointment.patient}</span>
             <Badge variant={getUrgencyColor((appointment as any).urgency || 'Medium')}>
-              {(appointment as any).urgency || 'Medium'} Priority
+              {(() => {
+                const u = (appointment as any).urgency || 'Medium';
+                const level = t(
+                  u === 'High' ? 'dashboard.urgency.high' : u === 'Low' ? 'dashboard.urgency.low' : 'dashboard.urgency.medium'
+                );
+                const priority = t('dashboard.priority');
+                return isRTL ? `${priority}: ${level}` : `${level} ${priority}`;
+              })()}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -301,23 +311,23 @@ function AppointmentCard({
       {/* Appointment Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
         <div>
-          <span className="font-medium">Type:</span> {appointment.type}
+          <span className="font-medium">{t('appointments.type')}:</span> {appointment.type}
         </div>
         <div>
-          <span className="font-medium">Duration:</span> {appointment.duration || 60} minutes
+          <span className="font-medium">{t('appointments.duration')}:</span> {appointment.duration || 60} {t('dashboard.minutes')}
         </div>
       </div>
 
       {(appointment as any).reason && (
         <div>
-          <span className="font-medium text-sm">Reason:</span>
+          <span className="font-medium text-sm">{t('dashboard.appointment_reason')}:</span>
           <p className="text-sm text-muted-foreground mt-1">{(appointment as any).reason}</p>
         </div>
       )}
 
       {appointment.notes && (
         <div>
-          <span className="font-medium text-sm">Notes:</span>
+          <span className="font-medium text-sm">{t('dashboard.appointment_notes')}:</span>
           <p className="text-sm text-muted-foreground mt-1">{appointment.notes}</p>
         </div>
       )}
@@ -326,7 +336,7 @@ function AppointmentCard({
       <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t">
         <div className="flex-1">
           <Label htmlFor={`doctor-${appointment.id}`} className="text-sm font-medium">
-            Assign Doctor
+            {t('dashboard.assign_doctor')}
           </Label>
           <Select
             value={selectedDoctor}
@@ -334,7 +344,7 @@ function AppointmentCard({
             disabled={isLoading}
           >
             <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select a doctor" />
+              <SelectValue placeholder={t('dashboard.select_doctor')} />
             </SelectTrigger>
             <SelectContent>
               {doctors.map((doctor) => (
@@ -360,28 +370,28 @@ function AppointmentCard({
             ) : (
               <CheckCircle className="h-4 w-4 mr-2" />
             )}
-            Confirm
+            {t('common.confirm')}
           </Button>
 
           <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" disabled={isLoading} className="flex-1 sm:flex-initial">
                 <XCircle className="h-4 w-4 mr-2" />
-                Reject
+                {t('dashboard.reject')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Reject Appointment Request</DialogTitle>
+                <DialogTitle>{t('dashboard.reject_appointment_request')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="rejectReason">Reason for rejection</Label>
+                  <Label htmlFor="rejectReason">{t('dashboard.reason_for_rejection')}</Label>
                   <Textarea
                     id="rejectReason"
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Please provide a reason for rejecting this appointment..."
+                    placeholder={t('dashboard.rejection_reason_placeholder')}
                     rows={3}
                   />
                 </div>
@@ -391,7 +401,7 @@ function AppointmentCard({
                     onClick={() => setShowRejectDialog(false)}
                     className="flex-1"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     onClick={() => {
@@ -403,7 +413,7 @@ function AppointmentCard({
                     variant="destructive"
                     className="flex-1"
                   >
-                    Reject Appointment
+                    {t('dashboard.reject_appointment')}
                   </Button>
                 </div>
               </div>

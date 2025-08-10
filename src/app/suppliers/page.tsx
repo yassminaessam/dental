@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -104,6 +105,7 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
+  const { t, language } = useLanguage();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [supplierToEdit, setSupplierToEdit] = React.useState<Supplier | null>(null);
@@ -135,8 +137,8 @@ export default function SuppliersPage() {
             setSuppliers(suppliersData);
             setPurchaseOrders(poData);
             setInventory(inventoryData);
-        } catch(e) {
-            toast({ title: "Error fetching data", variant: 'destructive'});
+    } catch(e) {
+      toast({ title: t('suppliers.toast.error_fetching'), variant: 'destructive'});
         } finally {
             setLoading(false);
         }
@@ -154,13 +156,14 @@ export default function SuppliersPage() {
     const totalPOValue = purchaseOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
     const topRatedSuppliers = suppliers.filter(s => s.rating >= 4.5).length;
     
+    const currencyFormatter = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
     return [
-      { title: "Total Suppliers", value: totalSuppliers, icon: "Building2", description: "All active suppliers", valueClassName: "" },
-      { title: "Pending POs", value: pendingPOs, icon: "FileText", description: "Orders awaiting shipment", valueClassName: "text-orange-500" },
-      { title: "Total PO Value", value: `EGP ${totalPOValue.toLocaleString()}`, icon: "DollarSign", description: "Value of all orders", valueClassName: "" },
-      { title: "Top Rated", value: `${topRatedSuppliers} Suppliers`, icon: "Star", description: "Rating of 4.5 or higher", valueClassName: "text-yellow-500" },
+      { title: t('suppliers.total_suppliers'), value: totalSuppliers, icon: "Building2", description: t('suppliers.all_active_suppliers'), valueClassName: "" },
+      { title: t('suppliers.pending_pos'), value: pendingPOs, icon: "FileText", description: t('suppliers.orders_awaiting_shipment'), valueClassName: "text-orange-500" },
+      { title: t('suppliers.total_po_value'), value: currencyFormatter.format(totalPOValue), icon: "DollarSign", description: t('suppliers.value_of_all_orders'), valueClassName: "" },
+      { title: t('suppliers.top_rated'), value: `${topRatedSuppliers} ${t('suppliers.suppliers')}`, icon: "Star", description: t('suppliers.rating_4_5_or_higher'), valueClassName: "text-yellow-500" },
     ];
-  }, [suppliers, purchaseOrders]);
+  }, [suppliers, purchaseOrders, language, t]);
 
   const getSupplierPerformance = React.useCallback((supplierName: string) => {
     const supplierOrders = purchaseOrders.filter(po => po.supplier === supplierName);
@@ -190,8 +193,7 @@ export default function SuppliersPage() {
 
       if (lowStockFromSupplier.length === 0) {
         toast({
-          title: "No Low Stock Items",
-          description: `No items from ${supplier.name} are currently low in stock.`,
+          title: t('suppliers.toast.no_low_stock'),
         });
         return;
       }
@@ -221,13 +223,13 @@ export default function SuppliersPage() {
       setPurchaseOrders(updatedPOs);
       
       toast({
-        title: "Quick Order Created",
-        description: `Created purchase order for ${lowStockFromSupplier.length} low stock items from ${supplier.name}.`,
+        title: t('suppliers.toast.quick_order_created'),
+        description: t('suppliers.toast.po_created_desc'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create quick purchase order",
+        title: t('suppliers.toast.error_quick_order'),
+        description: t('suppliers.toast.error_quick_order_desc'),
         variant: "destructive",
       });
     }
@@ -244,11 +246,11 @@ export default function SuppliersPage() {
         await setDocument('suppliers', newSupplier.id, newSupplier);
         setSuppliers(prev => [newSupplier, ...prev]);
         toast({
-          title: "Supplier Added",
-          description: `${newSupplier.name} has been added to your network.`,
+          title: t('suppliers.toast.supplier_added'),
+          description: t('suppliers.toast.supplier_added_desc'),
         });
     } catch(e) {
-        toast({ title: "Error adding supplier", variant: 'destructive'});
+        toast({ title: t('suppliers.toast.error_adding'), variant: 'destructive'});
     }
   };
 
@@ -258,11 +260,11 @@ export default function SuppliersPage() {
         setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
         setSupplierToEdit(null);
         toast({
-          title: "Supplier Updated",
-          description: `${updatedSupplier.name}'s record has been updated.`,
+          title: t('suppliers.toast.supplier_updated'),
+          description: t('suppliers.toast.supplier_updated_desc'),
         });
     } catch(e) {
-        toast({ title: "Error updating supplier", variant: 'destructive'});
+        toast({ title: t('suppliers.toast.error_updating'), variant: 'destructive'});
     }
   };
 
@@ -272,13 +274,13 @@ export default function SuppliersPage() {
           await deleteDocument('suppliers', supplierToDelete.id);
           setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete.id));
           toast({
-            title: "Supplier Deleted",
-            description: `${supplierToDelete.name} has been deleted.`,
+            title: t('suppliers.toast.supplier_deleted'),
+            description: t('suppliers.toast.supplier_deleted_desc'),
             variant: "destructive"
           });
           setSupplierToDelete(null);
       } catch(e) {
-          toast({ title: "Error deleting supplier", variant: 'destructive'});
+          toast({ title: t('suppliers.toast.error_deleting'), variant: 'destructive'});
       }
     }
   };
@@ -297,11 +299,11 @@ export default function SuppliersPage() {
         await setDocument('purchase-orders', newPurchaseOrder.id, newPurchaseOrder);
         setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
         toast({
-          title: "Purchase Order Created",
-          description: `New PO for ${newPurchaseOrder.supplier} has been created.`,
+          title: t('suppliers.toast.po_created'),
+          description: t('suppliers.toast.po_created_desc'),
         });
     } catch(e) {
-        toast({ title: "Error creating PO", variant: 'destructive'});
+        toast({ title: t('suppliers.toast.error_creating_po'), variant: 'destructive'});
     }
   };
 
@@ -323,12 +325,12 @@ export default function SuppliersPage() {
         await setDocument('inventory', newItem.id, newItem);
         setInventory(prev => [newItem, ...prev]);
         toast({
-          title: "Item Added",
-          description: `${newItem.name} has been added to inventory.`,
+          title: t('inventory.toast.item_added'),
+          description: t('inventory.toast.item_added_desc'),
         });
         setIsAddItemOpen(false); // Close the dialog
     } catch(e) {
-        toast({ title: 'Error adding item', variant: 'destructive'});
+        toast({ title: t('inventory.toast.error_adding'), variant: 'destructive'});
     }
   };
 
@@ -336,12 +338,12 @@ export default function SuppliersPage() {
     try {
         await updateDocument('purchase-orders', poId, { status });
         setPurchaseOrders(prev => prev.map(po => po.id === poId ? { ...po, status } : po));
-        toast({
-            title: "Order Status Updated",
-            description: `Order ${poId} has been marked as ${status}.`
-        });
+    toast({
+      title: t('suppliers.toast.status_updated'),
+      description: t('suppliers.toast.status_updated_desc')
+    });
     } catch (e) {
-        toast({ title: "Error updating status", variant: 'destructive'});
+    toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive'});
     }
   };
   
@@ -364,12 +366,12 @@ export default function SuppliersPage() {
         const updatedInventory = await getCollection<InventoryItem>('inventory');
         setInventory(updatedInventory);
 
-        toast({
-            title: "Order Received",
-            description: `PO ${order.id} has been marked as delivered and inventory has been updated.`,
-        });
+    toast({
+      title: t('suppliers.toast.status_updated'),
+      description: t('suppliers.toast.status_updated_desc'),
+    });
     } catch (e) {
-        toast({ title: "Error receiving order", variant: 'destructive'});
+    toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive'});
     }
   };
 
@@ -409,15 +411,15 @@ export default function SuppliersPage() {
       <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Suppliers & Purchase Orders</h1>
+            <h1 className="text-3xl font-bold">{`${t('suppliers.title')} & ${t('purchase_orders.title')}`}</h1>
             <p className="text-muted-foreground">
-              Manage suppliers and procurement processes
+              {t('suppliers.page_description')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => openNewPoDialog()}>
               <ShoppingCart className="mr-2 h-4 w-4" />
-              New Purchase Order
+              {t('suppliers.new_purchase_order')}
             </Button>
             <AddSupplierDialog onSave={handleSaveSupplier} />
           </div>
@@ -452,22 +454,22 @@ export default function SuppliersPage() {
           })}
         </div>
 
-        <Tabs defaultValue="suppliers">
+    <Tabs defaultValue="suppliers">
           <TabsList>
-            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-            <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
-            <TabsTrigger value="receiving">Receiving</TabsTrigger>
+      <TabsTrigger value="suppliers">{t('suppliers.suppliers')}</TabsTrigger>
+      <TabsTrigger value="purchase-orders">{t('purchase_orders.title')}</TabsTrigger>
+      <TabsTrigger value="receiving">{t('suppliers.receiving')}</TabsTrigger>
           </TabsList>
           <TabsContent value="suppliers" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Supplier Directory</CardTitle>
+        <CardTitle>{t('suppliers.supplier_directory')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Search suppliers..."
+            placeholder={t('suppliers.search_suppliers')}
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                       value={supplierSearchTerm}
                       onChange={(e) => setSupplierSearchTerm(e.target.value)}
@@ -475,10 +477,10 @@ export default function SuppliersPage() {
                   </div>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Categories" />
+            <SelectValue placeholder={t('common.all_categories')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t('common.all_categories')}</SelectItem>
                       {supplierCategories.map((cat) => (
                         <SelectItem key={cat} value={cat.toLowerCase()}>
                           {cat}
@@ -492,13 +494,13 @@ export default function SuppliersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Performance</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('suppliers.supplier')}</TableHead>
+            <TableHead>{t('suppliers.contact')}</TableHead>
+            <TableHead>{t('suppliers.category')}</TableHead>
+            <TableHead>{t('suppliers.performance')}</TableHead>
+            <TableHead>{t('suppliers.rating')}</TableHead>
+            <TableHead>{t('common.status')}</TableHead>
+            <TableHead className="text-right">{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -534,13 +536,13 @@ export default function SuppliersPage() {
                           <TableCell>
                             <div className="space-y-1">
                               <div className="text-sm font-medium">
-                                {performance.totalOrders} orders
+                {performance.totalOrders} {t('suppliers.orders')}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {performance.onTimeDelivery}% on-time
+                {performance.onTimeDelivery}% {t('suppliers.on_time')}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                EGP {performance.totalValue.toLocaleString()} total
+                {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(performance.totalValue)} {t('suppliers.total_value_label')}
                               </div>
                             </div>
                           </TableCell>
@@ -565,7 +567,7 @@ export default function SuppliersPage() {
                                   : ""
                               }
                             >
-                              {supplier.status}
+                {supplier.status === 'active' ? t('common.active') : t('common.inactive')}
                             </Badge>
                           </TableCell>
                            <TableCell className="text-right">
@@ -573,21 +575,21 @@ export default function SuppliersPage() {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                         <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t('table.actions')}</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => createQuickPurchaseOrder(supplier)}>
                                         <ShoppingCart className="mr-2 h-4 w-4" />
-                                        Quick Order
+                    {t('suppliers.quick_order')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setSupplierToEdit(supplier)}>
                                         <Pencil className="mr-2 h-4 w-4" />
-                                        Edit
+                    {t('table.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setSupplierToDelete(supplier)} className="text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
+                    {t('table.delete')}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -598,7 +600,7 @@ export default function SuppliersPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                          No suppliers found.
+              {t('suppliers.no_suppliers_found')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -610,13 +612,13 @@ export default function SuppliersPage() {
           <TabsContent value="purchase-orders" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Purchase Orders</CardTitle>
+        <CardTitle>{t('purchase_orders.title')}</CardTitle>
                  <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Search orders..."
+            placeholder={t('purchase_orders.search_placeholder')}
                       className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
                       value={poSearchTerm}
                       onChange={(e) => setPoSearchTerm(e.target.value)}
@@ -624,14 +626,14 @@ export default function SuppliersPage() {
                   </div>
                   <Select value={poStatusFilter} onValueChange={setPoStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
+            <SelectValue placeholder={t('common.all_status')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="shipped">Shipped</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="all">{t('common.all_status')}</SelectItem>
+            <SelectItem value="pending">{t('common.pending')}</SelectItem>
+            <SelectItem value="shipped">{t('suppliers.status.shipped')}</SelectItem>
+            <SelectItem value="delivered">{t('suppliers.status.delivered')}</SelectItem>
+            <SelectItem value="cancelled">{t('suppliers.status.cancelled')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -640,13 +642,13 @@ export default function SuppliersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>PO Number</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Order Date</TableHead>
-                      <TableHead>Expected Delivery</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('suppliers.po_number')}</TableHead>
+            <TableHead>{t('suppliers.supplier')}</TableHead>
+            <TableHead>{t('suppliers.order_date')}</TableHead>
+            <TableHead>{t('suppliers.expected_delivery')}</TableHead>
+            <TableHead>{t('suppliers.total')}</TableHead>
+            <TableHead>{t('common.status')}</TableHead>
+            <TableHead className="text-right">{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -675,7 +677,7 @@ export default function SuppliersPage() {
                                {po.status === 'Pending' && <Clock className="mr-1 h-3 w-3" />}
                                {po.status === 'Shipped' && <TruckIcon className="mr-1 h-3 w-3" />}
                                {po.status === 'Delivered' && <CheckCircle2 className="mr-1 h-3 w-3" />}
-                               {po.status}
+                 {po.status === 'Pending' ? t('common.pending') : po.status === 'Shipped' ? t('suppliers.status.shipped') : po.status === 'Delivered' ? t('suppliers.status.delivered') : t('suppliers.status.cancelled')}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
@@ -683,23 +685,23 @@ export default function SuppliersPage() {
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon">
                                     <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t('table.actions')}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={() => setPoToView(po)}>
                                     <Eye className="mr-2 h-4 w-4" />
-                                    View Details
+                  {t('table.view_details')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Shipped')}>
-                                    Mark as Shipped
+                  {t('suppliers.mark_as_shipped')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleReceiveOrder(po)} disabled={po.status !== 'Shipped'}>
-                                    Mark as Delivered
+                  {t('suppliers.mark_as_delivered')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Cancelled')} className="text-destructive">
-                                    Cancel Order
+                  {t('suppliers.cancel_order')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -709,7 +711,7 @@ export default function SuppliersPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                          No purchase orders found.
+              {t('suppliers.no_purchase_orders_found')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -721,19 +723,19 @@ export default function SuppliersPage() {
           <TabsContent value="receiving" className="mt-4">
              <Card>
                 <CardHeader>
-                    <CardTitle>Receiving</CardTitle>
+          <CardTitle>{t('suppliers.receiving')}</CardTitle>
                     <p className="text-muted-foreground">
-                        Review and receive shipped orders to update your inventory.
+            {t('suppliers.receiving_description')}
                     </p>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>PO Number</TableHead>
-                                <TableHead>Supplier</TableHead>
-                                <TableHead>Expected Delivery</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('suppliers.po_number')}</TableHead>
+                <TableHead>{t('suppliers.supplier')}</TableHead>
+                <TableHead>{t('suppliers.expected_delivery')}</TableHead>
+                <TableHead className="text-right">{t('table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -746,7 +748,7 @@ export default function SuppliersPage() {
                                         <TableCell className="text-right">
                                             <Button variant="outline" size="sm" onClick={() => handleReceiveOrder(order)}>
                                                 <Check className="mr-2 h-4 w-4" />
-                                                Receive Items
+                        {t('suppliers.receive_items')}
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -754,7 +756,7 @@ export default function SuppliersPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">
-                                        No orders awaiting receipt.
+                    {t('suppliers.no_orders_awaiting_receipt')}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -791,15 +793,14 @@ export default function SuppliersPage() {
       <AlertDialog open={!!supplierToDelete} onOpenChange={(isOpen) => !isOpen && setSupplierToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the supplier
-              "{supplierToDelete?.name}" from your network.
+              {t('suppliers.confirm_delete_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSupplier}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSupplier}>{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
