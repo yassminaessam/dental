@@ -62,7 +62,7 @@ const initialSettings: ClinicSettings = {
 };
 
 export default function SettingsPage() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [settings, setSettings] = React.useState<ClinicSettings>(initialSettings);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
@@ -126,7 +126,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
           <Button onClick={handleSaveChanges}>{t('settings.save_changes')}</Button>

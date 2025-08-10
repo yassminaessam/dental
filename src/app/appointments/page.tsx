@@ -70,7 +70,7 @@ export default function AppointmentsPage() {
   const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   React.useEffect(() => {
     const unsubscribe = listenToCollection<any>('appointments', (data) => {
@@ -148,8 +148,8 @@ export default function AppointmentsPage() {
 
   return (
     <ProtectedRoute requiredRoles={["receptionist", "admin", "doctor"]}>
-      <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
+  <DashboardLayout>
+  <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl sm:text-3xl font-bold">{t('appointments.title')}</h1>
           <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
@@ -204,11 +204,11 @@ export default function AppointmentsPage() {
       <CardTitle className="text-lg sm:text-xl">{t('appointments.title')}</CardTitle>
                   <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                     <div className="relative w-full md:w-auto">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                       <Input
                         type="search"
         placeholder={t('appointments.search_placeholder')}
-                        className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
+                        className={cn("w-full rounded-lg bg-background h-9 sm:h-10 lg:w-[300px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -321,13 +321,13 @@ export default function AppointmentsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="whitespace-nowrap">{t('appointments.date')} &amp; {t('appointments.time')}</TableHead>
-                          <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
-                          <TableHead className="whitespace-nowrap">{t('appointments.doctor')}</TableHead>
-                          <TableHead className="whitespace-nowrap">{t('appointments.type')}</TableHead>
-                          <TableHead className="whitespace-nowrap">{t('appointments.duration')}</TableHead>
-                          <TableHead className="whitespace-nowrap">{t('appointments.status')}</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">{t('table.actions')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.date')} &amp; {t('appointments.time')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('common.patient')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.doctor')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.type')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.duration')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.status')}</TableHead>
+                          <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -336,12 +336,12 @@ export default function AppointmentsPage() {
                         ) : filteredAppointments.length > 0 ? (
                           filteredAppointments.map(appt => (
                             <TableRow key={appt.id}>
-                              <TableCell className="whitespace-nowrap">{appt.dateTime.toLocaleString()}</TableCell>
-                              <TableCell className="whitespace-nowrap">{appt.patient}</TableCell>
-                              <TableCell className="whitespace-nowrap">{appt.doctor}</TableCell>
-                              <TableCell className="whitespace-nowrap">{appt.type}</TableCell>
-                              <TableCell className="whitespace-nowrap">{appt.duration}</TableCell>
-                              <TableCell className="whitespace-nowrap">
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.dateTime.toLocaleString()}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.patient}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.doctor}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.type}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.duration}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>
                                 <Badge variant={
                                   appt.status === 'Cancelled' ? 'destructive' :
                                   appt.status === 'Completed' ? 'default' :
@@ -360,7 +360,7 @@ export default function AppointmentsPage() {
                                   )}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-right whitespace-nowrap">
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-left' : 'text-right')}>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">

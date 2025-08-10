@@ -74,7 +74,7 @@ export default function TreatmentsPage() {
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
   const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
 
   React.useEffect(() => {
@@ -319,7 +319,7 @@ export default function TreatmentsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">{t('treatments.title')}</h1>
           <NewTreatmentPlanDialog onSave={handleSavePlan} />
@@ -350,11 +350,11 @@ export default function TreatmentsPage() {
         <CardTitle>{t('treatments.treatment_records')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                     <Input
                       type="search"
-            placeholder={t('treatments.search_placeholder')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      placeholder={t('treatments.search_placeholder')}
+                      className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -376,12 +376,12 @@ export default function TreatmentsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-            <TableHead>{t('common.patient')}</TableHead>
-            <TableHead>{t('treatments.procedure')}</TableHead>
-            <TableHead>{t('common.doctor')}</TableHead>
-            <TableHead>{t('common.cost')}</TableHead>
-            <TableHead>{t('treatments.appointments')}</TableHead>
-            <TableHead className="text-right">{t('table.actions')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.patient')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('treatments.procedure')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.doctor')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.cost')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('treatments.appointments')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -390,11 +390,11 @@ export default function TreatmentsPage() {
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
-                          <TableCell>{treatment.patient}</TableCell>
-                          <TableCell>{treatment.procedure}</TableCell>
-                          <TableCell>{treatment.doctor}</TableCell>
-                          <TableCell>{treatment.cost}</TableCell>
-                          <TableCell>
+                          <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.patient}</TableCell>
+                          <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.procedure}</TableCell>
+                          <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.doctor}</TableCell>
+                          <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.cost}</TableCell>
+                          <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>
                             <div className="flex flex-col gap-2">
                                 {(treatment.appointments || []).map((appt, index) => {
                                     const statusLabel =
@@ -429,7 +429,7 @@ export default function TreatmentsPage() {
                                 )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">

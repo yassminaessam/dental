@@ -68,7 +68,7 @@ export type Specialist = {
 }
 
 export default function ReferralsPage() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [referrals, setReferrals] = React.useState<Referral[]>([]);
   const [specialists, setSpecialists] = React.useState<Specialist[]>([]);
@@ -220,7 +220,7 @@ export default function ReferralsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">{t('referrals.title')}</h1>
           <div className="flex items-center gap-2">
@@ -262,11 +262,11 @@ export default function ReferralsPage() {
         <CardTitle>{t('referrals.outgoing_referrals')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                     <Input
                       type="search"
             placeholder={t('referrals.search_referrals')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -295,7 +295,7 @@ export default function ReferralsPage() {
             <TableHead>{t('referrals.urgency')}</TableHead>
             <TableHead>{t('referrals.status')}</TableHead>
             <TableHead>{t('referrals.referral_date')}</TableHead>
-            <TableHead className="text-right">{t('referrals.actions')}</TableHead>
+            <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('referrals.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -340,7 +340,7 @@ export default function ReferralsPage() {
                             <div>{referral.date}</div>
                             {referral.apptDate && <div className="text-xs text-muted-foreground">{referral.apptDate}</div>}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                             <div className="flex items-center justify-end gap-2">
                               <Button variant="outline" size="sm" onClick={() => setReferralToView(referral)}>
                                 <Eye className="mr-2 h-3 w-3" />
@@ -378,11 +378,11 @@ export default function ReferralsPage() {
                 <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
           <CardTitle>{t('referrals.specialist_network')}</CardTitle>
                     <div className="relative w-full md:w-auto">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                         <Input
                         type="search"
             placeholder={t('referrals.search_specialists')}
-                        className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                        className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
                         value={specialistSearchTerm}
                         onChange={(e) => setSpecialistSearchTerm(e.target.value)}
                         />
@@ -395,7 +395,7 @@ export default function ReferralsPage() {
                 <TableHead>{t('referrals.specialist')}</TableHead>
                 <TableHead>{t('referrals.specialty')}</TableHead>
                 <TableHead>{t('referrals.contact_info')}</TableHead>
-                <TableHead className="text-right">{t('referrals.actions')}</TableHead>
+                <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('referrals.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -423,7 +423,7 @@ export default function ReferralsPage() {
                                                 </div>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="icon">
