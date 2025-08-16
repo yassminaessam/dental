@@ -85,6 +85,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
+  // Local date helpers
+  const toValidDate = React.useCallback((value: any): Date | null => {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }, []);
+  const formatDateSafe = React.useCallback((value: any, fmt: string = 'PPP'): string => {
+    const d = toValidDate(value);
+    return d ? format(d, fmt) : t('common.na');
+  }, [toValidDate, t]);
   // Local helpers to translate common dynamic statuses
   const trMedicalRecordStatus = React.useCallback(
     (status: string) => {
@@ -207,13 +217,17 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     const completedTreatments = historyData.treatments.filter(t => t.status === 'Completed').length;
     const totalSpent = historyData.invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
     const lastVisit = historyData.appointments
-      .sort((a, b) => new Date(b.dateTime || b.date).getTime() - new Date(a.dateTime || a.date).getTime())[0];
+      .sort((a, b) => {
+        const bt = toValidDate(b.dateTime || b.date)?.getTime() ?? -Infinity;
+        const at = toValidDate(a.dateTime || a.date)?.getTime() ?? -Infinity;
+        return bt - at;
+      })[0];
 
     return {
       totalVisits,
       completedTreatments,
       totalSpent,
-      lastVisit: lastVisit ? format(new Date(lastVisit.dateTime || lastVisit.date), 'PPP') : 'Never',
+  lastVisit: lastVisit ? formatDateSafe(lastVisit.dateTime || lastVisit.date, 'PPP') : t('common.na'),
       totalImages: historyData.clinicalImages.length,
       totalRecords: historyData.medicalRecords.length,
       activeClaims: historyData.insuranceClaims.filter(c => c.status === 'Processing').length,
@@ -230,9 +244,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add appointments
     historyData.appointments.forEach(apt => {
+      const d = toValidDate(apt.dateTime || apt.date);
+      if (!d) return;
       events.push({
         type: 'appointment',
-        date: new Date(apt.dateTime || apt.date),
+        date: d,
         title: `Appointment - ${apt.type}`,
         description: `${apt.duration} with ${apt.doctor}`,
         status: apt.status,
@@ -243,9 +259,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add treatments
     historyData.treatments.forEach(treatment => {
+      const d = toValidDate(treatment.date);
+      if (!d) return;
       events.push({
         type: 'treatment',
-        date: new Date(treatment.date),
+        date: d,
         title: `Treatment - ${treatment.procedure}`,
         description: `${treatment.cost} with ${treatment.doctor}`,
         status: treatment.status,
@@ -256,9 +274,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add medical records
     historyData.medicalRecords.forEach(record => {
+      const d = toValidDate(record.date);
+      if (!d) return;
       events.push({
         type: 'record',
-        date: new Date(record.date),
+        date: d,
         title: `Medical Record - ${record.type}`,
         description: record.complaint,
         status: record.status,
@@ -269,9 +289,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add clinical images
     historyData.clinicalImages.forEach(image => {
+      const d = toValidDate(image.date);
+      if (!d) return;
       events.push({
         type: 'image',
-        date: new Date(image.date),
+        date: d,
         title: `Clinical Image - ${image.type}`,
         description: image.caption,
         status: 'Completed',
@@ -282,9 +304,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add invoices
     historyData.invoices.forEach(invoice => {
+      const d = toValidDate(invoice.issueDate);
+      if (!d) return;
       events.push({
         type: 'billing',
-        date: new Date(invoice.issueDate),
+        date: d,
         title: `Invoice ${invoice.id}`,
   description: `EGP ${invoice.totalAmount} - ${trInvoiceStatus(invoice.status)}`,
         status: invoice.status,
@@ -295,9 +319,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add messages
     historyData.messages.forEach(message => {
+      const d = toValidDate(message.date);
+      if (!d) return;
       events.push({
         type: 'communication',
-        date: new Date(message.date),
+        date: d,
         title: `${message.type} - ${message.subject}`,
         description: message.snippet,
         status: message.status,
@@ -308,9 +334,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add prescriptions
     historyData.prescriptions.forEach(prescription => {
+      const d = toValidDate(prescription.date);
+      if (!d) return;
       events.push({
         type: 'prescription',
-        date: new Date(prescription.date),
+        date: d,
         title: `Prescription - ${prescription.medication}`,
         description: `${prescription.strength} - ${prescription.dosage}`,
         status: prescription.status,
@@ -321,9 +349,11 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
 
     // Add referrals
     historyData.referrals.forEach(referral => {
+      const d = toValidDate(referral.date);
+      if (!d) return;
       events.push({
         type: 'referral',
-        date: new Date(referral.date),
+        date: d,
         title: `Referral - ${referral.specialty}`,
         description: `To ${referral.specialist} - ${referral.reason}`,
         status: referral.status,
@@ -749,7 +779,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                       </Badge>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      {format(new Date(appointment.dateTime || appointment.date), 'PPP')} • {appointment.doctor} • {appointment.duration}
+                                      {formatDateSafe(appointment.dateTime || appointment.date, 'PPP')} • {appointment.doctor} • {appointment.duration}
                                     </p>
                                   </div>
                                 ))}
