@@ -166,6 +166,19 @@ body {
   background: hsl(var(--foreground)) !important;
 }
 
+/* Extra-visible scrollbar style for Add Patient dialog */
+.scrollbar-accent [data-radix-scroll-area-scrollbar] {
+  background: color-mix(in hsl, hsl(var(--primary)) 30%, white) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+.scrollbar-accent [data-radix-scroll-area-thumb] {
+  background: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+.scrollbar-accent [data-radix-scroll-area-thumb]:hover {
+  background: color-mix(in hsl, hsl(var(--primary)) 85%, black) !important;
+}
+
 /* Responsive text utility classes */
 .text-responsive {
   @apply text-sm sm:text-base lg:text-lg;

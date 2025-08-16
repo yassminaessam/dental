@@ -31,7 +31,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
-import { ScrollArea } from '../ui/scroll-area';
+// Removed ScrollArea in favor of native overflow container for guaranteed visible scrollbar
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const patientSchema = z.object({
@@ -125,14 +125,14 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           <span className="sm:hidden">{t('patients.add_patient')}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col">
+  <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col min-h-0">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">{t('patients.add_patient')}</DialogTitle>
           <DialogDescription className="text-sm">
             {t('patients.enter_patient_details')}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-2 sm:pr-6 -mr-2 sm:-mr-6">
+  <div className="scrollbar-visible flex-1 min-h-0 overflow-y-auto pr-2 sm:pr-6 max-h-[65vh] sm:max-h-[70vh]">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -361,8 +361,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                 </div>
             </form>
           </Form>
-        </ScrollArea>
-        <DialogFooter className="border-t pt-3 sm:pt-4 gap-2">
+        </div>
+  <DialogFooter className="border-t pt-3 sm:pt-4 gap-2 print:hidden">
           <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">{t('common.cancel')}</Button>
           <Button type="submit" form="add-patient-form" className="flex-1 sm:flex-none">{t('patients.save_patient')}</Button>
         </DialogFooter>

@@ -31,6 +31,7 @@ const ScrollBar = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
 >(({ className, orientation = "vertical", ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar
+    data-radix-scroll-area-scrollbar
     ref={ref}
     orientation={orientation}
     className={cn(
@@ -44,10 +45,12 @@ const ScrollBar = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.ScrollAreaThumb 
+      data-radix-scroll-area-thumb
       className={cn(
         "relative flex-1 rounded-full transition-colors",
         "bg-border hover:bg-border/80",
-        "before:absolute before:top-1/2 before:left-1/2 before:h-full before:min-h-[44px] before:w-full before:min-w-[44px] before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']"
+        // increase touch target for mobile and enable visibility hooks
+        "before:absolute before:top-1/2 before:left-1/2 before:h-full before:min-h-[36px] before:w-full before:min-w-[36px] before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']"
       )} 
     />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>

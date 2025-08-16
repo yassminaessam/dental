@@ -121,14 +121,14 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+  <DialogContent className="max-w-3xl h-[90vh] flex flex-col min-h-0">
         <DialogHeader>
           <DialogTitle>{t('patients.edit_patient_details')}</DialogTitle>
           <DialogDescription>
             {t('patients.update_details_for', { name: patient.name })}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-6 -mr-6">
+  <ScrollArea className="flex-1 min-h-0 pr-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} id="edit-patient-form" className="space-y-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -312,7 +312,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
             </form>
           </Form>
         </ScrollArea>
-        <DialogFooter className="border-t pt-4">
+  <DialogFooter className="border-t pt-4 print:hidden">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
           <Button type="submit" form="edit-patient-form">{t('common.save_changes')}</Button>
         </DialogFooter>
