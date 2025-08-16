@@ -37,7 +37,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
-  email: z.string().email({ message: 'Invalid email address' }),
+  // Email is optional: allow empty string or a valid email
+  email: z.union([z.string().email({ message: 'Invalid email address' }), z.literal('')]),
   phone: z.string().min(1, { message: 'Phone number is required' }),
   dob: z.date({ required_error: 'Date of birth is required' }),
   address: z.string().optional(),
@@ -166,7 +167,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">{t('patients.email')} *</FormLabel>
+                        <FormLabel className="text-sm font-medium">{t('patients.email')}</FormLabel>
                         <FormControl>
                           <Input type="email" placeholder={t('patients.email_placeholder')} {...field} className="h-10" />
                         </FormControl>
