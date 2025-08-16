@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut } from 'lucide-react'
+import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut, HelpCircle } from 'lucide-react'
 import { DentalProLogo } from '../icons'
 import { SidebarNav } from '../dashboard/sidebar-nav'
 import Link from 'next/link'
@@ -30,6 +30,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useToast } from '../../hooks/use-toast'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { usePathname } from 'next/navigation'
 
 type AppointmentLite = { id: string; status: string; patient: string; type: string }
 type InventoryItemLite = { id: string; status: string; name: string; stock: number }
@@ -44,6 +45,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const { toast } = useToast()
   const { t, language, setLanguage, isRTL } = useLanguage()
+  const pathname = usePathname()
 
   const [pendingAppointments, setPendingAppointments] = React.useState<AppointmentLite[]>([])
   const [lowStockItems, setLowStockItems] = React.useState<InventoryItemLite[]>([])
@@ -103,6 +105,38 @@ export default function DashboardLayout({
     }
   }
 
+  // Map current page to help section anchor
+  const helpAnchorMap: Record<string, string> = {
+    '/': '#quickstart',
+    '/patients': '#patients',
+    '/appointments': '#appointments',
+    '/treatments': '#treatments',
+    '/billing': '#billing',
+    '/insurance': '#insurance',
+    '/inventory': '#inventory',
+    '/pharmacy': '#pharmacy',
+    '/suppliers': '#suppliers',
+    '/communications': '#communications',
+    '/staff': '#staff',
+    '/medical-records': '#patients', // closest relevant section
+    '/dental-chart': '#treatments', // related to treatments & teeth
+    '/analytics': '#analytics',
+    '/reports': '#analytics',
+    '/settings': '#settings',
+    '/admin/users': '#permissions',
+    '/patient-portal': '#portal',
+    '/patient-home-admin': '#portal',
+  }
+
+  const getHelpHref = () => {
+    // Find first matching base path in the map
+    const entry = Object.keys(helpAnchorMap).find((key) =>
+      key === '/' ? pathname === '/' : pathname.startsWith(key)
+    )
+    const anchor = entry ? helpAnchorMap[entry] : '#quickstart'
+    return `/help${anchor}`
+  }
+
   return (
     <SidebarProvider>
       <Sidebar side={isRTL ? 'right' : 'left'}>
@@ -130,6 +164,13 @@ export default function DashboardLayout({
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Context-sensitive Help */}
+            <Button asChild variant="ghost" size="sm" aria-label={t('nav.help')}>
+              <Link href={getHelpHref()} className="flex items-center gap-1">
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('nav.help')}</span>
+              </Link>
+            </Button>
             <Button
               variant="outline"
               size="sm"

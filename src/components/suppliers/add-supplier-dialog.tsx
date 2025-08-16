@@ -25,7 +25,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const supplierSchema = z.object({
   name: z.string().min(1, 'suppliers.validation.name_required'),
   phone: z.string().optional(),
-  email: z.string().email('suppliers.validation.invalid_email').optional(),
+  // Email is optional: allow empty string or a valid email
+  email: z.union([z.string().email('suppliers.validation.invalid_email'), z.literal('')]).optional(),
   address: z.string().optional(),
   category: z.string().optional(),
   paymentTerms: z.string().optional(),

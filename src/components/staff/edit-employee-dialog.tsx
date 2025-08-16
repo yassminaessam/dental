@@ -36,7 +36,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const employeeSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Invalid email address."),
+  // Email is optional: allow empty string or a valid email
+  email: z.union([z.string().email("Invalid email address."), z.literal('')]),
   phone: z.string().optional(),
   role: z.string({ required_error: "Role is required." }),
   hireDate: z.date({ required_error: "Hire date is required." }),
@@ -146,7 +147,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('staff.email')} *</FormLabel>
+                    <FormLabel>{t('staff.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder={t('staff.email_placeholder')} {...field} />
                     </FormControl>

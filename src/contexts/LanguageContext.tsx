@@ -127,6 +127,7 @@ const translations: Translations = {
     'nav.reports': 'Reports',
     'nav.user_management': 'User Management',
     'nav.settings': 'Settings',
+  'nav.help': 'Help',
     'nav.sign_out': 'Sign Out',
     
     'billing.amount_due': 'Amount Due',
@@ -1838,6 +1839,7 @@ const translations: Translations = {
     'nav.reports': 'التقارير',
     'nav.user_management': 'إدارة المستخدمين',
     'nav.settings': 'الإعدادات',
+  'nav.help': 'مساعدة',
     'nav.sign_out': 'تسجيل الخروج',
     
     // Header

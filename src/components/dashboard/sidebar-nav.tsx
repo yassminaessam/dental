@@ -36,6 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { HelpCircle } from "lucide-react";
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -61,6 +62,12 @@ export function SidebarNav() {
 
   // Define navigation items with permission requirements
   const navigationItems = [
+    {
+      href: "/help",
+      icon: HelpCircle,
+      label: t('nav.help'),
+      permission: null,
+    },
     {
       href: "/",
       icon: LayoutGrid,

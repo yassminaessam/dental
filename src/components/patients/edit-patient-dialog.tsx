@@ -38,7 +38,8 @@ const buildPatientSchema = (t: (key: string, params?: Record<string, string | nu
   z.object({
     name: z.string().min(1, { message: t('patients.validation.first_name_required') }),
     lastName: z.string().min(1, { message: t('patients.validation.last_name_required') }),
-    email: z.string().email({ message: t('validation.invalid_email') }),
+    // Email is optional: allow empty string or a valid email
+    email: z.union([z.string().email({ message: t('validation.invalid_email') }), z.literal('')]),
     phone: z.string().min(1, { message: t('patients.validation.phone_required') }),
     dob: z.date({ required_error: t('patients.validation.dob_required') }),
     status: z.enum(['Active', 'Inactive']),
@@ -162,7 +163,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                     name="email"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>{t('patients.email')} *</FormLabel>
+                        <FormLabel>{t('patients.email')}</FormLabel>
                         <FormControl>
                         <Input type="email" placeholder={t('patients.email_placeholder')} {...field} />
                         </FormControl>

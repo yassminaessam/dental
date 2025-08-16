@@ -62,7 +62,8 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   const employeeSchema = React.useMemo(() => z.object({
     firstName: z.string().min(1, t('staff.validation.first_name_required')),
     lastName: z.string().min(1, t('staff.validation.last_name_required')),
-    email: z.string().email(t('staff.validation.invalid_email')),
+  // Email is optional: allow empty string or a valid email
+  email: z.union([z.string().email(t('staff.validation.invalid_email')), z.literal('')]),
     phone: z.string().optional(),
     role: z.string({ required_error: t('staff.validation.role_required') }),
     hireDate: z.date({ required_error: t('staff.validation.hire_date_required') }),
@@ -145,7 +146,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('staff.email')} *</FormLabel>
+                    <FormLabel>{t('staff.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder={t('staff.email_placeholder')} {...field} />
                     </FormControl>
