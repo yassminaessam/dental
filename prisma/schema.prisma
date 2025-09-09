@@ -1,0 +1,675 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  firstName       String
+  lastName        String
+  role            UserRole
+  permissions     String[]
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  lastLoginAt     DateTime?
+  specialization  String?
+  licenseNumber   String?
+  employeeId      String?
+  department      String?
+  patientId       String?
+  phone           String?
+  address         String?
+  profileImageUrl String?
+  hashedPassword  String?
+  appointments    Appointment[]
+  clinicalImages  ClinicalImage[]
+  sentMessages    Message[]       @relation("SentBy")
+  prescriptions   Prescription[]
+  referralsGiven  Referral[]      @relation("ReferringDoctor")
+  treatments      Treatment[]
+  patient         Patient?        @relation(fields: [patientId], references: [id])
+
+  @@map("users")
+}
+
+model Patient {
+  id                 String           @id @default(cuid())
+  firstName          String
+  lastName           String
+  email              String?          @unique
+  phone              String?
+  address            String?
+  dateOfBirth        DateTime?
+  gender             String?
+  emergencyContact   String?
+  emergencyPhone     String?
+  insuranceProvider  String?
+  insuranceNumber    String?
+  allergies          String?
+  medicalHistory     String?
+  currentMedications String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  appointments       Appointment[]
+  clinicalImages     ClinicalImage[]
+  insuranceClaims    InsuranceClaim[]
+  invoices           Invoice[]
+  medicalRecords     MedicalRecord[]
+  messages           Message[]
+  portalUsers        PortalUser[]
+  prescriptions      Prescription[]
+  referrals          Referral[]
+  sharedDocuments    SharedDocument[]
+  toothImageLinks    ToothImageLink[]
+  treatments         Treatment[]
+  users              User[]
+
+  @@map("patients")
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  patientId        String
+  doctorId         String
+  dateTime         DateTime
+  duration         Int               @default(60)
+  type             String
+  status           AppointmentStatus @default(scheduled)
+  notes            String?
+  treatmentPlan    String?
+  followUpRequired Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  doctor           User              @relation(fields: [doctorId], references: [id])
+  patient          Patient           @relation(fields: [patientId], references: [id])
+  treatments       Treatment[]
+
+  @@map("appointments")
+}
+
+model Treatment {
+  id            String          @id @default(cuid())
+  patientId     String
+  doctorId      String
+  appointmentId String?
+  date          DateTime
+  procedure     String
+  tooth         String?
+  status        TreatmentStatus @default(planned)
+  notes         String?
+  cost          Decimal?
+  duration      Int?
+  materialUsed  String?
+  followUpDate  DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  invoices      Invoice[]
+  appointment   Appointment?    @relation(fields: [appointmentId], references: [id])
+  doctor        User            @relation(fields: [doctorId], references: [id])
+  patient       Patient         @relation(fields: [patientId], references: [id])
+
+  @@map("treatments")
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid())
+  patientId   String
+  recordType  String
+  title       String
+  description String?
+  findings    String?
+  diagnosis   String?
+  treatment   String?
+  date        DateTime
+  doctorNotes String?
+  attachments String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  patient     Patient  @relation(fields: [patientId], references: [id])
+
+  @@map("medical_records")
+}
+
+model ClinicalImage {
+  id          String   @id @default(cuid())
+  patientId   String?
+  doctorId    String
+  imageUrl    String
+  imageType   String
+  description String?
+  date        DateTime
+  annotations String?
+  createdAt   DateTime @default(now())
+  doctor      User     @relation(fields: [doctorId], references: [id])
+  patient     Patient? @relation(fields: [patientId], references: [id])
+
+  @@map("clinical_images")
+}
+
+model ToothImageLink {
+  id          String   @id @default(cuid())
+  patientId   String
+  tooth       String
+  imageUrl    String
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+  patient     Patient  @relation(fields: [patientId], references: [id])
+
+  @@map("tooth_image_links")
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  patientId   String
+  treatmentId String?
+  number      String        @unique
+  date        DateTime
+  dueDate     DateTime?
+  amount      Decimal
+  paid        Decimal       @default(0)
+  status      InvoiceStatus @default(pending)
+  items       Json
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  treatment   Treatment?    @relation(fields: [treatmentId], references: [id])
+  payments    Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  amount    Decimal
+  method    PaymentMethod
+  date      DateTime
+  reference String?
+  notes     String?
+  createdAt DateTime      @default(now())
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model InsuranceClaim {
+  id            String      @id @default(cuid())
+  patientId     String
+  claimNumber   String      @unique
+  provider      String
+  dateSubmitted DateTime
+  amount        Decimal
+  status        ClaimStatus @default(submitted)
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  patient       Patient     @relation(fields: [patientId], references: [id])
+
+  @@map("insurance_claims")
+}
+
+model InsuranceProvider {
+  id            String   @id @default(cuid())
+  name          String
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  contactPerson String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("insurance_providers")
+}
+
+model Staff {
+  id               String   @id @default(cuid())
+  employeeId       String   @unique
+  firstName        String
+  lastName         String
+  email            String   @unique
+  phone            String?
+  role             String
+  department       String?
+  specialization   String?
+  licenseNumber    String?
+  hireDate         DateTime
+  salary           Decimal?
+  isActive         Boolean  @default(true)
+  address          String?
+  emergencyContact String?
+  emergencyPhone   String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("staff")
+}
+
+model InventoryItem {
+  id                 String              @id @default(cuid())
+  name               String
+  sku                String              @unique
+  category           String
+  supplier           String?
+  quantity           Int
+  minQuantity        Int                 @default(0)
+  maxQuantity        Int?
+  unit               String
+  costPrice          Decimal?
+  salePrice          Decimal?
+  status             InventoryStatus     @default(active)
+  location           String?
+  expiryDate         DateTime?
+  notes              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@map("inventory")
+}
+
+model PurchaseOrder {
+  id           String              @id @default(cuid())
+  orderNumber  String              @unique
+  supplierId   String
+  date         DateTime
+  expectedDate DateTime?
+  status       PurchaseOrderStatus @default(pending)
+  totalAmount  Decimal?
+  notes        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  items        PurchaseOrderItem[]
+  supplier     Supplier            @relation(fields: [supplierId], references: [id])
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(cuid())
+  purchaseOrderId  String
+  inventoryItemId  String
+  quantity         Int
+  unitPrice        Decimal
+  receivedQuantity Int           @default(0)
+  notes            String?
+  inventoryItem    InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+model Supplier {
+  id             String          @id @default(cuid())
+  name           String
+  address        String?
+  phone          String?
+  email          String?
+  website        String?
+  contactPerson  String?
+  paymentTerms   String?
+  notes          String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model Medication {
+  id                String                   @id @default(cuid())
+  name              String
+  genericName       String?
+  brand             String?
+  dosage            String?
+  form              String?
+  category          String?
+  description       String?
+  sideEffects       String?
+  contraindications String?
+  quantity          Int                      @default(0)
+  minQuantity       Int                      @default(0)
+  expiryDate        DateTime?
+  supplier          String?
+  batchNumber       String?
+  cost              Decimal?
+  price             Decimal?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  prescriptions     PrescriptionMedication[]
+
+  @@map("medications")
+}
+
+model Prescription {
+  id          String                   @id @default(cuid())
+  patientId   String
+  doctorId    String
+  date        DateTime
+  status      PrescriptionStatus       @default(active)
+  notes       String?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  medications PrescriptionMedication[]
+  doctor      User                     @relation(fields: [doctorId], references: [id])
+  patient     Patient                  @relation(fields: [patientId], references: [id])
+
+  @@map("prescriptions")
+}
+
+model PrescriptionMedication {
+  id             String       @id @default(cuid())
+  prescriptionId String
+  medicationId   String
+  dosage         String
+  frequency      String
+  duration       String?
+  instructions   String?
+  quantity       Int
+  medication     Medication   @relation(fields: [medicationId], references: [id])
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  @@map("prescription_medications")
+}
+
+model Message {
+  id         String          @id @default(cuid())
+  patientId  String
+  senderId   String?
+  type       MessageType
+  subject    String?
+  content    String
+  subContent String?
+  status     MessageStatus   @default(unread)
+  sent       DateTime
+  category   MessageCategory @default(other)
+  priority   MessagePriority @default(normal)
+  createdAt  DateTime        @default(now())
+  patient    Patient         @relation(fields: [patientId], references: [id])
+  sender     User?           @relation("SentBy", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Referral {
+  id                String          @id @default(cuid())
+  patientId         String
+  referringDoctorId String?
+  specialistId      String
+  type              ReferralType    @default(outgoing)
+  reason            String
+  urgency           ReferralUrgency @default(routine)
+  status            ReferralStatus  @default(pending)
+  date              DateTime
+  appointmentDate   DateTime?
+  notes             String?
+  response          String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  patient           Patient         @relation(fields: [patientId], references: [id])
+  referringDoctor   User?           @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+  specialist        Specialist      @relation(fields: [specialistId], references: [id])
+
+  @@map("referrals")
+}
+
+model Specialist {
+  id             String     @id @default(cuid())
+  name           String
+  specialization String
+  address        String?
+  phone          String?
+  email          String?
+  hospital       String?
+  notes          String?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  referrals      Referral[]
+
+  @@map("specialists")
+}
+
+model PortalUser {
+  id        String           @id @default(cuid())
+  patientId String
+  name      String
+  email     String           @unique
+  status    PortalUserStatus @default(active)
+  lastLogin DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  patient   Patient          @relation(fields: [patientId], references: [id])
+
+  @@map("portal_users")
+}
+
+model SharedDocument {
+  id         String       @id @default(cuid())
+  patientId  String
+  name       String
+  type       DocumentType
+  url        String?
+  content    String?
+  sharedDate DateTime
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  patient    Patient      @relation(fields: [patientId], references: [id])
+
+  @@map("shared_documents")
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  date          DateTime
+  description   String
+  category      String
+  type          TransactionType
+  amount        Decimal
+  paymentMethod PaymentMethod
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("transactions")
+}
+
+model ClinicSettings {
+  id                  String   @id @default(cuid())
+  clinicName          String
+  address             String?
+  phone               String?
+  email               String?
+  website             String?
+  logo                String?
+  businessHours       String?
+  timezone            String?
+  appointmentDuration Int?     @default(60)
+  bookingLimit        Int?     @default(90)
+  allowOnlineBooking  Boolean  @default(true)
+  currency            String   @default("USD")
+  language            String   @default("en")
+  theme               String   @default("light")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("clinic_settings")
+}
+
+enum UserRole {
+  admin
+  doctor
+  receptionist
+  patient
+}
+
+enum UserPermission {
+  view_patients
+  edit_patients
+  delete_patients
+  view_appointments
+  edit_appointments
+  delete_appointments
+  view_treatments
+  edit_treatments
+  delete_treatments
+  view_billing
+  edit_billing
+  delete_billing
+  view_reports
+  edit_reports
+  view_staff
+  edit_staff
+  delete_staff
+  view_inventory
+  edit_inventory
+  view_settings
+  edit_settings
+  view_medical_records
+  edit_medical_records
+  view_dental_chart
+  edit_dental_chart
+  view_communications
+  send_communications
+  view_insurance
+  edit_insurance
+  view_analytics
+  view_own_data
+  view_patient_portal
+  edit_patient_portal
+}
+
+enum AppointmentStatus {
+  scheduled
+  confirmed
+  checkedIn
+  inProgress
+  completed
+  cancelled
+  noShow
+}
+
+enum TreatmentStatus {
+  planned
+  inProgress
+  completed
+  cancelled
+}
+
+enum InvoiceStatus {
+  draft
+  pending
+  paid
+  overdue
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+  check
+  insurance
+}
+
+enum ClaimStatus {
+  submitted
+  processing
+  approved
+  rejected
+  paid
+}
+
+enum InventoryStatus {
+  active
+  inactive
+  discontinued
+  outOfStock
+}
+
+enum PurchaseOrderStatus {
+  pending
+  ordered
+  partiallyReceived
+  received
+  cancelled
+}
+
+enum PrescriptionStatus {
+  active
+  completed
+  cancelled
+}
+
+enum MessageType {
+  SMS
+  Email
+}
+
+enum MessageStatus {
+  sent
+  delivered
+  read
+  unread
+}
+
+enum MessageCategory {
+  treatment
+  appointment
+  billing
+  other
+}
+
+enum MessagePriority {
+  high
+  normal
+  low
+}
+
+enum ReferralType {
+  outgoing
+  incoming
+}
+
+enum ReferralUrgency {
+  urgent
+  priority
+  routine
+}
+
+enum ReferralStatus {
+  pending
+  scheduled
+  completed
+  cancelled
+}
+
+enum PortalUserStatus {
+  active
+  deactivated
+}
+
+enum DocumentType {
+  treatmentPlan
+  invoice
+  labResult
+  prescription
+  report
+  other
+}
+
+enum TransactionType {
+  revenue
+  expense
+}
