@@ -347,6 +347,61 @@ body {
 
 /* Dialog positioning is handled by component classes */
 
+/* Elite Dropdown and Popover Z-Index Fixes */
+[data-radix-select-content],
+[data-radix-popover-content] {
+  z-index: 20000 !important;
+  position: fixed !important;
+}
+
+/* Ensure proper dialog visibility */
+[data-radix-dialog-overlay] {
+  z-index: 9999 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 10000 !important;
+}
+
+/* Ensure dialog dropdowns appear above dialog content */
+[data-radix-dialog-content] [data-radix-select-content],
+[data-radix-dialog-content] [data-radix-popover-content] {
+  z-index: 20000 !important;
+  position: fixed !important;
+}
+
+/* Force dropdown portals to appear above everything */
+[data-radix-select-content][data-state="open"],
+[data-radix-popover-content][data-state="open"] {
+  z-index: 20001 !important;
+  position: fixed !important;
+}
+
+/* Elite Select Dropdown Styling */
+[data-radix-select-content] {
+  @apply elite-card backdrop-blur-md;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: slideDownAndFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Elite Popover Styling */
+[data-radix-popover-content] {
+  @apply elite-card backdrop-blur-md;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: slideDownAndFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Enhanced Gradient Text Visibility */
 .bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
   background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));

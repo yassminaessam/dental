@@ -202,12 +202,20 @@ const translations: Translations = {
     
     // User roles
     'roles.admin': 'Admin',
+    'roles.admin_desc': 'Full system access and user management',
+    'roles.doctor': 'Doctor',
+    'roles.doctor_desc': 'Medical professional with patient care access',
     'billing.select_payment_method': 'Select Payment Method',
     'roles.dentist': 'Dentist',
+    'roles.dentist_desc': 'Dental specialist performing procedures',
     'roles.assistant': 'Assistant',
+    'roles.assistant_desc': 'Supports dental procedures and operations',
     'roles.receptionist': 'Receptionist',
+    'roles.receptionist_desc': 'Front desk operations and patient communications',
     'roles.hygienist': 'Hygienist',
+    'roles.hygienist_desc': 'Preventive dental care and teeth cleaning',
     'roles.manager': 'Manager',
+    'roles.manager_desc': 'Operations and staff management',
     'billing.payment_method_cash': 'Cash',
     'billing.payment_method_vodafone': 'Vodafone Cash',
     'billing.payment_method_fawry': 'Fawry',
@@ -1657,6 +1665,8 @@ const translations: Translations = {
   'staff.validation.last_name_required': 'Last name is required',
   'staff.validation.role_required': 'Role is required',
   'staff.validation.salary_required': 'Salary is required',
+  'staff.system_roles': 'System Roles',
+  'staff.staff_roles': 'Staff Roles',
   // Suppliers (en)
   'suppliers.active_orders': 'Active Orders',
   'suppliers.add_new_supplier': 'Add New Supplier',
@@ -1969,11 +1979,19 @@ const translations: Translations = {
     
     // User roles
     'roles.admin': 'مدير',
+    'roles.admin_desc': 'وصول كامل للنظام وإدارة المستخدمين',
+    'roles.doctor': 'طبيب',
+    'roles.doctor_desc': 'طبيب متخصص مع إمكانية الوصول لرعاية المرضى',
     'roles.dentist': 'طبيب أسنان',
+    'roles.dentist_desc': 'طبيب أسنان متخصص في إجراء العمليات',
     'roles.assistant': 'مساعد',
+    'roles.assistant_desc': 'يدعم العمليات الطبية والإجراءات',
     'roles.receptionist': 'موظف استقبال',
+    'roles.receptionist_desc': 'عمليات المكتب الأمامي والتواصل مع المرضى',
     'roles.hygienist': 'أخصائي صحة الأسنان',
+    'roles.hygienist_desc': 'الرعاية الوقائية وتنظيف الأسنان',
     'roles.manager': 'مدير',
+    'roles.manager_desc': 'إدارة العمليات والموظفين',
     
     // Common
     'common.save': 'حفظ',
@@ -3427,6 +3445,8 @@ const translations: Translations = {
   'staff.validation.last_name_required': 'اسم العائلة مطلوب',
   'staff.validation.role_required': 'الدور مطلوب',
   'staff.validation.salary_required': 'الراتب مطلوب',
+  'staff.system_roles': 'أدوار النظام',
+  'staff.staff_roles': 'أدوار الموظفين',
   // Suppliers (ar)
   'suppliers.active_orders': 'الطلبات النشطة',
   'suppliers.add_new_supplier': 'إضافة مورد جديد',
