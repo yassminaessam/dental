@@ -17,7 +17,10 @@
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "db:seed": "tsx src/lib/seed-prisma.ts",
-    "db:migrate-from-firebase": "tsx src/lib/migrate-firebase-to-neon.ts"
+    "db:migrate-from-firebase": "tsx src/lib/migrate-firebase-to-neon.ts",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "vercel-build": "prisma generate && next build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.884.0",
