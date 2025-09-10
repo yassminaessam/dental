@@ -10,13 +10,14 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/icon.svg', sizes: '16x16', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' }
+      { url: '/tooth-favicon.svg', type: 'image/svg+xml' },
+      { url: '/tooth-favicon.svg', sizes: '16x16', type: 'image/svg+xml' },
+      { url: '/tooth-favicon.svg', sizes: '32x32', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml' } // fallback
     ],
-    shortcut: '/favicon.svg',
+    shortcut: '/tooth-favicon.svg',
     apple: [
-      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }
+      { url: '/tooth-favicon.svg', sizes: '180x180', type: 'image/svg+xml' }
     ],
   },
 };

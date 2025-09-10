@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import { prisma } from '@/lib/prisma';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dental_clinic_jwt_secret_key_2025_very_secure_random_string_for_production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+import { neonAuth } from '@/services/neon-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,77 +9,51 @@ export async function POST(request: NextRequest) {
       password, 
       firstName, 
       lastName, 
-      role, 
-      permissions,
-      specialization,
-      licenseNumber,
-      employeeId,
-      department,
-      phone 
+      role
     } = data;
 
-    if (!email || !password || !firstName || !lastName || !role) {
+    if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { error: 'Email, password, firstName, lastName, and role are required' },
+        { error: 'Email, password, firstName, and lastName are required' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Register user using Neon auth service
+    const result = await neonAuth.register({
+      email,
+      password,
+      firstName,
+      lastName,
+      role: role || 'patient'
     });
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
-      );
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        hashedPassword,
-        firstName,
-        lastName,
-        role,
-        permissions: permissions || [],
-        isActive: true,
-        specialization,
-        licenseNumber,
-        employeeId,
-        department,
-        phone,
-      },
-    }) as any;
-
-    // Generate JWT token
-    const payload = { 
-      userId: user.id, 
-      email: user.email, 
-      role: user.role 
-    };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' } as any);
-
-    // Remove sensitive data from user object
-    const { hashedPassword: _, ...userResponse } = user;
-
-    return NextResponse.json({
+    // Set httpOnly cookie for token
+    const response = NextResponse.json({
       success: true,
-      user: userResponse,
-      token,
+      user: result.user,
+      token: result.token,
       message: 'Registration successful'
     });
+
+    response.cookies.set('auth-token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/'
+    });
+
+    return response;
+
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        error: error instanceof Error ? error.message : 'Registration failed',
+        success: false
+      },
+      { status: 400 }
     );
   }
 }

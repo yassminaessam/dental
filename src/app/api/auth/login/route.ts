@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import { prisma } from '@/lib/prisma';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dental_clinic_jwt_secret_key_2025_very_secure_random_string_for_production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+import { neonAuth } from '@/services/neon-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -17,69 +13,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user in database
-    const user = await prisma.user.findUnique({
-      where: { email },
-    }) as any;
+    // Get client IP and user agent for session tracking
+    const ipAddress = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
+    // Attempt login
+    const result = await neonAuth.login(
+      { email, password },
+      ipAddress,
+      userAgent
+    );
 
-    if (!user.isActive) {
-      return NextResponse.json(
-        { error: 'Account is deactivated. Please contact your administrator.' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    if (!user.hashedPassword) {
-      return NextResponse.json(
-        { error: 'Account not properly configured. Please contact your administrator.' },
-        { status: 401 }
-      );
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
-
-    // Generate JWT token
-    const payload = { 
-      userId: user.id, 
-      email: user.email, 
-      role: user.role 
-    };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' } as any);
-
-    // Remove sensitive data from user object
-    const { hashedPassword, ...userResponse } = user;
-
-    return NextResponse.json({
+    // Set httpOnly cookie for token
+    const response = NextResponse.json({
       success: true,
-      user: userResponse,
-      token,
+      user: result.user,
+      token: result.token,
       message: 'Login successful'
     });
+
+    response.cookies.set('auth-token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/'
+    });
+
+    return response;
+
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        error: error instanceof Error ? error.message : 'Login failed',
+        success: false
+      },
+      { status: 401 }
     );
   }
 }
