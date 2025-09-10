@@ -5,7 +5,7 @@ import { neonAuth } from '@/services/neon-auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  context: { params: Promise<{ fileId: string }> }
 ) {
   try {
     // Get auth token from header or query param
@@ -23,6 +23,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    const params = await context.params;
     const fileId = params.fileId;
 
     if (!fileId) {

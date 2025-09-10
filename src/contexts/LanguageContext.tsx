@@ -3661,8 +3661,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    document.documentElement.setAttribute('dir', direction);
-    document.documentElement.setAttribute('lang', language);
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('dir', direction);
+      document.documentElement.setAttribute('lang', language);
+    }
   }, [direction, language]);
 
   return (

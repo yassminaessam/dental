@@ -56,6 +56,7 @@ export function ImageViewerDialog({
 
   const handleDownload = () => {
     if (!image || !image.imageUrl) return;
+    if (typeof window === 'undefined') return;
     
     // Create a download link for the image
     const link = document.createElement('a');
@@ -267,7 +268,7 @@ export function ImageViewerDialog({
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => window.print()}
+                onClick={() => typeof window !== 'undefined' && window.print()}
               >
                 <Maximize2 className="h-4 w-4 mr-2" />
                 Print

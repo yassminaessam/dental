@@ -129,7 +129,9 @@ export function useRequireAuth() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Redirect to login page
-      window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   }, [isLoading, isAuthenticated]);
 
@@ -142,9 +144,13 @@ export function useRequireRole(allowedRoles: string[]) {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       } else if (user && !allowedRoles.includes(user.role)) {
-        window.location.href = '/unauthorized';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/unauthorized';
+        }
       }
     }
   }, [isLoading, isAuthenticated, user, allowedRoles]);
