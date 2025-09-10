@@ -262,31 +262,48 @@ export default function PurchaseOrdersPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
-              <p className="text-muted-foreground">
-                Manage purchase orders and supplier relationships
+          {/* Elite Purchase Orders Header */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <ShoppingCart className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">Procurement Control</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Purchase Orders
+              </h1>
+              <p className="text-muted-foreground font-medium">
+                Elite Supply Chain Management
               </p>
             </div>
-            <Button onClick={() => setIsNewOrderDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Order
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => setIsNewOrderDialogOpen(true)}
+                className="elite-button bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Order
+              </Button>
+            </div>
           </div>
 
-      {/* Low Stock Alerts */}
+      {/* Elite Low Stock Alerts */}
       {lowStockItems.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-orange-800">
-              <AlertTriangle className="mr-2 h-5 w-5" />
-              Low Stock Alert ({lowStockItems.length} items)
+        <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-r from-orange-500 to-red-500 text-white">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
+          <CardHeader className="relative z-10">
+            <CardTitle className="flex items-center text-white">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm mr-3">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
+              Elite Stock Alert ({lowStockItems.length} items)
             </CardTitle>
-            <CardDescription>
-              These items are running low and may need reordering
+            <CardDescription className="text-white/90 font-medium">
+              Critical inventory levels require immediate attention
             </CardDescription>
           </CardHeader>
           <CardContent>

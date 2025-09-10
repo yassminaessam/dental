@@ -177,49 +177,115 @@ export default function StaffPage() {
 
   return (
     <DashboardLayout>
-    <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-3xl font-bold">{t('staff.title')}</h1>
-          <AddEmployeeDialog onSave={handleSaveEmployee} />
+    <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Header Section */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Staff Management</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('staff.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">Elite Team Directory</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <AddEmployeeDialog onSave={handleSaveEmployee} />
+          </div>
         </div>
 
+        {/* Elite Staff Stats */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {staffPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {staffPageStats.map((stat, index) => {
+            const cardStyles = [
+              'metric-card-blue',
+              'metric-card-green', 
+              'metric-card-orange'
+            ];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card 
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                {/* Animated Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className="text-2xl font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <User className="h-6 w-6 text-white drop-shadow-sm" />
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 relative z-10">
+                  <p className="text-xs text-white/80 font-medium">
+                    {stat.description}
+                  </p>
+                  {/* Elite Status Indicator */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Active</span>
+                  </div>
+                </CardContent>
+                
+                {/* Elite Corner Accent */}
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
+              </Card>
+            );
+          })}
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-          {staffRoles.map((role) => (
-            <Card key={role.name}>
-              <CardContent className="p-4">
-        <div className="text-sm font-medium text-muted-foreground">{t(`roles.${role.name.toLowerCase()}`)}</div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{staff.filter(s => s.role === role.name).length}</span>
-                  <Badge
-                    className={cn(
-                      "text-xs font-semibold",
-                      role.color
-                    )}
-                  >
-          {t('common.active')}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Elite Role Breakdown */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {staffRoles.map((role, index) => {
+            const cardStyles = [
+              'bg-gradient-to-br from-blue-500/10 to-cyan-600/10 border-blue-500/20',
+              'bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-green-500/20',
+              'bg-gradient-to-br from-orange-500/10 to-amber-600/10 border-orange-500/20',
+              'bg-gradient-to-br from-purple-500/10 to-violet-600/10 border-purple-500/20',
+              'bg-gradient-to-br from-pink-500/10 to-rose-600/10 border-pink-500/20'
+            ];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card key={role.name} className={cn("elite-card hover:scale-105 transition-all duration-300", cardStyle)}>
+                <CardContent className="p-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">{t(`roles.${role.name.toLowerCase()}`)}</div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold">{staff.filter(s => s.role === role.name).length}</span>
+                    <Badge
+                      className={cn(
+                        "text-xs font-semibold",
+                        role.color
+                      )}
+                    >
+                      {t('common.active')}
+                    </Badge>
+                  </div>
+                  {/* Elite Role Indicator */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs text-muted-foreground font-medium">Department</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <div className="grid grid-cols-1 gap-6">

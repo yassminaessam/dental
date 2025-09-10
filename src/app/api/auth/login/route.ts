@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dental_clinic_jwt_secret_key_2025_very_secure_random_string_for_production';
@@ -59,15 +59,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    ) as string;
+    const payload = { 
+      userId: user.id, 
+      email: user.email, 
+      role: user.role 
+    };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' } as any);
 
     // Remove sensitive data from user object
     const { hashedPassword, ...userResponse } = user;

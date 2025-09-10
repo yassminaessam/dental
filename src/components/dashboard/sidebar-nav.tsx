@@ -216,15 +216,29 @@ export function SidebarNav() {
 
   return (
     <div className="flex flex-col h-full">
-      <SidebarMenu className="flex-grow">
-        {visibleItems.map((item) => {
+      <SidebarMenu className="flex-grow space-y-2">
+        {visibleItems.map((item, index) => {
           const IconComponent = item.icon;
+          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          
           return (
             <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton asChild isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}>
-                <Link href={item.href}>
-                  <IconComponent />
-                  {item.label}
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive}
+                className={`elite-nav-item ${isActive ? 'active' : ''} group relative rounded-xl px-4 py-3 transition-all duration-300 hover:bg-sidebar-accent/80`}
+              >
+                <Link href={item.href} className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sidebar-primary/10 group-hover:bg-sidebar-primary/20 transition-all duration-300">
+                    <IconComponent className="h-4 w-4 text-sidebar-foreground group-hover:text-sidebar-primary transition-colors duration-300" />
+                  </div>
+                  <span className="font-medium text-sidebar-foreground group-hover:text-sidebar-accent-foreground transition-colors duration-300">
+                    {item.label}
+                  </span>
+                  {/* Elite Active Indicator */}
+                  {isActive && (
+                    <div className="ml-auto w-2 h-2 rounded-full bg-sidebar-primary animate-pulse" />
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -232,21 +246,40 @@ export function SidebarNav() {
         })}
       </SidebarMenu>
       
-      {/* User info and sign out */}
-      <div className="mt-auto border-t pt-4 space-y-2">
-        <div className="px-2 py-1 text-sm text-muted-foreground">
-          <div className="font-medium">{user.firstName} {user.lastName}</div>
-          <div className="text-xs capitalize">{user.role}</div>
+      {/* Elite User Section */}
+      <div className="mt-auto border-t border-sidebar-border/50 pt-6 space-y-4">
+        {/* User Profile Card */}
+        <div className="px-4 py-3 mx-2 rounded-xl bg-sidebar-accent/30 backdrop-blur-sm border border-sidebar-border/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sidebar-primary to-sidebar-accent-foreground flex items-center justify-center">
+              <span className="text-sm font-bold text-sidebar-background">
+                {user.firstName?.[0]}{user.lastName?.[0]}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sidebar-foreground text-sm truncate">
+                {user.firstName} {user.lastName}
+              </div>
+              <div className="text-xs text-sidebar-foreground/70 capitalize font-medium">
+                {user.role} • Online
+              </div>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          </div>
         </div>
+        
+        {/* Elite Sign Out Button */}
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
             <Button 
               variant="ghost" 
-              className="w-full justify-start" 
+              className="w-full justify-start mx-2 px-4 py-3 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive transition-all duration-300 group" 
               onClick={handleSignOut}
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('nav.sign_out')}
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-all duration-300">
+                <LogOut className="h-4 w-4" />
+              </div>
+              <span className="font-medium">{t('nav.sign_out')}</span>
             </Button>
           </SidebarMenuButton>
         </SidebarMenuItem>

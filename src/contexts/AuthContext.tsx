@@ -34,7 +34,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     try {
-      const user = await AuthService.signIn({ email, password });
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
+
+      const { user, token } = await response.json();
+      
+      // Store token in localStorage
+      localStorage.setItem('authToken', token);
+      
       setAuthState({
         user,
         isLoading: false,
@@ -62,14 +79,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    const firebaseUser = AuthService.getCurrentFirebaseUser();
-    if (firebaseUser) {
-      const user = await AuthService.getUserProfile(firebaseUser.uid);
-      setAuthState(prev => ({
-        ...prev,
-        user,
-        isAuthenticated: !!user,
-      }));
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const { user } = await response.json();
+          setAuthState(prev => ({
+            ...prev,
+            user,
+            isAuthenticated: !!user,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+      }
     }
   };
 

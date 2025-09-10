@@ -149,49 +149,118 @@ export default function AppointmentsPage() {
   return (
     <ProtectedRoute requiredRoles={["receptionist", "admin", "doctor"]}>
   <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold">{t('appointments.title')}</h1>
-          <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Elite Header Section */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Appointment Management</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('appointments.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">Elite Scheduling System</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+          </div>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-          {appointmentPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className={cn("text-lg sm:text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Elite Appointment Stats */}
+        <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+          {appointmentPageStats.map((stat, index) => {
+            const cardStyles = [
+              'metric-card-blue',
+              'metric-card-green', 
+              'metric-card-orange',
+              'metric-card-purple'
+            ];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card 
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                {/* Animated Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className="text-2xl font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Calendar className="h-6 w-6 text-white drop-shadow-sm" />
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 relative z-10">
+                  <p className="text-xs text-white/80 font-medium">
+                    {stat.description}
+                  </p>
+                  {/* Elite Status Indicator */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Active</span>
+                  </div>
+                </CardContent>
+                
+                {/* Elite Corner Accent */}
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
+              </Card>
+            );
+          })}
         </div>
 
-        <div className="flex flex-col gap-2 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        {/* Elite View Controls */}
+        <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <Button 
               variant={activeView === 'calendar' ? 'default' : 'outline'} 
               onClick={() => setActiveView('calendar')}
-              className="flex-1 sm:flex-initial h-9 sm:h-10"
+              className={cn(
+                "flex-1 sm:flex-initial h-11 px-6 rounded-xl font-semibold transition-all duration-300",
+                activeView === 'calendar' 
+                  ? "elite-button shadow-lg" 
+                  : "bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 shadow-md hover:shadow-lg"
+              )}
             >
-              <Calendar className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-sm">{t('appointments.view.calendar')}</span>
+              <div className={cn(
+                "flex items-center justify-center w-5 h-5 rounded-full mr-3",
+                activeView === 'calendar' ? "bg-white/20" : "bg-accent/20"
+              )}>
+                <Calendar className="h-3 w-3" />
+              </div>
+              <span className="text-sm font-medium">{t('appointments.view.calendar')}</span>
             </Button>
             <Button 
               variant={activeView === 'list' ? 'default' : 'outline'} 
               onClick={() => setActiveView('list')}
-              className="flex-1 sm:flex-initial h-9 sm:h-10"
+              className={cn(
+                "flex-1 sm:flex-initial h-11 px-6 rounded-xl font-semibold transition-all duration-300",
+                activeView === 'list' 
+                  ? "elite-button shadow-lg" 
+                  : "bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 shadow-md hover:shadow-lg"
+              )}
             >
-              <List className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-sm">{t('appointments.view.list')}</span>
+              <div className={cn(
+                "flex items-center justify-center w-5 h-5 rounded-full mr-3",
+                activeView === 'list' ? "bg-white/20" : "bg-accent/20"
+              )}>
+                <List className="h-3 w-3" />
+              </div>
+              <span className="text-sm font-medium">{t('appointments.view.list')}</span>
             </Button>
           </div>
         </div>

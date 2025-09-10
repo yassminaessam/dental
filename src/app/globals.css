@@ -3,78 +3,91 @@
 @tailwind utilities;
 
 body {
-  font-family: 'PT Sans', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 @layer base {
   :root {
-    --background: 206 100% 97%; /* Very Light Blue (#F0F8FF) */
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    /* Elite Maritime Theme - Light Mode */
+    --background: 220 18% 97%; /* Light Blue-Gray Background */
+    --foreground: 220 20% 15%; /* Dark Blue-Gray Text */
+    --card: 0 0% 100%; /* Pure White Cards */
+    --card-foreground: 220 20% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 188 43% 65%; /* Light Blue (#7EC4CF) */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 224 8% 44%;
-    --accent: 34 100% 64%; /* Pale Orange (#FFB347) */
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 72% 51%;
+    --popover-foreground: 220 20% 15%;
+    --primary: 200 100% 40%; /* Elite Blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 95%; /* Light Gray */
+    --secondary-foreground: 220 20% 25%;
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 195 100% 50%; /* Bright Cyan */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
+    --border: 220 15% 88%;
     --input: 0 0% 100%;
-    --ring: 188 43% 65%; /* Light Blue (#7EC4CF) */
-    --chart-1: 188 43% 65%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 80% 60%;
-    --chart-5: 340 80% 60%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 10% 40%;
-    --sidebar-primary: 188 43% 65%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 206 100% 97%;
-    --sidebar-accent-foreground: 188 43% 65%;
-    --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 188 43% 65%;
+    --ring: 200 100% 40%;
+    --chart-1: 200 100% 40%; /* Primary Blue */
+    --chart-2: 195 100% 50%; /* Cyan */
+    --chart-3: 35 90% 55%; /* Orange */
+    --chart-4: 280 85% 60%; /* Purple */
+    --chart-5: 140 70% 45%; /* Green */
+    --radius: 0.75rem;
+    /* Elite Sidebar - Dark Professional */
+    --sidebar-background: 220 30% 12%; /* Dark Blue-Gray */
+    --sidebar-foreground: 220 15% 85%; /* Light Gray Text */
+    --sidebar-primary: 195 100% 50%; /* Bright Cyan */
+    --sidebar-primary-foreground: 220 30% 12%;
+    --sidebar-accent: 220 25% 18%; /* Slightly Lighter Dark */
+    --sidebar-accent-foreground: 195 100% 70%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 195 100% 50%;
+    /* Metric Card Colors */
+    --metric-green: 140 70% 45%;
+    --metric-blue: 200 100% 40%;
+    --metric-orange: 35 90% 55%;
+    --metric-purple: 280 85% 60%;
   }
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 188 43% 65%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 34 100% 64%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 188 43% 65%;
-    --chart-1: 188 43% 65%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 80% 60%;
-    --chart-5: 340 80% 60%;
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 188 43% 65%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 188 43% 65%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 188 43% 65%;
+    /* Elite Maritime Theme - Dark Mode */
+    --background: 220 25% 8%;
+    --foreground: 220 15% 90%;
+    --card: 220 25% 10%;
+    --card-foreground: 220 15% 90%;
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 15% 90%;
+    --primary: 195 100% 60%;
+    --primary-foreground: 220 25% 8%;
+    --secondary: 220 25% 15%;
+    --secondary-foreground: 220 15% 80%;
+    --muted: 220 25% 15%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 195 100% 50%;
+    --accent-foreground: 220 25% 8%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 25% 20%;
+    --input: 220 25% 15%;
+    --ring: 195 100% 60%;
+    --chart-1: 195 100% 60%;
+    --chart-2: 200 100% 50%;
+    --chart-3: 35 90% 60%;
+    --chart-4: 280 85% 65%;
+    --chart-5: 140 70% 50%;
+    --sidebar-background: 220 30% 6%;
+    --sidebar-foreground: 220 15% 85%;
+    --sidebar-primary: 195 100% 60%;
+    --sidebar-primary-foreground: 220 30% 6%;
+    --sidebar-accent: 220 25% 12%;
+    --sidebar-accent-foreground: 195 100% 70%;
+    --sidebar-border: 220 25% 15%;
+    --sidebar-ring: 195 100% 60%;
+    --metric-green: 140 70% 50%;
+    --metric-blue: 195 100% 60%;
+    --metric-orange: 35 90% 60%;
+    --metric-purple: 280 85% 65%;
   }
 }
 
@@ -84,6 +97,72 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(220 18% 94%) 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Elite Maritime Card Styles */
+  .elite-card {
+    @apply bg-card/95 backdrop-blur-sm border-border/50 shadow-lg hover:shadow-xl transition-all duration-300;
+    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--card)) 100%);
+    border: 1px solid hsl(var(--border));
+  }
+  
+  .elite-card-hover {
+    @apply hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 cursor-pointer;
+  }
+  
+  /* Metric Card Colors */
+  .metric-card-green {
+    @apply bg-gradient-to-br from-emerald-500 to-green-600 text-white;
+  }
+  
+  .metric-card-blue {
+    @apply bg-gradient-to-br from-blue-500 to-cyan-600 text-white;
+  }
+  
+  .metric-card-orange {
+    @apply bg-gradient-to-br from-orange-500 to-amber-600 text-white;
+  }
+  
+  .metric-card-purple {
+    @apply bg-gradient-to-br from-purple-500 to-violet-600 text-white;
+  }
+  
+  /* Elite Header */
+  .elite-header {
+    @apply bg-card/95 backdrop-blur-md border-b border-border/50;
+    background: linear-gradient(90deg, hsl(var(--card)) 0%, hsl(var(--card)/0.95) 100%);
+  }
+  
+  /* Elite Sidebar */
+  .elite-sidebar {
+    background: linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(220 35% 8%) 100%);
+    border-right: 1px solid hsl(var(--sidebar-border));
+  }
+  
+  /* Elite Button Styles */
+  .elite-button {
+    @apply bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90;
+    @apply shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+  
+  /* Elite Navigation */
+  .elite-nav-item {
+    @apply relative overflow-hidden rounded-lg transition-all duration-300;
+    @apply hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground;
+  }
+  
+  .elite-nav-item::before {
+    content: '';
+    @apply absolute left-0 top-0 h-full w-1 bg-sidebar-primary transform scale-y-0 transition-transform duration-300;
+  }
+  
+  .elite-nav-item:hover::before,
+  .elite-nav-item.active::before {
+    @apply scale-y-100;
   }
 }
 
@@ -186,4 +265,124 @@ body {
 
 .text-responsive-sm {
   @apply text-xs sm:text-sm lg:text-base;
+}
+
+/* Elite Maritime Table Styling */
+.elite-table {
+  @apply w-full border-collapse overflow-hidden rounded-xl border-0 shadow-lg;
+  background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted)/20) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.elite-table-header {
+  @apply bg-gradient-to-r from-primary/90 to-accent/90 text-white;
+}
+
+.elite-table-header th {
+  @apply px-6 py-4 text-left text-sm font-bold uppercase tracking-wider;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.elite-table-row {
+  @apply border-b border-border/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5;
+  backdrop-filter: blur(5px);
+}
+
+.elite-table-row:nth-child(even) {
+  @apply bg-muted/20;
+}
+
+.elite-table-row:hover {
+  @apply scale-[1.01] shadow-md;
+  transform-origin: center;
+}
+
+.elite-table-cell {
+  @apply px-6 py-4 text-sm font-medium;
+}
+
+.elite-table-cell-header {
+  @apply px-6 py-4 text-sm font-bold text-white uppercase tracking-wide;
+}
+
+/* Elite Table Status Badges */
+.elite-status-badge {
+  @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+  backdrop-filter: blur(5px);
+}
+
+.elite-status-active {
+  @apply bg-green-500/20 text-green-700 dark:text-green-300 border border-green-500/30;
+}
+
+.elite-status-pending {
+  @apply bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/30;
+}
+
+.elite-status-inactive {
+  @apply bg-gray-500/20 text-gray-700 dark:text-gray-300 border border-gray-500/30;
+}
+
+.elite-status-emergency {
+  @apply bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/30;
+}
+
+/* Elite Table Action Buttons */
+.elite-table-action {
+  @apply inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:scale-110;
+  backdrop-filter: blur(5px);
+}
+
+.elite-table-action-view {
+  @apply bg-blue-500/20 text-blue-600 hover:bg-blue-500/30 border border-blue-500/30;
+}
+
+.elite-table-action-edit {
+  @apply bg-orange-500/20 text-orange-600 hover:bg-orange-500/30 border border-orange-500/30;
+}
+
+.elite-table-action-delete {
+  @apply bg-red-500/20 text-red-600 hover:bg-red-500/30 border border-red-500/30;
+}
+
+/* Dialog positioning is handled by component classes */
+
+/* Enhanced Gradient Text Visibility */
+.bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
+  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  line-height: 1.3 !important;
+  min-height: 1.3em;
+  display: inline-block;
+  padding: 0.1em 0;
+}
+
+/* Ensure proper height for different text sizes */
+.text-3xl.bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
+  line-height: 1.4 !important;
+  min-height: 2.625rem; /* 42px for text-3xl */
+}
+
+.text-4xl.bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
+  line-height: 1.4 !important;
+  min-height: 3.15rem; /* 50.4px for text-4xl */
+}
+
+/* Responsive text-4xl on small screens and up */
+@media (min-width: 640px) {
+  .sm\:text-4xl.bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
+    line-height: 1.4 !important;
+    min-height: 3.15rem; /* 50.4px for text-4xl */
+  }
+}
+
+/* Additional support for webkit browsers */
+@supports (-webkit-background-clip: text) {
+  .bg-gradient-to-r.from-primary.to-accent.bg-clip-text.text-transparent {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }

@@ -131,39 +131,77 @@ export default function DashboardPage() {
   return (
     <StaffOnly>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6 max-w-screen-2xl mx-auto">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+        <main className="flex w-full flex-1 flex-col gap-6 p-6 sm:gap-8 sm:p-8 max-w-screen-2xl mx-auto">
+          {/* Elite Header Section */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">System Online</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {t('dashboard.title')}
+              </h1>
+              <p className="text-muted-foreground font-medium">Elite Operations Dashboard</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
               <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
               <AddPatientDialog onSave={handleSavePatient} />
             </div>
           </div>
-          <OverviewStats />
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-5">
-      <Card className="lg:col-span-3">
-              <CardHeader>
-        <CardTitle className="text-lg sm:text-xl">{t('analytics.revenue_trend')}</CardTitle>
+          
+          {/* Elite Stats Overview */}
+          <div className="transform hover:scale-[1.01] transition-all duration-300">
+            <OverviewStats />
+          </div>
+          
+          {/* Elite Charts Section */}
+          <div className="grid gap-6 md:gap-8 lg:grid-cols-5">
+            <Card className="elite-card elite-card-hover lg:col-span-3">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <div className="w-4 h-4 rounded bg-primary"></div>
+                  </div>
+                  {t('analytics.revenue_trend')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <RevenueTrendsChart data={revenueData} />
               </CardContent>
             </Card>
-            <Card className="lg:col-span-2">
-              <CardHeader>
-        <CardTitle className="text-lg sm:text-xl">{t('dashboard.appointments_by_type')}</CardTitle>
+            <Card className="elite-card elite-card-hover lg:col-span-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <div className="w-4 h-4 rounded-full bg-accent"></div>
+                  </div>
+                  {t('dashboard.appointments_by_type')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="flex justify-center p-4">
                 <AppointmentTypesChart data={appointmentTypes} />
               </CardContent>
             </Card>
           </div>
-          <PendingAppointmentsManager onAppointmentUpdate={() => {
-            // Optionally refresh dashboard data when appointments are confirmed
-            window.location.reload();
-          }} />
-          <SupplyChainIntegration />
-          <KpiSuggestions />
+          
+          {/* Elite Management Sections */}
+          <div className="space-y-6">
+            <div className="transform hover:scale-[1.005] transition-all duration-300">
+              <PendingAppointmentsManager onAppointmentUpdate={() => {
+                // Optionally refresh dashboard data when appointments are confirmed
+                window.location.reload();
+              }} />
+            </div>
+            <div className="transform hover:scale-[1.005] transition-all duration-300">
+              <SupplyChainIntegration />
+            </div>
+            <div className="transform hover:scale-[1.005] transition-all duration-300">
+              <KpiSuggestions />
+            </div>
+          </div>
         </main>
       </DashboardLayout>
     </StaffOnly>

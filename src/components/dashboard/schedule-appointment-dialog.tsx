@@ -109,8 +109,10 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-9 sm:h-10">
-          <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <Button className="elite-button h-11 sm:h-12 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 mr-3">
+            <Plus className="h-3 w-3 text-white" />
+          </div>
           <span className="hidden sm:inline">{t('appointments.new_appointment')}</span>
           <span className="sm:hidden">{t('appointments.appointment')}</span>
         </Button>

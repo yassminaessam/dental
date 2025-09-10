@@ -126,20 +126,72 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
-          <Button onClick={handleSaveChanges}>{t('settings.save_changes')}</Button>
+  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Elite Settings Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <Building className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">System Configuration</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('settings.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Elite Management Console
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={handleSaveChanges}
+              className="elite-button bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              {t('settings.save_changes')}
+            </Button>
+          </div>
         </div>
 
+        {/* Elite Settings Tabs */}
         <Tabs defaultValue="clinic">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
-            <TabsTrigger value="clinic">{t('settings.tabs.clinic')}</TabsTrigger>
-            <TabsTrigger value="users">{t('settings.tabs.users')}</TabsTrigger>
-            <TabsTrigger value="notifications">{t('settings.tabs.notifications')}</TabsTrigger>
-            <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
-            <TabsTrigger value="backup">{t('settings.tabs.backup')}</TabsTrigger>
-            <TabsTrigger value="appearance">{t('settings.tabs.appearance')}</TabsTrigger>
+          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+            <TabsTrigger 
+              value="clinic" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.clinic')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="users" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.users')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.notifications')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="security" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.security')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="backup" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.backup')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="appearance" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('settings.tabs.appearance')}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="clinic" className="mt-6">

@@ -1,6 +1,37 @@
 import { prisma } from '@/lib/prisma';
-import { UserRole, AppointmentStatus, TreatmentStatus, InvoiceStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+
+// Define enum values as string literals
+const UserRole = {
+  admin: 'admin' as const,
+  doctor: 'doctor' as const,
+  receptionist: 'receptionist' as const,
+  patient: 'patient' as const
+};
+
+const AppointmentStatus = {
+  Scheduled: 'Scheduled' as const,
+  Confirmed: 'Confirmed' as const,
+  InProgress: 'InProgress' as const,
+  Completed: 'Completed' as const,
+  Cancelled: 'Cancelled' as const,
+  NoShow: 'NoShow' as const
+};
+
+const TreatmentStatus = {
+  Planned: 'Planned' as const,
+  InProgress: 'InProgress' as const,
+  Completed: 'Completed' as const,
+  Cancelled: 'Cancelled' as const
+};
+
+const InvoiceStatus = {
+  Draft: 'Draft' as const,
+  Sent: 'Sent' as const,
+  Paid: 'Paid' as const,
+  Overdue: 'Overdue' as const,
+  Cancelled: 'Cancelled' as const
+};
 
 // Sample data for seeding
 const sampleUsers = [
@@ -83,7 +114,7 @@ const sampleAppointments = [
     dateTime: new Date('2025-09-15T10:00:00Z'),
     duration: 60,
     type: 'Regular Checkup',
-    status: AppointmentStatus.scheduled,
+    status: AppointmentStatus.Scheduled,
     notes: 'Routine dental examination and cleaning'
   },
   {
@@ -93,7 +124,7 @@ const sampleAppointments = [
     dateTime: new Date('2025-09-16T14:30:00Z'),
     duration: 90,
     type: 'Root Canal',
-    status: AppointmentStatus.confirmed,
+    status: AppointmentStatus.Confirmed,
     notes: 'Root canal treatment for tooth #14'
   }
 ];
@@ -106,7 +137,7 @@ const sampleTreatments = [
     appointmentId: 'appointment-1',
     date: new Date('2025-09-15T10:00:00Z'),
     procedure: 'Dental Cleaning',
-    status: TreatmentStatus.completed,
+    status: TreatmentStatus.Completed,
     cost: 150.00,
     duration: 60,
     notes: 'Routine prophylaxis completed successfully'
@@ -119,7 +150,7 @@ const sampleTreatments = [
     date: new Date('2025-09-16T14:30:00Z'),
     procedure: 'Root Canal Treatment',
     tooth: '#14',
-    status: TreatmentStatus.inProgress,
+    status: TreatmentStatus.InProgress,
     cost: 800.00,
     duration: 90,
     notes: 'First session of root canal treatment'
@@ -135,7 +166,7 @@ const sampleInvoices = [
     date: new Date('2025-09-15'),
     dueDate: new Date('2025-10-15'),
     amount: 150.00,
-    status: InvoiceStatus.pending,
+    status: InvoiceStatus.Sent,
     items: [
       {
         description: 'Dental Cleaning',
@@ -188,7 +219,7 @@ async function seedDatabase() {
         data: {
           ...user,
           hashedPassword
-        }
+        } as any
       });
     }
     console.log(`✅ Created ${sampleUsers.length} users`);
@@ -206,7 +237,7 @@ async function seedDatabase() {
     console.log('📅 Seeding appointments...');
     for (const appointment of sampleAppointments) {
       await prisma.appointment.create({
-        data: appointment
+        data: appointment as any
       });
     }
     console.log(`✅ Created ${sampleAppointments.length} appointments`);
@@ -215,7 +246,7 @@ async function seedDatabase() {
     console.log('🦷 Seeding treatments...');
     for (const treatment of sampleTreatments) {
       await prisma.treatment.create({
-        data: treatment
+        data: treatment as any
       });
     }
     console.log(`✅ Created ${sampleTreatments.length} treatments`);
@@ -224,7 +255,7 @@ async function seedDatabase() {
     console.log('💰 Seeding invoices...');
     for (const invoice of sampleInvoices) {
       await prisma.invoice.create({
-        data: invoice
+        data: invoice as any
       });
     }
     console.log(`✅ Created ${sampleInvoices.length} invoices`);

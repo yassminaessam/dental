@@ -1,5 +1,31 @@
 import { prisma } from '@/lib/prisma';
-import type { User, UserRole, UserPermission } from '@prisma/client';
+
+// Define UserRole as string literals
+const UserRole = {
+  admin: 'admin' as const,
+  doctor: 'doctor' as const,
+  receptionist: 'receptionist' as const,
+  patient: 'patient' as const
+};
+
+type User = any; // Simplified type for now
+
+// Define UserPermission enum locally since it's used as strings in the schema
+export enum UserPermission {
+  VIEW_PATIENTS = 'view_patients',
+  EDIT_PATIENTS = 'edit_patients',
+  DELETE_PATIENTS = 'delete_patients',
+  VIEW_APPOINTMENTS = 'view_appointments',
+  EDIT_APPOINTMENTS = 'edit_appointments',
+  DELETE_APPOINTMENTS = 'delete_appointments',
+  VIEW_TREATMENTS = 'view_treatments',
+  EDIT_TREATMENTS = 'edit_treatments',
+  DELETE_TREATMENTS = 'delete_treatments',
+  VIEW_BILLING = 'view_billing',
+  EDIT_BILLING = 'edit_billing',
+  DELETE_BILLING = 'delete_billing',
+  VIEW_REPORTS = 'view_reports',
+}
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -13,7 +39,7 @@ export interface RegisterData {
   password: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  role: string;
   phone?: string;
   specialization?: string;
   licenseNumber?: string;
@@ -109,7 +135,7 @@ export class AuthService {
           email: data.email.toLowerCase(),
           firstName: data.firstName,
           lastName: data.lastName,
-          role: data.role,
+          role: data.role as any,
           permissions: data.permissions || this.getDefaultPermissions(data.role),
           hashedPassword,
           isActive: true,
@@ -213,7 +239,7 @@ export class AuthService {
         orderBy: { createdAt: 'desc' }
       });
 
-      return users.map(user => ({
+      return users.map((user: any) => ({
         ...user,
         permissions: user.permissions as UserPermission[]
       }));
@@ -320,8 +346,8 @@ export class AuthService {
   /**
    * Get default permissions for a role
    */
-  private static getDefaultPermissions(role: UserRole): string[] {
-    const rolePermissions: Record<UserRole, string[]> = {
+  private static getDefaultPermissions(role: string): string[] {
+    const rolePermissions: Record<string, string[]> = {
       admin: [
         'view_patients', 'edit_patients', 'delete_patients',
         'view_appointments', 'edit_appointments', 'delete_appointments',

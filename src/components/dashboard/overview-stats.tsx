@@ -34,12 +34,12 @@ type IconKey = keyof typeof iconMap;
 export default function OverviewStats() {
   const { t } = useLanguage();
     const [stats, setStats] = React.useState([
-    { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-    { title: t('dashboard.todays_appointments'), value: "0", description: t('dashboard.scheduled_today'), icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
-    { title: t('dashboard.total_revenue'), value: "EGP 0", description: t('dashboard.all_time_revenue'), icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-    { title: t('dashboard.active_staff'), value: "0", description: t('dashboard.currently_on_duty'), icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-    { title: t('dashboard.pending_appointments'), value: "0", description: t('dashboard.awaiting_confirmation'), icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-    { title: t('dashboard.completed_treatments'), value: "0", description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+    { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue" },
+    { title: t('dashboard.todays_appointments'), value: "0", description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green" },
+    { title: t('dashboard.total_revenue'), value: "EGP 0", description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange" },
+    { title: t('dashboard.active_staff'), value: "0", description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple" },
+    { title: t('dashboard.pending_appointments'), value: "0", description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange" },
+    { title: t('dashboard.completed_treatments'), value: "0", description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green" },
     ]);
 
     React.useEffect(() => {
@@ -60,16 +60,14 @@ export default function OverviewStats() {
                 const pendingAppointments = appointments.filter(a => a.status === 'Pending').length;
                 const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
                 
-        setStats([
-          { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-          { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", iconBg: "bg-green-100", iconColor: "text-green-600" },
-          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", iconBg: "bg-yellow-100", iconColor: "text-yellow-500" },
-          { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
-          { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", iconBg: "bg-orange-100", iconColor: "text-orange-500" },
-          { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
-        ]);
-
-            } catch (error) {
+                setStats([
+          { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue" },
+          { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green" },
+          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange" },
+          { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple" },
+          { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange" },
+          { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green" },
+        ]);            } catch (error) {
                 console.error("Failed to fetch overview stats:", error);
             }
         }
@@ -77,29 +75,47 @@ export default function OverviewStats() {
   }, [t]);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {stats.map((stat) => {
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {stats.map((stat, index) => {
         const Icon = iconMap[stat.icon as IconKey];
         return (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg",
-                  stat.iconBg,
-                  stat.iconColor
-                )}
-              >
-                <Icon className="h-4 w-4" />
+          <Card 
+            key={stat.title} 
+            className={cn(
+              "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+              stat.cardStyle
+            )}
+          >
+            {/* Animated Background Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                  {stat.title}
+                </CardTitle>
+                <div className="text-3xl font-bold text-white drop-shadow-sm">
+                  {stat.value}
+                </div>
+              </div>
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                <Icon className="h-6 w-6 text-white drop-shadow-sm" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
+            
+            <CardContent className="pt-0 relative z-10">
+              <p className="text-xs text-white/80 font-medium">
+                {stat.description}
+              </p>
+              {/* Elite Metric Indicator */}
+              <div className="flex items-center gap-2 mt-3">
+                <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                <span className="text-xs text-white/70 font-medium">Active</span>
+              </div>
             </CardContent>
+            
+            {/* Elite Corner Accent */}
+            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
           </Card>
         );
       })}

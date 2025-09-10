@@ -180,44 +180,97 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-2xl sm:text-3xl font-bold">{t('patients.title')}</h1>
-            <AddPatientDialog onSave={handleSavePatient} />
+        <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+          {/* Elite Header Section */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">Patient Management</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {t('patients.title')}
+              </h1>
+              <p className="text-muted-foreground font-medium">Elite Patient Registry</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <AddPatientDialog onSave={handleSavePatient} />
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-            {patientPageStats.map((stat) => {
+          {/* Elite Patient Stats */}
+          <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            {patientPageStats.map((stat, index) => {
               const Icon = iconMap[stat.icon as IconKey];
+              const cardStyles = [
+                'metric-card-blue',
+                'metric-card-green', 
+                'metric-card-orange',
+                'metric-card-purple'
+              ];
+              const cardStyle = cardStyles[index % cardStyles.length];
+              
               return (
-                <Card key={stat.title}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className={cn('text-lg sm:text-2xl font-bold', stat.valueClassName)}>
-                      {stat.value}
+                <Card 
+                  key={stat.title}
+                  className={cn(
+                    "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                    cardStyle
+                  )}
+                >
+                  {/* Animated Background Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                    <div className="flex flex-col gap-1">
+                      <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                        {stat.title}
+                      </CardTitle>
+                      <div className="text-2xl font-bold text-white drop-shadow-sm">
+                        {stat.value}
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                      <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0 relative z-10">
+                    <p className="text-xs text-white/80 font-medium">
+                      {stat.description}
+                    </p>
+                    {/* Elite Status Indicator */}
+                    <div className="flex items-center gap-2 mt-3">
+                      <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                      <span className="text-xs text-white/70 font-medium">Active</span>
+                    </div>
                   </CardContent>
+                  
+                  {/* Elite Corner Accent */}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
                 </Card>
               );
             })}
           </div>
 
-          <Card>
-            <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="text-lg sm:text-xl">{t('patients.patient_directory')}</CardTitle>
-              <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
+          {/* Elite Patient Directory */}
+          <Card className="elite-card">
+            <CardHeader className="flex flex-col gap-4 p-6 sm:p-8 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <div className="w-4 h-4 rounded bg-primary"></div>
+                </div>
+                {t('patients.patient_directory')}
+              </CardTitle>
+              <div className="flex w-full flex-col items-center gap-3 md:w-auto md:flex-row">
                 <div className="relative w-full md:w-auto">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder={t('patients.search_patients')}
-                    className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
+                    className="w-full rounded-xl bg-background/60 backdrop-blur-sm border-border/50 pl-10 h-11 text-sm font-medium placeholder:text-muted-foreground/70 focus:bg-background/80 focus:border-primary/50 transition-all duration-300 lg:w-[320px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />

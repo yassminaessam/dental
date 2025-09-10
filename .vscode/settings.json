@@ -1,4 +1,12 @@
 {
     "IDX.aI.enableInlineCompletion": true,
-    "IDX.aI.enableCodebaseIndexing": true
+    "IDX.aI.enableCodebaseIndexing": true,
+    "css.validate": false,
+    "css.lint.unknownAtRules": "ignore",
+    "scss.validate": false,
+    "less.validate": false,
+    "tailwindCSS.validate": true,
+    "files.associations": {
+        "*.css": "tailwindcss"
+    }
 }
