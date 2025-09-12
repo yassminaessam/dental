@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getDbClient } from '@/services/database';
 
 // GET /api/collections/[collection] - Get all documents from a collection
 export async function GET(
@@ -8,68 +8,68 @@ export async function GET(
 ) {
   try {
     const { collection } = await params;
+    const dbClient = await getDbClient();
     
     // Map frontend collection names to Prisma models
     const collectionMap: { [key: string]: any } = {
       // Plural forms
-      'users': prisma.user,
-      'patients': prisma.patient,
-      'appointments': prisma.appointment,
-      'treatments': prisma.treatment,
-      'medical-records': prisma.medicalRecord,
-      'medicalRecords': prisma.medicalRecord,
-      'clinical-images': prisma.clinicalImage,
-      'clinicalImages': prisma.clinicalImage,
-      'tooth-image-links': prisma.toothImageLink,
-      'toothImageLinks': prisma.toothImageLink,
-      'invoices': prisma.invoice,
-      'insurance-claims': prisma.insuranceClaim,
-      'insuranceClaims': prisma.insuranceClaim,
-      'insurance-providers': prisma.insuranceProvider,
-      'insuranceProviders': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventory': prisma.inventoryItem,
-      'inventory-items': prisma.inventoryItem,
-      'inventoryItems': prisma.inventoryItem,
-      'purchase-orders': prisma.purchaseOrder,
-      'purchaseOrders': prisma.purchaseOrder,
-      'suppliers': prisma.supplier,
-      'medications': prisma.medication,
-      'prescriptions': prisma.prescription,
-      'messages': prisma.message,
-      'referrals': prisma.referral,
-      'specialists': prisma.specialist,
-      'portal-users': prisma.portalUser,
-      'portalUsers': prisma.portalUser,
-      'shared-documents': prisma.sharedDocument,
-      'sharedDocuments': prisma.sharedDocument,
-      'transactions': prisma.transaction,
-      'clinic-settings': prisma.clinicSettings,
-      'clinicSettings': prisma.clinicSettings,
+      'users': dbClient.user,
+      'patients': dbClient.patient,
+      'appointments': dbClient.appointment,
+      'treatments': dbClient.treatment,
+      'medical-records': dbClient.medicalRecord,
+      'medicalRecords': dbClient.medicalRecord,
+      'clinical-images': dbClient.clinicalImage,
+      'clinicalImages': dbClient.clinicalImage,
+      'tooth-image-links': dbClient.toothImageLink,
+      'toothImageLinks': dbClient.toothImageLink,
+      'invoices': dbClient.invoice,
+      'insurance-claims': dbClient.insuranceClaim,
+      'insuranceClaims': dbClient.insuranceClaim,
+      'insurance-providers': dbClient.insuranceProvider,
+      'insuranceProviders': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventory': dbClient.inventoryItem,
+      'inventory-items': dbClient.inventoryItem,
+      'inventoryItems': dbClient.inventoryItem,
+      'purchase-orders': dbClient.purchaseOrder,
+      'purchaseOrders': dbClient.purchaseOrder,
+      'suppliers': dbClient.supplier,
+      'medications': dbClient.medication,
+      'prescriptions': dbClient.prescription,
+      'messages': dbClient.message,
+      'referrals': dbClient.referral,
+      'specialists': dbClient.specialist,
+      'portal-users': dbClient.portalUser,
+      'portalUsers': dbClient.portalUser,
+      'shared-documents': dbClient.sharedDocument,
+      'sharedDocuments': dbClient.sharedDocument,
+      'transactions': dbClient.transaction,
+      'clinic-settings': dbClient.clinicSettings,
+      'clinicSettings': dbClient.clinicSettings,
       
       // Singular forms (for backward compatibility)
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction
     };
 
     const model = collectionMap[collection];
@@ -90,6 +90,7 @@ export async function GET(
       return NextResponse.json(data);
     }
   } catch (error) {
+    const { collection } = await params;
     console.error(`Error fetching collection ${collection}:`, error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -103,68 +104,68 @@ export async function POST(
   try {
     const { collection } = await params;
     const data = await request.json();
+    const dbClient = await getDbClient();
     
     // Map frontend collection names to Prisma models (same mapping as GET)
     const collectionMap: { [key: string]: any } = {
       // Plural forms
-      'users': prisma.user,
-      'patients': prisma.patient,
-      'appointments': prisma.appointment,
-      'treatments': prisma.treatment,
-      'medical-records': prisma.medicalRecord,
-      'medicalRecords': prisma.medicalRecord,
-      'clinical-images': prisma.clinicalImage,
-      'clinicalImages': prisma.clinicalImage,
-      'tooth-image-links': prisma.toothImageLink,
-      'toothImageLinks': prisma.toothImageLink,
-      'invoices': prisma.invoice,
-      'insurance-claims': prisma.insuranceClaim,
-      'insuranceClaims': prisma.insuranceClaim,
-      'insurance-providers': prisma.insuranceProvider,
-      'insuranceProviders': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventory': prisma.inventoryItem,
-      'inventory-items': prisma.inventoryItem,
-      'inventoryItems': prisma.inventoryItem,
-      'purchase-orders': prisma.purchaseOrder,
-      'purchaseOrders': prisma.purchaseOrder,
-      'suppliers': prisma.supplier,
-      'medications': prisma.medication,
-      'prescriptions': prisma.prescription,
-      'messages': prisma.message,
-      'referrals': prisma.referral,
-      'specialists': prisma.specialist,
-      'portal-users': prisma.portalUser,
-      'portalUsers': prisma.portalUser,
-      'shared-documents': prisma.sharedDocument,
-      'sharedDocuments': prisma.sharedDocument,
-      'transactions': prisma.transaction,
-      'clinic-settings': prisma.clinicSettings,
-      'clinicSettings': prisma.clinicSettings,
+      'users': dbClient.user,
+      'patients': dbClient.patient,
+      'appointments': dbClient.appointment,
+      'treatments': dbClient.treatment,
+      'medical-records': dbClient.medicalRecord,
+      'medicalRecords': dbClient.medicalRecord,
+      'clinical-images': dbClient.clinicalImage,
+      'clinicalImages': dbClient.clinicalImage,
+      'tooth-image-links': dbClient.toothImageLink,
+      'toothImageLinks': dbClient.toothImageLink,
+      'invoices': dbClient.invoice,
+      'insurance-claims': dbClient.insuranceClaim,
+      'insuranceClaims': dbClient.insuranceClaim,
+      'insurance-providers': dbClient.insuranceProvider,
+      'insuranceProviders': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventory': dbClient.inventoryItem,
+      'inventory-items': dbClient.inventoryItem,
+      'inventoryItems': dbClient.inventoryItem,
+      'purchase-orders': dbClient.purchaseOrder,
+      'purchaseOrders': dbClient.purchaseOrder,
+      'suppliers': dbClient.supplier,
+      'medications': dbClient.medication,
+      'prescriptions': dbClient.prescription,
+      'messages': dbClient.message,
+      'referrals': dbClient.referral,
+      'specialists': dbClient.specialist,
+      'portal-users': dbClient.portalUser,
+      'portalUsers': dbClient.portalUser,
+      'shared-documents': dbClient.sharedDocument,
+      'sharedDocuments': dbClient.sharedDocument,
+      'transactions': dbClient.transaction,
+      'clinic-settings': dbClient.clinicSettings,
+      'clinicSettings': dbClient.clinicSettings,
       
       // Singular forms (for backward compatibility)
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction
     };
 
     const model = collectionMap[collection];
@@ -183,6 +184,7 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
+    const { collection } = await params;
     console.error(`Error creating document in collection ${collection}:`, error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
