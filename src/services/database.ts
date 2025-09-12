@@ -1,29 +1,7 @@
-// Check if we're running in the browser
-import { PrismaClient } from '@prisma/client';
-
-// Function to check if we're     } else {
-      // Server-side: use Prisma directly
-      if (!dbClient) {
-        throw new Error('Database client not initialized');
-      }
-      const collection = dbClient[model] as any;
-      const result = await collection.delete({rowser environment
-const isBrowser = () => typeof window !== 'undefined';
-
-// Only import Prisma on the server side
-let dbClient: any = null;
-if (!isBrowser()) {
-  dbClient = require('@/lib/prisma').prisma;
-}
-
-// Export function to get database client
-export const getDbClient = () => dbClient;
-
-import type { 
-  Patient, 
-  Appointment, 
-  Treatment, 
-  User, 
+import type {
+  Patient,
+  Appointment,
+  Treatment,
   Invoice,
   Staff,
   InventoryItem,
@@ -42,8 +20,35 @@ import type {
   PortalUser,
   SharedDocument,
   Transaction,
-  ClinicSettings
+  ClinicSettings,
+  PrismaClient
 } from '@prisma/client';
+
+// -----------------------------------------------------------------------------
+// Environment / Client acquisition helpers
+// -----------------------------------------------------------------------------
+export const isBrowser = () => typeof window !== 'undefined';
+
+// We only load the Prisma client on the server. On the client these helpers
+// will fall back to calling the API routes instead of touching Prisma directly.
+let dbClient: PrismaClient | null = null;
+if (!isBrowser()) {
+  // Dynamic require so Next.js tree-shakes Prisma out of client bundles.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const prismaModule = require('@/lib/prisma');
+  dbClient = prismaModule.prisma as PrismaClient;
+}
+
+// Public accessor. Kept async in case we later need lazy init / connection warmup.
+export async function getDbClient(): Promise<PrismaClient> {
+  if (isBrowser()) {
+    throw new Error('Direct database access is server-only. Use API endpoints from the client.');
+  }
+  if (!dbClient) {
+    throw new Error('Database client not initialized');
+  }
+  return dbClient;
+}
 
 // Generic functions for CRUD operations
 
@@ -62,7 +67,10 @@ export async function getCollection<T>(
       return await response.json();
     } else {
       // Server-side: use Prisma directly
-      const collection = dbClient[model] as any;
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
       const data = await collection.findMany({
         include,
         orderBy: { createdAt: 'desc' }
@@ -97,7 +105,7 @@ export async function getDocument<T>(
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const collection = dbClient[model] as any;
+      const collection = (dbClient as any)[model];
       const data = await collection.findUnique({
         where: { id },
         include
@@ -134,7 +142,7 @@ export async function addDocument<T>(
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const collection = dbClient[model] as any;
+      const collection = (dbClient as any)[model];
       const result = await collection.create({
         data: {
           ...data,
@@ -172,7 +180,10 @@ export async function setDocument<T>(
       return await response.json();
     } else {
       // Server-side: use Prisma directly
-      const collection = dbClient[model] as any;
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
       const result = await collection.upsert({
         where: { id },
         create: {
@@ -219,7 +230,7 @@ export async function updateDocument<T>(
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const collection = dbClient[model] as any;
+      const collection = (dbClient as any)[model];
       const result = await collection.update({
         where: { id },
         data: {
@@ -251,7 +262,10 @@ export async function deleteDocument(
       }
     } else {
       // Server-side: use Prisma directly
-      const collection = dbClient[model] as any;
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
       await collection.delete({
         where: { id }
       });
@@ -313,7 +327,7 @@ export async function searchPatients(searchTerm: string): Promise<Patient[]> {
       throw new Error('Database client not initialized');
     }
     try {
-      const patients = await dbClient.patient.findMany({
+      const patients = await (dbClient as PrismaClient).patient.findMany({
         where: {
           OR: [
             { firstName: { contains: searchTerm, mode: 'insensitive' } },
@@ -350,7 +364,7 @@ export async function getAppointmentsByDateRange(
       throw new Error('Database client not initialized');
     }
     try {
-      const appointments = await dbClient.appointment.findMany({
+      const appointments = await (dbClient as PrismaClient).appointment.findMany({
         where: {
           dateTime: {
             gte: startDate,
@@ -383,7 +397,10 @@ export async function getPatientTreatments(patientId: string): Promise<Treatment
   } else {
     // Server-side: use Prisma directly
     try {
-      const treatments = await dbClient.treatment.findMany({
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const treatments = await (dbClient as PrismaClient).treatment.findMany({
         where: { patientId },
         include: {
           doctor: true,
@@ -411,7 +428,10 @@ export async function getPatientMedicalRecords(patientId: string): Promise<Medic
   } else {
     // Server-side: use Prisma directly
     try {
-      const records = await dbClient.medicalRecord.findMany({
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const records = await (dbClient as PrismaClient).medicalRecord.findMany({
         where: { patientId },
         orderBy: { date: 'desc' }
       });
@@ -435,7 +455,10 @@ export async function getLowStockItems(): Promise<InventoryItem[]> {
   } else {
     // Server-side: use Prisma directly
     try {
-      const items = await dbClient.inventoryItem.findMany({
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const items = await (dbClient as PrismaClient).inventoryItem.findMany({
         where: {
           quantity: {
             // Use a subquery or raw SQL for field comparison
@@ -464,7 +487,10 @@ export async function getOverdueInvoices(): Promise<Invoice[]> {
   } else {
     // Server-side: use Prisma directly
     try {
-      const invoices = await dbClient.invoice.findMany({
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const invoices = await (dbClient as PrismaClient).invoice.findMany({
         where: {
           status: { not: 'paid' },
           dueDate: { lt: new Date() }
@@ -503,6 +529,9 @@ export async function batchCreateDocuments<T>(
   } else {
     // Server-side: use Prisma directly
     try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
       const collection = (dbClient as any)[model];
       if (!collection) {
         throw new Error(`Unknown model: ${model}`);
@@ -530,7 +559,10 @@ export async function executeTransaction<T>(
   }
   
   try {
-    return await dbClient.$transaction(operations);
+    if (!dbClient) {
+      throw new Error('Database client not initialized');
+    }
+    return await (dbClient as PrismaClient).$transaction(operations);
   } catch (error) {
     console.error('Error executing transaction:', error);
     throw error;
@@ -551,7 +583,10 @@ export async function checkDatabaseHealth(): Promise<boolean> {
   } else {
     // Server-side: direct database check
     try {
-      await dbClient.$queryRaw`SELECT 1`;
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      await (dbClient as PrismaClient).$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
       console.error('Database health check failed:', error);
@@ -559,7 +594,6 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     }
   }
 }
-
-export default prisma;
+// Intentionally no default export to avoid accidental client-side Prisma import.
 
 

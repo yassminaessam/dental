@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getDbClient } from '@/services/database';
 
 // GET /api/documents/[collection]/[id] - Get a specific document
 export async function GET(
@@ -9,30 +9,31 @@ export async function GET(
   try {
     const { collection, id } = await params;
     
+    const dbClient = await getDbClient();
     const validCollections: { [key: string]: any } = {
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction,
+      'clinicSettings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -64,30 +65,31 @@ export async function PUT(
     const { collection, id } = await params;
     const data = await request.json();
     
+    const dbClient = await getDbClient();
     const validCollections: { [key: string]: any } = {
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction,
+      'clinicSettings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -119,30 +121,31 @@ export async function PATCH(
     const { collection, id } = await params;
     const data = await request.json();
     
+    const dbClient = await getDbClient();
     const validCollections: { [key: string]: any } = {
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction,
+      'clinicSettings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -179,30 +182,31 @@ export async function DELETE(
   try {
     const { collection, id } = await params;
     
+    const dbClient = await getDbClient();
     const validCollections: { [key: string]: any } = {
-      'user': prisma.user,
-      'patient': prisma.patient,
-      'appointment': prisma.appointment,
-      'treatment': prisma.treatment,
-      'medicalRecord': prisma.medicalRecord,
-      'clinicalImage': prisma.clinicalImage,
-      'toothImageLink': prisma.toothImageLink,
-      'invoice': prisma.invoice,
-      'insuranceClaim': prisma.insuranceClaim,
-      'insuranceProvider': prisma.insuranceProvider,
-      'staff': prisma.staff,
-      'inventoryItem': prisma.inventoryItem,
-      'purchaseOrder': prisma.purchaseOrder,
-      'supplier': prisma.supplier,
-      'medication': prisma.medication,
-      'prescription': prisma.prescription,
-      'message': prisma.message,
-      'referral': prisma.referral,
-      'specialist': prisma.specialist,
-      'portalUser': prisma.portalUser,
-      'sharedDocument': prisma.sharedDocument,
-      'transaction': prisma.transaction,
-      'clinicSettings': prisma.clinicSettings
+      'user': dbClient.user,
+      'patient': dbClient.patient,
+      'appointment': dbClient.appointment,
+      'treatment': dbClient.treatment,
+      'medicalRecord': dbClient.medicalRecord,
+      'clinicalImage': dbClient.clinicalImage,
+      'toothImageLink': dbClient.toothImageLink,
+      'invoice': dbClient.invoice,
+      'insuranceClaim': dbClient.insuranceClaim,
+      'insuranceProvider': dbClient.insuranceProvider,
+      'staff': dbClient.staff,
+      'inventoryItem': dbClient.inventoryItem,
+      'purchaseOrder': dbClient.purchaseOrder,
+      'supplier': dbClient.supplier,
+      'medication': dbClient.medication,
+      'prescription': dbClient.prescription,
+      'message': dbClient.message,
+      'referral': dbClient.referral,
+      'specialist': dbClient.specialist,
+      'portalUser': dbClient.portalUser,
+      'sharedDocument': dbClient.sharedDocument,
+      'transaction': dbClient.transaction,
+      'clinicSettings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
