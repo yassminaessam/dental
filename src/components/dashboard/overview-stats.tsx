@@ -12,7 +12,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCollection } from '@/services/firestore';
+import { getCollection } from '@/services/database';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 import type { StaffMember } from '@/app/staff/page';

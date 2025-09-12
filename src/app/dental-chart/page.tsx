@@ -28,9 +28,7 @@ import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dial
 import { UploadImageDialog } from '@/components/medical-records/upload-image-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
-import { getCollection, setDocument } from '@/services/firestore';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getCollection, setDocument, getDocument } from '@/services/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
@@ -98,10 +96,9 @@ export default function DentalChartPage() {
     const fetchChartData = async (patientId: string) => {
         setLoading(true);
         try {
-            const docRef = doc(db, 'dental-charts', patientId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setChartData(docSnap.data().chart);
+            const docSnap = await getDocument('dental-charts', patientId);
+            if (docSnap && (docSnap as any).chart) {
+                setChartData((docSnap as any).chart);
             } else {
                 setChartData({ ...allHealthyDentalChart });
             }

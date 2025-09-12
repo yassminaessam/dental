@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { updateDocument, getDocument } from '@/services/database';
 
 export default function UpdatePermissionsPage() {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -22,15 +21,12 @@ export default function UpdatePermissionsPage() {
       const ADMIN_USER_ID = 'rolltlh0UIXrceBiQ7iPRDBbYEV2';
       
       // Get current user data
-      const userRef = doc(db, 'users', ADMIN_USER_ID);
-      const userDoc = await getDoc(userRef);
+      const userData = await getDocument('user', ADMIN_USER_ID);
       
-      if (!userDoc.exists()) {
+      if (!userData) {
         throw new Error('Admin user not found');
       }
-      
-      const userData = userDoc.data();
-      const currentPermissions = userData.permissions || [];
+      const currentPermissions = (userData as any).permissions || [];
       
       // Add new patient portal permissions if they don't exist
       const newPermissions = [
@@ -55,7 +51,7 @@ export default function UpdatePermissionsPage() {
       }
       
       // Update the user document
-      await updateDoc(userRef, {
+      await updateDocument('user', ADMIN_USER_ID, {
         permissions: updatedPermissions,
         updatedAt: new Date()
       });

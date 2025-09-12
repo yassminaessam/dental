@@ -61,7 +61,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type InventoryItem = {

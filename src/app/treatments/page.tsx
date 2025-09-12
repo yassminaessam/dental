@@ -32,14 +32,12 @@ import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-pl
 import { useToast } from '@/hooks/use-toast';
 import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
 import { EditTreatmentDialog } from "@/components/treatments/edit-treatment-dialog";
-import { getCollection, setDocument, updateDocument, deleteDocument, listenToCollection } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument, listenToCollection } from '@/services/database';
 import type { Appointment } from '../appointments/page';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -139,7 +137,6 @@ export default function TreatmentsPage() {
   const handleSavePlan = async (data: any) => {
     try {
       const treatmentId = `TRT-${Date.now()}`;
-      const batch = writeBatch(db);
       
       const appointmentRefs: TreatmentAppointment[] = [];
 
@@ -160,8 +157,7 @@ export default function TreatmentsPage() {
           status: 'Confirmed',
           treatmentId: treatmentId,
         };
-        const appointmentRef = doc(db, 'appointments', appointmentId);
-        batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
+        await setDocument('appointments', appointmentId, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
         appointmentRefs.push({
             date: appt.date.toISOString(),
             time: appt.time,
@@ -183,10 +179,7 @@ export default function TreatmentsPage() {
         appointments: appointmentRefs,
       };
 
-      const treatmentRef = doc(db, 'treatments', treatmentId);
-      batch.set(treatmentRef, { ...newTreatment, appointments: newTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) });
-      
-      await batch.commit();
+      await setDocument('treatments', treatmentId, { ...newTreatment, appointments: newTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) });
 
       toast({
         title: t('treatments.toast.plan_created'),
@@ -207,21 +200,19 @@ export default function TreatmentsPage() {
   
   const handleUpdateTreatment = async (updatedTreatment: Treatment) => {
     try {
-        const batch = writeBatch(db);
-        const treatmentRef = doc(db, 'treatments', updatedTreatment.id);
-        
-        const existingAppointmentsQuery = query(collection(db, "appointments"), where("treatmentId", "==", updatedTreatment.id));
-        const existingAppointmentsSnapshot = await getDocs(existingAppointmentsQuery);
-        const existingAppointmentIds = new Set(existingAppointmentsSnapshot.docs.map(d => d.id));
+        // Get existing appointments for this treatment
+        const existingAppointments = await getCollection<Appointment>('appointments');
+        const treatmentAppointments = existingAppointments.filter(apt => apt.treatmentId === updatedTreatment.id);
+        const existingAppointmentIds = new Set(treatmentAppointments.map(apt => apt.id));
 
         const updatedAppointmentIds = new Set((updatedTreatment.appointments || []).map(a => a.appointmentId).filter(Boolean));
 
         // Delete appointments that are no longer in the plan
-        existingAppointmentsSnapshot.forEach(appointmentDoc => {
-            if (!updatedAppointmentIds.has(appointmentDoc.id)) {
-                batch.delete(appointmentDoc.ref);
+        for (const apt of treatmentAppointments) {
+            if (!updatedAppointmentIds.has(apt.id)) {
+                await deleteDocument('appointments', apt.id);
             }
-        });
+        }
 
         // Update existing or create new appointments
         for (const appt of (updatedTreatment.appointments || [])) {
@@ -241,12 +232,10 @@ export default function TreatmentsPage() {
             };
 
             if (appt.appointmentId && existingAppointmentIds.has(appt.appointmentId)) {
-                 const appointmentRef = doc(db, 'appointments', appt.appointmentId);
-                 batch.update(appointmentRef, {...appointmentData, dateTime: appointmentData.dateTime.toISOString() });
+                await updateDocument('appointments', appt.appointmentId, {...appointmentData, dateTime: appointmentData.dateTime.toISOString() });
             } else {
                 const appointmentId = `APT-${Date.now()}-${Math.random()}`;
-                const appointmentRef = doc(db, 'appointments', appointmentId);
-                batch.set(appointmentRef, {...appointmentData, id: appointmentId, dateTime: appointmentData.dateTime.toISOString() });
+                await setDocument('appointments', appointmentId, {...appointmentData, id: appointmentId, dateTime: appointmentData.dateTime.toISOString() });
                 // Update the treatment's appointment with the new ID
                 const treatmentAppt = (updatedTreatment.appointments || []).find(a => a.date === appt.date && a.time === appt.time);
                 if (treatmentAppt) {
@@ -256,9 +245,7 @@ export default function TreatmentsPage() {
         }
         
         const treatmentDocData = { ...updatedTreatment, appointments: (updatedTreatment.appointments || []).map(a => ({...a, date: new Date(a.date).toISOString()})) };
-        batch.update(treatmentRef, treatmentDocData);
-
-        await batch.commit();
+        await updateDocument('treatments', updatedTreatment.id, treatmentDocData);
         setTreatmentToEdit(null);
         toast({
             title: t('treatments.toast.plan_updated'),
@@ -272,15 +259,15 @@ export default function TreatmentsPage() {
   const handleDeleteTreatment = async () => {
     if (!treatmentToDelete) return;
     try {
-        const q = query(collection(db, "appointments"), where("treatmentId", "==", treatmentToDelete.id));
-        const querySnapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
+        // Get appointments for this treatment and delete them
+        const appointments = await getCollection<Appointment>('appointments');
+        const treatmentAppointments = appointments.filter(apt => apt.treatmentId === treatmentToDelete.id);
+        
+        for (const apt of treatmentAppointments) {
+            await deleteDocument('appointments', apt.id);
+        }
 
-  await deleteDocument('treatments', treatmentToDelete.id);
+        await deleteDocument('treatments', treatmentToDelete.id);
 
         setTreatmentToDelete(null);
 

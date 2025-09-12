@@ -28,10 +28,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Building, Users, Bell, Shield, Database, Palette, Loader2 } from "lucide-react";
-import { getCollection, setDocument } from '@/services/firestore';
+import { getCollection, setDocument, getDocument } from '@/services/database';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 type ClinicSettings = {
   id: string;
@@ -70,10 +68,9 @@ export default function SettingsPage() {
   React.useEffect(() => {
     async function fetchSettings() {
       try {
-        const docRef = doc(db, "clinic-settings", "main");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setSettings(docSnap.data() as ClinicSettings);
+        const docSnap = await getDocument("clinic-settings", "main");
+        if (docSnap) {
+          setSettings(docSnap as ClinicSettings);
         } else {
           console.log("No such document! Using initial settings.");
           // Optionally, create the document if it doesn't exist

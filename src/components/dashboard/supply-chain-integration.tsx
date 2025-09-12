@@ -25,8 +25,48 @@ import {
   Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getCollection } from "@/services/database";
+
+// Local type definitions for supply chain data
+interface SupplyChainSupplier {
+  id: string;
+  name: string;
+  status: string;
+}
+
+interface SupplyChainPurchaseOrder {
+  id: string;
+  supplier: string;
+  status: string;
+  totalAmount: string;
+  orderDate: string;
+  expectedDelivery: string;
+  items: number;
+}
+
+interface SupplyChainInventoryItem {
+  id: string;
+  name: string;
+  status: string;
+  category: string;
+  currentStock: number;
+  minStock: number;
+  unit: string;
+  supplier: string;
+  lastOrdered: string;
+}
+
+interface SupplyChainMedication {
+  id: string;
+  name: string;
+  status: string;
+  category: string;
+  currentStock: number;
+  minStock: number;
+  unit: string;
+  supplier: string;
+  lastOrdered: string;
+}
 
 interface IntegrationStats {
   totalSuppliers: number;
@@ -105,28 +145,29 @@ export function SupplyChainIntegration() {
   const fetchIntegrationData = async () => {
     try {
       const [
-        suppliersSnapshot,
-        purchaseOrdersSnapshot,
-        inventorySnapshot,
-        medicationsSnapshot,
+        suppliers,
+        purchaseOrders,
+        inventory,
+        medications,
       ] = await Promise.all([
-        getDocs(collection(db, "suppliers")),
-        getDocs(collection(db, "purchase-orders")),
-        getDocs(collection(db, "inventory")),
-        getDocs(collection(db, "medications")),
+        getCollection("suppliers"),
+        getCollection("purchase-orders"),
+        getCollection("inventory"),
+        getCollection("medications"),
       ]);
 
-      const suppliers = suppliersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const purchaseOrders = purchaseOrdersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const inventory = inventorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const medications = medicationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      // Type cast the returned data
+      const typedSuppliers = suppliers as SupplyChainSupplier[];
+      const typedPurchaseOrders = purchaseOrders as SupplyChainPurchaseOrder[];
+      const typedInventory = inventory as SupplyChainInventoryItem[];
+      const typedMedications = medications as SupplyChainMedication[];
 
-      const totalSuppliers = suppliers.length;
-      const activeOrders = purchaseOrders.filter(po => po.status === 'Pending' || po.status === 'Shipped').length;
-      const inventoryItems = inventory.length;
-      const lowStockItems = inventory.filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock').length;
-      const totalMedications = medications.length;
-      const lowStockMedications = medications.filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock').length;
+      const totalSuppliers = typedSuppliers.length;
+      const activeOrders = typedPurchaseOrders.filter(po => po.status === 'Pending' || po.status === 'Shipped').length;
+      const inventoryItems = typedInventory.length;
+      const lowStockItems = typedInventory.filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock').length;
+      const totalMedications = typedMedications.length;
+      const lowStockMedications = typedMedications.filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock').length;
 
       // Calculate integration score (0-100)
       let integrationScore = 0;

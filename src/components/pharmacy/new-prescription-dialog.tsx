@@ -30,7 +30,7 @@ import { Calendar as CalendarIcon, ClipboardPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
+import { getCollection } from '@/services/database';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import type { Medication } from '@/app/pharmacy/page';

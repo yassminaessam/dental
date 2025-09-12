@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarIcon, Clock, User, Phone, Mail, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { setDocument, getCollection } from '@/services/firestore';
+import { setDocument, getCollection } from '@/services/database';
 import type { Appointment } from '@/app/appointments/page';
 import { format, addDays, setHours, setMinutes, parseISO, isSameDay, isBefore } from 'date-fns';
 

@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
-import { getCollection } from '@/services/firestore';
+import { getCollection } from '@/services/database';
 import { StaffMember } from '@/app/staff/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 

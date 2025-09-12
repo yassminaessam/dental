@@ -45,7 +45,7 @@ import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Lo
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
 import { AddProviderDialog } from '@/components/insurance/add-provider-dialog';
 import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';

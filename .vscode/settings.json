@@ -8,5 +8,6 @@
     "tailwindCSS.validate": true,
     "files.associations": {
         "*.css": "tailwindcss"
-    }
+    },
+    "chat.agent.maxRequests": 100
 }

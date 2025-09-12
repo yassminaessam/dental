@@ -49,8 +49,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, MoreHorizontal, Plus, ShoppingCart, AlertTriangle, CheckCircle2, Clock, Truck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getCollection, addDocument, deleteDocument, updateDocument } from "@/services/database";
 
 interface PurchaseOrderItem {
   itemId: string;
@@ -113,27 +112,15 @@ export default function PurchaseOrdersPage() {
   const fetchData = async () => {
     try {
       // Fetch purchase orders
-      const ordersSnapshot = await getDocs(collection(db, "purchase-orders"));
-      const ordersData = ordersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as PurchaseOrder[];
+      const ordersData = await getCollection("purchase-orders") as PurchaseOrder[];
       setPurchaseOrders(ordersData);
 
       // Fetch inventory items
-      const inventorySnapshot = await getDocs(collection(db, "inventory"));
-      const inventoryData = inventorySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as InventoryItem[];
+      const inventoryData = await getCollection("inventory") as InventoryItem[];
       setInventoryItems(inventoryData);
 
       // Fetch suppliers
-      const suppliersSnapshot = await getDocs(collection(db, "suppliers"));
-      const suppliersData = suppliersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Supplier[];
+      const suppliersData = await getCollection("suppliers") as Supplier[];
       setSuppliers(suppliersData);
 
       // Find low stock items
@@ -206,7 +193,7 @@ export default function PurchaseOrdersPage() {
         }]
       };
 
-      await addDoc(collection(db, "purchase-orders"), newOrder);
+      await addDocument("purchase-orders", newOrder);
       fetchData();
       toast({
         title: "Success",
@@ -224,7 +211,7 @@ export default function PurchaseOrdersPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, "purchase-orders", orderId), {
+      await updateDocument("purchase-orders", orderId, {
         status: newStatus
       });
       fetchData();
@@ -244,7 +231,7 @@ export default function PurchaseOrdersPage() {
 
   const deleteOrder = async (orderId: string) => {
     try {
-      await deleteDoc(doc(db, "purchase-orders", orderId));
+      await deleteDocument("purchase-orders", orderId);
       fetchData();
       toast({
         title: "Success",

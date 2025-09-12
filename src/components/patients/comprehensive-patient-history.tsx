@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { getCollection } from '@/services/firestore';
+import { getCollection } from '@/services/database';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';

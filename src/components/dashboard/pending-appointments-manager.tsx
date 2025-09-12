@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Clock, User, Phone, AlertTriangle, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, updateDocument } from '@/services/firestore';
+import { getCollection, updateDocument } from '@/services/database';
 import type { Appointment } from '@/app/appointments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 

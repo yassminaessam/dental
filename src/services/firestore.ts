@@ -1,6 +1,7 @@
 
 // DEPRECATED: This file is deprecated in favor of the new database service using Neon PostgreSQL
 // Please use src/services/database.ts instead
+// This file now acts as a pure compatibility layer routing all calls to the database service
 
 import { 
   getCollection as neonGetCollection,
@@ -11,34 +12,44 @@ import {
   listenToCollection as neonListenToCollection
 } from './database';
 
-// Legacy Firebase imports - keeping for backwards compatibility during migration
-import { db } from '@/lib/firebase';
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  DocumentData,
-  QueryDocumentSnapshot,
-  WithFieldValue,
-  PartialWithFieldValue,
-} from 'firebase/firestore';
+// Collection name mapping from Firebase collections to Prisma models
+const COLLECTION_MAPPING: { [key: string]: string } = {
+  'patients': 'patient',
+  'appointments': 'appointment',
+  'treatments': 'treatment',
+  'users': 'user',
+  'invoices': 'invoice',
+  'staff': 'staff',
+  'inventory': 'inventoryItem',
+  'medical-records': 'medicalRecord',
+  'clinical-images': 'clinicalImage',
+  'tooth-image-links': 'toothImageLink',
+  'insurance-claims': 'insuranceClaim',
+  'insurance-providers': 'insuranceProvider',
+  'purchase-orders': 'purchaseOrder',
+  'suppliers': 'supplier',
+  'medications': 'medication',
+  'prescriptions': 'prescription',
+  'messages': 'message',
+  'referrals': 'referral',
+  'specialists': 'specialist',
+  'portal-users': 'portalUser',
+  'shared-documents': 'sharedDocument',
+  'transactions': 'transaction',
+  'clinic-settings': 'clinicSettings',
+  'dental-charts': 'dentalChart',
+  'patient-promotions': 'promotion',
+  'patient-portal-content': 'portalContent'
+};
 
-// Migration flag - set to true to use new Neon database, false to use Firebase
-const USE_NEON_DATABASE = process.env.USE_NEON_DATABASE === 'true';
+function mapCollectionName(collectionName: string): string {
+  return COLLECTION_MAPPING[collectionName] || collectionName;
+}
 
 // Generic function to fetch all documents from a collection
 export async function getCollection<T>(collectionName: string): Promise<T[]> {
-  if (USE_NEON_DATABASE) {
-    return neonGetCollection<T>(collectionName as any);
-  }
-  
-  const querySnapshot = await getDocs(collection(db, collectionName));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+  const mappedName = mapCollectionName(collectionName);
+  return neonGetCollection<T>(mappedName as any);
 }
 
 // Generic function to listen to a collection in real-time
@@ -47,72 +58,42 @@ export function listenToCollection<T>(
     callback: (data: T[]) => void,
     onError: (error: Error) => void
 ): () => void {
-    if (USE_NEON_DATABASE) {
-      return neonListenToCollection<T>(collectionName as any, callback, onError);
-    }
-    
-    const q = collection(db, collectionName);
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-        callback(data);
-    }, (error) => {
-        console.error(`Error listening to ${collectionName}: `, error);
-        onError(error);
-    });
-    return unsubscribe;
+    const mappedName = mapCollectionName(collectionName);
+    return neonListenToCollection<T>(mappedName as any, callback, onError);
 }
 
 // Generic function to add a document to a collection
-export async function addDocument<T extends DocumentData>(
+export async function addDocument<T>(
   collectionName: string, 
-  data: WithFieldValue<T>
+  data: any
 ): Promise<string> {
-  if (USE_NEON_DATABASE) {
-    const result = await neonAddDocument<T>(collectionName as any, data);
-    return (result as any).id;
-  }
-  
-  const collectionRef = collection(db, collectionName);
-  const docRef = await addDoc(collectionRef, data as any);
-  return docRef.id;
+  const mappedName = mapCollectionName(collectionName);
+  const result = await neonAddDocument<T>(mappedName as any, data);
+  return (result as any).id;
 }
 
 // Generic function to set a document with a specific ID
-export async function setDocument<T extends DocumentData>(
+export async function setDocument<T>(
   collectionName: string, 
   id: string, 
-  data: WithFieldValue<T>
+  data: any
 ): Promise<void> {
-  if (USE_NEON_DATABASE) {
-    await neonSetDocument<T>(collectionName as any, id, data);
-    return;
-  }
-  
-  const docRef = doc(db, collectionName, id);
-  await setDoc(docRef, data as any);
+  const mappedName = mapCollectionName(collectionName);
+  await neonSetDocument<T>(mappedName as any, id, data);
 }
 
 // Generic function to update a document
-export async function updateDocument<T extends DocumentData>(
+export async function updateDocument<T>(
   collectionName: string, 
   id: string, 
-  data: PartialWithFieldValue<T>
+  data: any
 ): Promise<void> {
-  if (USE_NEON_DATABASE) {
-    await neonUpdateDocument<T>(collectionName as any, id, data);
-    return;
-  }
-  
-  const docRef = doc(db, collectionName, id);
-  await updateDoc(docRef, data as any);
+  const mappedName = mapCollectionName(collectionName);
+  await neonUpdateDocument<T>(mappedName as any, id, data);
 }
 
 // Generic function to delete a document
 export async function deleteDocument(collectionName: string, id: string): Promise<void> {
-  if (USE_NEON_DATABASE) {
-    await neonDeleteDocument(collectionName as any, id);
-    return;
-  }
-  
-  await deleteDoc(doc(db, collectionName, id));
+  const mappedName = mapCollectionName(collectionName);
+  await neonDeleteDocument(mappedName as any, id);
 }

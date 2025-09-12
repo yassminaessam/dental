@@ -55,7 +55,7 @@ import { ViewRecordDialog } from '@/components/medical-records/view-record-dialo
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
 import { LinkImageToToothDialog } from '@/components/medical-records/link-image-to-tooth-dialog';
 import { ViewImageDialog } from '@/components/medical-records/view-image-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
 import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
