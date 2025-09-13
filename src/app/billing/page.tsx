@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+// Migrated from direct server getCollection to client data layer listDocuments
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
 import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
 import { InsuranceIntegrationDialog } from '@/components/billing/insurance-integration-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -90,13 +91,13 @@ export default function BillingPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-            const [invoiceData, patientData, treatmentData, appointmentData, claimData] = await Promise.all([
-                getCollection<Invoice>('invoices'),
-                getCollection<Patient>('patients'),
-                getCollection<any>('treatments'),
-                getCollection<any>('appointments'),
-                getCollection<any>('insurance-claims'),
-            ]);
+      const [invoiceData, patientData, treatmentData, appointmentData, claimData] = await Promise.all([
+        listDocuments<Invoice>('invoices'),
+        listDocuments<Patient>('patients'),
+        listDocuments<any>('treatments'),
+        listDocuments<any>('appointments'),
+        listDocuments<any>('insurance-claims'),
+      ]);
             
             // Update overdue invoices
             const today = new Date();

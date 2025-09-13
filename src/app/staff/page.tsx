@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { ViewEmployeeDialog } from '@/components/staff/view-employee-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type StaffMember = {
@@ -80,7 +80,8 @@ export default function StaffPage() {
   React.useEffect(() => {
     async function fetchStaff() {
       try {
-        const data = await getCollection<StaffMember>('staff');
+  // Switched from getCollection to listDocuments (client-side data fetch)
+  const data = await listDocuments<StaffMember>('staff');
         setStaff(data);
       } catch (error) {
         toast({ title: t('staff.toast.error_fetching'), variant: "destructive" });

@@ -14,7 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarIcon, Clock, User, Phone, Mail, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { setDocument, getCollection } from '@/services/database';
+import { setDocument } from '@/services/database';
+import { listDocuments } from '@/lib/data-client';
 import type { Appointment } from '@/app/appointments/page';
 import { format, addDays, setHours, setMinutes, parseISO, isSameDay, isBefore } from 'date-fns';
 
@@ -121,7 +122,7 @@ export default function PatientBookAppointment() {
 
   const fetchExistingAppointments = async () => {
     try {
-      const appointments = await getCollection<Appointment>('appointments');
+  const appointments = await listDocuments<Appointment>('appointments');
       setExistingAppointments(appointments || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);

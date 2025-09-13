@@ -24,7 +24,9 @@ import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut, Help
 import { DentalProLogo } from '../icons'
 import { SidebarNav } from '../dashboard/sidebar-nav'
 import Link from 'next/link'
-import { getCollection } from '../../services/firestore'
+// Switched from deprecated firestore compatibility layer to unified database service
+// Using client REST data layer instead of server/database helper for collections
+import { listDocuments } from '@/lib/data-client'
 import { Button } from '../ui/button'
 import { useAuth } from '../../contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -53,8 +55,8 @@ export default function DashboardLayout({
   React.useEffect(() => {
     async function fetchNotifications() {
       const [appointments, inventory] = await Promise.all([
-        getCollection<AppointmentLite>('appointments'),
-        getCollection<InventoryItemLite>('inventory'),
+        listDocuments<AppointmentLite>('appointments'),
+        listDocuments<InventoryItemLite>('inventory'),
       ])
       setPendingAppointments(appointments.filter((a) => a.status === 'Pending'))
       setLowStockItems(

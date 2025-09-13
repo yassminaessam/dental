@@ -12,7 +12,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCollection } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { listDocuments } from '@/lib/data-client';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 import type { StaffMember } from '@/app/staff/page';
@@ -45,13 +46,13 @@ export default function OverviewStats() {
     React.useEffect(() => {
         async function fetchStats() {
             try {
-                const [patients, appointments, staff, invoices, treatments] = await Promise.all([
-                    getCollection<Patient>('patients'),
-                    getCollection<Appointment>('appointments'),
-                    getCollection<StaffMember>('staff'),
-                    getCollection<Invoice>('invoices'),
-                    getCollection<Treatment>('treatments'),
-                ]);
+        const [patients, appointments, staff, invoices, treatments] = await Promise.all([
+          listDocuments<Patient>('patients'),
+          listDocuments<Appointment>('appointments'),
+          listDocuments<StaffMember>('staff'),
+          listDocuments<Invoice>('invoices'),
+          listDocuments<Treatment>('treatments'),
+        ]);
 
                 const totalPatients = patients.length;
                 const todaysAppointments = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;

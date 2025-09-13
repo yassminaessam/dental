@@ -65,7 +65,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
-import { getCollection, setDocument, deleteDocument, updateDocument } from '@/services/firestore';
+import { listDocuments, setDocument, deleteDocument, updateDocument } from '@/lib/data-client';
 
 export type Medication = {
   id: string;
@@ -161,9 +161,9 @@ export default function PharmacyPage() {
         async function fetchData() {
             try {
         const [medicationData, prescriptionData, inventoryData] = await Promise.all([
-          getCollection<Medication>('medications'),
-          getCollection<Prescription>('prescriptions'),
-          getCollection<InventoryItem>('inventory'),
+          listDocuments<Medication>('medications'),
+          listDocuments<Prescription>('prescriptions'),
+          listDocuments<InventoryItem>('inventory'),
         ]);
                 setMedications(medicationData);
                 setPrescriptions(prescriptionData);

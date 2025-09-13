@@ -3,24 +3,11 @@
 // This is useful for development and testing purposes.
 // To run this script, use the command: `npm run seed`
 
-import { db } from './firebase';
-import { collection, setDoc, doc } from 'firebase/firestore';
+// Deprecated Firestore seed script (no-op). Use Prisma-based seeding instead.
 import { insuranceProviders } from './data/insurance-providers';
+console.warn('[legacy] seed.ts is deprecated and does nothing now.');
 
-async function seedCollection(collectionName: string, data: any[]) {
-  console.log(`Seeding ${collectionName}...`);
-  for (const item of data) {
-    try {
-      // Use the existing 'id' field for the document ID in Firestore
-      const docRef = doc(db, collectionName, item.id);
-      await setDoc(docRef, item);
-      console.log(`Added ${collectionName} with ID: ${item.id}`);
-    } catch (e) {
-      console.error(`Error adding document to ${collectionName}: `, e);
-    }
-  }
-  console.log(`${collectionName} seeding finished.`);
-}
+async function seedCollection(_collectionName: string, _data: any[]) { /* noop */ }
 
 async function seedDatabase() {
     const initialPatientsData = [
@@ -164,31 +151,11 @@ async function seedDatabase() {
       }
     ];
 
-  console.log('Starting database seed...');
+    console.log('Starting legacy database seed (noop)...');
 
-  await seedCollection('patients', initialPatientsData.map(p => ({...p, dob: p.dob.toISOString() })));
-  await seedCollection('appointments', initialAppointmentsData.map(a => ({...a, dateTime: a.dateTime.toISOString() })));
-  await seedCollection('treatments', initialTreatmentsData);
-  await seedCollection('invoices', initialInvoicesData);
-  await seedCollection('inventory', initialInventoryItemsData);
-  await seedCollection('staff', initialStaffData);
-  await seedCollection('medical-records', initialMedicalRecordsData);
-  await seedCollection('clinical-images', initialClinicalImagesData);
-  await seedCollection('tooth-image-links', initialToothImageLinksData);
-  await seedCollection('insurance-claims', initialInsuranceClaimsData);
-  await seedCollection('insurance-providers', insuranceProviders);
-  await seedCollection('referrals', initialOutgoingReferralsData);
-  await seedCollection('specialists', initialSpecialistNetwork);
-  await seedCollection('purchase-orders', initialPurchaseOrdersData);
-  await seedCollection('suppliers', initialSuppliersData);
-  await seedCollection('medications', initialMedicationInventoryData);
-  await seedCollection('prescriptions', initialPrescriptionRecordsData);
-  await seedCollection('messages', initialRecentMessagesData);
-  await seedCollection('portal-users', initialPortalUsersData);
-  await seedCollection('shared-documents', initialSharedDocumentsData);
-  await seedCollection('clinic-settings', initialClinicSettingsData);
+    // All seedCollection calls removed
 
-  console.log('Database seeding completed successfully!');
+    console.log('Legacy seed script finished (nothing executed).');
 }
 
 seedDatabase().catch(console.error);

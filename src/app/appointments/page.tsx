@@ -41,7 +41,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
 import { EditAppointmentDialog } from '@/components/appointments/edit-appointment-dialog';
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
-import { setDocument, updateDocument, listenToCollection } from '@/services/firestore';
+import { setDocument, updateDocument, listenToCollection } from '@/services/database';
+// NOTE: Firestore removed. Realtime still provided via database listen abstraction.
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 

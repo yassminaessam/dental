@@ -43,7 +43,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
 import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
-import { getCollection, setDocument, deleteDocument, updateDocument } from '@/services/firestore';
+import { listDocuments, setDocument, deleteDocument, updateDocument } from '@/lib/data-client';
 import type { Patient } from '@/app/patients/page';
 
 export type Referral = {
@@ -86,11 +86,11 @@ export default function ReferralsPage() {
     async function fetchData() {
         setLoading(true);
         try {
-            const [referralsData, specialistsData, patientsData] = await Promise.all([
-                getCollection<Referral>('referrals'),
-                getCollection<Specialist>('specialists'),
-                getCollection<Patient>('patients'),
-            ]);
+      const [referralsData, specialistsData, patientsData] = await Promise.all([
+        listDocuments<Referral>('referrals'),
+        listDocuments<Specialist>('specialists'),
+        listDocuments<Patient>('patients'),
+      ]);
             setReferrals(referralsData);
             setSpecialists(specialistsData);
             setPatients(patientsData);

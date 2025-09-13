@@ -32,7 +32,8 @@ import PatientDemographicsChart from '@/components/analytics/patient-demographic
 import TreatmentVolumeChart from '@/components/analytics/treatment-volume-chart';
 import StaffPerformanceChart from '@/components/analytics/staff-performance-chart';
 import PatientSatisfactionChart from '@/components/analytics/patient-satisfaction-chart';
-import { getCollection } from '@/services/firestore';
+// Switched to client REST data layer (listDocuments) instead of server getCollection
+import { listDocuments } from '@/lib/data-client';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
@@ -72,31 +73,31 @@ export default function AnalyticsPage() {
     React.useEffect(() => {
     async function fetchData() {
         const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
-          getCollection<Invoice>('invoices'),
-          getCollection<Patient>('patients'),
-          getCollection<any>('appointments'),
-          getCollection<Treatment>('treatments'),
-          getCollection<Transaction>('transactions'),
+          listDocuments<Invoice>('invoices'),
+          listDocuments<Patient>('patients'),
+          listDocuments<any>('appointments'),
+          listDocuments<Treatment>('treatments'),
+          listDocuments<Transaction>('transactions'),
         ]);
         
-        const total = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+  const total = invoices.reduce((acc: number, inv: Invoice) => acc + inv.totalAmount, 0);
         setTotalRevenue(total);
 
         setPatientCount(patients.length);
 
-        const parsedAppointments = appointments.map(a => ({...a, dateTime: new Date(a.dateTime) }));
+  const parsedAppointments = appointments.map((a: any) => ({...a, dateTime: new Date(a.dateTime) }));
 
-        const confirmed = parsedAppointments.filter(a => a.status === 'Confirmed').length;
+  const confirmed = parsedAppointments.filter((a: any) => a.status === 'Confirmed').length;
         const totalAppointments = parsedAppointments.length;
         if(totalAppointments > 0) {
             setShowRate((confirmed / totalAppointments) * 100);
         }
 
-        const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
+  const completedTreatments = treatments.filter((t: Treatment) => t.status === 'Completed').length;
         if (completedTreatments > 0) {
             const totalTreatmentRevenue = treatments
-                .filter(t => t.status === 'Completed')
-                .reduce((acc, t) => acc + parseFloat(t.cost.replace(/[^0-9.-]+/g, '')), 0);
+                .filter((t: Treatment) => t.status === 'Completed')
+                .reduce((acc: number, t: Treatment) => acc + parseFloat((t as any).cost.replace(/[^0-9.-]+/g, '')), 0);
             setAvgTreatmentValue(totalTreatmentRevenue / completedTreatments);
         }
 
@@ -104,9 +105,9 @@ export default function AnalyticsPage() {
         const today = new Date();
         const hourlyStats: Record<string, { appointments: number, noShows: number, cancellations: number }> = {};
 
-        parsedAppointments
-            .filter(a => isToday(a.dateTime))
-            .forEach(appt => {
+    parsedAppointments
+      .filter((a: any) => isToday(a.dateTime))
+      .forEach((appt: any) => {
                 const hour = format(appt.dateTime, 'ha').toLowerCase(); // e.g., "8am", "1pm"
                 if (!hourlyStats[hour]) {
                     hourlyStats[hour] = { appointments: 0, noShows: 0, cancellations: 0 };
@@ -140,7 +141,7 @@ export default function AnalyticsPage() {
             '0-18': 0, '19-35': 0, '36-50': 0, '51-65': 0, '66+': 0
         };
 
-        patients.forEach(patient => {
+  patients.forEach((patient: any) => {
             const age = patient.age;
             if (age <= 18) ageGroups['0-18']++;
             else if (age <= 35) ageGroups['19-35']++;
@@ -155,7 +156,7 @@ export default function AnalyticsPage() {
 
         // Process data for treatment volume chart
         const monthlyTreatments: Record<string, number> = {};
-        treatments.forEach(treatment => {
+  treatments.forEach((treatment: Treatment) => {
             const month = format(new Date(treatment.date), 'MMM');
             if (!monthlyTreatments[month]) {
                 monthlyTreatments[month] = 0;
@@ -169,7 +170,7 @@ export default function AnalyticsPage() {
 
         // Process revenue data for chart
         const monthlyRevenue: Record<string, { revenue: number, expenses: number }> = {};
-        transactions.forEach(t => {
+  transactions.forEach((t: Transaction) => {
             const month = new Date(t.date).toLocaleString(locale, { month: 'short' });
             if (!monthlyRevenue[month]) {
                 monthlyRevenue[month] = { revenue: 0, expenses: 0 };

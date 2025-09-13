@@ -8,6 +8,18 @@ export async function GET(
 ) {
   try {
     const { collection } = await params;
+    // Normalization: convert camelCase to kebab-case for hyphenated known collections and lower-case
+    const normalize = (name: string) => {
+      if (!name) return name;
+      const lower = name.trim();
+      // If already contains hyphen or is all lowercase just return lower
+      // Convert camelCase to hyphen-case: clinicSettings -> clinic-settings, medicalRecords -> medical-records
+      return lower
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        .replace(/_/g, '-')
+        .toLowerCase();
+    };
+    const normalized = normalize(collection);
     const dbClient = await getDbClient();
     
     // Map frontend collection names to Prisma models
@@ -71,10 +83,11 @@ export async function GET(
       clinicSettings: dbClient.clinicSettings
     };
 
-    const model = collectionMap[collection];
+    const model = collectionMap[collection] || collectionMap[normalized];
     if (!model) {
-      console.error(`Invalid collection name: ${collection}`);
-      return NextResponse.json({ error: `Invalid collection: ${collection}` }, { status: 400 });
+      const suggestions = Object.keys(collectionMap).filter(k => k.includes(normalized.slice(0,3)) || normalized.includes(k.slice(0,3))).slice(0,8);
+      console.error(`Invalid collection name: ${collection} (normalized: ${normalized})`);
+      return NextResponse.json({ error: `Invalid collection: ${collection}`, normalized, suggestions }, { status: 400 });
     }
 
     // Try to fetch data with createdAt ordering, fallback to no ordering if field doesn't exist

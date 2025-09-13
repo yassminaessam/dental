@@ -20,7 +20,7 @@ import {
   Loader2 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateDocument, getCollection } from '@/services/firestore';
+import { updateDocument, listDocuments } from '@/lib/data-client';
 import { format } from 'date-fns';
 import type { Appointment } from '@/app/appointments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -47,7 +47,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
 
   const fetchPendingAppointments = async () => {
     try {
-      const appointments = await getCollection<Appointment>('appointments');
+  // Switched from getCollection to listDocuments (REST client)
+  const appointments = await listDocuments<Appointment>('appointments');
       const pending = (appointments || [])
         .filter(apt => apt.status === 'Pending')
         .map(apt => ({ ...apt, dateTime: new Date(apt.dateTime) }))

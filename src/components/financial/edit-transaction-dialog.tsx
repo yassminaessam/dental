@@ -29,7 +29,7 @@ import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import { Patient } from '@/app/patients/page';
 import type { Transaction } from '@/app/financial/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -76,7 +76,7 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
   React.useEffect(() => {
     async function fetchPatients() {
         if(open) {
-            const patientData = await getCollection<any>('patients');
+            const patientData = await listDocuments<any>('patients');
             setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
         }
     }

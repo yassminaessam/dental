@@ -61,7 +61,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { setDocument, updateDocument, deleteDocument } from '@/services/database';
+import { listDocuments } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type InventoryItem = {
@@ -96,7 +98,7 @@ export default function InventoryPage() {
   React.useEffect(() => {
     async function fetchInventory() {
         try {
-            const data = await getCollection<InventoryItem>('inventory');
+            const data = await listDocuments<InventoryItem>('inventory');
             setInventory(data);
         } catch (error) {
             toast({ title: t('inventory.toast.error_fetching'), variant: 'destructive'});

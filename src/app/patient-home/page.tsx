@@ -28,7 +28,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import PatientAppointmentBooking from '@/components/appointments/patient-appointment-booking';
 
 interface Promotion {
@@ -164,12 +164,12 @@ export default function PatientHomePage() {
   const fetchPortalData = async () => {
     try {
       // Fetch promotions
-      const promotionsData = await getCollection<Promotion>('patient-promotions');
+  const promotionsData = await listDocuments<Promotion>('patient-promotions');
       const activePromotions = promotionsData?.filter(p => p.active) || [];
       setPromotions(activePromotions);
 
       // Fetch portal content
-      const contentData = await getCollection<PatientPortalContent>('patient-portal-content');
+  const contentData = await listDocuments<PatientPortalContent>('patient-portal-content');
       if (contentData && contentData.length > 0) {
         setPortalContent(contentData[0]);
       }

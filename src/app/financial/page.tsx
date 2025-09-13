@@ -50,7 +50,7 @@ import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-c
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -93,7 +93,8 @@ export default function FinancialPage() {
   React.useEffect(() => {
     async function fetchTransactions() {
       try {
-        const data = await getCollection<any>('transactions');
+  // Fetch transactions via REST data client (was getCollection during Firestore era)
+  const data = await listDocuments<any>('transactions');
         const parsedData = data.map(t => ({ ...t, date: new Date(t.date) }));
         setTransactions(parsedData);
 

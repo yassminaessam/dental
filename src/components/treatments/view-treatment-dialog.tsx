@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
 import { FileText, DollarSign, Shield } from 'lucide-react';
-import { getCollection } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { listDocuments } from '@/lib/data-client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -57,8 +58,8 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
     if (treatment && open) {
       setLoading(true);
       Promise.all([
-        getCollection<Invoice>('invoices'),
-        getCollection<InsuranceClaim>('insurance-claims')
+        listDocuments<Invoice>('invoices'),
+        listDocuments<InsuranceClaim>('insurance-claims')
       ]).then(([invoices, claims]) => {
         const invoice = invoices.find(inv => inv.treatmentId === treatment.id);
         const claim = claims.find(c => 

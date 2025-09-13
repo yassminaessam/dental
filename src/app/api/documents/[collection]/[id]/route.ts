@@ -33,7 +33,9 @@ export async function GET(
       'portalUser': dbClient.portalUser,
       'sharedDocument': dbClient.sharedDocument,
       'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings
+      'clinicSettings': dbClient.clinicSettings,
+      // Added hyphenated alias for settings (matches collection route & client usage)
+      'clinic-settings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -41,12 +43,43 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
     }
 
-    const data = await model.findUnique({
-      where: { id }
-    });
+    let data = await model.findUnique({ where: { id } });
+
+    // Auto-initialize clinic settings if not found and collection is clinic-settings
+    if (!data && (collection === 'clinic-settings' || collection === 'clinicSettings')) {
+      const defaultSettings = {
+        id,
+        clinicName: '',
+        address: '',
+        phone: '',
+        email: '',
+        website: '',
+        businessHours: 'mon-fri-8-6',
+        timezone: 'UTC',
+        appointmentDuration: 60,
+        bookingLimit: 90,
+        allowOnlineBooking: true,
+        currency: 'USD',
+        language: 'en',
+        theme: 'light',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      try {
+        data = await model.create({ data: defaultSettings });
+      } catch (createErr) {
+        console.error('Failed to auto-create clinic settings document:', createErr);
+      }
+    }
 
     if (!data) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    }
+
+    // Transform response for clinic-settings to include phoneNumber alias for client form
+    if (collection === 'clinic-settings' || collection === 'clinicSettings') {
+      const shaped = { ...data, phoneNumber: data.phone };
+      return NextResponse.json(shaped);
     }
 
     return NextResponse.json(data);
@@ -89,7 +122,8 @@ export async function PUT(
       'portalUser': dbClient.portalUser,
       'sharedDocument': dbClient.sharedDocument,
       'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings
+      'clinicSettings': dbClient.clinicSettings,
+      'clinic-settings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -97,10 +131,31 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
     }
 
+    // Normalization similar to PATCH for clinic settings
+    let normalized = { ...data };
+    if (collection === 'clinic-settings' || collection === 'clinicSettings') {
+      if (normalized.phoneNumber && !normalized.phone) {
+        normalized.phone = normalized.phoneNumber;
+        delete normalized.phoneNumber;
+      }
+      const intFields: Array<keyof typeof normalized> = ['appointmentDuration','bookingLimit'];
+      for (const f of intFields) {
+        if (normalized[f] !== undefined && typeof normalized[f] === 'string') {
+          const parsed = parseInt(normalized[f] as string, 10);
+          if (!isNaN(parsed)) (normalized as any)[f] = parsed;
+        }
+      }
+      if (normalized.allowOnlineBooking === undefined) {
+        normalized.allowOnlineBooking = true;
+      }
+    }
+    // Never allow id overwrite in update payload
+    delete (normalized as any).id;
+
     const result = await model.update({
       where: { id },
       data: {
-        ...data,
+        ...normalized,
         updatedAt: new Date()
       }
     });
@@ -108,6 +163,13 @@ export async function PUT(
     return NextResponse.json(result);
   } catch (error) {
     console.error(`Error updating document:`, error);
+    const errObj: any = error;
+    if (errObj?.code && errObj?.meta) {
+      return NextResponse.json({ error: 'Validation failed', code: errObj.code, meta: errObj.meta }, { status: 422 });
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      return NextResponse.json({ error: 'Internal server error', message: errObj?.message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -145,7 +207,8 @@ export async function PATCH(
       'portalUser': dbClient.portalUser,
       'sharedDocument': dbClient.sharedDocument,
       'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings
+      'clinicSettings': dbClient.clinicSettings,
+      'clinic-settings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];
@@ -153,15 +216,42 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
     }
 
+    // Special normalization for clinic settings (client form uses different keys / types)
+    let normalized = { ...data };
+    if (collection === 'clinic-settings' || collection === 'clinicSettings') {
+      // Map phoneNumber -> phone (schema uses phone)
+      if (normalized.phoneNumber && !normalized.phone) {
+        normalized.phone = normalized.phoneNumber;
+        delete normalized.phoneNumber;
+      }
+      // Coerce numeric string fields if present
+      const intFields: Array<keyof typeof normalized> = ['appointmentDuration','bookingLimit'];
+      for (const f of intFields) {
+        if (normalized[f] !== undefined && typeof normalized[f] === 'string') {
+          const parsed = parseInt(normalized[f] as string, 10);
+            if (!isNaN(parsed)) {
+              (normalized as any)[f] = parsed;
+            }
+        }
+      }
+      // Ensure allowOnlineBooking defaults if absent
+      if (normalized.allowOnlineBooking === undefined) {
+        normalized.allowOnlineBooking = true;
+      }
+    }
+
+    // Prevent id mutation in update part
+    const updateData = { ...normalized } as any;
+    delete updateData.id;
+    const createData = { id, ...normalized } as any;
     const result = await model.upsert({
       where: { id },
       update: {
-        ...data,
+        ...updateData,
         updatedAt: new Date()
       },
       create: {
-        id,
-        ...data,
+        ...createData,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -169,7 +259,15 @@ export async function PATCH(
 
     return NextResponse.json(result);
   } catch (error) {
+    // Provide better prisma error surface for debugging
     console.error(`Error setting document:`, error);
+    const errObj: any = error;
+    if (errObj?.code && errObj?.meta) {
+      return NextResponse.json({ error: 'Validation failed', code: errObj.code, meta: errObj.meta }, { status: 422 });
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      return NextResponse.json({ error: 'Internal server error', message: errObj?.message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -206,7 +304,8 @@ export async function DELETE(
       'portalUser': dbClient.portalUser,
       'sharedDocument': dbClient.sharedDocument,
       'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings
+      'clinicSettings': dbClient.clinicSettings,
+      'clinic-settings': dbClient.clinicSettings
     };
 
     const model = validCollections[collection];

@@ -36,7 +36,7 @@ import { ViewMessageDialog } from '@/components/patient-portal/view-message-dial
 import type { Appointment } from '@/app/appointments/page';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { getCollection, updateDocument, deleteDocument, setDocument } from '@/services/firestore';
+import { listDocuments, updateDocument, deleteDocument, setDocument } from '@/lib/data-client';
 import type { Message } from '@/lib/types';
 
 
@@ -75,10 +75,10 @@ export default function PatientPortalPage() {
       setLoading(true);
       try {
         const [msgData, apptData, userData, docData] = await Promise.all([
-          getCollection<Message>('messages'),
-          getCollection<Appointment>('appointments'),
-          getCollection<PortalUser>('portal-users'),
-          getCollection<SharedDocument>('shared-documents'),
+          listDocuments<Message>('messages'),
+          listDocuments<Appointment>('appointments'),
+          listDocuments<PortalUser>('portal-users'),
+          listDocuments<SharedDocument>('shared-documents'),
         ]);
         setMessages(msgData.filter(m => m.category === 'billing' || m.category === 'other'));
         setAppointments(apptData.map(a => ({...a, dateTime: new Date(a.dateTime) })));

@@ -1,3 +1,8 @@
+// LEGACY STORAGE SHIM
+// This file originally wrapped Firebase Storage. The application has migrated to Neon + external asset storage.
+// New uploads should use the API route `/api/uploads` (FTPS/S3 abstraction) instead of calling these functions directly.
+// These implementations now only provide mock behavior to avoid runtime errors while legacy callers are refactored.
+
 // Check if we should use Neon database (which means no Firebase Storage)
 const USE_NEON_DATABASE = process.env.USE_NEON_DATABASE === 'true';
 const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';

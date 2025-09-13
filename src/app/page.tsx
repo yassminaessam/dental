@@ -22,7 +22,9 @@ import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import PendingAppointmentsManager from "@/components/dashboard/pending-appointments-manager";
 import { StaffOnly } from "@/components/auth/ProtectedRoute";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument } from '@/services/database';
+// Migrated from server getCollection to client listDocuments abstraction
+import { setDocument } from '@/services/database';
+import { listDocuments } from '@/lib/data-client';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 import type { Transaction } from '@/app/financial/page';
@@ -48,10 +50,10 @@ export default function DashboardPage() {
 
     React.useEffect(() => {
         async function fetchData() {
-            const [transactions, appointments] = await Promise.all([
-                getCollection<Transaction>('transactions'),
-                getCollection<Appointment>('appointments'),
-            ]);
+      const [transactions, appointments] = await Promise.all([
+        listDocuments<Transaction>('transactions'),
+        listDocuments<Appointment>('appointments'),
+      ]);
 
             // Process revenue data for chart
             const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};

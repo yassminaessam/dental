@@ -25,9 +25,11 @@ import {
 } from '@/components/ui/select';
 import { Upload, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
+// Using client REST listDocuments instead of server getCollection
+import { listDocuments } from '@/lib/data-client';
 import { Patient } from '@/app/patients/page';
-import { clinicalImagesStorage } from '@/services/storage';
+// New unified upload helper hitting /api/uploads
+import { uploadFileToServer } from '@/lib/uploads';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -85,7 +87,7 @@ export function UploadImageDialog({
   
   React.useEffect(() => {
     async function fetchPatients() {
-        const data = await getCollection<Patient>('patients');
+  const data = await listDocuments<Patient>('patients');
         setPatients(data);
     }
     if (open) {
@@ -108,14 +110,13 @@ export function UploadImageDialog({
       }
 
       console.log('Patient found:', selectedPatient.name);
-      console.log('Attempting to upload to Firebase Storage...');
-
-      // Upload image to Firebase Storage
-      const imageUrl = await clinicalImagesStorage.uploadClinicalImage(
-        data.file[0],
-        data.patient,
-        data.type
-      );
+      console.log('Uploading image via /api/uploads (FTPS backend)...');
+      const file: File = data.file[0];
+      const uploadRes = await uploadFileToServer(file, {
+        category: 'clinical-images',
+        subPath: data.patient
+      });
+      const imageUrl = uploadRes.url;
 
       console.log('Upload successful, URL:', imageUrl);
 
@@ -141,15 +142,7 @@ export function UploadImageDialog({
       
       // Provide more specific error messages
       if (error instanceof Error) {
-        if (error.message.includes('storage/unauthorized')) {
-          errorMessage = "Upload failed: Storage permissions denied. Please check Firebase Storage rules.";
-        } else if (error.message.includes('storage/invalid-format')) {
-          errorMessage = "Upload failed: Invalid image format. Please use JPG, PNG, or GIF.";
-        } else if (error.message.includes('storage/object-not-found')) {
-          errorMessage = "Upload failed: Storage configuration error.";
-        } else {
-          errorMessage = `Upload failed: ${error.message}`;
-        }
+        errorMessage = `Upload failed: ${error.message}`;
       }
       
       toast({

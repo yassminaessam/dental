@@ -42,7 +42,7 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
@@ -96,8 +96,8 @@ export default function PatientsPage() {
   React.useEffect(() => {
     async function fetchPatients() {
       try {
-        const data = await getCollection<any>('patients');
-        setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
+  const data = await listDocuments<any>('patients');
+  setPatients(data.map((p: any) => ({...p, dob: new Date(p.dob) })));
       } catch (error) {
     toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
       } finally {

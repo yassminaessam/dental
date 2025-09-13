@@ -55,7 +55,9 @@ import { ViewRecordDialog } from '@/components/medical-records/view-record-dialo
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
 import { LinkImageToToothDialog } from '@/components/medical-records/link-image-to-tooth-dialog';
 import { ViewImageDialog } from '@/components/medical-records/view-image-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { setDocument, updateDocument, deleteDocument } from '@/services/database';
+import { listDocuments } from '@/lib/data-client';
 import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -143,11 +145,11 @@ export default function MedicalRecordsPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-            const [recordsData, imagesData, templatesData] = await Promise.all([
-                getCollection<MedicalRecord>('medical-records'),
-                getCollection<ClinicalImage>('clinical-images'),
-                getCollection<MedicalRecordTemplate>('templates'),
-            ]);
+      const [recordsData, imagesData, templatesData] = await Promise.all([
+        listDocuments<MedicalRecord>('medical-records'),
+        listDocuments<ClinicalImage>('clinical-images'),
+        listDocuments<MedicalRecordTemplate>('templates'),
+      ]);
             setRecords(recordsData);
             setImages(imagesData);
             setTemplates(templatesData);

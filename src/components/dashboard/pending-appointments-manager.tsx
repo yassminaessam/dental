@@ -12,7 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Clock, User, Phone, AlertTriangle, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, updateDocument } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { updateDocument } from '@/services/database';
+import { listDocuments } from '@/lib/data-client';
 import type { Appointment } from '@/app/appointments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -51,7 +53,7 @@ export default function PendingAppointmentsManager({
 
   const fetchPendingAppointments = async () => {
     try {
-      const appointments = await getCollection<Appointment>('appointments');
+  const appointments = await listDocuments<Appointment>('appointments');
       const pending = appointments?.filter(apt => 
         apt.status === 'Pending'
       ).sort((a, b) => {

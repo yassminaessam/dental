@@ -202,21 +202,28 @@ export class AuthService {
    */
   static async getAllUsers(): Promise<User[]> {
     try {
+      const token = this.getToken();
       const response = await fetch('/api/auth/users', {
         headers: {
-          'Authorization': `Bearer ${this.getToken()}`,
+          'Authorization': token ? `Bearer ${token}` : '',
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
+      const contentType = response.headers.get('content-type');
+      let payload: any = null;
+      if (contentType && contentType.includes('application/json')) {
+        try { payload = await response.json(); } catch { /* ignore */ }
       }
 
-      const data = await response.json();
-      return data.users;
+      if (!response.ok) {
+        const serverMsg = payload?.error || payload?.message;
+        throw new Error(serverMsg ? `Failed to fetch users: ${serverMsg} (status ${response.status})` : `Failed to fetch users (status ${response.status})`);
+      }
+
+      return Array.isArray(payload?.users) ? payload.users : [];
     } catch (error) {
       console.error('Error fetching users:', error);
-      throw new Error('Failed to fetch users');
+      throw error instanceof Error ? error : new Error('Failed to fetch users');
     }
   }
 

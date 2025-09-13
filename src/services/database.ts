@@ -23,6 +23,7 @@ import type {
   ClinicSettings,
   PrismaClient
 } from '@prisma/client';
+import { resolveCollection } from '@/lib/collection-alias';
 
 // -----------------------------------------------------------------------------
 // Environment / Client acquisition helpers
@@ -58,10 +59,15 @@ export async function getCollection<T>(
   include?: any
 ): Promise<T[]> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/collections/${model}`);
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('getCollection failed', { requested: originalModel, normalized: model, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
@@ -90,6 +96,8 @@ export async function getDocument<T>(
   include?: any
 ): Promise<T | null> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/documents/${model}/${id}`);
@@ -97,6 +105,9 @@ export async function getDocument<T>(
         return null;
       }
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('getDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
@@ -124,6 +135,8 @@ export async function addDocument<T>(
   data: any
 ): Promise<T> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/collections/${model}`, {
@@ -134,6 +147,9 @@ export async function addDocument<T>(
         body: JSON.stringify(data),
       });
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('addDocument failed', { requested: originalModel, normalized: model, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
@@ -165,6 +181,8 @@ export async function setDocument<T>(
   data: any
 ): Promise<T> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/documents/${model}/${id}`, {
@@ -175,6 +193,9 @@ export async function setDocument<T>(
         body: JSON.stringify(data),
       });
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('setDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
@@ -212,6 +233,8 @@ export async function updateDocument<T>(
   data: any
 ): Promise<T> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/documents/${model}/${id}`, {
@@ -222,6 +245,9 @@ export async function updateDocument<T>(
         body: JSON.stringify(data),
       });
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('updateDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
@@ -252,12 +278,17 @@ export async function deleteDocument(
   id: string
 ): Promise<void> {
   try {
+    const originalModel = model;
+    model = resolveCollection(model);
     if (isBrowser()) {
       // Client-side: make API call
       const response = await fetch(`/api/documents/${model}/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('deleteDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } else {

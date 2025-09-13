@@ -42,7 +42,7 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, direction } = useLanguage();
 
   const handleSignOut = async () => {
     try {
@@ -236,37 +236,66 @@ export function SidebarNav() {
 
   if (!user) return null;
 
+  // Static color styles (kept literal so Tailwind doesn't purge)
+  const colorStyles = [
+    { iconBg: 'bg-cyan-500/10', iconText: 'text-cyan-400', ring: 'ring-cyan-400/30' },
+    { iconBg: 'bg-sky-500/10', iconText: 'text-sky-400', ring: 'ring-sky-400/30' },
+    { iconBg: 'bg-teal-500/10', iconText: 'text-teal-400', ring: 'ring-teal-400/30' },
+    { iconBg: 'bg-emerald-500/10', iconText: 'text-emerald-400', ring: 'ring-emerald-400/30' },
+    { iconBg: 'bg-green-500/10', iconText: 'text-green-400', ring: 'ring-green-400/30' },
+    { iconBg: 'bg-lime-500/10', iconText: 'text-lime-400', ring: 'ring-lime-400/30' },
+    { iconBg: 'bg-amber-500/10', iconText: 'text-amber-400', ring: 'ring-amber-400/30' },
+    { iconBg: 'bg-orange-500/10', iconText: 'text-orange-400', ring: 'ring-orange-400/30' },
+    { iconBg: 'bg-rose-500/10', iconText: 'text-rose-400', ring: 'ring-rose-400/30' },
+    { iconBg: 'bg-pink-500/10', iconText: 'text-pink-400', ring: 'ring-pink-400/30' },
+    { iconBg: 'bg-fuchsia-500/10', iconText: 'text-fuchsia-400', ring: 'ring-fuchsia-400/30' },
+    { iconBg: 'bg-violet-500/10', iconText: 'text-violet-400', ring: 'ring-violet-400/30' },
+    { iconBg: 'bg-purple-500/10', iconText: 'text-purple-400', ring: 'ring-purple-400/30' },
+    { iconBg: 'bg-indigo-500/10', iconText: 'text-indigo-400', ring: 'ring-indigo-400/30' },
+    { iconBg: 'bg-blue-500/10', iconText: 'text-blue-400', ring: 'ring-blue-400/30' },
+  ];
+
   return (
     <div className="flex flex-col h-full">
       <SidebarMenu className="flex-grow space-y-2">
         {visibleItems.map((item, index) => {
           const IconComponent = item.icon;
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const colors = colorStyles[index % colorStyles.length];
           
           return (
             <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton 
-                asChild 
+              <SidebarMenuButton
+                asChild
                 isActive={isActive}
-                className={`elite-nav-item ${isActive ? 'active' : ''} group relative rounded-xl px-4 py-3 transition-all duration-300 hover:bg-sidebar-accent/80`}
+                className={`group relative w-full p-0 bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none`}
               >
-                <Link href={item.href} className="flex items-center gap-3 text-left">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-sidebar-primary/10 to-sidebar-primary/20 group-hover:from-sidebar-primary/20 group-hover:to-sidebar-primary/30 transition-all duration-300">
-                    <IconComponent className="h-5 w-5 text-sidebar-foreground group-hover:text-sidebar-primary transition-colors duration-300" />
+                <Link
+                  href={item.href}
+                  className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-2xl px-4 py-4 min-h-24 border border-sidebar-border/20 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 transition-all duration-300 relative overflow-hidden`}
+                >
+                  {/* Active bar */}
+                  <span
+                    className={`absolute ${direction === 'rtl' ? 'right-0' : 'left-0'} top-0 h-full w-1.5 rounded-${direction === 'rtl' ? 'l' : 'r'}-full transition-all duration-300 ${isActive ? 'bg-sidebar-primary opacity-100' : 'bg-sidebar-primary/0 opacity-0 group-hover:opacity-60'}`}
+                  />
+                  {/* Icon */}
+                  <div className={`flex-shrink-0 self-center flex items-center justify-center w-14 h-14 rounded-xl ${colors.iconBg} ${colors.ring} ring-1 backdrop-blur-sm transition-all duration-300 group-hover:scale-105`}> 
+                    <IconComponent className={`h-7 w-7 ${colors.iconText}`} />
                   </div>
-                  <div className="flex flex-col -space-y-0.5">
-                    <span className="font-semibold text-sm text-sidebar-foreground group-hover:text-sidebar-accent-foreground tracking-wide">
+                  {/* Text Block */}
+                  <div className={`flex flex-col flex-1 justify-center ${direction === 'rtl' ? 'pr-1' : 'pl-1'} py-1`}> 
+                    <span className={`font-semibold text-sm tracking-wide mb-1 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'} group-hover:text-sidebar-accent-foreground transition-colors`}> 
                       {item.label}
                     </span>
                     {item.subLabel && (
-                      <span className="text-[10px] font-medium text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground/70 leading-tight">
+                      <span className="text-xs font-medium text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground/90 whitespace-normal break-words leading-snug">
                         {item.subLabel}
                       </span>
                     )}
                   </div>
-                  {/* Elite Active Indicator */}
+                  {/* Active pulse dot */}
                   {isActive && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-sidebar-primary animate-pulse" />
+                    <div className={`absolute ${direction === 'rtl' ? 'left-2' : 'right-2'} top-2 w-2.5 h-2.5 rounded-full bg-sidebar-primary shadow-[0_0_0_3px_rgba(var(--sidebar-primary-rgb),0.25)] animate-pulse`} />
                   )}
                 </Link>
               </SidebarMenuButton>

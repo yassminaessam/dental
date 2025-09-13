@@ -24,7 +24,8 @@ import PatientGrowthChart from "../../components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "../../components/reports/treatments-by-type-chart";
 import AppointmentDistributionChart from "../../components/reports/appointment-distribution-chart";
 import { useToast } from '../../hooks/use-toast';
-import { getCollection } from '../../services/firestore';
+// Migrated from server getCollection to client data layer listDocuments
+import { listDocuments } from '../../lib/data-client';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
@@ -65,13 +66,13 @@ export default function ReportsPage() {
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
-        const [invoices, rawPatients, appointments, treatments, rawTransactions] = await Promise.all([
-            getCollection<Invoice>('invoices'),
-            getCollection<any>('patients'),
-            getCollection<any>('appointments'),
-            getCollection<Treatment>('treatments'),
-            getCollection<any>('transactions'),
-        ]);
+    const [invoices, rawPatients, appointments, treatments, rawTransactions] = await Promise.all([
+      listDocuments<Invoice>('invoices'),
+      listDocuments<any>('patients'),
+      listDocuments<any>('appointments'),
+      listDocuments<Treatment>('treatments'),
+      listDocuments<any>('transactions'),
+    ]);
 
         const transactions: Transaction[] = rawTransactions.map((t: any) => ({ ...t, date: new Date(t.date) }));
         const patients: Patient[] = rawPatients.map((p: any) => ({

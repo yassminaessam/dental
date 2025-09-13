@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument } from '@/services/firestore';
+import { listDocuments, setDocument } from '@/lib/data-client';
 import type { Appointment } from '@/app/appointments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -79,7 +79,8 @@ export default function PatientAppointmentBooking() {
   const fetchDoctorsAndAppointments = async () => {
     try {
       // Fetch existing appointments to check availability
-      const appointments = await getCollection<Appointment>('appointments');
+  // Updated to listDocuments REST client
+  const appointments = await listDocuments<Appointment>('appointments');
       setExistingAppointments(appointments || []);
 
       // Mock doctors data - in real app, fetch from database

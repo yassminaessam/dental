@@ -25,7 +25,9 @@ import {
 import { Textarea } from '../ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Treatment } from '../../app/treatments/page';
-import { getCollection } from '../../services/firestore';
+// Using unified database service instead of deprecated firestore layer
+// Migrated from server getCollection to client listDocuments
+import { listDocuments } from '@/lib/data-client';
 import { Patient } from '../../app/patients/page';
 import { StaffMember } from '../../app/staff/page';
 import { ScrollArea } from '../ui/scroll-area';
@@ -108,9 +110,9 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
   
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
+  const patientData = await listDocuments<Patient>('patients');
         setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+  const staffData = await listDocuments<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
     }
     if (open) {

@@ -32,7 +32,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { MedicalRecord } from '@/app/medical-records/page';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({
@@ -77,9 +77,9 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
+  const patientData = await listDocuments<Patient>('patients');
         setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+  const staffData = await listDocuments<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
     }
     if (open) {

@@ -1,7 +1,14 @@
 
 // DEPRECATED: This file is deprecated in favor of the new database service using Neon PostgreSQL
-// Please use src/services/database.ts instead
-// This file now acts as a pure compatibility layer routing all calls to the database service
+// Please use src/services/database.ts instead.
+// This file remains temporarily for backward compatibility. It will be removed once all imports are migrated.
+// A runtime warning is emitted on first import.
+
+if (typeof console !== 'undefined' && !('__FIRESTORE_SERVICE_WARNED__' in globalThis as any)) {
+  (globalThis as any).__FIRESTORE_SERVICE_WARNED__ = true;
+  // eslint-disable-next-line no-console
+  console.warn('[DEPRECATED] Import from \'src/services/firestore\' detected. Migrate to \'src/services/database\'.');
+}
 
 import { 
   getCollection as neonGetCollection,

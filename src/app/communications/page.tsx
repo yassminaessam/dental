@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+// Migrated from server getCollection to client listDocuments
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,7 +34,7 @@ import { NewTemplateDialog, Template } from "@/components/communications/new-tem
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, deleteDocument } from '@/lib/data-client';
 import type { Message } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -64,8 +65,8 @@ export default function CommunicationsPage() {
     async function fetchData() {
       try {
         const [messageData, templateData] = await Promise.all([
-          getCollection<Message>('messages'),
-          getCollection<Template>('templates'),
+          listDocuments<Message>('messages'),
+          listDocuments<Template>('templates'),
         ]);
         setMessages(messageData);
         setTemplates(templateData);

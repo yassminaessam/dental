@@ -30,7 +30,8 @@ import { Calendar as CalendarIcon, ClipboardPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/database';
+// Migrated from server getCollection to client listDocuments
+import { listDocuments } from '@/lib/data-client';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import type { Medication } from '@/app/pharmacy/page';
@@ -71,9 +72,9 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
+  const patientData = await listDocuments<Patient>('patients');
         setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+  const staffData = await listDocuments<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
     }
     if (open) {
