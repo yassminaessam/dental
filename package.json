@@ -18,6 +18,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "basic-ftp": "^5.0.5",
     "@genkit-ai/googleai": "^1.13.0",
     "@genkit-ai/next": "^1.13.0",
     "@hookform/resolvers": "^4.1.3",
