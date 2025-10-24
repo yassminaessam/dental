@@ -25,8 +25,8 @@ import {
 } from '@/components/ui/select';
 import { Upload, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
-import { Patient } from '@/app/patients/page';
+import { listCollection } from '@/services/datastore';
+import type { Patient } from '@/lib/types';
 import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -85,8 +85,9 @@ export function UploadImageDialog({
   
   React.useEffect(() => {
     async function fetchPatients() {
-        const data = await getCollection<Patient>('patients');
-        setPatients(data);
+        type PatientRecord = Omit<Patient, 'dob'> & { dob: string };
+        const data = await listCollection<PatientRecord>('patients');
+        setPatients(data.map((patient) => ({ ...patient, dob: new Date(patient.dob) })));
     }
     if (open) {
         fetchPatients();

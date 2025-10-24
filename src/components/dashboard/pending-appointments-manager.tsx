@@ -12,8 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Clock, User, Phone, AlertTriangle, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, updateDocument } from '@/services/firestore';
-import type { Appointment } from '@/app/appointments/page';
+import type { Appointment } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const doctors = [
@@ -51,21 +50,34 @@ export default function PendingAppointmentsManager({
 
   const fetchPendingAppointments = async () => {
     try {
-      const appointments = await getCollection<Appointment>('appointments');
-      const pending = appointments?.filter(apt => 
+      const response = await fetch('/api/appointments');
+      if (!response.ok) {
+        throw new Error('Failed to load appointments');
+      }
+      const data = await response.json();
+      const appointments = (data.appointments ?? []) as Array<Record<string, unknown>>;
+      const normalized: Appointment[] = appointments.map((entry) => ({
+        ...entry,
+        dateTime: new Date(entry.dateTime as string),
+        createdAt: entry.createdAt ? new Date(entry.createdAt as string) : undefined,
+        updatedAt: entry.updatedAt ? new Date(entry.updatedAt as string) : undefined,
+        confirmedAt: entry.confirmedAt ? new Date(entry.confirmedAt as string) : undefined,
+        rejectedAt: entry.rejectedAt ? new Date(entry.rejectedAt as string) : undefined,
+      })) as Appointment[];
+
+      const pending = normalized.filter(apt => 
         apt.status === 'Pending'
       ).sort((a, b) => {
-        // Sort by urgency first, then by date
-        const urgencyOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+        const urgencyOrder = { High: 3, Medium: 2, Low: 1 } as const;
         const urgencyA = urgencyOrder[(a as any).urgency as keyof typeof urgencyOrder] || 2;
         const urgencyB = urgencyOrder[(b as any).urgency as keyof typeof urgencyOrder] || 2;
-        
+
         if (urgencyA !== urgencyB) {
-          return urgencyB - urgencyA; // High urgency first
+          return urgencyB - urgencyA;
         }
-        
+
         return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime();
-      }) || [];
+      });
       
       setPendingAppointments(pending);
     } catch (error) {
@@ -83,13 +95,22 @@ export default function PendingAppointmentsManager({
   const handleConfirmAppointment = async (appointmentId: string, assignedDoctor: string) => {
     setActionLoading(appointmentId);
     try {
-      await updateDocument('appointments', appointmentId, {
-        status: 'Confirmed',
-        doctor: assignedDoctor,
-        confirmedAt: new Date().toISOString(),
-        confirmedBy: `${user?.firstName} ${user?.lastName}`,
-        updatedAt: new Date().toISOString()
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Confirmed',
+          doctor: assignedDoctor,
+          confirmedAt: new Date().toISOString(),
+          confirmedBy: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || undefined,
+          updatedAt: new Date().toISOString(),
+        }),
       });
+
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({}));
+        throw new Error(details.error ?? 'Failed to confirm appointment');
+      }
 
       toast({
   title: t('dashboard.appointment_confirmed'),
@@ -112,13 +133,22 @@ export default function PendingAppointmentsManager({
   const handleRejectAppointment = async (appointmentId: string, reason: string) => {
     setActionLoading(appointmentId);
     try {
-      await updateDocument('appointments', appointmentId, {
-        status: 'Cancelled',
-        cancellationReason: reason,
-        cancelledAt: new Date().toISOString(),
-        cancelledBy: `${user?.firstName} ${user?.lastName}`,
-        updatedAt: new Date().toISOString()
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Cancelled',
+          cancellationReason: reason,
+          cancelledAt: new Date().toISOString(),
+          cancelledBy: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || undefined,
+          updatedAt: new Date().toISOString(),
+        }),
       });
+
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({}));
+        throw new Error(details.error ?? 'Failed to reject appointment');
+      }
 
       toast({
   title: t('dashboard.appointment_rejected'),

@@ -29,8 +29,7 @@ import { UploadImageDialog } from '@/components/medical-records/upload-image-dia
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { getCollection, setDocument } from '@/services/firestore';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, db } from '@/services/firestore';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';

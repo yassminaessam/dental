@@ -9,13 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Treatment } from '@/app/treatments/page';
+import type { Treatment } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
 import { FileText, DollarSign, Shield } from 'lucide-react';
-import { getCollection } from '@/services/firestore';
+import { listCollection } from '@/services/datastore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -57,8 +57,8 @@ export function ViewTreatmentDialog({ treatment, open, onOpenChange }: ViewTreat
     if (treatment && open) {
       setLoading(true);
       Promise.all([
-        getCollection<Invoice>('invoices'),
-        getCollection<InsuranceClaim>('insurance-claims')
+        listCollection<Invoice>('invoices'),
+        listCollection<InsuranceClaim>('insurance-claims')
       ]).then(([invoices, claims]) => {
         const invoice = invoices.find(inv => inv.treatmentId === treatment.id);
         const claim = claims.find(c => 

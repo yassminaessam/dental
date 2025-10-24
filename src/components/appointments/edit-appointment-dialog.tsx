@@ -28,10 +28,8 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { Appointment } from '@/app/appointments/page';
-import { getCollection } from '@/services/firestore';
-import { Patient } from '@/app/patients/page';
-import { StaffMember } from '@/app/staff/page';
+import type { Appointment, Patient, StaffMember } from '@/lib/types';
+import { listCollection } from '@/services/datastore';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 
@@ -84,10 +82,19 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
-        setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+      try {
+        const patientData = await listCollection<Record<string, unknown>>('patients');
+        setPatients(
+          patientData.map((patient) => ({
+            ...patient,
+            dob: patient.dob ? new Date(patient.dob as string) : new Date(),
+          })) as Patient[]
+        );
+        const staffData = await listCollection<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
+      } catch (error) {
+        console.error('Error loading appointment data', error);
+      }
     }
     if (open) {
       fetchData();
@@ -106,7 +113,7 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
             time: format(appointment.dateTime, 'HH:mm'),
             type: appointment.type,
             duration: appointment.duration,
-            notes: '',
+            notes: appointment.notes || '',
         });
     }
   }, [appointment, form, patients, doctors]);
@@ -124,10 +131,13 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
     const updatedAppointment: Appointment = {
       ...appointment,
       patient: patientName || appointment.patient,
+      patientId: data.patient,
       doctor: doctorName || appointment.doctor,
+      doctorId: data.doctor,
       dateTime,
       type: data.type,
       duration: data.duration,
+      notes: data.notes ?? appointment.notes,
     };
     onSave(updatedAppointment);
   };

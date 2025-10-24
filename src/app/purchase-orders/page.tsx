@@ -49,8 +49,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, MoreHorizontal, Plus, ShoppingCart, AlertTriangle, CheckCircle2, Clock, Truck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, addDocument as addDoc, deleteDocument, doc, updateDocument, db } from "@/services/firestore";
 
 interface PurchaseOrderItem {
   itemId: string;
@@ -206,7 +205,7 @@ export default function PurchaseOrdersPage() {
         }]
       };
 
-      await addDoc(collection(db, "purchase-orders"), newOrder);
+      await addDoc("purchase-orders", newOrder as any);
       fetchData();
       toast({
         title: "Success",
@@ -224,9 +223,7 @@ export default function PurchaseOrdersPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, "purchase-orders", orderId), {
-        status: newStatus
-      });
+      await updateDocument("purchase-orders", orderId, { status: newStatus } as any);
       fetchData();
       toast({
         title: "Success",
@@ -244,7 +241,7 @@ export default function PurchaseOrdersPage() {
 
   const deleteOrder = async (orderId: string) => {
     try {
-      await deleteDoc(doc(db, "purchase-orders", orderId));
+      await deleteDocument("purchase-orders", orderId);
       fetchData();
       toast({
         title: "Success",

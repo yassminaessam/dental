@@ -25,8 +25,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, db } from "@/services/firestore";
 
 interface IntegrationStats {
   totalSuppliers: number;

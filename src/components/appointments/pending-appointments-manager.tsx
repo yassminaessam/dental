@@ -20,9 +20,9 @@ import {
   Loader2 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateDocument, getCollection } from '@/services/firestore';
+import { AppointmentsService } from '@/services/appointments';
 import { format } from 'date-fns';
-import type { Appointment } from '@/app/appointments/page';
+import type { Appointment } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PendingAppointmentsProps {
@@ -47,12 +47,7 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
 
   const fetchPendingAppointments = async () => {
     try {
-      const appointments = await getCollection<Appointment>('appointments');
-      const pending = (appointments || [])
-        .filter(apt => apt.status === 'Pending')
-        .map(apt => ({ ...apt, dateTime: new Date(apt.dateTime) }))
-        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-      
+      const pending = await AppointmentsService.listPending();
       setPendingAppointments(pending);
     } catch (error) {
       console.error('Error fetching pending appointments:', error);
@@ -70,10 +65,9 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     setConfirmingIds(prev => new Set(prev).add(appointmentId));
     
     try {
-      await updateDocument('appointments', appointmentId, { 
-        status: 'Confirmed',
+      await AppointmentsService.updateStatus(appointmentId, 'Confirmed', {
         confirmedAt: new Date(),
-        confirmedBy: 'staff' // You can get actual user info from auth context
+        confirmedBy: 'staff',
       });
       
       toast({
@@ -117,11 +111,10 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     setConfirmingIds(prev => new Set(prev).add(appointmentId));
     
     try {
-      await updateDocument('appointments', appointmentId, { 
-        status: 'Cancelled',
+      await AppointmentsService.updateStatus(appointmentId, 'Cancelled', {
         rejectedAt: new Date(),
         rejectedBy: 'staff',
-        rejectionReason: notes
+        rejectionReason: notes,
       });
       
       toast({

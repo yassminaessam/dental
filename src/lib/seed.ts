@@ -1,25 +1,9 @@
-
-// A script to seed the database with some initial data.
-// This is useful for development and testing purposes.
-// To run this script, use the command: `npm run seed`
-
-import { db } from './firebase';
-import { collection, setDoc, doc } from 'firebase/firestore';
+// Seed script placeholder (Firebase removed)
+// Use Prisma migrations or a dedicated seed for Postgres instead.
 import { insuranceProviders } from './data/insurance-providers';
 
-async function seedCollection(collectionName: string, data: any[]) {
-  console.log(`Seeding ${collectionName}...`);
-  for (const item of data) {
-    try {
-      // Use the existing 'id' field for the document ID in Firestore
-      const docRef = doc(db, collectionName, item.id);
-      await setDoc(docRef, item);
-      console.log(`Added ${collectionName} with ID: ${item.id}`);
-    } catch (e) {
-      console.error(`Error adding document to ${collectionName}: `, e);
-    }
-  }
-  console.log(`${collectionName} seeding finished.`);
+async function seedCollection(collectionName: string, _data: any[]) {
+    console.log(`Skipping seeding for ${collectionName} (migrate to Postgres models first).`);
 }
 
 async function seedDatabase() {
@@ -164,7 +148,7 @@ async function seedDatabase() {
       }
     ];
 
-  console.log('Starting database seed...');
+    console.log('Starting database seed (Postgres migration pending)...');
 
   await seedCollection('patients', initialPatientsData.map(p => ({...p, dob: p.dob.toISOString() })));
   await seedCollection('appointments', initialAppointmentsData.map(a => ({...a, dateTime: a.dateTime.toISOString() })));
@@ -188,7 +172,7 @@ async function seedDatabase() {
   await seedCollection('shared-documents', initialSharedDocumentsData);
   await seedCollection('clinic-settings', initialClinicSettingsData);
 
-  console.log('Database seeding completed successfully!');
+    console.log('Seed script finished (no-op for non-user collections).');
 }
 
 seedDatabase().catch(console.error);

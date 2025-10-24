@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { getCollection } from '@/services/firestore';
+import { listCollection } from '@/services/datastore';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -165,16 +165,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
         prescriptions,
         referrals
       ] = await Promise.all([
-        getCollection('appointments'),
-        getCollection('treatments'),
-        getCollection('medical-records'),
-        getCollection('clinical-images'),
-        getCollection('invoices'),
-        getCollection('insurance-claims'),
-        getCollection('tooth-image-links'),
-        getCollection('messages'),
-        getCollection('prescriptions'),
-        getCollection('referrals')
+        listCollection('appointments'),
+        listCollection('treatments'),
+        listCollection('medical-records'),
+        listCollection('clinical-images'),
+        listCollection('invoices'),
+        listCollection('insurance-claims'),
+        listCollection('tooth-image-links'),
+        listCollection('messages'),
+        listCollection('prescriptions'),
+        listCollection('referrals')
       ]);
 
       // Filter data by patient

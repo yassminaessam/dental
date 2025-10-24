@@ -1,6 +1,6 @@
 'use client';
 
-import { setDocument, getCollection, updateDocument } from '@/services/firestore';
+import { setDocument, getCollection, updateDocument } from '@/services/firestore.server';
 import type { MedicalRecord } from '@/app/medical-records/page';
 import type { Tooth, ToothCondition } from '@/app/dental-chart/page';
 import type { ClinicalImage } from '@/app/medical-records/page';

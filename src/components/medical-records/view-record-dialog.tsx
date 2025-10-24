@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { MedicalRecord } from '@/app/medical-records/page';
+import type { MedicalRecord } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 

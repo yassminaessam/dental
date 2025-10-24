@@ -18,7 +18,7 @@ import { Upload, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
-import { ClinicalImage } from '@/app/medical-records/page';
+import type { ClinicalImage } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const replaceImageSchema = z.object({

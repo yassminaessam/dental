@@ -29,10 +29,16 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { Patient } from '@/app/patients/page';
-import { getCollection } from '@/services/firestore';
-import { StaffMember } from '@/app/staff/page';
+import type { Patient, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { AppointmentCreateInput } from '@/services/appointments';
+async function fetchCollection<T>(collection: string): Promise<T[]> {
+  const response = await fetch(`/api/collections/${collection}`);
+  if (!response.ok) throw new Error(`Failed to fetch ${collection}`);
+  const payload = await response.json();
+  return (payload.items ?? payload.data ?? []) as T[];
+}
+
 
 
 const appointmentSchema = z.object({
@@ -67,7 +73,7 @@ const availableTimeSlots = [
 const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
 interface ScheduleAppointmentDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: AppointmentCreateInput) => Promise<void>;
 }
 
 export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogProps) {
@@ -76,23 +82,33 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const [submitting, setSubmitting] = React.useState(false);
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
-        setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+      try {
+        const patientData = await fetchCollection<Record<string, unknown>>('patients');
+        setPatients(
+          patientData.map((patient) => ({
+            ...patient,
+            dob: patient.dob ? new Date(patient.dob as string) : new Date(),
+          })) as Patient[]
+        );
+        const staffData = await fetchCollection<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
+      } catch (error) {
+        console.error('Error loading scheduling data', error);
+      }
     }
     if (open) {
       fetchData();
     }
   }, [open]);
 
-  const onSubmit = (data: AppointmentFormData) => {
+  const onSubmit = async (data: AppointmentFormData) => {
     const [hours, minutes] = data.time.split(':');
     const dateTime = new Date(data.date);
     dateTime.setHours(parseInt(hours, 10));
@@ -101,9 +117,26 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
     const patientName = patients.find(p => p.id === data.patient)?.name;
     const doctorName = doctors.find(d => d.id === data.doctor)?.name;
 
-    onSave({ ...data, dateTime, patient: patientName, doctor: doctorName });
-    form.reset();
-    setOpen(false);
+    setSubmitting(true);
+    try {
+      await onSave({
+        dateTime,
+        patient: patientName || data.patient,
+        patientId: data.patient,
+        doctor: doctorName || data.doctor,
+        doctorId: data.doctor,
+        type: data.type,
+        duration: data.duration,
+        notes: data.notes,
+        bookedBy: 'staff',
+      });
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      console.error('Error scheduling appointment', error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -321,6 +354,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
               <Button 
                 type="submit" 
                 className="w-full sm:w-auto order-1 sm:order-2"
+                disabled={submitting}
               >
                 {t('appointments.schedule_appointment')}
               </Button>

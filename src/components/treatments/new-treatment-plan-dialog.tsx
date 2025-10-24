@@ -28,11 +28,37 @@ import { Calendar } from '@/components/ui/calendar';
 import { Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
-import { Patient } from '@/app/patients/page';
-import { StaffMember } from '@/app/staff/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+interface PatientRecord {
+  id: string;
+  name: string;
+}
+
+interface StaffRecord {
+  id: string;
+  name: string;
+  role: string;
+}
+
+async function fetchCollection<T>(collection: string): Promise<T[]> {
+  const response = await fetch(`/api/collections/${collection}`);
+  if (!response.ok) throw new Error(`Failed to fetch ${collection}`);
+  const json = await response.json();
+  const items = json.items ?? json.data ?? [];
+  return items as T[];
+}
+
+export interface NewTreatmentPlanData {
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  procedure: string;
+  notes?: string;
+  appointments: Array<{ date: Date; time: string; duration: string }>;
+}
 
 // Schema builders to localize validation messages
 const buildAppointmentSchema = (t: (k: string) => string) =>
@@ -66,13 +92,13 @@ const availableTimeSlots = [
 const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
 interface NewTreatmentPlanDialogProps {
-  onSave: (data: any) => void;
+  onSave: (data: NewTreatmentPlanData) => Promise<void> | void;
 }
 
 export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const [patients, setPatients] = React.useState<Patient[]>([]);
-  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const [patients, setPatients] = React.useState<PatientRecord[]>([]);
+  const [doctors, setDoctors] = React.useState<StaffRecord[]>([]);
   const { t, language } = useLanguage();
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
 
@@ -95,13 +121,15 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
-        setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+      const patientData = await fetchCollection<PatientRecord>('patients');
+      setPatients(patientData);
+      const staffData = await fetchCollection<StaffRecord>('staff');
+      setDoctors(staffData.filter((staff) => staff.role === 'Dentist'));
     }
     if (open) {
-        fetchData();
+      fetchData().catch(() => {
+        /** handled via parent toast */
+      });
     }
   }, [open]);
 
@@ -114,10 +142,20 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
     replace(newAppointments);
   };
 
-  const onSubmit = (data: PlanFormData) => {
-    const patientName = patients.find(p => p.id === data.patient)?.name;
-    const doctorName = doctors.find(d => d.id === data.doctor)?.name;
-    onSave({...data, patient: patientName, doctor: doctorName});
+  const onSubmit = async (data: PlanFormData) => {
+    const patient = patients.find(p => p.id === data.patient);
+    const doctor = doctors.find(d => d.id === data.doctor);
+
+    await onSave({
+      patientId: data.patient,
+      patientName: patient?.name ?? '',
+      doctorId: data.doctor,
+      doctorName: doctor?.name ?? '',
+      procedure: data.treatmentName,
+      notes: data.notes,
+      appointments: data.appointments,
+    });
+
     form.reset();
     setOpen(false);
   };

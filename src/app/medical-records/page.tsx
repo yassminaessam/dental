@@ -55,37 +55,23 @@ import { ViewRecordDialog } from '@/components/medical-records/view-record-dialo
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
 import { LinkImageToToothDialog } from '@/components/medical-records/link-image-to-tooth-dialog';
 import { ViewImageDialog } from '@/components/medical-records/view-image-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import type { ClinicalImage, MedicalRecord, MedicalRecordTemplate } from '@/lib/types';
+import {
+  listMedicalRecords,
+  listClinicalImages,
+  listMedicalRecordTemplates,
+  createMedicalRecord,
+  updateMedicalRecord,
+  removeMedicalRecord,
+  createClinicalImage,
+  updateClinicalImage,
+  removeClinicalImage,
+} from '@/services/medical-records';
 import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export type MedicalRecord = {
-  id: string;
-  patient: string;
-  type: string;
-  complaint: string;
-  provider: string;
-  date: string;
-  status: 'Final' | 'Draft';
-  notes?: string;
-};
-
-export type MedicalRecordTemplate = {
-  id: string;
-  name: string;
-  type: string;
-  content: string;
-};
-
-export type ClinicalImage = {
-  id: string;
-  patient: string;
-  type: string;
-  date: string;
-  imageUrl: string;
-  caption?: string;
-};
+export type { MedicalRecord, MedicalRecordTemplate, ClinicalImage } from '@/lib/types';
 
 const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
@@ -143,11 +129,11 @@ export default function MedicalRecordsPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-            const [recordsData, imagesData, templatesData] = await Promise.all([
-                getCollection<MedicalRecord>('medical-records'),
-                getCollection<ClinicalImage>('clinical-images'),
-                getCollection<MedicalRecordTemplate>('templates'),
-            ]);
+        const [recordsData, imagesData, templatesData] = await Promise.all([
+          listMedicalRecords(),
+          listClinicalImages(),
+          listMedicalRecordTemplates(),
+        ]);
             setRecords(recordsData);
             setImages(imagesData);
             setTemplates(templatesData);
@@ -175,13 +161,11 @@ export default function MedicalRecordsPage() {
 
   const handleSaveRecord = async (data: Omit<MedicalRecord, 'id' | 'status'>) => {
     try {
-      const newRecord: MedicalRecord = {
-        id: `MR-${Date.now()}`,
+      const created = await createMedicalRecord({
         ...data,
         status: 'Final',
-      };
-      await setDocument('medical-records', newRecord.id, newRecord);
-      setRecords(prev => [newRecord, ...prev]);
+      });
+      setRecords((prev) => [created, ...prev]);
       toast({
         title: t('medical_records.toast.record_created'),
         description: t('medical_records.toast.record_created_desc'),
@@ -193,7 +177,7 @@ export default function MedicalRecordsPage() {
 
   const handleUpdateRecord = async (updatedRecord: MedicalRecord) => {
     try {
-      await updateDocument('medical-records', updatedRecord.id, updatedRecord);
+      await updateMedicalRecord(updatedRecord);
       setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
       setRecordToEdit(null);
       toast({
@@ -208,7 +192,7 @@ export default function MedicalRecordsPage() {
   const handleDeleteRecord = async () => {
     if (!recordToDelete) return;
     try {
-      await deleteDocument('medical-records', recordToDelete.id);
+      await removeMedicalRecord(recordToDelete.id);
       setRecords(prev => prev.filter(record => record.id !== recordToDelete.id));
       setRecordToDelete(null);
       toast({
@@ -223,18 +207,14 @@ export default function MedicalRecordsPage() {
 
   const handleImageUpload = async (data: any) => {
      try {
-      const newImage: ClinicalImage = {
-        id: `IMG-${Date.now()}`,
+      const created = await createClinicalImage({
         patient: data.patientName,
         type: data.type,
         date: new Date().toLocaleDateString(),
-        imageUrl: data.imageUrl, // Now using the actual Firebase Storage URL
-        caption: data.caption
-      };
-      
-      // Save to Firestore with the actual storage URL
-      await setDocument('clinical-images', newImage.id, newImage);
-      setImages(prev => [newImage, ...prev]);
+        imageUrl: data.imageUrl,
+        caption: data.caption,
+      });
+      setImages(prev => [created, ...prev]);
       toast({
         title: t('medical_records.toast.image_uploaded'),
         description: t('medical_records.toast.image_uploaded_desc'),
@@ -256,7 +236,7 @@ export default function MedicalRecordsPage() {
         date: new Date().toLocaleDateString(), // Update date when replaced
       };
 
-      await updateDocument('clinical-images', imageId, updatedImageData);
+      await updateClinicalImage(updatedImageData);
       setImages(prev => prev.map(img => img.id === imageId ? updatedImageData : img));
       
       toast({
@@ -278,7 +258,7 @@ export default function MedicalRecordsPage() {
       }
       
       // Always delete from Firestore regardless of URL type
-      await deleteDocument('clinical-images', imageToDelete.id);
+      await removeClinicalImage(imageToDelete.id);
       
       setImages(prev => prev.filter(img => img.id !== imageToDelete.id));
       setImageToDelete(null);

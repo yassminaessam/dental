@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, Link as LinkIcon, X } from "lucide-react";
-import { ClinicalImage } from '@/app/medical-records/page';
+import type { ClinicalImage } from '@/lib/types';
 import { DentalIntegrationService } from '@/services/dental-integration';
 import { useToast } from '@/hooks/use-toast';
 import { toothNames } from '@/lib/data/dental-chart-data';

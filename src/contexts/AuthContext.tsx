@@ -62,15 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    const firebaseUser = AuthService.getCurrentFirebaseUser();
-    if (firebaseUser) {
-      const user = await AuthService.getUserProfile(firebaseUser.uid);
-      setAuthState(prev => ({
-        ...prev,
-        user,
-        isAuthenticated: !!user,
-      }));
-    }
+    const user = await AuthService.getCurrentUser();
+    setAuthState(prev => ({
+      ...prev,
+      user,
+      isAuthenticated: !!user,
+    }));
   };
 
   return (

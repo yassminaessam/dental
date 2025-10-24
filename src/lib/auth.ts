@@ -1,27 +1,59 @@
 'use client';
 
-import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User as FirebaseUser,
-  UserCredential
-} from 'firebase/auth';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc,
-  serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs 
-} from 'firebase/firestore';
-import { auth, db } from './firebase';
 import type { User, LoginCredentials, RegisterData, UserRole, UserPermission } from './types';
-import { ROLE_PERMISSIONS } from './types';
+
+const SESSION_KEY = 'sessionUserId';
+const AUTH_API_BASE = '/api/auth';
+
+function setSessionUserId(id: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SESSION_KEY, id);
+  window.dispatchEvent(new StorageEvent('storage', { key: SESSION_KEY, newValue: id }));
+}
+
+function clearSession() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(SESSION_KEY);
+  window.dispatchEvent(new StorageEvent('storage', { key: SESSION_KEY, newValue: null } as any));
+}
+
+async function getSessionUser(): Promise<User | null> {
+  if (typeof window === 'undefined') return null;
+  const id = localStorage.getItem(SESSION_KEY);
+  if (!id) return null;
+  try {
+    const response = await fetch(`${AUTH_API_BASE}/users/${id}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    const { user } = (await response.json()) as { user: User };
+    return user ?? null;
+  } catch (error) {
+    console.error('Failed to fetch session user', error);
+    return null;
+  }
+}
+
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorMessage = (body as { error?: string }).error ?? 'Request failed';
+    throw new Error(errorMessage);
+  }
+
+  return body as T;
+}
 
 export class AuthService {
   
@@ -30,24 +62,11 @@ export class AuthService {
    */
   static async signIn(credentials: LoginCredentials): Promise<User> {
     try {
-      const userCredential: UserCredential = await signInWithEmailAndPassword(
-        auth, 
-        credentials.email, 
-        credentials.password
-      );
-      
-      const user = await this.getUserProfile(userCredential.user.uid);
-      if (!user) {
-        throw new Error('User profile not found');
-      }
-
-      if (!user.isActive) {
-        throw new Error('Account is deactivated. Please contact your administrator.');
-      }
-
-      // Update last login
-      await this.updateLastLogin(user.id);
-      
+      const { user } = await requestJson<{ user: User }>(`${AUTH_API_BASE}/sign-in`, {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      });
+      setSessionUserId(user.id);
       return user;
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -60,43 +79,12 @@ export class AuthService {
    */
   static async register(data: RegisterData & { permissions?: UserPermission[] }): Promise<User> {
     try {
-      const userCredential: UserCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-
-      const userData: User = {
-        id: userCredential.user.uid,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        permissions: data.permissions || ROLE_PERMISSIONS[data.role],
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        // Only include optional fields if they have values
-        ...(data.specialization && { specialization: data.specialization }),
-        ...(data.licenseNumber && { licenseNumber: data.licenseNumber }),
-        ...(data.employeeId && { employeeId: data.employeeId }),
-        ...(data.department && { department: data.department }),
-        ...(data.phone && { phone: data.phone }),
-      };
-
-      // Prepare data for Firestore (remove undefined values)
-      const firestoreData = Object.fromEntries(
-        Object.entries({
-          ...userData,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }).filter(([_, value]) => value !== undefined)
-      );
-
-      // Save user profile to Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), firestoreData);
-
-      return userData;
+      const { user } = await requestJson<{ user: User }>(`${AUTH_API_BASE}/register`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      setSessionUserId(user.id);
+      return user;
     } catch (error: any) {
       console.error('Registration error:', error);
       throw new Error(error.message || 'Failed to register user');
@@ -108,7 +96,7 @@ export class AuthService {
    */
   static async signOut(): Promise<void> {
     try {
-      await signOut(auth);
+      clearSession();
     } catch (error: any) {
       console.error('Sign out error:', error);
       throw new Error('Failed to sign out');
@@ -118,20 +106,10 @@ export class AuthService {
   /**
    * Get user profile from Firestore
    */
-  static async getUserProfile(uid: string): Promise<User | null> {
+  static async getUserProfile(id: string): Promise<User | null> {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        return {
-          ...data,
-          id: uid,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-          lastLoginAt: data.lastLoginAt?.toDate(),
-        } as User;
-      }
-      return null;
+      const { user } = await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`);
+      return user;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
@@ -141,11 +119,11 @@ export class AuthService {
   /**
    * Update user's last login timestamp
    */
-  static async updateLastLogin(uid: string): Promise<void> {
+  static async updateLastLogin(id: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', uid), {
-        lastLoginAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ lastLoginAt: new Date().toISOString() }),
       });
     } catch (error) {
       console.error('Error updating last login:', error);
@@ -155,11 +133,11 @@ export class AuthService {
   /**
    * Update user profile
    */
-  static async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
+  static async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', uid), {
-        ...updates,
-        updatedAt: serverTimestamp(),
+      await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
       });
     } catch (error: any) {
       console.error('Error updating user profile:', error);
@@ -172,16 +150,8 @@ export class AuthService {
    */
   static async getAllUsers(): Promise<User[]> {
     try {
-      const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
-      
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        lastLoginAt: doc.data().lastLoginAt?.toDate(),
-      })) as User[];
+      const { users } = await requestJson<{ users: User[] }>(`${AUTH_API_BASE}/users`);
+      return users;
     } catch (error) {
       console.error('Error fetching users:', error);
       throw new Error('Failed to fetch users');
@@ -193,17 +163,8 @@ export class AuthService {
    */
   static async getUsersByRole(role: UserRole): Promise<User[]> {
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('role', '==', role));
-      const querySnapshot = await getDocs(q);
-      
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        lastLoginAt: doc.data().lastLoginAt?.toDate(),
-      })) as User[];
+      const { users } = await requestJson<{ users: User[] }>(`${AUTH_API_BASE}/users?role=${encodeURIComponent(role)}`);
+      return users;
     } catch (error) {
       console.error('Error fetching users by role:', error);
       throw new Error('Failed to fetch users');
@@ -213,11 +174,11 @@ export class AuthService {
   /**
    * Deactivate user account
    */
-  static async deactivateUser(uid: string): Promise<void> {
+  static async deactivateUser(id: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', uid), {
-        isActive: false,
-        updatedAt: serverTimestamp(),
+      await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: false }),
       });
     } catch (error: any) {
       console.error('Error deactivating user:', error);
@@ -228,11 +189,11 @@ export class AuthService {
   /**
    * Activate user account
    */
-  static async activateUser(uid: string): Promise<void> {
+  static async activateUser(id: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', uid), {
-        isActive: true,
-        updatedAt: serverTimestamp(),
+      await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: true }),
       });
     } catch (error: any) {
       console.error('Error activating user:', error);
@@ -243,11 +204,11 @@ export class AuthService {
   /**
    * Update user permissions
    */
-  static async updateUserPermissions(uid: string, permissions: UserPermission[]): Promise<void> {
+  static async updateUserPermissions(id: string, permissions: UserPermission[]): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', uid), {
-        permissions: permissions,
-        updatedAt: serverTimestamp(),
+      await requestJson<{ user: User }>(`${AUTH_API_BASE}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ permissions }),
       });
     } catch (error: any) {
       console.error('Error updating user permissions:', error);
@@ -274,22 +235,33 @@ export class AuthService {
   /**
    * Get current Firebase user
    */
-  static getCurrentFirebaseUser(): FirebaseUser | null {
-    return auth.currentUser;
+  static getCurrentFirebaseUser(): null { return null; }
+
+  static async getCurrentUser(): Promise<User | null> {
+    return await getSessionUser();
   }
 
   /**
    * Listen to auth state changes
    */
   static onAuthStateChange(callback: (user: User | null) => void): () => void {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const user = await this.getUserProfile(firebaseUser.uid);
-        callback(user);
-      } else {
-        callback(null);
-      }
-    });
+    let cancelled = false;
+    (async () => {
+      const u = await getSessionUser();
+      if (!cancelled) callback(u);
+    })();
+    const handler = async (e: StorageEvent) => {
+      if (e.key && e.key !== SESSION_KEY) return;
+      const u = await getSessionUser();
+      if (!cancelled) callback(u);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handler);
+    }
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined') window.removeEventListener('storage', handler);
+    };
   }
 }
 

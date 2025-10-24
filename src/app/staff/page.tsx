@@ -45,19 +45,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ViewEmployeeDialog } from '@/components/staff/view-employee-dialog';
 import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { StaffMember } from '@/lib/types';
 
-export type StaffMember = {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  schedule: string;
-  salary: string;
-  hireDate: string;
-  status: 'Active' | 'Inactive';
-  notes?: string;
-};
+export type { StaffMember } from '@/lib/types';
 
 const staffRoles = [
   { name: "Dentist", color: "bg-blue-100 text-blue-800" },

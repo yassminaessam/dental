@@ -22,10 +22,8 @@ import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import PendingAppointmentsManager from "@/components/dashboard/pending-appointments-manager";
 import { StaffOnly } from "@/components/auth/ProtectedRoute";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument } from '@/services/firestore';
-import type { Patient } from '@/app/patients/page';
-import type { Appointment } from '@/app/appointments/page';
-import type { Transaction } from '@/app/financial/page';
+import type { AppointmentCreateInput } from '@/services/appointments';
+import type { Patient } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function DashboardPage() {
@@ -48,20 +46,37 @@ export default function DashboardPage() {
 
     React.useEffect(() => {
         async function fetchData() {
-            const [transactions, appointments] = await Promise.all([
-                getCollection<Transaction>('transactions'),
-                getCollection<Appointment>('appointments'),
-            ]);
+            try {
+              const [transactionsResponse, appointmentsResponse] = await Promise.all([
+                fetch('/api/collections/transactions'),
+                fetch('/api/appointments'),
+              ]);
+
+              if (!transactionsResponse.ok) {
+                throw new Error('Failed to load transactions');
+              }
+              if (!appointmentsResponse.ok) {
+                throw new Error('Failed to load appointments');
+              }
+
+              const transactionsJson = await transactionsResponse.json();
+              const appointmentsJson = await appointmentsResponse.json();
+
+              const transactions = (transactionsJson.items ?? []) as Array<Record<string, unknown>>;
+              const appointments = (appointmentsJson.appointments ?? []) as Array<Record<string, unknown>>;
 
             // Process revenue data for chart
             const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
-            transactions.forEach(t => {
-                const month = new Date(t.date).toLocaleString('default', { month: 'short' });
+            transactions.forEach((raw) => {
+              const date = raw.date ? new Date(raw.date as string) : new Date();
+              const amountField = typeof raw.amount === 'string' ? raw.amount : String(raw.amount ?? '0');
+              const typeField = raw.type === 'Expense' ? 'Expense' : 'Revenue';
+              const month = date.toLocaleString('default', { month: 'short' });
                 if (!monthlyFinancials[month]) {
                     monthlyFinancials[month] = { revenue: 0, expenses: 0 };
                 }
-                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
-                if (t.type === 'Revenue') {
+              const amount = parseFloat(amountField.replace(/[^0-9.-]+/g,""));
+              if (typeField === 'Revenue') {
                     monthlyFinancials[month].revenue += amount;
                 } else {
                     monthlyFinancials[month].expenses += amount;
@@ -75,8 +90,9 @@ export default function DashboardPage() {
             setRevenueData(chartData);
 
             // Process appointment types
-            const typeCounts = appointments.reduce((acc, appt) => {
-                acc[appt.type] = (acc[appt.type] || 0) + 1;
+            const typeCounts = appointments.reduce((acc, entry) => {
+                const type = typeof entry.type === 'string' ? entry.type : 'Other';
+                acc[type] = (acc[type] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>);
             
@@ -87,32 +103,60 @@ export default function DashboardPage() {
                 color: colors[index % colors.length]
             }));
             setAppointmentTypes(appointmentTypeData);
+            } catch (error) {
+              console.error('Failed to load dashboard data', error);
+            }
         }
         fetchData();
     }, []);
 
     const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
         try {
-            const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
-            await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
-            toast({ title: t('dashboard.toast.patient_added'), description: t('dashboard.toast.patient_added_desc', { name: newPatient.name }) });
+        const response = await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newPatientData,
+            dob: newPatientData.dob.toISOString(),
+          }),
+        });
+        if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
+          throw new Error(details.error ?? 'Failed to add patient');
+        }
+            toast({ title: t('dashboard.toast.patient_added'), description: t('dashboard.toast.patient_added_desc', { name: newPatientData.name }) });
         } catch (error) {
             toast({ title: t('dashboard.toast.error_adding_patient'), variant: "destructive" });
         }
     };
     
-    const handleSaveAppointment = async (data: Omit<Appointment, 'id' | 'status' | 'dateTime'> & { dateTime: Date }) => {
+    const handleSaveAppointment = async (data: AppointmentCreateInput) => {
         try {
-            const newAppointment: Appointment = {
-                id: `APT-${Date.now()}`,
-                ...data,
-                dateTime: data.dateTime,
-                status: 'Confirmed',
-            };
-            await setDocument('appointments', newAppointment.id, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
-            toast({ title: t('dashboard.toast.appointment_scheduled'), description: t('dashboard.toast.appointment_scheduled_desc', { patient: newAppointment.patient }) });
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...data,
+            bookedBy: data.bookedBy ?? 'staff',
+            dateTime: data.dateTime.toISOString(),
+            createdAt: data.createdAt?.toISOString(),
+            updatedAt: data.updatedAt?.toISOString(),
+            confirmedAt: data.confirmedAt?.toISOString(),
+            rejectedAt: data.rejectedAt?.toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
+          throw new Error(details.error ?? 'Failed to schedule appointment');
+        }
+
+        const result = await response.json();
+        const appointment = result.appointment as { patient?: string } | undefined;
+        toast({ title: t('dashboard.toast.appointment_scheduled'), description: t('dashboard.toast.appointment_scheduled_desc', { patient: appointment?.patient ?? data.patient }) });
         } catch (error) {
             toast({ title: t('dashboard.toast.error_scheduling'), variant: "destructive" });
+        throw (error instanceof Error ? error : new Error('Failed to schedule appointment'));
         }
     };
 
@@ -158,7 +202,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-          <PendingAppointmentsManager onAppointmentUpdate={() => {
+          <PendingAppointmentsManager onAppointmentConfirmed={() => {
             // Optionally refresh dashboard data when appointments are confirmed
             window.location.reload();
           }} />

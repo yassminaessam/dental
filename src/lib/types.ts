@@ -124,3 +124,129 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
     'view_own_data'
   ]
 };
+
+export type PatientStatus = 'Active' | 'Inactive';
+
+export interface PatientMedicalHistoryEntry {
+  condition: string;
+  notes?: string;
+}
+
+export interface Patient {
+  id: string;
+  name: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dob: Date;
+  age: number;
+  lastVisit: string;
+  status: PatientStatus;
+  address?: string;
+  ecName?: string;
+  ecPhone?: string;
+  ecRelationship?: string;
+  insuranceProvider?: string;
+  policyNumber?: string;
+  medicalHistory?: PatientMedicalHistoryEntry[];
+}
+
+export type AppointmentStatus = 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
+
+export type AppointmentBookedBy = 'patient' | 'staff';
+
+export type AppointmentUrgency = 'Low' | 'Medium' | 'High';
+
+export interface Appointment {
+  id: string;
+  dateTime: Date;
+  patient: string;
+  patientId?: string;
+  patientEmail?: string;
+  patientPhone?: string;
+  doctor: string;
+  doctorId?: string;
+  type: string;
+  duration: string;
+  status: AppointmentStatus;
+  treatmentId?: string;
+  notes?: string;
+  bookedBy?: AppointmentBookedBy;
+  createdAt?: Date;
+  updatedAt?: Date;
+  reason?: string;
+  urgency?: AppointmentUrgency;
+  confirmedAt?: Date;
+  confirmedBy?: string;
+  rejectedAt?: Date;
+  rejectionReason?: string;
+  rejectedBy?: string;
+}
+
+export type StaffStatus = 'Active' | 'Inactive';
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  schedule: string;
+  salary: string;
+  hireDate: string;
+  status: StaffStatus;
+  notes?: string;
+}
+
+export type TreatmentStatus = 'Pending' | 'In Progress' | 'Completed';
+
+export interface TreatmentAppointment {
+  date: Date;
+  time: string;
+  duration: string;
+  status: AppointmentStatus;
+  appointmentId?: string;
+}
+
+export interface Treatment {
+  id: string;
+  date: string;
+  patient: string;
+  patientId?: string;
+  doctor: string;
+  doctorId?: string;
+  procedure: string;
+  cost: string;
+  status: TreatmentStatus;
+  notes?: string;
+  appointments: TreatmentAppointment[];
+}
+
+export type MedicalRecordStatus = 'Final' | 'Draft';
+
+export interface MedicalRecord {
+  id: string;
+  patient: string;
+  type: string;
+  complaint: string;
+  provider: string;
+  date: string;
+  status: MedicalRecordStatus;
+  notes?: string;
+}
+
+export interface MedicalRecordTemplate {
+  id: string;
+  name: string;
+  type: string;
+  content: string;
+}
+
+export interface ClinicalImage {
+  id: string;
+  patient: string;
+  type: string;
+  date: string;
+  imageUrl: string;
+  caption?: string;
+}

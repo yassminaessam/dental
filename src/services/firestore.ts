@@ -1,74 +1,111 @@
+'use client';
 
-import { db } from '@/lib/firebase';
 import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  DocumentData,
-  QueryDocumentSnapshot,
-  WithFieldValue,
-  PartialWithFieldValue,
-} from 'firebase/firestore';
+  createDocument as apiCreateDocument,
+  deleteDocument as apiDeleteDocument,
+  generateDocumentId,
+  getDocument as apiGetDocument,
+  listCollection as apiListCollection,
+  setDocument as apiSetDocument,
+  updateDocument as apiUpdateDocument,
+} from '@/lib/collections-client';
 
-// Generic function to fetch all documents from a collection
+export const db = {} as any; // placeholder to keep call sites unchanged
+
+export type DocumentData = Record<string, any>;
+
+type DocRef = { __type: 'doc'; __col: string; __id: string };
+type ColRef = { __type: 'col'; __col: string };
+
+export function collection(_db: any, collectionName: string): ColRef {
+  return { __type: 'col', __col: collectionName };
+}
+
+export function doc(_db: any, collectionName: string, id: string): DocRef {
+  return { __type: 'doc', __col: collectionName, __id: id };
+}
+
+export function query<T>(arg: T, ..._rest: any[]): T { return arg; }
+export function where(..._args: any[]): any { return {}; }
+
+export function writeBatch(_dbHandle: any) {
+  const ops: Array<() => Promise<void>> = [];
+  return {
+    set(ref: DocRef, data: any) { ops.push(async () => { await setDocument(ref.__col, ref.__id, data); }); },
+    update(ref: DocRef, data: any) { ops.push(async () => { await updateDocument(ref.__col, ref.__id, data); }); },
+    delete(ref: DocRef) { ops.push(async () => { await deleteDocument(ref.__col, ref.__id); }); },
+    async commit() { for (const op of ops) await op(); }
+  };
+}
+
+type QSDoc = { id: string; data: () => any; ref?: DocRef };
+type QS = { docs: QSDoc[] };
+
+export async function getDocs(colRef: ColRef | any): Promise<QS> {
+  const col = (colRef && colRef.__col) || '';
+  const rows = await apiListCollection<Record<string, unknown>>(col);
+  return {
+    docs: rows.map((row) => ({
+      id: String((row as Record<string, unknown>).id ?? ''),
+      data: () => row,
+    })),
+  };
+}
+
+export async function getDoc(ref: DocRef): Promise<{ exists: () => boolean; data: () => any }> {
+  const document = await apiGetDocument<Record<string, unknown>>(ref.__col, ref.__id);
+  return document
+    ? { exists: () => true, data: () => document }
+    : { exists: () => false, data: () => null };
+}
+
+export function onSnapshot(colRef: ColRef, next: (qs: QS) => void, error?: (e: any) => void) {
+  getDocs(colRef).then(next).catch(err => error?.(err));
+  return () => { /* no-op */ };
+}
+
 export async function getCollection<T>(collectionName: string): Promise<T[]> {
-  const querySnapshot = await getDocs(collection(db, collectionName));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+  return apiListCollection<T>(collectionName);
 }
 
-// Generic function to listen to a collection in real-time
 export function listenToCollection<T>(
-    collectionName: string, 
-    callback: (data: T[]) => void,
-    onError: (error: Error) => void
+  collectionName: string,
+  callback: (data: T[]) => void,
+  onError: (error: Error) => void
 ): () => void {
-    const q = collection(db, collectionName);
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-        callback(data);
-    }, (error) => {
-        console.error(`Error listening to ${collectionName}: `, error);
-        onError(error);
-    });
-    return unsubscribe;
+  (async () => {
+    try {
+      const data = await getCollection<T>(collectionName);
+      callback(data);
+    } catch (e: any) {
+      onError(e);
+    }
+  })();
+  return () => {};
 }
 
-// Generic function to add a document to a collection
-export async function addDocument<T extends DocumentData>(
-  collectionName: string, 
-  data: WithFieldValue<T>
-): Promise<string> {
-  const collectionRef = collection(db, collectionName);
-  const docRef = await addDoc(collectionRef, data as any);
-  return docRef.id;
+export async function addDocument<T extends DocumentData>(collectionName: string, data: T): Promise<string> {
+  return apiCreateDocument(collectionName, data);
 }
 
-// Generic function to set a document with a specific ID
 export async function setDocument<T extends DocumentData>(
-  collectionName: string, 
-  id: string, 
-  data: WithFieldValue<T>
+  collectionName: string,
+  id: string,
+  data: T
 ): Promise<void> {
-  const docRef = doc(db, collectionName, id);
-  await setDoc(docRef, data as any);
+  await apiSetDocument(collectionName, id, data);
 }
 
-// Generic function to update a document
 export async function updateDocument<T extends DocumentData>(
-  collectionName: string, 
-  id: string, 
-  data: PartialWithFieldValue<T>
+  collectionName: string,
+  id: string,
+  patch: Partial<T>
 ): Promise<void> {
-  const docRef = doc(db, collectionName, id);
-  await updateDoc(docRef, data as any);
+  await apiUpdateDocument(collectionName, id, patch);
 }
 
-// Generic function to delete a document
 export async function deleteDocument(collectionName: string, id: string): Promise<void> {
-  await deleteDoc(doc(db, collectionName, id));
+  await apiDeleteDocument(collectionName, id);
 }
+
+export { generateDocumentId };

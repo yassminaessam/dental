@@ -1,17 +1,6 @@
-import { storage } from '@/lib/firebase';
-import { 
-  ref, 
-  uploadBytes, 
-  uploadBytesResumable,
-  getDownloadURL, 
-  deleteObject,
-  listAll,
-  StorageReference 
-} from 'firebase/storage';
-
-// Check if we're in development mode and Firebase is having issues
+// Mock-only storage layer (Firebase removed). For production, consider Vercel Blob.
 const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const USE_MOCK_UPLOAD = true; // Set to true to use mock uploads in development
+const USE_MOCK_UPLOAD = true;
 
 // Mock upload function for development
 async function mockUpload(file: File, path: string, fileName?: string): Promise<string> {
@@ -29,108 +18,15 @@ async function mockUpload(file: File, path: string, fileName?: string): Promise<
 }
 
 // Upload a file to Firebase Storage with fallback to mock
-export async function uploadFile(
-  file: File, 
-  path: string, 
-  fileName?: string
-): Promise<string> {
-  try {
-    console.log('Storage upload started:', { 
-      fileName: file.name, 
-      size: file.size, 
-      type: file.type, 
-      path,
-      useMock: USE_MOCK_UPLOAD
-    });
-    
-    // If using mock upload, return early
-    if (USE_MOCK_UPLOAD) {
-      return await mockUpload(file, path, fileName);
-    }
-    
-    const finalFileName = fileName || `${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, `${path}/${finalFileName}`);
-    
-    console.log('Storage reference created:', storageRef.fullPath);
-    
-    // Try resumable upload first (better for CORS)
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    
-    // Wait for upload to complete
-    await new Promise((resolve, reject) => {
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('Upload is ' + progress + '% done');
-        },
-        (error) => {
-          console.error('Upload error:', error);
-          reject(error);
-        },
-        () => {
-          console.log('Upload completed successfully');
-          resolve(uploadTask.snapshot);
-        }
-      );
-    });
-    
-    console.log('Getting download URL...');
-    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-    console.log('Download URL obtained:', downloadURL);
-    
-    return downloadURL;
-  } catch (error) {
-    console.error('Detailed storage error:', error);
-    
-    // If in development and Firebase fails, use mock upload
-    if (USE_MOCK_UPLOAD || isDevelopment) {
-      console.log('Firebase upload failed, falling back to mock upload for development');
-      return await mockUpload(file, path, fileName);
-    }
-    
-    // Fallback to simple upload if resumable fails
-    try {
-      console.log('Trying fallback upload method...');
-      const finalFileName = fileName || `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `${path}/${finalFileName}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
-    } catch (fallbackError) {
-      console.error('Fallback upload also failed:', fallbackError);
-      
-      // Last resort: use mock upload
-      if (isDevelopment) {
-        console.log('All Firebase uploads failed, using mock upload for development');
-        return await mockUpload(file, path, fileName);
-      }
-      
-      throw new Error('Failed to upload file: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    }
-  }
+export async function uploadFile(file: File, path: string, fileName?: string): Promise<string> {
+  // Mock only
+  return await mockUpload(file, path, fileName);
 }
 
 // Delete a file from Firebase Storage
 export async function deleteFile(fileUrl: string): Promise<void> {
-  try {
-    // Check if this is a Firebase Storage URL
-    if (!fileUrl.includes('firebasestorage.googleapis.com') && !fileUrl.includes('storage.googleapis.com')) {
-      console.warn('Attempting to delete non-Firebase Storage URL:', fileUrl);
-      return; // Skip deletion for external URLs like Unsplash
-    }
-    
-    // Check if this is a mock URL (for development)
-    if (fileUrl.includes('mock-token-')) {
-      console.log('Skipping deletion of mock upload URL:', fileUrl);
-      return; // Skip deletion for mock URLs
-    }
-    
-    const fileRef = ref(storage, fileUrl);
-    await deleteObject(fileRef);
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    throw new Error('Failed to delete file');
-  }
+  // Mock only: nothing to delete
+  console.log('Mock delete file:', fileUrl);
 }
 
 // Replace an existing file with a new one
@@ -160,15 +56,9 @@ export async function replaceFile(
 }
 
 // List all files in a directory
-export async function listFiles(path: string): Promise<StorageReference[]> {
-  try {
-    const storageRef = ref(storage, path);
-    const result = await listAll(storageRef);
-    return result.items;
-  } catch (error) {
-    console.error('Error listing files:', error);
-    throw new Error('Failed to list files');
-  }
+export async function listFiles(_path: string): Promise<string[]> {
+  // Mock only: return empty list
+  return [];
 }
 
 // Get the storage path from a download URL
@@ -210,17 +100,11 @@ export const clinicalImagesStorage = {
 
   // Delete clinical image
   async deleteClinicalImage(imageUrl: string): Promise<void> {
-    // Only delete if it's a Firebase Storage URL
-    if (imageUrl.includes('firebasestorage.googleapis.com') || imageUrl.includes('storage.googleapis.com')) {
-      return await deleteFile(imageUrl);
-    } else {
-      console.warn('Skipping deletion of external URL:', imageUrl);
-      return Promise.resolve();
-    }
+    return await deleteFile(imageUrl);
   },
 
   // List all clinical images
-  async listClinicalImages(): Promise<StorageReference[]> {
+  async listClinicalImages(): Promise<string[]> {
     return await listFiles('clinical-images');
   }
 };

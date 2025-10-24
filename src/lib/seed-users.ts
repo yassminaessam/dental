@@ -1,23 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ROLE_PERMISSIONS } from './types';
-import type { User, UserRole } from './types';
-
-// Firebase config (same as in firebase.ts)
-const firebaseConfig = {
-  apiKey: "AIzaSyAyhz89y2Y9ucaB2xi5xFAcALhkMH-HBIY",
-  authDomain: "dental-a627d.firebaseapp.com",
-  projectId: "dental-a627d",
-  storageBucket: "dental-a627d.firebasestorage.app",
-  messagingSenderId: "61708021549",
-  appId: "1:61708021549:web:682cd642b856c0f35f2da4",
-  measurementId: "G-KZZD0JR71E"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+import type { UserRole } from './types';
+import { UsersService } from '@/services/users';
 
 // Demo users data
 const demoUsers = [
@@ -65,46 +48,23 @@ const demoUsers = [
 async function createDemoUser(userData: any) {
   try {
     console.log(`Creating user: ${userData.email}`);
-    
-    // Create Firebase Auth user
-    const userCredential = await createUserWithEmailAndPassword(
-      auth, 
-      userData.email, 
-      userData.password
-    );
-
-    // Create user profile in Firestore
-    const userProfile: Omit<User, 'id'> = {
+    await UsersService.create({
       email: userData.email,
+      password: userData.password,
       firstName: userData.firstName,
       lastName: userData.lastName,
       role: userData.role,
       permissions: ROLE_PERMISSIONS[userData.role as UserRole],
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
       phone: userData.phone,
       specialization: userData.specialization,
       licenseNumber: userData.licenseNumber,
       employeeId: userData.employeeId,
       department: userData.department,
-      patientId: userData.patientId,
-    };
-
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
-      ...userProfile,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
-
     console.log(`✅ Created user: ${userData.email} (${userData.role})`);
-    return userCredential.user;
+    return true;
   } catch (error: any) {
-    if (error.code === 'auth/email-already-in-use') {
-      console.log(`⚠️  User already exists: ${userData.email}`);
-    } else {
-      console.error(`❌ Error creating user ${userData.email}:`, error.message);
-    }
+    console.error(`❌ Error creating user ${userData.email}:`, error.message);
     return null;
   }
 }

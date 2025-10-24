@@ -30,8 +30,7 @@ import {
 import { Building, Users, Bell, Shield, Database, Palette, Loader2 } from "lucide-react";
 import { getCollection, setDocument } from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, db } from '@/services/firestore';
 
 type ClinicSettings = {
   id: string;

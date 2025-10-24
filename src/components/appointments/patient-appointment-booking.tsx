@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument } from '@/services/firestore';
-import type { Appointment } from '@/app/appointments/page';
+import { listCollection } from '@/services/datastore';
+import { AppointmentsService, type AppointmentCreateInput } from '@/services/appointments';
+import type { Appointment, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BookingFormData {
@@ -78,16 +79,19 @@ export default function PatientAppointmentBooking() {
 
   const fetchDoctorsAndAppointments = async () => {
     try {
-      // Fetch existing appointments to check availability
-      const appointments = await getCollection<Appointment>('appointments');
+      const appointments = await AppointmentsService.list();
       setExistingAppointments(appointments || []);
 
-      // Mock doctors data - in real app, fetch from database
-      setDoctors([
-        { id: '1', name: 'Dr. Smith', specialization: 'General Dentistry', available: true },
-        { id: '2', name: 'Dr. Johnson', specialization: 'Orthodontics', available: true },
-        { id: '3', name: 'Dr. Williams', specialization: 'Oral Surgery', available: true }
-      ]);
+      const staff = await listCollection<StaffMember>('staff');
+      const dentistStaff = staff.filter((member) => member.role === 'Dentist');
+      setDoctors(
+        dentistStaff.map((member) => ({
+          id: member.id,
+          name: member.name,
+          specialization: member.notes || 'General Dentistry',
+          available: member.status === 'Active',
+        }))
+      );
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -134,7 +138,7 @@ export default function PatientAppointmentBooking() {
 
       const appointmentDateTime = new Date(`${formData.preferredDate}T${formData.preferredTime}`);
 
-      const newAppointment = {
+      const newAppointment: AppointmentCreateInput = {
         patient: `${user.firstName} ${user.lastName}`,
         patientId: user.id,
         patientEmail: user.email,
@@ -142,23 +146,16 @@ export default function PatientAppointmentBooking() {
         type: formData.appointmentType,
         dateTime: appointmentDateTime,
         doctor: 'To be assigned',
-        status: 'Pending' as const,
-        duration: '60', // Default 1 hour
+        status: 'Pending',
+        duration: '60',
         reason: formData.reason,
         urgency: formData.urgency,
         notes: formData.notes,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        bookedBy: 'patient',
       };
 
-      const appointmentId = `APT-${Date.now()}`;
-      await setDocument('appointments', appointmentId, {
-        ...newAppointment,
-        id: appointmentId,
-        dateTime: appointmentDateTime.toISOString(),
-        createdAt: newAppointment.createdAt.toISOString(),
-        updatedAt: newAppointment.updatedAt.toISOString()
-      });
+      const createdAppointment = await AppointmentsService.create(newAppointment);
+      setExistingAppointments((prev) => [...prev, createdAppointment]);
 
       toast({
         title: t('appointments.toast.request_submitted') || t('analytics.toast.exporting_report'),

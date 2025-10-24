@@ -42,32 +42,16 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listCollection, saveDocument, patchDocument, removeDocument, generateDocumentId } from '@/services/datastore';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ResponsiveTableWrapper, MobileCard, MobileCardField } from '@/components/ui/responsive-table';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { Patient } from '@/lib/types';
 
-export type Patient = {
-  id: string;
-  name: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dob: Date;
-  age: number;
-  lastVisit: string;
-  status: 'Active' | 'Inactive';
-  address?: string;
-  ecName?: string;
-  ecPhone?: string;
-  ecRelationship?: string;
-  insuranceProvider?: string;
-  policyNumber?: string;
-  medicalHistory?: { condition: string }[];
-};
+export type { Patient } from '@/lib/types';
 
 
 const iconMap = {
@@ -96,7 +80,7 @@ export default function PatientsPage() {
   React.useEffect(() => {
     async function fetchPatients() {
       try {
-        const data = await getCollection<any>('patients');
+        const data = await listCollection<any>('patients');
         setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
       } catch (error) {
     toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
@@ -129,8 +113,8 @@ export default function PatientsPage() {
 
   const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
     try {
-        const newPatient = { ...newPatientData, id: `PAT-${Date.now()}`};
-        await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
+        const newPatient = { ...newPatientData, id: generateDocumentId('PAT') };
+        await saveDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
         setPatients(prev => [newPatient, ...prev]);
   toast({ title: t('patients.patient_added'), description: t('patients.patient_added_description') });
     } catch (error) {
@@ -140,7 +124,7 @@ export default function PatientsPage() {
 
   const handleUpdatePatient = async (updatedPatient: Patient) => {
     try {
-        await updateDocument('patients', updatedPatient.id, { ...updatedPatient, dob: updatedPatient.dob.toISOString() });
+        await patchDocument('patients', updatedPatient.id, { ...updatedPatient, dob: updatedPatient.dob.toISOString() });
         setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
         setPatientToEdit(null);
   toast({ title: t('patients.patient_updated'), description: t('patients.patient_updated_description') });
@@ -152,7 +136,7 @@ export default function PatientsPage() {
   const handleDeletePatient = async () => {
     if (patientToDelete) {
       try {
-        await deleteDocument('patients', patientToDelete.id);
+        await removeDocument('patients', patientToDelete.id);
         setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
   toast({ title: t('patients.patient_deleted'), description: t('patients.patient_deleted_description'), variant: "destructive" });
         setPatientToDelete(null);

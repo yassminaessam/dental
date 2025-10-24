@@ -1,67 +1,74 @@
-
-'use client';
+"use client";
 
 import React from 'react';
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { Search, Pencil, Loader2, MoreHorizontal, Trash2, Eye } from "lucide-react";
-import { NewTreatmentPlanDialog } from "@/components/treatments/new-treatment-plan-dialog";
-import { useToast } from '@/hooks/use-toast';
-import { ViewTreatmentDialog } from "@/components/treatments/view-treatment-dialog";
-import { EditTreatmentDialog } from "@/components/treatments/edit-treatment-dialog";
-import { getCollection, setDocument, updateDocument, deleteDocument, listenToCollection } from '@/services/firestore';
-import type { Appointment } from '../appointments/page';
-import { format } from 'date-fns';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { NewTreatmentPlanDialog } from '@/components/treatments/new-treatment-plan-dialog';
+import { ViewTreatmentDialog } from '@/components/treatments/view-treatment-dialog';
+import { EditTreatmentDialog } from '@/components/treatments/edit-treatment-dialog';
+import type { Appointment, Treatment, TreatmentAppointment } from '@/lib/types';
+import type { NewTreatmentPlanData } from '@/components/treatments/new-treatment-plan-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { listCollection } from '@/lib/collections-client';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Eye, Loader2, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
 
-export type TreatmentAppointment = {
+export type { TreatmentAppointment } from '@/lib/types';
+
+export type { Treatment } from '@/lib/types';
+
+type SerializedTreatment = Omit<Treatment, 'appointments'> & {
+  appointments: Array<{
+    appointmentId?: string;
     date: string;
     time: string;
     duration: string;
     status: Appointment['status'];
-    appointmentId?: string;
+  }>;
 };
 
-export type Treatment = {
-  id: string;
-  date: string; 
-  patient: string;
-  procedure: string;
-  doctor: string;
-  cost: string;
-  status: 'In Progress' | 'Completed' | 'Pending';
-  notes: string;
-  appointments: TreatmentAppointment[]; 
+type AppointmentRecord = Omit<Appointment, 'dateTime' | 'createdAt' | 'updatedAt' | 'confirmedAt' | 'rejectedAt'> & {
+  dateTime: string;
+  createdAt?: string;
+  updatedAt?: string;
+  confirmedAt?: string;
+  rejectedAt?: string;
 };
+
+const deserializeTreatment = (record: SerializedTreatment): Treatment => ({
+  ...record,
+  appointments: (record.appointments ?? []).map((appointment) => ({
+    ...appointment,
+    date: new Date(appointment.date),
+  })),
+});
+
+const deserializeAppointment = (record: AppointmentRecord): Appointment => ({
+  ...record,
+  dateTime: new Date(record.dateTime),
+  createdAt: record.createdAt ? new Date(record.createdAt) : undefined,
+  updatedAt: record.updatedAt ? new Date(record.updatedAt) : undefined,
+  confirmedAt: record.confirmedAt ? new Date(record.confirmedAt) : undefined,
+  rejectedAt: record.rejectedAt ? new Date(record.rejectedAt) : undefined,
+});
 
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = React.useState<Treatment[]>([]);
@@ -73,249 +80,235 @@ export default function TreatmentsPage() {
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
   const [treatmentToDelete, setTreatmentToDelete] = React.useState<Treatment | null>(null);
-  const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
   const { t, isRTL } = useLanguage();
 
+  const refreshData = React.useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/treatments');
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = typeof payload?.error === 'string' ? payload.error : 'Failed to fetch treatments.';
+        throw new Error(message);
+      }
+      const records = Array.isArray(payload?.treatments) ? payload.treatments : [];
+      setTreatments(records.map(deserializeTreatment));
+    } catch (error) {
+      console.error('[TreatmentsPage] refreshData treatments error', error);
+      setTreatments([]);
+      toast({
+        title: t('common.error'),
+        description: t('treatments.toast.error_fetching'),
+        variant: 'destructive',
+      });
+    }
+
+    try {
+      const appointmentRecords = await listCollection<AppointmentRecord>('appointments');
+      setAllAppointments(appointmentRecords.map(deserializeAppointment));
+    } catch (error) {
+      console.error('[TreatmentsPage] refreshData appointments error', error);
+      setAllAppointments([]);
+      toast({
+        title: t('common.error'),
+        description: t('treatments.toast.error_fetching_appointments'),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [t, toast]);
 
   React.useEffect(() => {
-  const unsubscribeTreatments = listenToCollection<any>('treatments', (data) => {
-        setTreatments(data);
-        if (loading) setLoading(false);
-    }, (error) => {
-    toast({ title: t('treatments.toast.error_fetching'), variant: "destructive", description: error.message });
-        setLoading(false);
-    });
+    void refreshData();
+  }, [refreshData]);
 
-  const unsubscribeAppointments = listenToCollection<any>('appointments', (data) => {
-        setAllAppointments(data.map((a: any) => ({...a, dateTime: new Date(a.dateTime)})));
-    }, (error) => {
-    toast({ title: t('appointments.toast.error_fetching'), variant: "destructive", description: error.message });
-    });
+  const treatmentsWithAppointmentDetails = React.useMemo(() => {
+    const appointmentMap = new Map(allAppointments.map((appointment) => [appointment.id, appointment]));
+    return treatments.map((treatment) => ({
+      ...treatment,
+      appointments: (treatment.appointments ?? []).map((appointment) => {
+        const linked = appointment.appointmentId ? appointmentMap.get(appointment.appointmentId) : undefined;
+        return {
+          ...appointment,
+          date: appointment.date instanceof Date ? appointment.date : new Date(appointment.date),
+          status: linked?.status ?? appointment.status,
+        };
+      }),
+    }));
+  }, [treatments, allAppointments]);
 
-    return () => {
-        unsubscribeTreatments();
-        unsubscribeAppointments();
-    };
-  }, [toast, loading, t]);
-  
   const treatmentPageStats = React.useMemo(() => {
     const total = treatments.length;
-    const completed = treatments.filter(t => t.status === 'Completed').length;
-    const inProgress = treatments.filter(t => t.status === 'In Progress').length;
-    const pending = treatments.filter(t => t.status === 'Pending').length;
+    const completed = treatments.filter((treatment) => treatment.status === 'Completed').length;
+    const inProgress = treatments.filter((treatment) => treatment.status === 'In Progress').length;
+    const pending = treatments.filter((treatment) => treatment.status === 'Pending').length;
 
     return [
-      { title: t('treatments.total_treatments'), value: total, description: t('treatments.all_recorded_treatments') },
-      { title: t('treatments.completed_treatments'), value: completed, description: t('treatments.finished_treatment_plans') },
-      { title: t('treatments.in_progress'), value: inProgress, description: t('treatments.ongoing_treatments') },
-      { title: t('treatments.pending_treatments'), value: pending, description: t('treatments.awaiting_start') },
+      {
+        title: t('treatments.total_treatments'),
+        value: total.toString(),
+        description: t('treatments.all_status'),
+      },
+      {
+        title: t('treatments.completed_treatments'),
+        value: completed.toString(),
+        description: t('treatments.completed_status'),
+      },
+      {
+        title: t('treatments.in_progress_status'),
+        value: inProgress.toString(),
+        description: t('treatments.in_progress'),
+      },
+      {
+        title: t('treatments.pending_treatments'),
+        value: pending.toString(),
+        description: t('treatments.pending_status'),
+      },
     ];
   }, [treatments, t]);
 
-  const treatmentsWithAppointmentDetails = React.useMemo(() => {
-    return treatments.map(treatment => {
-      const appointmentsWithStatus = (treatment.appointments || []).map(appt => {
-        const matchingAppt = allAppointments.find(ra => ra.id === appt.appointmentId);
-        return {
-          ...appt,
-          status: matchingAppt?.status || appt.status || 'Unknown',
-        };
-      });
-      // Determine overall treatment status
-      const hasCompleted = appointmentsWithStatus.every(a => a.status === 'Completed');
-      const hasInProgress = appointmentsWithStatus.some(a => a.status === 'Confirmed' || a.status === 'Pending');
-      
-      let overallStatus: Treatment['status'] = 'Pending';
-      if(hasCompleted && appointmentsWithStatus.length > 0) {
-        overallStatus = 'Completed';
-      } else if (hasInProgress) {
-        overallStatus = 'In Progress';
-      }
-
-      return { ...treatment, appointments: appointmentsWithStatus, status: overallStatus };
-    });
-  }, [treatments, allAppointments]);
-
-  const handleSavePlan = async (data: any) => {
-    try {
-      const treatmentId = `TRT-${Date.now()}`;
-      const batch = writeBatch(db);
-      
-      const appointmentRefs: TreatmentAppointment[] = [];
-
-      for (const appt of (data.appointments || [])) {
-        const [hours, minutes] = appt.time.split(':');
-        const apptDateTime = new Date(appt.date);
-        apptDateTime.setHours(parseInt(hours, 10));
-        apptDateTime.setMinutes(parseInt(minutes, 10));
-
-        const appointmentId = `APT-${Date.now()}-${Math.random()}`;
-        const newAppointment: Appointment = {
-          id: appointmentId,
-          dateTime: apptDateTime,
-          patient: data.patient,
-          doctor: data.doctor,
-          type: data.treatmentName,
-          duration: appt.duration,
-          status: 'Confirmed',
-          treatmentId: treatmentId,
-        };
-        const appointmentRef = doc(db, 'appointments', appointmentId);
-        batch.set(appointmentRef, { ...newAppointment, dateTime: newAppointment.dateTime.toISOString() });
-        appointmentRefs.push({
-            date: appt.date.toISOString(),
-            time: appt.time,
-            duration: appt.duration,
-            appointmentId: appointmentId,
-            status: 'Confirmed',
+  const handleSavePlan = React.useCallback(
+    async (data: NewTreatmentPlanData) => {
+      try {
+        const response = await fetch('/api/treatments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientId: data.patientId,
+            patientName: data.patientName,
+            doctorId: data.doctorId,
+            doctorName: data.doctorName,
+            procedure: data.procedure,
+            notes: data.notes,
+            appointments: data.appointments.map((appointment) => ({
+              date: appointment.date.toISOString(),
+              time: appointment.time,
+              duration: appointment.duration,
+              status: 'Confirmed' as Appointment['status'],
+            })),
+          }),
         });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          const message = typeof payload?.error === 'string' ? payload.error : 'Failed to create treatment.';
+          throw new Error(message);
+        }
+
+        await refreshData();
+
+        toast({
+          title: t('treatments.toast.plan_created'),
+          description: t('treatments.toast.plan_created_desc'),
+        });
+
+        if (data.appointments.length > 0) {
+          toast({
+            title: t('treatments.toast.appointments_scheduled'),
+            description: t('treatments.toast.appointments_scheduled_desc', {
+              count: data.appointments.length,
+              treatment: data.procedure,
+            }),
+          });
+        }
+      } catch (error) {
+        console.error('[TreatmentsPage] handleSavePlan error', error);
+        toast({ title: t('treatments.toast.error_creating_plan'), variant: 'destructive' });
+      }
+    },
+    [refreshData, t, toast],
+  );
+
+  const handleUpdateTreatment = React.useCallback(
+    async (updatedTreatment: Treatment) => {
+      try {
+        if (!updatedTreatment.patientId || !updatedTreatment.doctorId) {
+          throw new Error('Missing patient or doctor identifier.');
+        }
+
+        const response = await fetch(`/api/treatments/${updatedTreatment.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: updatedTreatment.id,
+            patientId: updatedTreatment.patientId,
+            patientName: updatedTreatment.patient,
+            doctorId: updatedTreatment.doctorId,
+            doctorName: updatedTreatment.doctor,
+            procedure: updatedTreatment.procedure,
+            cost: updatedTreatment.cost,
+            notes: updatedTreatment.notes,
+            appointments: (updatedTreatment.appointments ?? []).map((appointment) => ({
+              appointmentId: appointment.appointmentId,
+              date: (appointment.date instanceof Date ? appointment.date : new Date(appointment.date)).toISOString(),
+              time: appointment.time,
+              duration: appointment.duration,
+              status: appointment.status ?? 'Confirmed',
+            })),
+          }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          const message = typeof payload?.error === 'string' ? payload.error : 'Failed to update treatment.';
+          throw new Error(message);
+        }
+
+        await refreshData();
+        setTreatmentToEdit(null);
+
+        toast({
+          title: t('treatments.toast.plan_updated'),
+          description: t('treatments.toast.plan_updated_desc'),
+        });
+      } catch (error) {
+        console.error('[TreatmentsPage] handleUpdateTreatment error', error);
+        toast({ title: t('treatments.toast.error_updating'), variant: 'destructive' });
+      }
+    },
+    [refreshData, t, toast],
+  );
+
+  const handleDeleteTreatment = React.useCallback(async () => {
+    if (!treatmentToDelete) return;
+
+    try {
+      const response = await fetch(`/api/treatments/${treatmentToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = typeof payload?.error === 'string' ? payload.error : 'Failed to delete treatment.';
+        throw new Error(message);
       }
 
-      const newTreatment: Treatment = {
-        id: treatmentId,
-        date: new Date().toLocaleDateString(),
-        patient: data.patient,
-        procedure: data.treatmentName,
-        doctor: data.doctor,
-        cost: 'EGP ' + Math.floor(500 + Math.random() * 2000),
-        status: 'Pending',
-        notes: data.notes,
-        appointments: appointmentRefs,
-      };
-
-      const treatmentRef = doc(db, 'treatments', treatmentId);
-      batch.set(treatmentRef, { ...newTreatment, appointments: newTreatment.appointments.map(a => ({...a, date: new Date(a.date).toISOString()})) });
-      
-      await batch.commit();
+      await refreshData();
 
       toast({
-        title: t('treatments.toast.plan_created'),
-        description: t('treatments.toast.plan_created_desc'),
+        title: t('treatments.toast.plan_deleted'),
+        description: t('treatments.toast.plan_deleted_desc'),
+        variant: 'destructive',
       });
 
-      if ((data.appointments || []).length > 0) {
-        toast({
-          title: t('treatments.toast.appointments_scheduled'),
-          description: t('treatments.toast.appointments_scheduled_desc', { count: (data.appointments || []).length, treatment: data.treatmentName }),
-        });
-      }
-
-    } catch (e) {
-  toast({ title: t('treatments.toast.error_creating_plan'), variant: "destructive" });
+      setTreatmentToDelete(null);
+    } catch (error) {
+      console.error('[TreatmentsPage] handleDeleteTreatment error', error);
+      toast({ title: t('treatments.toast.error_deleting'), variant: 'destructive' });
     }
-  };
-  
-  const handleUpdateTreatment = async (updatedTreatment: Treatment) => {
-    try {
-        const batch = writeBatch(db);
-        const treatmentRef = doc(db, 'treatments', updatedTreatment.id);
-        
-        const existingAppointmentsQuery = query(collection(db, "appointments"), where("treatmentId", "==", updatedTreatment.id));
-        const existingAppointmentsSnapshot = await getDocs(existingAppointmentsQuery);
-        const existingAppointmentIds = new Set(existingAppointmentsSnapshot.docs.map(d => d.id));
-
-        const updatedAppointmentIds = new Set((updatedTreatment.appointments || []).map(a => a.appointmentId).filter(Boolean));
-
-        // Delete appointments that are no longer in the plan
-        existingAppointmentsSnapshot.forEach(appointmentDoc => {
-            if (!updatedAppointmentIds.has(appointmentDoc.id)) {
-                batch.delete(appointmentDoc.ref);
-            }
-        });
-
-        // Update existing or create new appointments
-        for (const appt of (updatedTreatment.appointments || [])) {
-            const [hours, minutes] = appt.time.split(':');
-            const apptDateTime = new Date(appt.date);
-            apptDateTime.setHours(parseInt(hours, 10));
-            apptDateTime.setMinutes(parseInt(minutes, 10));
-
-            const appointmentData: Omit<Appointment, 'id'> = {
-                dateTime: apptDateTime,
-                patient: updatedTreatment.patient,
-                doctor: updatedTreatment.doctor,
-                type: updatedTreatment.procedure,
-                duration: appt.duration,
-                status: appt.status || 'Confirmed',
-                treatmentId: updatedTreatment.id,
-            };
-
-            if (appt.appointmentId && existingAppointmentIds.has(appt.appointmentId)) {
-                 const appointmentRef = doc(db, 'appointments', appt.appointmentId);
-                 batch.update(appointmentRef, {...appointmentData, dateTime: appointmentData.dateTime.toISOString() });
-            } else {
-                const appointmentId = `APT-${Date.now()}-${Math.random()}`;
-                const appointmentRef = doc(db, 'appointments', appointmentId);
-                batch.set(appointmentRef, {...appointmentData, id: appointmentId, dateTime: appointmentData.dateTime.toISOString() });
-                // Update the treatment's appointment with the new ID
-                const treatmentAppt = (updatedTreatment.appointments || []).find(a => a.date === appt.date && a.time === appt.time);
-                if (treatmentAppt) {
-                    treatmentAppt.appointmentId = appointmentId;
-                }
-            }
-        }
-        
-        const treatmentDocData = { ...updatedTreatment, appointments: (updatedTreatment.appointments || []).map(a => ({...a, date: new Date(a.date).toISOString()})) };
-        batch.update(treatmentRef, treatmentDocData);
-
-        await batch.commit();
-        setTreatmentToEdit(null);
-        toast({
-            title: t('treatments.toast.plan_updated'),
-            description: t('treatments.toast.plan_updated_desc'),
-        });
-    } catch(e) {
-      toast({ title: t('treatments.toast.error_updating'), variant: "destructive" });
-    }
-  };
-  
-  const handleDeleteTreatment = async () => {
-    if (!treatmentToDelete) return;
-    try {
-        const q = query(collection(db, "appointments"), where("treatmentId", "==", treatmentToDelete.id));
-        const querySnapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-
-  await deleteDocument('treatments', treatmentToDelete.id);
-
-        setTreatmentToDelete(null);
-
-    toast({
-      title: t('treatments.toast.plan_deleted'),
-      description: t('treatments.toast.plan_deleted_desc'),
-      variant: "destructive",
-    });
-
-    } catch (e) {
-    toast({ title: t('treatments.toast.error_deleting'), variant: "destructive" });
-    }
-  };
+  }, [refreshData, treatmentToDelete, t, toast]);
 
   const filteredTreatments = React.useMemo(() => {
     return treatmentsWithAppointmentDetails
-      .filter(treatment =>
-        treatment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        treatment.procedure.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .filter(treatment =>
-        statusFilter === 'all' || treatment.status.toLowerCase().replace(' ', '_') === statusFilter
-      );
+      .filter((treatment) => {
+        const patientMatch = treatment.patient.toLowerCase().includes(searchTerm.toLowerCase());
+        const procedureMatch = treatment.procedure.toLowerCase().includes(searchTerm.toLowerCase());
+        return patientMatch || procedureMatch;
+      })
+      .filter((treatment) => statusFilter === 'all' || treatment.status.toLowerCase().replace(' ', '_') === statusFilter);
   }, [treatmentsWithAppointmentDetails, searchTerm, statusFilter]);
-
-  const handleViewAppointment = (appointmentId?: string) => {
-    if (!appointmentId) return;
-    const appointment = allAppointments.find(a => a.id === appointmentId);
-  if (appointment) {
-        setAppointmentToView(appointment);
-    } else {
-    toast({ title: t('treatments.toast.appointment_not_found'), variant: 'destructive'});
-    }
-  };
-
 
   return (
     <DashboardLayout>
@@ -471,13 +464,6 @@ export default function TreatmentsPage() {
         open={!!treatmentToView}
         onOpenChange={(isOpen) => !isOpen && setTreatmentToView(null)}
       />
-
-       <ViewAppointmentDialog
-        appointment={appointmentToView}
-        open={!!appointmentToView}
-        onOpenChange={(isOpen) => !isOpen && setAppointmentToView(null)}
-      />
-
       {treatmentToEdit && (
         <EditTreatmentDialog
             treatment={treatmentToEdit}

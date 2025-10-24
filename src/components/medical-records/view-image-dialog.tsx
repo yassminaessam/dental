@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { ClinicalImage } from '@/app/medical-records/page';
+import type { ClinicalImage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 

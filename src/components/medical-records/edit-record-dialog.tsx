@@ -29,10 +29,8 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { MedicalRecord } from '@/app/medical-records/page';
-import { Patient } from '@/app/patients/page';
-import { StaffMember } from '@/app/staff/page';
-import { getCollection } from '@/services/firestore';
+import type { MedicalRecord, Patient, StaffMember } from '@/lib/types';
+import { listCollection } from '@/services/datastore';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({
@@ -77,9 +75,10 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
 
   React.useEffect(() => {
     async function fetchData() {
-        const patientData = await getCollection<Patient>('patients');
-        setPatients(patientData);
-        const staffData = await getCollection<StaffMember>('staff');
+        type PatientRecord = Omit<Patient, 'dob'> & { dob: string };
+        const patientData = await listCollection<PatientRecord>('patients');
+        setPatients(patientData.map((patient) => ({ ...patient, dob: new Date(patient.dob) })));
+        const staffData = await listCollection<StaffMember>('staff');
         setDoctors(staffData.filter(s => s.role === 'Dentist'));
     }
     if (open) {

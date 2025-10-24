@@ -1,0 +1,53 @@
+// Prisma schema for Neon Postgres (cleaned)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  admin
+  doctor
+  receptionist
+  patient
+}
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String
+  firstName        String
+  lastName         String
+  role             UserRole
+  permissions      String[]
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  lastLoginAt      DateTime?
+
+  // Optional profile fields
+  specialization   String?
+  licenseNumber    String?
+  employeeId       String?
+  department       String?
+  patientId        String?
+  phone            String?
+  address          String?
+  profileImageUrl  String?
+}
+
+// Generic JSON collection to provide backward-compatible Firestore-like storage
+model CollectionDoc {
+  id         String
+  collection String
+  data       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([collection, id])
+  @@index([collection])
+}
