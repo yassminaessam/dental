@@ -32,7 +32,8 @@ import PatientDemographicsChart from '@/components/analytics/patient-demographic
 import TreatmentVolumeChart from '@/components/analytics/treatment-volume-chart';
 import StaffPerformanceChart from '@/components/analytics/staff-performance-chart';
 import PatientSatisfactionChart from '@/components/analytics/patient-satisfaction-chart';
-import { getCollection } from '@/services/firestore';
+// Switched to client REST data layer (listDocuments) instead of server getCollection
+import { listDocuments } from '@/lib/data-client';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
@@ -72,31 +73,31 @@ export default function AnalyticsPage() {
     React.useEffect(() => {
     async function fetchData() {
         const [invoices, patients, appointments, treatments, transactions] = await Promise.all([
-          getCollection<Invoice>('invoices'),
-          getCollection<Patient>('patients'),
-          getCollection<any>('appointments'),
-          getCollection<Treatment>('treatments'),
-          getCollection<Transaction>('transactions'),
+          listDocuments<Invoice>('invoices'),
+          listDocuments<Patient>('patients'),
+          listDocuments<any>('appointments'),
+          listDocuments<Treatment>('treatments'),
+          listDocuments<Transaction>('transactions'),
         ]);
         
-        const total = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+  const total = invoices.reduce((acc: number, inv: Invoice) => acc + inv.totalAmount, 0);
         setTotalRevenue(total);
 
         setPatientCount(patients.length);
 
-        const parsedAppointments = appointments.map(a => ({...a, dateTime: new Date(a.dateTime) }));
+  const parsedAppointments = appointments.map((a: any) => ({...a, dateTime: new Date(a.dateTime) }));
 
-        const confirmed = parsedAppointments.filter(a => a.status === 'Confirmed').length;
+  const confirmed = parsedAppointments.filter((a: any) => a.status === 'Confirmed').length;
         const totalAppointments = parsedAppointments.length;
         if(totalAppointments > 0) {
             setShowRate((confirmed / totalAppointments) * 100);
         }
 
-        const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
+  const completedTreatments = treatments.filter((t: Treatment) => t.status === 'Completed').length;
         if (completedTreatments > 0) {
             const totalTreatmentRevenue = treatments
-                .filter(t => t.status === 'Completed')
-                .reduce((acc, t) => acc + parseFloat(t.cost.replace(/[^0-9.-]+/g, '')), 0);
+                .filter((t: Treatment) => t.status === 'Completed')
+                .reduce((acc: number, t: Treatment) => acc + parseFloat((t as any).cost.replace(/[^0-9.-]+/g, '')), 0);
             setAvgTreatmentValue(totalTreatmentRevenue / completedTreatments);
         }
 
@@ -104,9 +105,9 @@ export default function AnalyticsPage() {
         const today = new Date();
         const hourlyStats: Record<string, { appointments: number, noShows: number, cancellations: number }> = {};
 
-        parsedAppointments
-            .filter(a => isToday(a.dateTime))
-            .forEach(appt => {
+    parsedAppointments
+      .filter((a: any) => isToday(a.dateTime))
+      .forEach((appt: any) => {
                 const hour = format(appt.dateTime, 'ha').toLowerCase(); // e.g., "8am", "1pm"
                 if (!hourlyStats[hour]) {
                     hourlyStats[hour] = { appointments: 0, noShows: 0, cancellations: 0 };
@@ -140,7 +141,7 @@ export default function AnalyticsPage() {
             '0-18': 0, '19-35': 0, '36-50': 0, '51-65': 0, '66+': 0
         };
 
-        patients.forEach(patient => {
+  patients.forEach((patient: any) => {
             const age = patient.age;
             if (age <= 18) ageGroups['0-18']++;
             else if (age <= 35) ageGroups['19-35']++;
@@ -155,7 +156,7 @@ export default function AnalyticsPage() {
 
         // Process data for treatment volume chart
         const monthlyTreatments: Record<string, number> = {};
-        treatments.forEach(treatment => {
+  treatments.forEach((treatment: Treatment) => {
             const month = format(new Date(treatment.date), 'MMM');
             if (!monthlyTreatments[month]) {
                 monthlyTreatments[month] = 0;
@@ -169,7 +170,7 @@ export default function AnalyticsPage() {
 
         // Process revenue data for chart
         const monthlyRevenue: Record<string, { revenue: number, expenses: number }> = {};
-        transactions.forEach(t => {
+  transactions.forEach((t: Transaction) => {
             const month = new Date(t.date).toLocaleString(locale, { month: 'short' });
             if (!monthlyRevenue[month]) {
                 monthlyRevenue[month] = { revenue: 0, expenses: 0 };
@@ -228,51 +229,103 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <h1 className="text-3xl font-bold">{t('nav.analytics')}</h1>
-          <div className="flex items-center gap-2">
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Header Section */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Business Intelligence</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('nav.analytics')}
+            </h1>
+            <p className="text-muted-foreground font-medium">Elite Analytics Dashboard</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder={t('analytics.last_30_days')} />
+              <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl bg-background/60 backdrop-blur-sm border-border/50 font-medium">
+                <SelectValue placeholder={t('analytics.last_30_days')} />
               </SelectTrigger>
               <SelectContent>
-                                <SelectItem value="30">{t('analytics.last_30_days')}</SelectItem>
-                                <SelectItem value="60">{t('analytics.last_60_days')}</SelectItem>
-                                <SelectItem value="90">{t('analytics.last_90_days')}</SelectItem>
+                <SelectItem value="30">{t('analytics.last_30_days')}</SelectItem>
+                <SelectItem value="60">{t('analytics.last_60_days')}</SelectItem>
+                <SelectItem value="90">{t('analytics.last_90_days')}</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-                            {t('analytics.export_report')}
+            <Button variant="outline" onClick={handleExport} className="h-11 px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-accent/20 mr-3">
+                <Download className="h-3 w-3" />
+              </div>
+              {t('analytics.export_report')}
             </Button>
           </div>
         </div>
 
+        {/* Elite Analytics Stats */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {analyticsPageStats.map((stat) => {
-                const Icon = iconMap[stat.icon as IconKey];
-                return (
-                    <Card key={stat.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className="text-xs text-muted-foreground">{stat.description}</p>
-                        </CardContent>
-                    </Card>
-                );
-            })}
+          {analyticsPageStats.map((stat, index) => {
+            const Icon = iconMap[stat.icon as IconKey];
+            const cardStyles = [
+              'metric-card-blue',
+              'metric-card-green', 
+              'metric-card-orange',
+              'metric-card-purple'
+            ];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card 
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                {/* Animated Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className="text-2xl font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 relative z-10">
+                  <p className="text-xs text-white/80 font-medium">
+                    {stat.description}
+                  </p>
+                  {/* Elite Status Indicator */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Live Data</span>
+                  </div>
+                </CardContent>
+                
+                {/* Elite Corner Accent */}
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
+              </Card>
+            );
+          })}
         </div>
 
+        {/* Elite Analytics Tabs */}
         <Tabs defaultValue="overview">
-          <TabsList>
-            <TabsTrigger value="overview">{t('analytics.overview')}</TabsTrigger>
-            <TabsTrigger value="patients">{t('patients.title')}</TabsTrigger>
-            <TabsTrigger value="treatments">{t('treatments.title')}</TabsTrigger>
-            <TabsTrigger value="staff">{t('nav.staff')}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-12 bg-background/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+            <TabsTrigger value="overview" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('analytics.overview')}</TabsTrigger>
+            <TabsTrigger value="patients" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('patients.title')}</TabsTrigger>
+            <TabsTrigger value="treatments" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('treatments.title')}</TabsTrigger>
+            <TabsTrigger value="staff" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('nav.staff')}</TabsTrigger>
             <TabsTrigger value="satisfaction">{t('analytics.satisfaction')}</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-4">

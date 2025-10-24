@@ -24,7 +24,8 @@ import PatientGrowthChart from "../../components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "../../components/reports/treatments-by-type-chart";
 import AppointmentDistributionChart from "../../components/reports/appointment-distribution-chart";
 import { useToast } from '../../hooks/use-toast';
-import { getCollection } from '../../services/firestore';
+// Migrated from server getCollection to client data layer listDocuments
+import { listDocuments } from '../../lib/data-client';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
@@ -65,13 +66,13 @@ export default function ReportsPage() {
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
-        const [invoices, rawPatients, appointments, treatments, rawTransactions] = await Promise.all([
-            getCollection<Invoice>('invoices'),
-            getCollection<any>('patients'),
-            getCollection<any>('appointments'),
-            getCollection<Treatment>('treatments'),
-            getCollection<any>('transactions'),
-        ]);
+    const [invoices, rawPatients, appointments, treatments, rawTransactions] = await Promise.all([
+      listDocuments<Invoice>('invoices'),
+      listDocuments<any>('patients'),
+      listDocuments<any>('appointments'),
+      listDocuments<Treatment>('treatments'),
+      listDocuments<any>('transactions'),
+    ]);
 
         const transactions: Transaction[] = rawTransactions.map((t: any) => ({ ...t, date: new Date(t.date) }));
         const patients: Patient[] = rawPatients.map((p: any) => ({
@@ -205,9 +206,23 @@ export default function ReportsPage() {
 
   return (
     <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
+  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Reports Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Analytics & Reports</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('reports.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Elite Business Intelligence
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-[180px]">
@@ -236,19 +251,48 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {/* Elite Reports Stats */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {reportsPageStats.map((stat) => {
+            {reportsPageStats.map((stat, index) => {
                 const Icon = iconMap[stat.icon as IconKey];
+                const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
+                const cardStyle = cardStyles[index % cardStyles.length];
+                
                 return (
-                    <Card key={stat.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className="text-xs text-muted-foreground">{stat.description}</p>
-                        </CardContent>
+                    <Card 
+                      key={stat.title}
+                      className={cn(
+                        "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                        cardStyle
+                      )}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                        <div className="flex flex-col gap-1">
+                          <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                            {stat.title}
+                          </CardTitle>
+                          <div className="text-2xl font-bold text-white drop-shadow-sm">
+                            {stat.value}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                          <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="pt-0 relative z-10">
+                        <p className="text-xs text-white/80 font-medium">
+                          {stat.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                          <span className="text-xs text-white/70 font-medium">Live</span>
+                        </div>
+                      </CardContent>
+                      
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
                     </Card>
                 );
             })}

@@ -11,11 +11,11 @@ export async function POST(request: Request) {
     }
 
     const user = await UsersService.getByEmail(email);
-    if (!user?.passwordHash) {
+    if (!user?.hashedPassword) {
       return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
     }
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
+    const isValid = await bcrypt.compare(password, user.hashedPassword);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
     }
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     await UsersService.updateLastLogin(user.id);
 
-    const { passwordHash: _ignored, ...sanitized } = user;
+    const { hashedPassword: _ignored, ...sanitized } = user;
     return NextResponse.json({ user: sanitized });
   } catch (error) {
     console.error('[api/auth/sign-in] Error', error);

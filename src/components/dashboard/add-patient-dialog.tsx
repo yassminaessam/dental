@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -31,13 +30,11 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
-// Removed ScrollArea in favor of native overflow container for guaranteed visible scrollbar
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
-  // Email is optional: allow empty string or a valid email
   email: z.union([z.string().email({ message: 'Invalid email address' }), z.literal('')]),
   phone: z.string().min(1, { message: 'Phone number is required' }),
   dob: z.date({ required_error: 'Date of birth is required' }),
@@ -57,18 +54,18 @@ interface AddPatientDialogProps {
 }
 
 const emergencyContactRelationships = [
-    'Spouse',
-    'Parent',
-    'Child',
-    'Sibling',
-    'Friend',
-    'Other',
+  'Spouse',
+  'Parent',
+  'Child',
+  'Sibling',
+  'Friend',
+  'Other'
 ];
 
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
-  const [dobOpen, setDobOpen] = React.useState(false);
+  
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
@@ -76,7 +73,6 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       lastName: '',
       email: '',
       phone: '',
-      dob: undefined,
       address: '',
       ecName: '',
       ecPhone: '',
@@ -84,58 +80,75 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       insuranceProvider: '',
       policyNumber: '',
       medicalHistory: [],
-    }
+    },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: medicalHistoryFields, append: appendMedicalHistory, remove: removeMedicalHistory } = useFieldArray({
     control: form.control,
-    name: "medicalHistory",
+    name: 'medicalHistory',
   });
 
   const onSubmit = (data: PatientFormData) => {
-    const newPatient: Omit<Patient, 'id'> = {
+    const currentYear = new Date().getFullYear();
+    const birthYear = data.dob.getFullYear();
+    const age = currentYear - birthYear;
+    
+    const patient: Omit<Patient, 'id'> = {
       name: data.name,
       lastName: data.lastName,
-      email: data.email,
+      email: data.email || '',
       phone: data.phone,
       dob: data.dob,
-      age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
-      lastVisit: new Date().toLocaleDateString(),
-      status: 'Active',
-      address: data.address,
-      ecName: data.ecName,
-      ecPhone: data.ecPhone,
-      ecRelationship: data.ecRelationship,
-      insuranceProvider: data.insuranceProvider,
-      policyNumber: data.policyNumber,
-      medicalHistory: data.medicalHistory,
+      age: age,
+      lastVisit: 'Never',
+      status: 'Active' as const,
+      address: data.address || undefined,
+      ecName: data.ecName || undefined,
+      ecPhone: data.ecPhone || undefined,
+      ecRelationship: data.ecRelationship || undefined,
+      insuranceProvider: data.insuranceProvider || undefined,
+      policyNumber: data.policyNumber || undefined,
+      medicalHistory: data.medicalHistory?.map(item => ({ condition: item.condition })).filter(item => Boolean(item.condition)) || [],
     };
-    
-    onSave(newPatient);
-    form.reset();
+    onSave(patient);
     setOpen(false);
+    form.reset();
   };
 
+  console.log('Dialog state:', open);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      console.log('Dialog state changing from', open, 'to', newOpen);
+      setOpen(newOpen);
+    }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">{t('patients.new_patient')}</span>
-          <span className="sm:hidden">{t('patients.add_patient')}</span>
+        <Button 
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          onClick={() => {
+            console.log('Add Patient button clicked');
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {t('patients.add_patient')}
         </Button>
       </DialogTrigger>
-  <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col min-h-0">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">{t('patients.add_patient')}</DialogTitle>
-          <DialogDescription className="text-sm">
-            {t('patients.enter_patient_details')}
+          <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {t('patients.add_patient')}
+          </DialogTitle>
+          <DialogDescription className="text-sm sm:text-base text-muted-foreground">
+            {t('patients.add_patient_description')}
           </DialogDescription>
         </DialogHeader>
-  <div className="scrollbar-visible flex-1 min-h-0 overflow-y-auto pr-2 sm:pr-6 max-h-[65vh] sm:max-h-[70vh]">
+        
+        <div className="overflow-y-auto max-h-[calc(85vh-200px)] pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent'}}>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} id="add-patient-form" className="space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.personal_information')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="name"
@@ -182,7 +195,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       <FormItem>
                         <FormLabel className="text-sm font-medium">{t('patients.phone')} *</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
+                          <Input placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -192,20 +205,24 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     control={form.control}
                     name="dob"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem className="sm:col-span-1">
                         <FormLabel className="text-sm font-medium">{t('patients.date_of_birth')} *</FormLabel>
-                        <Popover open={dobOpen} onOpenChange={setDobOpen}>
+                        <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full justify-start text-left font-normal h-10",
+                                  "w-full pl-3 text-left font-normal h-10",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? format(field.value, "PPP") : <span>{t('patients.dob_placeholder')}</span>}
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>{t('patients.pick_date')}</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -213,15 +230,11 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                             <Calendar
                               mode="single"
                               selected={field.value}
-                              onSelect={(date) => {
-                                if (date) field.onChange(date);
-                                setDobOpen(false);
-                              }}
-                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
                               initialFocus
-                              captionLayout="dropdown-buttons"
-                              fromYear={1930}
-                              toYear={new Date().getFullYear()}
                             />
                           </PopoverContent>
                         </Popover>
@@ -229,142 +242,171 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       </FormItem>
                     )}
                   />
+                </div>
+                <div className="mt-4">
                   <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
-                      <FormItem className="sm:col-span-2">
+                      <FormItem>
                         <FormLabel className="text-sm font-medium">{t('patients.address')}</FormLabel>
                         <FormControl>
                           <Textarea placeholder={t('patients.address_placeholder')} {...field} className="min-h-[80px]" />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              </div>
 
-                <div>
-                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.emergency_contact')}</h3>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="ecName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">{t('patients.name')}</FormLabel>
+              <div>
+                <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.emergency_contact')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="ecName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{t('patients.emergency_contact_name')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('patients.emergency_contact_name_placeholder')} {...field} className="h-10" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="ecPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{t('patients.emergency_contact_phone')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('patients.emergency_contact_phone_placeholder')} {...field} className="h-10" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="ecRelationship"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel className="text-sm font-medium">{t('patients.emergency_contact_relationship')}</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <Input placeholder={t('patients.emergency_name_placeholder')} {...field} className="h-10" />
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder={t('patients.emergency_contact_relationship_placeholder')} />
+                            </SelectTrigger>
                           </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="ecPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">{t('patients.phone')}</FormLabel>
-                          <FormControl>
-                            <Input type="tel" placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="ecRelationship"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">{t('patients.relationship')}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="h-10">
-                                <SelectValue placeholder={t('patients.select_relationship')} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {emergencyContactRelationships.map((rel) => (
-                                <SelectItem key={rel} value={rel.toLowerCase()}>
-                                  {rel}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <SelectContent>
+                            {emergencyContactRelationships.map((relationship) => (
+                              <SelectItem key={relationship} value={relationship}>
+                                {t(`patients.relationships.${relationship.toLowerCase()}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+              </div>
 
-                <div>
-                  <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.insurance_information')}</h3>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="insuranceProvider"
-                        render={({ field }) => (
-                          <FormItem>
-                              <FormLabel className="text-sm font-medium">{t('patients.insurance_provider')}</FormLabel>
-                              <FormControl>
-                                <Input placeholder={t('patients.insurance_provider_placeholder')} {...field} className="h-10" />
-                              </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="policyNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                              <FormLabel className="text-sm font-medium">{t('patients.policy_number')}</FormLabel>
-                              <FormControl>
-                                <Input placeholder={t('patients.policy_number_placeholder')} {...field} className="h-10" />
-                              </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                  </div>
+              <div>
+                <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-medium">{t('patients.insurance_information')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="insuranceProvider"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{t('patients.insurance_provider')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('patients.insurance_provider_placeholder')} {...field} className="h-10" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="policyNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{t('patients.policy_number')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('patients.policy_number_placeholder')} {...field} className="h-10" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                
-                <div>
-                  <h3 className="mb-2 text-base sm:text-lg font-medium">{t('patients.medical_history')}</h3>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-base sm:text-lg font-medium">{t('patients.medical_history')}</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendMedicalHistory({ condition: '' })}
+                    className="h-8"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {t('patients.add_condition')}
+                  </Button>
+                </div>
+                {medicalHistoryFields.length > 0 && (
                   <div className="space-y-2">
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                         <FormField
-                            control={form.control}
-                            name={`medicalHistory.${index}.condition`}
-                            render={({ field }) => (
-                              <FormItem className="flex-grow">
-                                <FormControl>
-                                    <Input placeholder={t('patients.medical_condition_placeholder')} {...field} className="h-10" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="h-10 w-10 sm:h-9 sm:w-9">
-                          <Trash2 className="h-4 w-4" />
+                    {medicalHistoryFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`medicalHistory.${index}.condition`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input placeholder={t('patients.medical_condition_placeholder')} {...field} className="h-9" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeMedicalHistory(index)}
+                          className="h-9 w-9 p-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => append({ condition: '' })}
-                      className="w-full sm:w-auto"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t('patients.add_medical_condition')}
-                    </Button>
                   </div>
-                </div>
+                )}
+              </div>
             </form>
           </Form>
         </div>
-  <DialogFooter className="border-t pt-3 sm:pt-4 gap-2 print:hidden">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">{t('common.cancel')}</Button>
-          <Button type="submit" form="add-patient-form" className="flex-1 sm:flex-none">{t('patients.save_patient')}</Button>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button 
+            type="button" 
+            onClick={form.handleSubmit(onSubmit)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            {t('patients.save_patient')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

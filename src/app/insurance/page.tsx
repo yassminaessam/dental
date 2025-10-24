@@ -45,7 +45,7 @@ import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Lo
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
 import { AddProviderDialog } from '@/components/insurance/add-provider-dialog';
 import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -219,11 +219,25 @@ export default function InsurancePage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">{t('insurance.insurance_claims')}</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleExport}>
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Insurance Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Claims Management</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('insurance.insurance_claims')}
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Elite Insurance Operations
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button variant="outline" onClick={handleExport} className="elite-button-outline">
               <Download className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
               {t('insurance.exportClaims')}
             </Button>
@@ -231,29 +245,73 @@ export default function InsurancePage() {
           </div>
         </div>
 
+        {/* Elite Insurance Stats */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {insurancePageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={cn("text-2xl font-bold", stat.valueClassName)}>
-                  {stat.value}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {insurancePageStats.map((stat, index) => {
+            const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card 
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <CheckCircle2 className="h-6 w-6 text-white drop-shadow-sm" />
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 relative z-10">
+                  <p className="text-xs text-white/80 font-medium">
+                    {stat.description}
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Active</span>
+                  </div>
+                </CardContent>
+                
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
+              </Card>
+            );
+          })}
         </div>
 
+    {/* Elite Insurance Tabs */}
     <Tabs defaultValue="claims-management">
-          <TabsList>
-      <TabsTrigger value="claims-management">{t('insurance.claims_management')}</TabsTrigger>
-      <TabsTrigger value="insurance-providers">{t('insurance.insurance_providers')}</TabsTrigger>
-      <TabsTrigger value="claims-reports">{t('insurance.claims_reports')}</TabsTrigger>
+          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl">
+            <TabsTrigger 
+              value="claims-management" 
+              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('insurance.claims_management')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="insurance-providers" 
+              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('insurance.insurance_providers')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="claims-reports" 
+              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('insurance.claims_reports')}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="claims-management" className="mt-4">
             <Card>

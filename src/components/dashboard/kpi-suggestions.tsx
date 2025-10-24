@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getKpiSuggestionsAction, type KpiSuggestionsState } from "@/lib/actions";
 import { Lightbulb, ListChecks, Loader2 } from "lucide-react";
-import { getCollection } from "@/services/firestore";
+// Migrated from server getCollection to client listDocuments
+import { listDocuments } from "@/lib/data-client";
 import type { Invoice } from "@/app/billing/page";
 import type { Patient } from "@/app/patients/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -56,8 +57,8 @@ export default function KpiSuggestions() {
   useEffect(() => {
     async function fetchData() {
       const [invoices, patients] = await Promise.all([
-        getCollection<Invoice>('invoices'),
-        getCollection<Patient>('patients'),
+        listDocuments<Invoice>('invoices'),
+        listDocuments<Patient>('patients'),
       ]);
       const totalRevenue = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
       const patientCount = patients.length;

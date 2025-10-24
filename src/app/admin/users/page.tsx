@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AuthService } from '@/lib/auth';
 import { AdminOnly } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -58,6 +59,7 @@ export default function UserManagementPage() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadUsers();
@@ -70,8 +72,8 @@ export default function UserManagementPage() {
       setUsers(userData);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to load users",
+        title: t('common.error'),
+        description: t('users.error_loading'),
         variant: "destructive",
       });
     } finally {
@@ -88,14 +90,14 @@ export default function UserManagementPage() {
       };
       await AuthService.register(userData);
       toast({
-        title: "Success",
-        description: "User created successfully",
+        title: t('common.success'),
+        description: t('users.toast.created'),
       });
       setIsCreateDialogOpen(false);
       loadUsers();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -107,20 +109,20 @@ export default function UserManagementPage() {
       if (isActive) {
         await AuthService.deactivateUser(userId);
         toast({
-          title: "Success",
-          description: "User deactivated successfully",
+          title: t('common.success'),
+          description: t('users.toast.deactivated'),
         });
       } else {
         await AuthService.activateUser(userId);
         toast({
-          title: "Success",
-          description: "User activated successfully",
+          title: t('common.success'),
+          description: t('users.toast.activated'),
         });
       }
       loadUsers();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -131,8 +133,8 @@ export default function UserManagementPage() {
     try {
       await AuthService.updateUserPermissions(userId, permissions);
       toast({
-        title: "Success",
-        description: "User permissions updated successfully",
+        title: t('common.success'),
+        description: t('users.toast.permissions_updated'),
       });
       setIsEditingPermissions(false);
       loadUsers();
@@ -142,7 +144,7 @@ export default function UserManagementPage() {
       }
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -175,14 +177,14 @@ export default function UserManagementPage() {
         <div className="container mx-auto p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">User Management</h1>
-              <p className="text-muted-foreground">Manage system users and their permissions</p>
+              <h1 className="text-3xl font-bold">{t('nav.user_management')}</h1>
+              <p className="text-muted-foreground">{t('users.page_subtitle')}</p>
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Add User
+                  {t('users.add_user')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -236,12 +238,12 @@ export default function UserManagementPage() {
                   {user.lastLoginAt && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3" />
-                      Last login: {format(user.lastLoginAt, 'MMM dd, yyyy')}
+                      {t('users.last_login')}: {format(user.lastLoginAt, 'MMM dd, yyyy')}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                      {user.isActive ? 'Active' : 'Inactive'}
+                      {user.isActive ? t('common.active') : t('common.inactive')}
                     </Badge>
                   </div>
                   <div className="flex gap-2 pt-2">
@@ -254,7 +256,7 @@ export default function UserManagementPage() {
                       }}
                     >
                       <Eye className="h-3 w-3 mr-1" />
-                      View
+                      {t('common.view')}
                     </Button>
                     <Button 
                       size="sm" 
@@ -264,12 +266,12 @@ export default function UserManagementPage() {
                       {user.isActive ? (
                         <>
                           <ShieldX className="h-3 w-3 mr-1" />
-                          Deactivate
+                          {t('users.deactivate')}
                         </>
                       ) : (
                         <>
                           <Shield className="h-3 w-3 mr-1" />
-                          Activate
+                          {t('users.activate')}
                         </>
                       )}
                     </Button>
@@ -306,6 +308,7 @@ export default function UserManagementPage() {
 }
 
 function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permissions?: UserPermission[] }) => void }) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<RegisterData>({
     email: '',
     password: '',
@@ -346,46 +349,47 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
   };
 
   const formatPermissionLabel = (permission: UserPermission) => {
-    return permission
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+    // permission pattern: action_subject e.g. view_patients, edit_billing, delete_staff, send_communications, view_own_data
+    const [action, ...subjectParts] = permission.split('_');
+    const subject = subjectParts.join('_');
+    return `${t(`permissions.action.${action}`) || action} ${t(`permissions.subject.${subject}`) || subject}`;
   };
 
   const groupPermissions = (permissions: UserPermission[]) => {
     const groups: Record<string, UserPermission[]> = {
-      'Patients': [],
-      'Appointments': [],
-      'Treatments': [],
-      'Billing': [],
-      'Reports': [],
-      'Staff': [],
-      'Inventory': [],
-      'Settings': [],
-      'Medical Records': [],
-      'Dental Chart': [],
-      'Communications': [],
-      'Insurance': [],
-      'Analytics': [],
-      'Patient Portal': [],
-      'Other': []
+      'patients': [],
+      'appointments': [],
+      'treatments': [],
+      'billing': [],
+      'reports': [],
+      'staff': [],
+      'inventory': [],
+      'settings': [],
+      'medical_records': [],
+      'dental_chart': [],
+      'communications': [],
+      'insurance': [],
+      'analytics': [],
+      'patient_portal': [],
+      'other': []
     };
 
     permissions.forEach(permission => {
-      if (permission.includes('patient') && permission.includes('portal')) groups['Patient Portal'].push(permission);
-      else if (permission.includes('patient')) groups['Patients'].push(permission);
-      else if (permission.includes('appointment')) groups['Appointments'].push(permission);
-      else if (permission.includes('treatment')) groups['Treatments'].push(permission);
-      else if (permission.includes('billing')) groups['Billing'].push(permission);
-      else if (permission.includes('report')) groups['Reports'].push(permission);
-      else if (permission.includes('staff')) groups['Staff'].push(permission);
-      else if (permission.includes('inventory')) groups['Inventory'].push(permission);
-      else if (permission.includes('settings')) groups['Settings'].push(permission);
-      else if (permission.includes('medical_records')) groups['Medical Records'].push(permission);
-      else if (permission.includes('dental_chart')) groups['Dental Chart'].push(permission);
-      else if (permission.includes('communication')) groups['Communications'].push(permission);
-      else if (permission.includes('insurance')) groups['Insurance'].push(permission);
-      else if (permission.includes('analytics')) groups['Analytics'].push(permission);
-      else groups['Other'].push(permission);
+      if (permission.includes('patient') && permission.includes('portal')) groups['patient_portal'].push(permission);
+      else if (permission.includes('patient')) groups['patients'].push(permission);
+      else if (permission.includes('appointment')) groups['appointments'].push(permission);
+      else if (permission.includes('treatment')) groups['treatments'].push(permission);
+      else if (permission.includes('billing')) groups['billing'].push(permission);
+      else if (permission.includes('report')) groups['reports'].push(permission);
+      else if (permission.includes('staff')) groups['staff'].push(permission);
+      else if (permission.includes('inventory')) groups['inventory'].push(permission);
+      else if (permission.includes('settings')) groups['settings'].push(permission);
+      else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
+      else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
+      else if (permission.includes('communication')) groups['communications'].push(permission);
+      else if (permission.includes('insurance')) groups['insurance'].push(permission);
+      else if (permission.includes('analytics')) groups['analytics'].push(permission);
+      else groups['other'].push(permission);
     });
 
     // Filter out empty groups
@@ -397,16 +401,16 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Create New User</DialogTitle>
+        <DialogTitle>{t('users.create_new')}</DialogTitle>
         <DialogDescription>
-          Add a new user to the system with their role and permissions.
+          {t('users.create_new_desc')}
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName">{t('patients.first_name')}</Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
@@ -415,7 +419,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
               />
             </div>
             <div>
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName">{t('patients.last_name')}</Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
@@ -425,7 +429,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
             </div>
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('patients.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -435,7 +439,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
             />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
@@ -446,21 +450,21 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
             />
           </div>
           <div>
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role">{t('staff.role')}</Label>
             <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="doctor">Doctor</SelectItem>
-                <SelectItem value="receptionist">Receptionist</SelectItem>
-                <SelectItem value="patient">Patient</SelectItem>
+                <SelectItem value="admin">{t('roles.admin')}</SelectItem>
+                <SelectItem value="doctor">{t('roles.dentist')}</SelectItem>
+                <SelectItem value="receptionist">{t('roles.receptionist')}</SelectItem>
+                <SelectItem value="patient">{t('common.patient')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="phone">Phone (Optional)</Label>
+            <Label htmlFor="phone">{t('common.phone')}</Label>
             <Input
               id="phone"
               value={formData.phone}
@@ -470,7 +474,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
           {formData.role === 'doctor' && (
             <>
               <div>
-                <Label htmlFor="specialization">Specialization</Label>
+                <Label htmlFor="specialization">{t('users.specialization')}</Label>
                 <Input
                   id="specialization"
                   value={formData.specialization}
@@ -478,7 +482,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
                 />
               </div>
               <div>
-                <Label htmlFor="licenseNumber">License Number</Label>
+                <Label htmlFor="licenseNumber">{t('users.license_number')}</Label>
                 <Input
                   id="licenseNumber"
                   value={formData.licenseNumber}
@@ -490,7 +494,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
           {(formData.role === 'receptionist' || formData.role === 'admin') && (
             <>
               <div>
-                <Label htmlFor="employeeId">Employee ID</Label>
+                <Label htmlFor="employeeId">{t('users.employee_id')}</Label>
                 <Input
                   id="employeeId"
                   value={formData.employeeId}
@@ -498,7 +502,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
                 />
               </div>
               <div>
-                <Label htmlFor="department">Department</Label>
+                <Label htmlFor="department">{t('users.department')}</Label>
                 <Input
                   id="department"
                   value={formData.department}
@@ -510,14 +514,14 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
           
           {/* Permissions Section */}
           <div>
-            <Label className="text-sm font-medium">Permissions</Label>
+            <Label className="text-sm font-medium">{t('users.permissions')}</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Customize permissions or use role defaults
+              {t('users.permissions_hint')}
             </p>
             <div className="max-h-48 overflow-y-auto border rounded-md p-3">
               {Object.entries(groupPermissions(ALL_PERMISSIONS)).map(([group, permissions]) => (
                 <div key={group} className="mb-3">
-                  <h4 className="font-medium text-xs text-muted-foreground mb-2">{group}</h4>
+                  <h4 className="font-medium text-xs text-muted-foreground mb-2">{t(`permissions.group.${group}`)}</h4>
                   <div className="space-y-1">
                     {permissions.map(permission => (
                       <div key={permission} className="flex items-center space-x-2">
@@ -541,7 +545,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
         </div>
         <DialogFooter className="mt-6">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create User'}
+            {isSubmitting ? t('common.loading') : t('users.create_user_action')}
           </Button>
         </DialogFooter>
       </form>
@@ -562,6 +566,7 @@ function UserDetailsView({
   onCancelEdit: () => void;
   onUpdatePermissions: (userId: string, permissions: UserPermission[]) => void;
 }) {
+  const { t } = useLanguage();
   const [selectedPermissions, setSelectedPermissions] = useState<UserPermission[]>(user.permissions);
 
   // Reset selected permissions when user changes or edit mode starts
@@ -582,46 +587,46 @@ function UserDetailsView({
   };
 
   const formatPermissionLabel = (permission: UserPermission) => {
-    return permission
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+    const [action, ...subjectParts] = permission.split('_');
+    const subject = subjectParts.join('_');
+    return `${t(`permissions.action.${action}`) || action} ${t(`permissions.subject.${subject}`) || subject}`;
   };
 
   const groupPermissions = (permissions: UserPermission[]) => {
     const groups: Record<string, UserPermission[]> = {
-      'Patients': [],
-      'Appointments': [],
-      'Treatments': [],
-      'Billing': [],
-      'Reports': [],
-      'Staff': [],
-      'Inventory': [],
-      'Settings': [],
-      'Medical Records': [],
-      'Dental Chart': [],
-      'Communications': [],
-      'Insurance': [],
-      'Analytics': [],
-      'Patient Portal': [],
-      'Other': []
+      'patients': [],
+      'appointments': [],
+      'treatments': [],
+      'billing': [],
+      'reports': [],
+      'staff': [],
+      'inventory': [],
+      'settings': [],
+      'medical_records': [],
+      'dental_chart': [],
+      'communications': [],
+      'insurance': [],
+      'analytics': [],
+      'patient_portal': [],
+      'other': []
     };
 
     permissions.forEach(permission => {
-      if (permission.includes('patient') && permission.includes('portal')) groups['Patient Portal'].push(permission);
-      else if (permission.includes('patient')) groups['Patients'].push(permission);
-      else if (permission.includes('appointment')) groups['Appointments'].push(permission);
-      else if (permission.includes('treatment')) groups['Treatments'].push(permission);
-      else if (permission.includes('billing')) groups['Billing'].push(permission);
-      else if (permission.includes('report')) groups['Reports'].push(permission);
-      else if (permission.includes('staff')) groups['Staff'].push(permission);
-      else if (permission.includes('inventory')) groups['Inventory'].push(permission);
-      else if (permission.includes('settings')) groups['Settings'].push(permission);
-      else if (permission.includes('medical_records')) groups['Medical Records'].push(permission);
-      else if (permission.includes('dental_chart')) groups['Dental Chart'].push(permission);
-      else if (permission.includes('communication')) groups['Communications'].push(permission);
-      else if (permission.includes('insurance')) groups['Insurance'].push(permission);
-      else if (permission.includes('analytics')) groups['Analytics'].push(permission);
-      else groups['Other'].push(permission);
+      if (permission.includes('patient') && permission.includes('portal')) groups['patient_portal'].push(permission);
+      else if (permission.includes('patient')) groups['patients'].push(permission);
+      else if (permission.includes('appointment')) groups['appointments'].push(permission);
+      else if (permission.includes('treatment')) groups['treatments'].push(permission);
+      else if (permission.includes('billing')) groups['billing'].push(permission);
+      else if (permission.includes('report')) groups['reports'].push(permission);
+      else if (permission.includes('staff')) groups['staff'].push(permission);
+      else if (permission.includes('inventory')) groups['inventory'].push(permission);
+      else if (permission.includes('settings')) groups['settings'].push(permission);
+      else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
+      else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
+      else if (permission.includes('communication')) groups['communications'].push(permission);
+      else if (permission.includes('insurance')) groups['insurance'].push(permission);
+      else if (permission.includes('analytics')) groups['analytics'].push(permission);
+      else groups['other'].push(permission);
     });
 
     // Filter out empty groups
@@ -637,68 +642,68 @@ function UserDetailsView({
           {getRoleIcon(user.role)}
           {user.firstName} {user.lastName}
         </DialogTitle>
-        <DialogDescription>User details and permissions</DialogDescription>
+        <DialogDescription>{t('users.details_and_permissions')}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm font-medium">Role</Label>
+            <Label className="text-sm font-medium">{t('staff.role')}</Label>
             <Badge variant={getRoleBadgeVariant(user.role)} className="mt-1">
               {user.role}
             </Badge>
           </div>
           <div>
-            <Label className="text-sm font-medium">Status</Label>
+            <Label className="text-sm font-medium">{t('common.status')}</Label>
             <Badge variant={user.isActive ? 'default' : 'secondary'} className="mt-1">
-              {user.isActive ? 'Active' : 'Inactive'}
+              {user.isActive ? t('common.active') : t('common.inactive')}
             </Badge>
           </div>
         </div>
         <div>
-          <Label className="text-sm font-medium">Email</Label>
+          <Label className="text-sm font-medium">{t('patients.email')}</Label>
           <p className="text-sm">{user.email}</p>
         </div>
         {user.phone && (
           <div>
-            <Label className="text-sm font-medium">Phone</Label>
+            <Label className="text-sm font-medium">{t('common.phone')}</Label>
             <p className="text-sm">{user.phone}</p>
           </div>
         )}
         {user.specialization && (
           <div>
-            <Label className="text-sm font-medium">Specialization</Label>
+            <Label className="text-sm font-medium">{t('users.specialization')}</Label>
             <p className="text-sm">{user.specialization}</p>
           </div>
         )}
         {user.licenseNumber && (
           <div>
-            <Label className="text-sm font-medium">License Number</Label>
+            <Label className="text-sm font-medium">{t('users.license_number')}</Label>
             <p className="text-sm">{user.licenseNumber}</p>
           </div>
         )}
         {user.employeeId && (
           <div>
-            <Label className="text-sm font-medium">Employee ID</Label>
+            <Label className="text-sm font-medium">{t('users.employee_id')}</Label>
             <p className="text-sm">{user.employeeId}</p>
           </div>
         )}
         <div>
-          <Label className="text-sm font-medium">Created</Label>
+          <Label className="text-sm font-medium">{t('common.created_at')}</Label>
           <p className="text-sm">{format(user.createdAt, 'PPP')}</p>
         </div>
         {user.lastLoginAt && (
           <div>
-            <Label className="text-sm font-medium">Last Login</Label>
+            <Label className="text-sm font-medium">{t('users.last_login')}</Label>
             <p className="text-sm">{format(user.lastLoginAt, 'PPp')}</p>
           </div>
         )}
         <div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Permissions</Label>
+            <Label className="text-sm font-medium">{t('users.permissions')}</Label>
             {!isEditingPermissions && (
               <Button size="sm" variant="outline" onClick={onEditPermissions}>
                 <Edit className="h-3 w-3 mr-1" />
-                Edit
+                {t('common.edit')}
               </Button>
             )}
           </div>
@@ -708,7 +713,7 @@ function UserDetailsView({
               <div className="max-h-60 overflow-y-auto border rounded-md p-3">
                 {Object.entries(groupPermissions(ALL_PERMISSIONS)).map(([group, permissions]) => (
                   <div key={group} className="mb-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">{group}</h4>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">{t(`permissions.group.${group}`)}</h4>
                     <div className="space-y-2">
                       {permissions.map(permission => (
                         <div key={permission} className="flex items-center space-x-2">
@@ -730,10 +735,10 @@ function UserDetailsView({
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSavePermissions}>
-                  Save Changes
+                  {t('common.save_changes')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={onCancelEdit}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>

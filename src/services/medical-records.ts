@@ -69,17 +69,17 @@ export async function createMedicalRecord(input: MedicalRecordCreateInput): Prom
     notes: input.notes ?? '',
   };
 
-  await saveDocument(RECORDS_COLLECTION, record.id, record);
+  await saveDocument(RECORDS_COLLECTION, record as unknown as Record<string, unknown> & { id?: string });
   return record;
 }
 
 export async function updateMedicalRecord(record: MedicalRecordUpdateInput): Promise<MedicalRecord> {
-  await saveDocument(RECORDS_COLLECTION, record.id, record);
+  await saveDocument(RECORDS_COLLECTION, record as unknown as Record<string, unknown> & { id?: string });
   return record;
 }
 
 export async function patchMedicalRecord(id: string, patch: Partial<MedicalRecord>): Promise<void> {
-  await patchDocument<MedicalRecord>(RECORDS_COLLECTION, id, patch);
+  await patchDocument(RECORDS_COLLECTION, id, patch as Partial<Record<string, unknown>>);
 }
 
 export async function removeMedicalRecord(id: string): Promise<void> {
@@ -96,17 +96,17 @@ export async function createClinicalImage(input: ClinicalImageCreateInput): Prom
     ...input,
   };
 
-  await saveDocument(IMAGES_COLLECTION, image.id, image);
+  await saveDocument(IMAGES_COLLECTION, image as unknown as Record<string, unknown> & { id?: string });
   return image;
 }
 
 export async function updateClinicalImage(image: ClinicalImage): Promise<ClinicalImage> {
-  await saveDocument(IMAGES_COLLECTION, image.id, image);
+  await saveDocument(IMAGES_COLLECTION, image as unknown as Record<string, unknown> & { id?: string });
   return image;
 }
 
 export async function patchClinicalImage(id: string, patch: ClinicalImageUpdateInput): Promise<void> {
-  await patchDocument<ClinicalImage>(IMAGES_COLLECTION, id, patch);
+  await patchDocument(IMAGES_COLLECTION, id, patch as Partial<Record<string, unknown>>);
 }
 
 export async function removeClinicalImage(id: string): Promise<void> {
@@ -125,14 +125,14 @@ export async function createMedicalRecordTemplate(
     ...input,
   };
 
-  await saveDocument(TEMPLATES_COLLECTION, template.id, template);
+  await saveDocument(TEMPLATES_COLLECTION, template as unknown as Record<string, unknown> & { id?: string });
   return template;
 }
 
 export async function updateMedicalRecordTemplate(
   template: MedicalRecordTemplateUpdateInput,
 ): Promise<MedicalRecordTemplate> {
-  await saveDocument(TEMPLATES_COLLECTION, template.id, template);
+  await saveDocument(TEMPLATES_COLLECTION, template as unknown as Record<string, unknown> & { id?: string });
   return template;
 }
 

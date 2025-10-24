@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { InventoryItem } from '@/app/inventory/page';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import { Supplier } from '@/app/suppliers/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -64,7 +64,7 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
 
   React.useEffect(() => {
     async function fetchSuppliers() {
-      const data = await getCollection<Supplier>('suppliers');
+  const data = await listDocuments<Supplier>('suppliers');
       setSuppliers(data);
     }
     if (open) {

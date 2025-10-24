@@ -50,7 +50,7 @@ import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-c
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -93,7 +93,8 @@ export default function FinancialPage() {
   React.useEffect(() => {
     async function fetchTransactions() {
       try {
-        const data = await getCollection<any>('transactions');
+  // Fetch transactions via REST data client (was getCollection during Firestore era)
+  const data = await listDocuments<any>('transactions');
         const parsedData = data.map(t => ({ ...t, date: new Date(t.date) }));
         setTransactions(parsedData);
 
@@ -264,43 +265,80 @@ export default function FinancialPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-3xl font-bold">{t('financial.title')}</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
-        <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-        {t('reports.export_report')}
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Financial Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Financial Control</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('financial.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Elite Financial Management
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button variant="outline" className="elite-button-outline">
+              <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+              {t('reports.export_report')}
             </Button>
             <AddTransactionDialog onSave={handleSaveTransaction} />
           </div>
         </div>
 
+        {/* Elite Financial Stats */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {financialPageStats.map((stat) => {
+          {financialPageStats.map((stat, index) => {
             const Icon = iconMap[stat.icon as IconKey];
+            const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
             return (
-              <Card key={stat.titleKey}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t(stat.titleKey as string)}
-                  </CardTitle>
-                  <Icon
-                    className={cn(
-                      "h-4 w-4 text-muted-foreground",
-                      stat.icon === "TrendingUp" && "text-green-500",
-                      stat.icon === "TrendingDown" && "text-red-500"
-                    )}
-                  />
+              <Card 
+                key={stat.titleKey}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                      {t(stat.titleKey as string)}
+                    </CardTitle>
+                    <div className="text-2xl font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Icon className={cn(
+                      "h-6 w-6 text-white drop-shadow-sm",
+                      stat.icon === "TrendingUp" && "text-green-200",
+                      stat.icon === "TrendingDown" && "text-red-200"
+                    )} />
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                
+                <CardContent className="pt-0 relative z-10">
                   {stat.descriptionKey && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-white/80 font-medium">
                       {t(stat.descriptionKey as string)}
                     </p>
                   )}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Live</span>
+                  </div>
                 </CardContent>
+                
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}

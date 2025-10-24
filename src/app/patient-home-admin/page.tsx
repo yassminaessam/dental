@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Save, Eye, Globe, Gift, Users, MessageSquare, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, deleteDocument } from '@/services/firestore';
+import { getCollection, setDocument, deleteDocument } from '@/services/database';
 
 interface Promotion {
   id: string;

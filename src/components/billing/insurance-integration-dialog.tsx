@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, FileText, DollarSign, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { updateDocument } from '@/services/firestore';
+import { updateDocument } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InsuranceClaim {

@@ -62,7 +62,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
 import { InventoryItem } from '../inventory/page';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AddItemDialog } from '@/components/inventory/add-item-dialog';
 
 export type Supplier = {
@@ -129,11 +129,12 @@ export default function SuppliersPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-            const [suppliersData, poData, inventoryData] = await Promise.all([
-                getCollection<Supplier>('suppliers'),
-                getCollection<PurchaseOrder>('purchase-orders'),
-                getCollection<InventoryItem>('inventory'),
-            ]);
+      // Replaced legacy getCollection calls with listDocuments (client REST layer)
+      const [suppliersData, poData, inventoryData] = await Promise.all([
+        listDocuments<Supplier>('suppliers'),
+        listDocuments<PurchaseOrder>('purchase-orders'),
+        listDocuments<InventoryItem>('inventory'),
+      ]);
             setSuppliers(suppliersData);
             setPurchaseOrders(poData);
             setInventory(inventoryData);
@@ -219,7 +220,7 @@ export default function SuppliersPage() {
       await setDocument('purchase-orders', `PO-${Date.now()}`, newPurchaseOrder);
       
       // Refresh purchase orders
-      const updatedPOs = await getCollection<PurchaseOrder>('purchase-orders');
+  const updatedPOs = await listDocuments<PurchaseOrder>('purchase-orders');
       setPurchaseOrders(updatedPOs);
       
       toast({
@@ -363,7 +364,7 @@ export default function SuppliersPage() {
         }
         
         // Refetch inventory to show updated stock
-        const updatedInventory = await getCollection<InventoryItem>('inventory');
+  const updatedInventory = await listDocuments<InventoryItem>('inventory');
         setInventory(updatedInventory);
 
     toast({

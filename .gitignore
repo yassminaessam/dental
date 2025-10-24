@@ -43,3 +43,8 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+/generated/prisma
+
+# Local File Storage Directory
+# This directory will be created automatically by the local storage service
+/uploads/

@@ -9,211 +9,194 @@ import { useRouter } from 'next/navigation';
 
 export default function HelpPage() {
   const router = useRouter();
-  // Print to PDF via browser print dialog
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+  const [activeId, setActiveId] = React.useState<string>('quickstart');
+  const [query, setQuery] = React.useState('');
+  const [showTop, setShowTop] = React.useState(false);
+
+  const handlePrint = () => typeof window !== 'undefined' && window.print();
+
+  type SectionData = {
+    id: string;
+    title: string;
+    type: 'list' | 'ordered';
+    items: string[];
+    screenshot?: string;
+    caption?: string;
+    keywords?: string[];
   };
 
+  const sections: SectionData[] = [
+    {
+      id: 'quickstart',
+      title: 'البدء السريع',
+      type: 'ordered',
+      items: [
+        'سجّل الدخول بحساب الأدمن أو أنشئ حساب أدمن من صفحة إنشاء الأدمن.',
+        'اختر اللغة المفضلة (عربي/إنجليزي) من شريط التطبيق.',
+        'ابدأ بإضافة الموظفين والموردين، ثم أضف المرضى والمواعيد.'
+      ],
+      screenshot: '/help/screenshot-login.svg',
+      caption: 'شكل توضيحي: شاشة تسجيل الدخول (صورة نموذجية).',
+      keywords: ['تسجيل', 'لغة', 'أدمن']
+    },
+    {
+      id: 'patients', title: 'المرضى', type: 'list',
+      items: [
+        'إضافة مريض: الاسم الأول، اسم العائلة، الهاتف، تاريخ الميلاد (البريد الإلكتروني اختياري).',
+        'تحرير بيانات المريض وعرض الملف والتاريخ المرضي والتأمين.'
+      ], screenshot: '/help/screenshot-patients.svg', caption: 'قائمة المرضى وإضافة مريض جديد.'
+    },
+    { id: 'appointments', title: 'المواعيد', type: 'list', items: ['إنشاء موعد للمريض وتخصيص الطبيب والوقت.', 'تعديل/إلغاء الموعد وإرسال تذكيرات.'], screenshot: '/help/screenshot-appointments.svg', caption: 'الجدول الزمني للمواعيد.' },
+    { id: 'treatments', title: 'العلاجات', type: 'list', items: ['بدء خطة علاج وإضافة إجراءات لكل سن.', 'تحديث حالة العلاج وربط الفاتورة.'], screenshot: '/help/screenshot-treatments.svg', caption: 'إدارة الإجراءات العلاجية.' },
+    { id: 'billing', title: 'الفوترة والمالية', type: 'list', items: ['إنشاء فاتورة من العلاجات أو من شاشة الفوترة.', 'تسجيل المدفوعات (كامل/جزئي) وطريقة الدفع.'], screenshot: '/help/screenshot-billing.svg', caption: 'إنشاء فاتورة وتحصيل المدفوعات.' },
+    { id: 'insurance', title: 'التأمين', type: 'list', items: ['إضافة مزوّد وربط المريض بالوثيقة.', 'إنشاء مطالبات ومتابعة حالتها.'], screenshot: '/help/screenshot-insurance.svg', caption: 'إدارة مزوّدي التأمين والمطالبات.' },
+    { id: 'inventory', title: 'المخزون', type: 'list', items: ['إضافة الأصناف وتحديد الحد الأدنى.', 'تسجّل الحركات واستلم تنبيهات النقص.'], screenshot: '/help/screenshot-inventory.svg', caption: 'مراقبة المخزون وطلبات الشراء.' },
+    { id: 'pharmacy', title: 'الصيدلية', type: 'list', items: ['إصدار وصفة بمعلومات الجرعة والمدة.', 'صرف الدواء وتسجيل الكميات المصروفة.'], screenshot: '/help/screenshot-pharmacy.svg', caption: 'الوصفات وصرف الأدوية.' },
+    { id: 'referrals', title: 'التحويلات', type: 'list', items: ['إضافة أخصائيين واستصدار تحويل من ملف المريض.', 'إرفاق مستندات/صور إن لزم.'], screenshot: '/help/screenshot-referrals.svg', caption: 'إدارة التحويلات للأخصائيين.' },
+    { id: 'communications', title: 'الاتصالات', type: 'list', items: ['إرسال تذكيرات وتعليمات ما بعد العلاج.', 'استخدام القوالب الجاهزة لتسريع العمل.'], screenshot: '/help/screenshot-communications.svg', caption: 'التواصل مع المرضى.' },
+    { id: 'staff', title: 'الموظفون', type: 'list', items: ['إضافة موظف (البريد الإلكتروني اختياري)، تحديد الدور وتاريخ التعيين.', 'تعديل الحالة والملاحظات.'], screenshot: '/help/screenshot-staff.svg', caption: 'إدارة الموظفين والأدوار.' },
+    { id: 'suppliers', title: 'الموردون', type: 'list', items: ['إضافة/تحرير مورد، وربط الأصناف لسهولة إعادة الطلب.'], screenshot: '/help/screenshot-suppliers.svg', caption: 'الموردون وربطهم بالمخزون.' },
+    { id: 'analytics', title: 'التقارير والتحليلات', type: 'list', items: ['عرض الإيرادات والزيارات والأداء بحسب الطبيب والفترة.', 'التصفية والتصدير عند الحاجة.'], screenshot: '/help/screenshot-analytics.svg', caption: 'لوحة التحليلات ونظرة الأداء.' },
+    { id: 'settings', title: 'الإعدادات', type: 'list', items: ['الهوية البصرية، اللغة/الاتجاه، والتكاملات.'], screenshot: '/help/screenshot-settings.svg', caption: 'إعدادات النظام واللغة.' },
+    { id: 'permissions', title: 'الصلاحيات', type: 'list', items: ['تحديث صلاحيات الأدمن والأدوار (طبيب/استقبال/مدير...).'], screenshot: '/help/screenshot-permissions.svg', caption: 'التحكم في الأذونات حسب الدور.' },
+    { id: 'portal', title: 'بوابة المريض', type: 'list', items: ['اطلاع المريض على مواعيده وفواتيره وربما حجز المواعيد.'], screenshot: '/help/screenshot-portal.svg', caption: 'تجربة بوابة المريض.' },
+    { id: 'notes', title: 'ملاحظات عملية', type: 'list', items: ['الحقول المطلوبة مميزة بنجمة. البريد الإلكتروني اختياري في أغلب النماذج (لا يشمل تسجيل الدخول).', 'استخدم البحث والتصفية للجداول الكبيرة.', 'عند ظهور رسالة خطأ، راجع الحقل المظلل أو المحتوى المفقود.'] }
+  ];
+
+  const filtered = query.trim()
+    ? sections.filter(s =>
+        s.title.includes(query) ||
+        s.items.some(i => i.includes(query)) ||
+        (s.keywords || []).some(k => k.includes(query))
+      )
+    : sections;
+
+  // Scroll spy
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -70% 0px', threshold: [0, 0.25, 0.5] }
+    );
+    filtered.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [filtered]);
+
+  React.useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
   return (
-    <div className={cn('container mx-auto max-w-4xl py-8', 'rtl')}
-         dir="rtl">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold">دليل المساعدة</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => router.back()} aria-label="رجوع">رجوع</Button>
-          <Button asChild variant="secondary" aria-label="العودة للتطبيق">
-            <Link href="/">العودة للتطبيق</Link>
-          </Button>
-          <Button onClick={handlePrint} variant="outline">طباعة / حفظ كملف PDF</Button>
-        </div>
+    <div className={cn('container mx-auto py-8 xl:max-w-6xl', 'rtl')} dir="rtl">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar */}
+        <aside className="lg:w-60 lg:shrink-0 print:hidden">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h1 className="text-2xl font-bold">دليل المساعدة</h1>
+          </div>
+          <div className="flex gap-2 mb-4">
+            <Button size="sm" variant="ghost" onClick={() => router.back()} aria-label="رجوع" className="flex-1">رجوع</Button>
+            <Button asChild size="sm" variant="secondary" aria-label="العودة للتطبيق" className="flex-1">
+              <Link href="/">التطبيق</Link>
+            </Button>
+          </div>
+            <Button size="sm" onClick={handlePrint} variant="outline" className="w-full mb-4">طباعة / PDF</Button>
+          <div className="relative mb-4">
+            <input
+              placeholder="بحث..."
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground"
+              >✕</button>
+            )}
+          </div>
+          <nav className="border rounded-lg p-4 bg-card max-h-[70vh] overflow-y-auto sticky top-4">
+            <h2 className="font-semibold mb-3 text-sm">جدول المحتويات</h2>
+            <ol className="space-y-1 text-sm">
+              {filtered.map(s => (
+                <li key={s.id}>
+                  <a
+                    href={`#${s.id}`}
+                    className={cn('block rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground transition-colors',
+                      activeId === s.id && 'bg-accent text-accent-foreground font-medium')}
+                  >{s.title}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+        {/* Content */}
+        <main className="flex-1 min-w-0">
+          <p className="text-muted-foreground mb-8 leading-relaxed text-sm md:text-base">
+            هذا الدليل يشرح كيفية استخدام النظام خطوة بخطوة من البداية للنهاية. استخدم البحث لتصفية الأقسام، ويمكن حفظ الصفحة كـ PDF.
+          </p>
+          <div className="space-y-12">
+            {filtered.map(section => (
+              <HelpSection key={section.id} data={section} />
+            ))}
+          </div>
+        </main>
       </div>
 
-      <p className="text-muted-foreground mb-6">
-        هذا الدليل يشرح كيفية استخدام النظام خطوة بخطوة من البداية للنهاية. يمكن حفظ الصفحة كـ PDF عن طريق زر الطباعة.
-      </p>
-
-      <nav className="mb-8 border rounded-lg p-4 bg-card">
-        <h2 className="font-semibold mb-3">جدول المحتويات</h2>
-        <ol className="list-decimal list-inside grid gap-1">
-          <li><a href="#quickstart" className="hover:underline">البدء السريع</a></li>
-          <li><a href="#patients" className="hover:underline">المرضى</a></li>
-          <li><a href="#appointments" className="hover:underline">المواعيد</a></li>
-          <li><a href="#treatments" className="hover:underline">العلاجات</a></li>
-          <li><a href="#billing" className="hover:underline">الفوترة والمالية</a></li>
-          <li><a href="#insurance" className="hover:underline">التأمين</a></li>
-          <li><a href="#inventory" className="hover:underline">المخزون</a></li>
-          <li><a href="#pharmacy" className="hover:underline">الصيدلية</a></li>
-          <li><a href="#referrals" className="hover:underline">التحويلات</a></li>
-          <li><a href="#communications" className="hover:underline">الاتصالات</a></li>
-          <li><a href="#staff" className="hover:underline">الموظفون</a></li>
-          <li><a href="#suppliers" className="hover:underline">الموردون</a></li>
-          <li><a href="#analytics" className="hover:underline">التقارير والتحليلات</a></li>
-          <li><a href="#settings" className="hover:underline">الإعدادات</a></li>
-          <li><a href="#permissions" className="hover:underline">الصلاحيات</a></li>
-          <li><a href="#portal" className="hover:underline">بوابة المريض</a></li>
-          <li><a href="#notes" className="hover:underline">ملاحظات عملية</a></li>
-        </ol>
-      </nav>
-
-      <section id="quickstart" className="space-y-3 mb-10">
-        <h2 className="text-xl font-semibold">البدء السريع</h2>
-        <ol className="list-decimal list-inside space-y-1">
-          <li>سجّل الدخول بحساب الأدمن أو أنشئ حساب أدمن من صفحة إنشاء الأدمن.</li>
-          <li>اختر اللغة المفضلة (عربي/إنجليزي) من شريط التطبيق.</li>
-          <li>ابدأ بإضافة الموظفين والموردين، ثم أضف المرضى والمواعيد.</li>
-        </ol>
-        <div className="rounded-lg border bg-card p-3">
-          <Image src="/help/screenshot-login.svg" alt="شاشة الدخول" width={1024} height={560} className="w-full h-auto" />
-          <p className="text-sm text-muted-foreground mt-2">شكل توضيحي: شاشة تسجيل الدخول (صورة نموذجية).</p>
-        </div>
-      </section>
-
-      <SectionWithShot id="patients" title="المرضى">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة مريض: الاسم الأول، اسم العائلة، الهاتف، تاريخ الميلاد (البريد الإلكتروني اختياري).</li>
-          <li>تحرير بيانات المريض وعرض الملف والتاريخ المرضي والتأمين.</li>
-        </ul>
-        <Shot path="/help/screenshot-patients.svg" caption="قائمة المرضى وإضافة مريض جديد." />
-      </SectionWithShot>
-
-      <SectionWithShot id="appointments" title="المواعيد">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إنشاء موعد للمريض وتخصيص الطبيب والوقت.</li>
-          <li>تعديل/إلغاء الموعد وإرسال تذكيرات.</li>
-        </ul>
-        <Shot path="/help/screenshot-appointments.svg" caption="الجدول الزمني للمواعيد." />
-      </SectionWithShot>
-
-      <SectionWithShot id="treatments" title="العلاجات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>بدء خطة علاج وإضافة إجراءات لكل سن.</li>
-          <li>تحديث حالة العلاج وربط الفاتورة.</li>
-        </ul>
-        <Shot path="/help/screenshot-treatments.svg" caption="إدارة الإجراءات العلاجية." />
-      </SectionWithShot>
-
-      <SectionWithShot id="billing" title="الفوترة والمالية">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إنشاء فاتورة من العلاجات أو من شاشة الفوترة.</li>
-          <li>تسجيل المدفوعات (كامل/جزئي) وطريقة الدفع.</li>
-        </ul>
-        <Shot path="/help/screenshot-billing.svg" caption="إنشاء فاتورة وتحصيل المدفوعات." />
-      </SectionWithShot>
-
-      <SectionWithShot id="insurance" title="التأمين">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة مزوّد وربط المريض بالوثيقة.</li>
-          <li>إنشاء مطالبات ومتابعة حالتها.</li>
-        </ul>
-        <Shot path="/help/screenshot-insurance.svg" caption="إدارة مزوّدي التأمين والمطالبات." />
-      </SectionWithShot>
-
-      <SectionWithShot id="inventory" title="المخزون">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة الأصناف وتحديد الحد الأدنى.</li>
-          <li>تسجّل الحركات واستلم تنبيهات النقص.</li>
-        </ul>
-        <Shot path="/help/screenshot-inventory.svg" caption="مراقبة المخزون وطلبات الشراء." />
-      </SectionWithShot>
-
-      <SectionWithShot id="pharmacy" title="الصيدلية">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إصدار وصفة بمعلومات الجرعة والمدة.</li>
-          <li>صرف الدواء وتسجيل الكميات المصروفة.</li>
-        </ul>
-        <Shot path="/help/screenshot-pharmacy.svg" caption="الوصفات وصرف الأدوية." />
-      </SectionWithShot>
-
-      <SectionWithShot id="referrals" title="التحويلات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة أخصائيين واستصدار تحويل من ملف المريض.</li>
-          <li>إرفاق مستندات/صور إن لزم.</li>
-        </ul>
-        <Shot path="/help/screenshot-referrals.svg" caption="إدارة التحويلات للأخصائيين." />
-      </SectionWithShot>
-
-      <SectionWithShot id="communications" title="الاتصالات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إرسال تذكيرات وتعليمات ما بعد العلاج.</li>
-          <li>استخدام القوالب الجاهزة لتسريع العمل.</li>
-        </ul>
-        <Shot path="/help/screenshot-communications.svg" caption="التواصل مع المرضى." />
-      </SectionWithShot>
-
-      <SectionWithShot id="staff" title="الموظفون">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة موظف (البريد الإلكتروني اختياري)، تحديد الدور وتاريخ التعيين.</li>
-          <li>تعديل الحالة والملاحظات.</li>
-        </ul>
-        <Shot path="/help/screenshot-staff.svg" caption="إدارة الموظفين والأدوار." />
-      </SectionWithShot>
-
-      <SectionWithShot id="suppliers" title="الموردون">
-        <ul className="list-disc list-inside space-y-1">
-          <li>إضافة/تحرير مورد، وربط الأصناف لسهولة إعادة الطلب.</li>
-        </ul>
-        <Shot path="/help/screenshot-suppliers.svg" caption="الموردون وربطهم بالمخزون." />
-      </SectionWithShot>
-
-      <SectionWithShot id="analytics" title="التقارير والتحليلات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>عرض الإيرادات والزيارات والأداء بحسب الطبيب والفترة.</li>
-          <li>التصفية والتصدير عند الحاجة.</li>
-        </ul>
-        <Shot path="/help/screenshot-analytics.svg" caption="لوحة التحليلات ونظرة الأداء." />
-      </SectionWithShot>
-
-      <SectionWithShot id="settings" title="الإعدادات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>الهوية البصرية، اللغة/الاتجاه، والتكاملات.</li>
-        </ul>
-        <Shot path="/help/screenshot-settings.svg" caption="إعدادات النظام واللغة." />
-      </SectionWithShot>
-
-      <SectionWithShot id="permissions" title="الصلاحيات">
-        <ul className="list-disc list-inside space-y-1">
-          <li>تحديث صلاحيات الأدمن والأدوار (طبيب/استقبال/مدير...).</li>
-        </ul>
-        <Shot path="/help/screenshot-permissions.svg" caption="التحكم في الأذونات حسب الدور." />
-      </SectionWithShot>
-
-      <SectionWithShot id="portal" title="بوابة المريض">
-        <ul className="list-disc list-inside space-y-1">
-          <li>اطلاع المريض على مواعيده وفواتيره وربما حجز المواعيد.</li>
-        </ul>
-        <Shot path="/help/screenshot-portal.svg" caption="تجربة بوابة المريض." />
-      </SectionWithShot>
-
-      <section id="notes" className="space-y-2 mt-10">
-        <h2 className="text-xl font-semibold">ملاحظات عملية</h2>
-        <ul className="list-disc list-inside space-y-1">
-          <li>الحقول المطلوبة مميزة بنجمة. البريد الإلكتروني اختياري في أغلب النماذج (لا يشمل تسجيل الدخول).</li>
-          <li>استخدم البحث والتصفية للجداول الكبيرة.</li>
-          <li>عند ظهور رسالة خطأ، راجع الحقل المظلل أو المحتوى المفقود.</li>
-        </ul>
-      </section>
+      {showTop && (
+        <Button onClick={scrollToTop} size="sm" className="fixed bottom-6 left-6 shadow-lg print:hidden" variant="secondary">
+          ↑ أعلى
+        </Button>
+      )}
     </div>
   );
 }
 
-function SectionWithShot({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function HelpSection({ data }: { data: { id: string; title: string; type: 'list' | 'ordered'; items: string[]; screenshot?: string; caption?: string } }) {
   return (
-    <section id={id} className="mb-10">
-      <h2 className="text-xl font-semibold mb-3">{title}</h2>
-      <div className="space-y-3">
-        {children}
-      </div>
+    <section id={data.id} className="scroll-mt-24">
+      <header className="mb-3 flex items-center gap-3">
+        <h2 className="text-xl font-semibold tracking-tight">{data.title}</h2>
+        <div className="h-px flex-1 bg-border" />
+      </header>
+      {data.type === 'ordered' ? (
+        <ol className="list-decimal list-inside space-y-1 text-sm md:text-base mb-4">
+          {data.items.map((i, idx) => <li key={idx}>{i}</li>)}
+        </ol>
+      ) : (
+        <ul className="list-disc list-inside space-y-1 text-sm md:text-base mb-4">
+          {data.items.map((i, idx) => <li key={idx}>{i}</li>)}
+        </ul>
+      )}
+      {data.screenshot && (
+        <figure className="rounded-lg border bg-card/60 backdrop-blur p-3 shadow-sm">
+          <Image src={data.screenshot} alt={data.caption || data.title} width={1200} height={640} className="w-full h-auto rounded" />
+          {data.caption && <figcaption className="text-xs md:text-sm text-muted-foreground mt-2 leading-relaxed">{data.caption}</figcaption>}
+        </figure>
+      )}
     </section>
   );
 }
 
-function Shot({ path, caption }: { path: string; caption: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-3">
-      <Image src={path} alt={caption} width={1200} height={640} className="w-full h-auto" />
-      <p className="text-sm text-muted-foreground mt-2">{caption}</p>
-    </div>
-  );
+// Print adjustments via inline global style (could move to CSS module if needed)
+if (typeof window !== 'undefined') {
+  const id = 'help-print-styles';
+  if (!document.getElementById(id)) {
+    const style = document.createElement('style');
+    style.id = id;
+    style.innerHTML = `@media print { body { background:white; } nav, aside, button, input, .print\:hidden { display:none !important; } section { page-break-inside:avoid; } figure { page-break-inside:avoid; } }`;
+    document.head.appendChild(style);
+  }
 }

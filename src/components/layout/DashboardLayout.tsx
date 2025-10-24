@@ -24,7 +24,9 @@ import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut, Help
 import { DentalProLogo } from '../icons'
 import { SidebarNav } from '../dashboard/sidebar-nav'
 import Link from 'next/link'
-import { getCollection } from '../../services/firestore'
+// Switched from deprecated firestore compatibility layer to unified database service
+// Using client REST data layer instead of server/database helper for collections
+import { listDocuments } from '@/lib/data-client'
 import { Button } from '../ui/button'
 import { useAuth } from '../../contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -53,8 +55,8 @@ export default function DashboardLayout({
   React.useEffect(() => {
     async function fetchNotifications() {
       const [appointments, inventory] = await Promise.all([
-        getCollection<AppointmentLite>('appointments'),
-        getCollection<InventoryItemLite>('inventory'),
+        listDocuments<AppointmentLite>('appointments'),
+        listDocuments<InventoryItemLite>('inventory'),
       ])
       setPendingAppointments(appointments.filter((a) => a.status === 'Pending'))
       setLowStockItems(
@@ -139,36 +141,41 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <Sidebar side={isRTL ? 'right' : 'left'}>
-        <SidebarHeader className="border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <DentalProLogo className="size-7 text-primary" />
-            <h1 className="text-xl font-bold text-foreground">{t('dashboard.clinic_name')}</h1>
+      <Sidebar side={isRTL ? 'right' : 'left'} className="elite-sidebar">
+        <SidebarHeader className="border-b border-sidebar-border/50 bg-sidebar-background/50 backdrop-blur-sm p-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-sidebar-primary/20 backdrop-blur-sm">
+              <DentalProLogo className="size-8 text-sidebar-primary" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{t('dashboard.clinic_name')}</h1>
+              <p className="text-xs text-sidebar-foreground/70 font-medium">Elite Operations Dashboard</p>
+            </div>
           </div>
         </SidebarHeader>
-        <SidebarContent className="flex flex-col">
+        <SidebarContent className="flex flex-col px-3 py-4">
           <SidebarNav />
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-card px-4 sm:px-6">
+        <header className="elite-header flex h-16 sm:h-18 items-center gap-4 sm:gap-6 border-b border-border/50 px-6 sm:px-8">
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder={t('header.search_placeholder')}
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px] h-9"
+                className="w-full rounded-xl bg-background/60 backdrop-blur-sm border-border/50 pl-10 h-11 text-sm font-medium placeholder:text-muted-foreground/70 focus:bg-background/80 focus:border-primary/50 transition-all duration-300"
               />
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-3">
             {/* Context-sensitive Help */}
-            <Button asChild variant="ghost" size="sm" aria-label={t('nav.help')}>
-              <Link href={getHelpHref()} className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm" aria-label={t('nav.help')} className="rounded-xl hover:bg-accent/10 transition-all duration-300">
+              <Link href={getHelpHref()} className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('nav.help')}</span>
+                <span className="hidden sm:inline font-medium">{t('nav.help')}</span>
               </Link>
             </Button>
             <Button
@@ -177,16 +184,17 @@ export default function DashboardLayout({
               type="button"
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
               aria-label="Language"
+              className="rounded-xl bg-background/60 backdrop-blur-sm border-border/50 hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold min-w-[3rem]"
             >
               {language === 'en' ? 'AR' : 'EN'}
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                  <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl hover:bg-accent/10 transition-all duration-300">
+                  <Bell className="h-5 w-5" />
                   {notificationCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-xs text-white font-bold shadow-lg animate-pulse">
                       {notificationCount}
                     </span>
                   )}
@@ -239,21 +247,21 @@ export default function DashboardLayout({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground rounded-lg px-2 py-1 transition-colors">
-                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+                <button className="flex items-center gap-3 hover:bg-accent/10 rounded-xl px-3 py-2 transition-all duration-300 group">
+                  <Avatar className="h-10 w-10 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all duration-300 group-hover:ring-primary/40">
                     <AvatarImage
                       src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${getUserInitials()}`}
                       alt={getUserDisplayName()}
                     />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-sm font-bold">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden flex-col items-start md:flex">
-                    <span className="text-sm font-semibold">{getUserDisplayName()}</span>
-                    <span className="text-xs text-muted-foreground">{getRoleDisplayName()}</span>
+                    <span className="text-sm font-semibold text-foreground">{getUserDisplayName()}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{getRoleDisplayName()}</span>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block transition-transform duration-300 group-hover:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

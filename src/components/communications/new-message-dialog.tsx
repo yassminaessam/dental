@@ -29,7 +29,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { GenerateMessageAi } from './generate-message-ai';
 import { Patient } from '@/app/patients/page';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const messageSchema = z.object({
@@ -80,9 +80,9 @@ export function NewMessageDialog({
   });
 
   React.useEffect(() => {
-    async function fetchPatients() {
-        const data = await getCollection<Patient>('patients');
-        setPatients(data);
+  async function fetchPatients() {
+    const data = await listDocuments<Patient>('patients');
+    setPatients(data);
     }
     if (open) {
         fetchPatients();

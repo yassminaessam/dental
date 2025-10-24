@@ -1,5 +1,6 @@
 // Script to update admin permissions (Postgres)
 import { UsersService } from '@/services/users';
+import type { UserPermission } from '@/lib/types';
 
 const ADMIN_USER_ID = 'rolltlh0UIXrceBiQ7iPRDBbYEV2'; // From your database
 
@@ -13,7 +14,7 @@ export async function updateAdminPermissions() {
     console.log('Current permissions:', currentPermissions);
     
     // Add new patient portal permissions if they don't exist
-    const newPermissions = [
+    const newPermissions: UserPermission[] = [
       'view_patient_portal',
       'edit_patient_portal'
     ];

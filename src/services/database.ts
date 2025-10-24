@@ -1,0 +1,626 @@
+import type {
+  Patient,
+  Appointment,
+  Treatment,
+  Invoice,
+  Staff,
+  InventoryItem,
+  MedicalRecord,
+  ClinicalImage,
+  ToothImageLink,
+  InsuranceClaim,
+  InsuranceProvider,
+  PurchaseOrder,
+  Supplier,
+  Medication,
+  Prescription,
+  Message,
+  Referral,
+  Specialist,
+  PortalUser,
+  SharedDocument,
+  Transaction,
+  ClinicSettings,
+  PrismaClient
+} from '@prisma/client';
+import { resolveCollection } from '@/lib/collection-alias';
+
+// -----------------------------------------------------------------------------
+// Environment / Client acquisition helpers
+// -----------------------------------------------------------------------------
+export const isBrowser = () => typeof window !== 'undefined';
+
+// We only load the Prisma client on the server. On the client these helpers
+// will fall back to calling the API routes instead of touching Prisma directly.
+let dbClient: PrismaClient | null = null;
+if (!isBrowser()) {
+  // Dynamic require so Next.js tree-shakes Prisma out of client bundles.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const prismaModule = require('@/lib/prisma');
+  dbClient = prismaModule.prisma as PrismaClient;
+}
+
+// Public accessor. Kept async in case we later need lazy init / connection warmup.
+export async function getDbClient(): Promise<PrismaClient> {
+  if (isBrowser()) {
+    throw new Error('Direct database access is server-only. Use API endpoints from the client.');
+  }
+  if (!dbClient) {
+    throw new Error('Database client not initialized');
+  }
+  return dbClient;
+}
+
+// Generic functions for CRUD operations
+
+// GET COLLECTION - Fetch all records from a collection
+export async function getCollection<T>(
+  model: string,
+  include?: any
+): Promise<T[]> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/collections/${model}`);
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('getCollection failed', { requested: originalModel, normalized: model, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      const data = await collection.findMany({
+        include,
+        orderBy: { createdAt: 'desc' }
+      });
+      return data as T[];
+    }
+  } catch (error) {
+    console.error(`Error fetching ${String(model)}:`, error);
+    throw error;
+  }
+}
+
+// GET DOCUMENT - Fetch a single record by ID
+export async function getDocument<T>(
+  model: string,
+  id: string,
+  include?: any
+): Promise<T | null> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/documents/${model}/${id}`);
+      if (response.status === 404) {
+        return null;
+      }
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('getDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      const data = await collection.findUnique({
+        where: { id },
+        include
+      });
+      return data as T | null;
+    }
+  } catch (error) {
+    console.error(`Error fetching ${String(model)} with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// ADD DOCUMENT - Create a new record
+export async function addDocument<T>(
+  model: string,
+  data: any
+): Promise<T> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/collections/${model}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('addDocument failed', { requested: originalModel, normalized: model, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      const result = await collection.create({
+        data: {
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+      return result as T;
+    }
+  } catch (error) {
+    console.error(`Error adding ${String(model)}:`, error);
+    throw error;
+  }
+}
+
+// SET DOCUMENT - Create or update a record with specific ID
+export async function setDocument<T>(
+  model: string,
+  id: string,
+  data: any
+): Promise<T> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/documents/${model}/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('setDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      const result = await collection.upsert({
+        where: { id },
+        create: {
+          id,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        update: {
+          ...data,
+          updatedAt: new Date()
+        }
+      });
+      return result as T;
+    }
+  } catch (error) {
+    console.error(`Error setting ${String(model)} with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// UPDATE DOCUMENT - Update an existing record
+export async function updateDocument<T>(
+  model: string,
+  id: string,
+  data: any
+): Promise<T> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/documents/${model}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('updateDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      const result = await collection.update({
+        where: { id },
+        data: {
+          ...data,
+          updatedAt: new Date()
+        }
+      });
+      return result as T;
+    }
+  } catch (error) {
+    console.error(`Error updating ${String(model)} with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// DELETE DOCUMENT - Delete a record by ID
+export async function deleteDocument(
+  model: string,
+  id: string
+): Promise<void> {
+  try {
+    const originalModel = model;
+    model = resolveCollection(model);
+    if (isBrowser()) {
+      // Client-side: make API call
+      const response = await fetch(`/api/documents/${model}/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        let details = '';
+        try { details = await response.text(); } catch {}
+        console.warn('deleteDocument failed', { requested: originalModel, normalized: model, id, status: response.status, details });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } else {
+      // Server-side: use Prisma directly
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      await collection.delete({
+        where: { id }
+      });
+    }
+  } catch (error) {
+    console.error(`Error deleting ${String(model)} with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// LISTEN TO COLLECTION - Real-time subscription (Note: PostgreSQL doesn't have native real-time like Firestore)
+// This is a polling-based alternative - for true real-time, consider using Supabase or implementing WebSockets
+export function listenToCollection<T>(
+  model: string,
+  callback: (data: T[]) => void,
+  onError: (error: Error) => void,
+  pollInterval: number = 5000 // Poll every 5 seconds by default
+): () => void {
+  const poll = async () => {
+    try {
+      const data = await getCollection<T>(model);
+      callback(data);
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  // Initial fetch
+  poll();
+
+  // Set up polling
+  const intervalId = setInterval(poll, pollInterval);
+
+  // Return cleanup function
+  return () => {
+    clearInterval(intervalId);
+  };
+}
+
+// SEARCH FUNCTIONS
+
+// Search patients
+export async function searchPatients(searchTerm: string): Promise<Patient[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    // Note: You would need to create a search API endpoint for this
+    const response = await fetch(`/api/search/patients?q=${encodeURIComponent(searchTerm)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    if (!dbClient) {
+      throw new Error('Database client not initialized');
+    }
+    try {
+      const patients = await (dbClient as PrismaClient).patient.findMany({
+        where: {
+          OR: [
+            { firstName: { contains: searchTerm, mode: 'insensitive' } },
+            { lastName: { contains: searchTerm, mode: 'insensitive' } },
+            { email: { contains: searchTerm, mode: 'insensitive' } },
+            { phone: { contains: searchTerm, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      return patients;
+    } catch (error) {
+      console.error('Error searching patients:', error);
+      throw error;
+    }
+  }
+}
+
+// Get appointments by date range
+export async function getAppointmentsByDateRange(
+  startDate: Date,
+  endDate: Date
+): Promise<Appointment[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch(`/api/appointments/date-range?start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    if (!dbClient) {
+      throw new Error('Database client not initialized');
+    }
+    try {
+      const appointments = await (dbClient as PrismaClient).appointment.findMany({
+        where: {
+          dateTime: {
+            gte: startDate,
+            lte: endDate
+          }
+        },
+        include: {
+          patient: true,
+          doctor: true
+        },
+        orderBy: { dateTime: 'asc' }
+      });
+      return appointments;
+    } catch (error) {
+      console.error('Error fetching appointments by date range:', error);
+      throw error;
+    }
+  }
+}
+
+// Get treatments for a patient
+export async function getPatientTreatments(patientId: string): Promise<Treatment[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch(`/api/patients/${patientId}/treatments`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const treatments = await (dbClient as PrismaClient).treatment.findMany({
+        where: { patientId },
+        include: {
+          doctor: true,
+          appointment: true
+        },
+        orderBy: { date: 'desc' }
+      });
+      return treatments;
+    } catch (error) {
+      console.error('Error fetching patient treatments:', error);
+      throw error;
+    }
+  }
+}
+
+// Get patient's medical records
+export async function getPatientMedicalRecords(patientId: string): Promise<MedicalRecord[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch(`/api/patients/${patientId}/medical-records`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const records = await (dbClient as PrismaClient).medicalRecord.findMany({
+        where: { patientId },
+        orderBy: { date: 'desc' }
+      });
+      return records;
+    } catch (error) {
+      console.error('Error fetching patient medical records:', error);
+      throw error;
+    }
+  }
+}
+
+// Get low stock inventory items
+export async function getLowStockItems(): Promise<InventoryItem[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch('/api/inventory/low-stock');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const items = await (dbClient as PrismaClient).inventoryItem.findMany({
+        where: {
+          quantity: {
+            // Use a subquery or raw SQL for field comparison
+            lte: 10 // Default min quantity threshold for now
+          }
+        },
+        orderBy: { quantity: 'asc' }
+      });
+      return items;
+    } catch (error) {
+      console.error('Error fetching low stock items:', error);
+      throw error;
+    }
+  }
+}
+
+// Get overdue invoices
+export async function getOverdueInvoices(): Promise<Invoice[]> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch('/api/invoices/overdue');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } else {
+    // Server-side: use Prisma directly
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const invoices = await (dbClient as PrismaClient).invoice.findMany({
+        where: {
+          status: { not: 'paid' },
+          dueDate: { lt: new Date() }
+        },
+        include: {
+          patient: true
+        },
+        orderBy: { dueDate: 'asc' }
+      });
+      return invoices;
+    } catch (error) {
+      console.error('Error fetching overdue invoices:', error);
+      throw error;
+    }
+  }
+}
+
+// Batch operations
+export async function batchCreateDocuments<T>(
+  model: string,
+  data: any[]
+): Promise<void> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    const response = await fetch(`/api/collections/${model}/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data })
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return;
+  } else {
+    // Server-side: use Prisma directly
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      const collection = (dbClient as any)[model];
+      if (!collection) {
+        throw new Error(`Unknown model: ${model}`);
+      }
+      await collection.createMany({
+        data: data.map(item => ({
+          ...item,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }))
+      });
+    } catch (error) {
+      console.error(`Error batch creating ${model}:`, error);
+      throw error;
+    }
+  }
+}
+
+// Transaction wrapper for complex operations (server-side only)
+export async function executeTransaction<T>(
+  operations: (tx: any) => Promise<T>
+): Promise<T> {
+  if (isBrowser()) {
+    throw new Error('Transactions are not supported on client-side. Use individual API calls instead.');
+  }
+  
+  try {
+    if (!dbClient) {
+      throw new Error('Database client not initialized');
+    }
+    return await (dbClient as PrismaClient).$transaction(operations);
+  } catch (error) {
+    console.error('Error executing transaction:', error);
+    throw error;
+  }
+}
+
+// Health check
+export async function checkDatabaseHealth(): Promise<boolean> {
+  if (isBrowser()) {
+    // Client-side: make API call
+    try {
+      const response = await fetch('/api/health');
+      return response.ok;
+    } catch (error) {
+      console.error('Database health check failed:', error);
+      return false;
+    }
+  } else {
+    // Server-side: direct database check
+    try {
+      if (!dbClient) {
+        throw new Error('Database client not initialized');
+      }
+      await (dbClient as PrismaClient).$queryRaw`SELECT 1`;
+      return true;
+    } catch (error) {
+      console.error('Database health check failed:', error);
+      return false;
+    }
+  }
+}
+// Intentionally no default export to avoid accidental client-side Prisma import.
+
+

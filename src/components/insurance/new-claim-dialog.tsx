@@ -29,7 +29,7 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { getCollection } from '@/services/firestore';
+import { listDocuments } from '@/lib/data-client';
 import type { InsuranceProvider } from '@/app/insurance/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -86,11 +86,11 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   React.useEffect(() => {
   async function fetchData() {
         if (open) {
-            const [patientData, providerData] = await Promise.all([
-        getCollection<{ id: string; name: string }>('patients'),
-                getCollection<InsuranceProvider>('insurance-providers')
-            ]);
-      setPatients(patientData.map((p) => ({ id: p.id, name: p.name })));
+      const [patientData, providerData] = await Promise.all([
+    listDocuments<{ id: string; name: string }>('patients'),
+        listDocuments<InsuranceProvider>('insurance-providers')
+      ]);
+    setPatients(patientData.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
             setProviders(providerData);
         }
     }

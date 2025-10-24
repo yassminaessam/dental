@@ -32,6 +32,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   const { t, language, isRTL } = useLanguage();
 
   const handlePrint = () => {
+    if (typeof window === 'undefined') return;
     const content = document.getElementById(`printable-invoice-${invoice.id}`);
     if (content) {
       const printWindow = window.open('', '', 'height=800,width=800');

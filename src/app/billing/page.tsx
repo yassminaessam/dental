@@ -2,6 +2,8 @@
 'use client';
 
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+// Migrated from direct server getCollection to client data layer listDocuments
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +37,7 @@ import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
 import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
 import { InsuranceIntegrationDialog } from '@/components/billing/insurance-integration-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/firestore';
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -90,13 +92,13 @@ export default function BillingPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-            const [invoiceData, patientData, treatmentData, appointmentData, claimData] = await Promise.all([
-                getCollection<Invoice>('invoices'),
-                getCollection<Patient>('patients'),
-                getCollection<any>('treatments'),
-                getCollection<any>('appointments'),
-                getCollection<any>('insurance-claims'),
-            ]);
+      const [invoiceData, patientData, treatmentData, appointmentData, claimData] = await Promise.all([
+        listDocuments<Invoice>('invoices'),
+        listDocuments<Patient>('patients'),
+        listDocuments<any>('treatments'),
+        listDocuments<any>('appointments'),
+        listDocuments<any>('insurance-claims'),
+      ]);
             
             // Update overdue invoices
             const today = new Date();
@@ -412,9 +414,13 @@ export default function BillingPage() {
                 // Fallback for when the dialog isn't rendered
                 const dialog = document.createElement('div');
                 const viewDialog = React.createElement(ViewInvoiceDialog, { invoice, open: true, onOpenChange: () => {} });
-                const ReactDOM = require('react-dom');
-                ReactDOM.render(viewDialog, dialog);
+                const root = createRoot(dialog);
+                root.render(viewDialog);
+                // Give React a tick to render into the container before reading HTML
+                // Note: printing happens after this function returns; innerHTML is captured synchronously after render enqueues.
                 printWindow.document.write(dialog.innerHTML);
+                // Cleanup
+                root.unmount();
             }
             printWindow.document.write('</body></html>');
             printWindow.document.close();
@@ -437,10 +443,22 @@ export default function BillingPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-3xl font-bold">{t('billing.title')}</h1>
-          <div className="flex gap-2">
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Elite Header Section */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Financial Management</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {t('billing.title')}
+            </h1>
+            <p className="text-muted-foreground font-medium">Elite Billing System</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <InsuranceIntegrationDialog 
               claims={insuranceClaims} 
               onClaimProcessed={handleApplyInsuranceCredit}
@@ -451,32 +469,72 @@ export default function BillingPage() {
               disabled={treatments.filter(t => 
                 t.status === 'Completed' && !invoices.some(inv => inv.treatmentId === t.id)
               ).length === 0}
+              className="h-11 px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
             >
-        <DollarSign className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-        {t('billing.bill_all_completed_treatments')}
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-accent/20 mr-3">
+                <DollarSign className="h-3 w-3" />
+              </div>
+              <span className="hidden sm:inline">{t('billing.bill_all_completed_treatments')}</span>
+              <span className="sm:hidden">Bill All</span>
             </Button>
             <NewInvoiceDialog onSave={handleSaveInvoice} patients={patients} />
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {billingPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={cn("text-xl font-bold", stat.valueClassName)}>
-                  {stat.value}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Elite Billing Stats */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {billingPageStats.map((stat, index) => {
+            const cardStyles = [
+              'metric-card-blue',
+              'metric-card-green', 
+              'metric-card-orange',
+              'metric-card-purple',
+              'metric-card-blue',
+              'metric-card-green'
+            ];
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
+            return (
+              <Card 
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  cardStyle
+                )}
+              >
+                {/* Animated Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-xs font-semibold text-white/90 uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className="text-lg font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <DollarSign className="h-4 w-4 text-white drop-shadow-sm" />
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 relative z-10">
+                  <p className="text-xs text-white/80 font-medium">
+                    {stat.description}
+                  </p>
+                  {/* Elite Status Indicator */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-xs text-white/70 font-medium">Active</span>
+                  </div>
+                </CardContent>
+                
+                {/* Elite Corner Accent */}
+                <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-white/20 to-transparent" />
+              </Card>
+            );
+          })}
         </div>
 
         {/* Unbilled Treatments Section */}

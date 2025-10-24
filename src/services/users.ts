@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/db';
 import type { User, UserRole, UserPermission, RegisterData } from '@/lib/types';
+import type { User as PrismaUser, Prisma } from '@prisma/client';
 
-// Map DB user to app User type (excluding passwordHash)
-function mapDbUser(u: any): User {
+// Map DB user to app User type (excluding hashedPassword)
+function mapDbUser(u: PrismaUser): User {
   return {
     id: u.id,
     email: u.email,
@@ -32,12 +33,11 @@ export const UsersService = {
     return u ? mapDbUser(u) : null;
   },
 
-  async getByEmail(email: string): Promise<(User & { passwordHash?: string }) | null> {
+  async getByEmail(email: string): Promise<(User & { hashedPassword?: string }) | null> {
     const u = await prisma.user.findUnique({ where: { email } });
     if (!u) return null;
-    const mapped = mapDbUser(u) as any;
-    mapped.passwordHash = u.passwordHash;
-    return mapped;
+    const mapped = mapDbUser(u);
+    return { ...mapped, hashedPassword: u.hashedPassword ?? undefined };
   },
 
   async listAll(): Promise<User[]> {
@@ -51,11 +51,11 @@ export const UsersService = {
   },
 
   async create(data: RegisterData & { permissions: UserPermission[] }): Promise<User> {
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
     const created = await prisma.user.create({
       data: {
         email: data.email,
-        passwordHash,
+        hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
@@ -71,10 +71,33 @@ export const UsersService = {
     return mapDbUser(created);
   },
 
-  async update(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> & { password?: string }): Promise<User> {
-    const { password, ...rest } = updates as any;
-    const data: any = { ...rest };
-    if (password) data.passwordHash = await bcrypt.hash(password, 10);
+  async update(
+    id: string,
+    updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> & { password?: string }
+  ): Promise<User> {
+    const { password, ...rest } = updates;
+
+    const data: Prisma.UserUncheckedUpdateInput = {
+      email: rest.email,
+      firstName: rest.firstName,
+      lastName: rest.lastName,
+      role: rest.role,
+      permissions: rest.permissions as unknown as string[] | undefined,
+      isActive: rest.isActive,
+      specialization: rest.specialization ?? undefined,
+      licenseNumber: rest.licenseNumber ?? undefined,
+      employeeId: rest.employeeId ?? undefined,
+      department: rest.department ?? undefined,
+      patientId: rest.patientId ?? undefined,
+      phone: rest.phone ?? undefined,
+      address: rest.address ?? undefined,
+      profileImageUrl: rest.profileImageUrl ?? undefined,
+    };
+
+    if (password) {
+      data.hashedPassword = await bcrypt.hash(password, 10);
+    }
+
     const updated = await prisma.user.update({ where: { id }, data });
     return mapDbUser(updated);
   },
