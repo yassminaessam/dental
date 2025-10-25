@@ -61,9 +61,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-// Migrated from server getCollection to client listDocuments
-import { setDocument, updateDocument, deleteDocument } from '@/services/database';
-import { listDocuments } from '@/lib/data-client';
+// Use client-side data client for all CRUD to avoid server-only imports in client components
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type InventoryItem = {

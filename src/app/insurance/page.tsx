@@ -45,7 +45,8 @@ import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Lo
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
-import { getCollection, setDocument, updateDocument, deleteDocument } from '@/services/database';
+// Use client-safe data client to ensure array shape and avoid server-only imports
+import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AddProviderDialog } from '@/components/insurance/add-provider-dialog';
 import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -92,8 +93,8 @@ export default function InsurancePage() {
     async function fetchData() {
       try {
         const [claimsData, providersData] = await Promise.all([
-          getCollection<Claim>('insurance-claims'),
-          getCollection<InsuranceProvider>('insurance-providers'),
+          listDocuments<Claim>('insurance-claims'),
+          listDocuments<InsuranceProvider>('insurance-providers'),
         ]);
         setClaims(claimsData);
         setProviders(providersData);

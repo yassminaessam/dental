@@ -1,6 +1,7 @@
 'use client';
 
 const BASE_PATH = '/api/collections';
+const DOCS_BASE_PATH = '/api/documents';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -38,6 +39,16 @@ function buildPath(collection: string, id?: string) {
   return id ? `${BASE_PATH}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}` : `${BASE_PATH}/${encodeURIComponent(collection)}`;
 }
 
+function buildDocPath(collection: string, id?: string) {
+  return id ? `${DOCS_BASE_PATH}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}` : `${DOCS_BASE_PATH}/${encodeURIComponent(collection)}`;
+}
+
+// Some collections are backed by direct Prisma models and live under /api/documents
+// rather than the generic Firestore-like /api/collections abstraction.
+function isDirectDocCollection(collection: string) {
+  return collection === 'clinic-settings' || collection === 'clinicSettings';
+}
+
 export function generateDocumentId(prefix?: string): string {
   const base = globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   return prefix ? `${prefix}_${base}` : base;
@@ -51,6 +62,15 @@ export async function listCollection<T>(collection: string): Promise<T[]> {
 export const getCollection = listCollection;
 
 export async function getDocument<T>(collection: string, id: string): Promise<T | null> {
+  // Prefer direct documents endpoint for special collections
+  if (isDirectDocCollection(collection)) {
+    const res = await fetch(buildDocPath(collection, id), { method: 'GET' });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+    // documents endpoint returns the object directly (not wrapped)
+    const data = (await res.json()) as T;
+    return data ?? null;
+  }
   const result = await request<{ document?: T }>(buildPath(collection, id), { method: 'GET' });
   return result.document ?? null;
 }
@@ -76,22 +96,32 @@ export async function createDocument<T extends Record<string, unknown>>(collecti
 }
 
 export async function setDocument<T extends Record<string, unknown>>(collection: string, id: string, data: T) {
-  await request<unknown>(buildPath(collection, id), {
-    method: 'PUT',
-    body: data,
-  });
+  if (isDirectDocCollection(collection)) {
+    // documents endpoint accepts full object and returns updated entity
+    await request<unknown>(buildDocPath(collection, id), {
+      method: 'PUT',
+      body: data,
+    });
+    return;
+  }
+  await request<unknown>(buildPath(collection, id), { method: 'PUT', body: data });
 }
 
 export async function updateDocument<T extends Record<string, unknown>>(collection: string, id: string, patch: Partial<T>) {
-  await request<unknown>(buildPath(collection, id), {
-    method: 'PATCH',
-    body: patch,
-  });
+  if (isDirectDocCollection(collection)) {
+    await request<unknown>(buildDocPath(collection, id), { method: 'PATCH', body: patch });
+    return;
+  }
+  await request<unknown>(buildPath(collection, id), { method: 'PATCH', body: patch });
 }
 
 export const patchDocument = updateDocument;
 
 export async function deleteDocument(collection: string, id: string) {
+  if (isDirectDocCollection(collection)) {
+    await request<unknown>(buildDocPath(collection, id), { method: 'DELETE' });
+    return;
+  }
   await request<unknown>(buildPath(collection, id), { method: 'DELETE' });
 }
 

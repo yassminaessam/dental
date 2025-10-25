@@ -29,7 +29,18 @@ async function handleJson(res: Response) {
 // List documents (collection GET)
 export async function listDocuments<T = any>(collection: string, opts?: QueryOptions): Promise<T[]> {
   const res = await fetch(`/api/collections/${collection}${buildQuery(opts)}`, { signal: opts?.signal });
-  return handleJson(res);
+  const data = await handleJson(res);
+  // Accept multiple shapes for backward compatibility:
+  // 1) Array of documents
+  // 2) { items: T[] }
+  // 3) { docs: T[] } (older shape)
+  if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === 'object') {
+    if (Array.isArray((data as any).items)) return (data as any).items as T[];
+    if (Array.isArray((data as any).docs)) return (data as any).docs as T[];
+  }
+  // Fallback to empty list to avoid runtime errors
+  return [] as T[];
 }
 
 // Get a single document

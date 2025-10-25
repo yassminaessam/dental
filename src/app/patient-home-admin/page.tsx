@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Save, Eye, Globe, Gift, Users, MessageSquare, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCollection, setDocument, deleteDocument } from '@/services/database';
+// Use client data layer to ensure array shape and avoid server-only imports in client components
+import { listDocuments, setDocument, deleteDocument } from '@/lib/data-client';
 
 interface Promotion {
   id: string;
@@ -70,11 +71,11 @@ export default function PatientHomeAdminPage() {
   const fetchData = async () => {
     try {
       // Fetch promotions
-      const promotionsData = await getCollection<Promotion>('patient-promotions');
+      const promotionsData = await listDocuments<Promotion>('patient-promotions');
       setPromotions(promotionsData || []);
 
       // Fetch portal content
-      const contentData = await getCollection<PatientPortalContent>('patient-portal-content');
+      const contentData = await listDocuments<PatientPortalContent>('patient-portal-content');
       if (contentData && contentData.length > 0) {
         setPortalContent(contentData[0]);
       } else {

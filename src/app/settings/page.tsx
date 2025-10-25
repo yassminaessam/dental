@@ -72,7 +72,16 @@ export default function SettingsPage() {
         const docRef = doc(db, "clinic-settings", "main");
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setSettings(docSnap.data() as ClinicSettings);
+          const raw = (docSnap.data() as any) || {};
+          // Normalize server values to match UI state expectations (strings for selects)
+          const normalized: ClinicSettings = {
+            ...initialSettings,
+            ...raw,
+            phoneNumber: raw.phoneNumber ?? raw.phone ?? initialSettings.phoneNumber,
+            appointmentDuration: String(raw.appointmentDuration ?? initialSettings.appointmentDuration),
+            bookingLimit: String(raw.bookingLimit ?? initialSettings.bookingLimit),
+          };
+          setSettings(normalized);
         } else {
           console.log("No such document! Using initial settings.");
           // Optionally, create the document if it doesn't exist
