@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { listCollection } from '@/services/datastore';
-import { AppointmentsService, type AppointmentCreateInput } from '@/services/appointments';
+import { AppointmentsClient } from '@/services/appointments.client';
+import type { AppointmentCreateInput } from '@/services/appointments.types';
 import type { Appointment, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -79,7 +80,7 @@ export default function PatientAppointmentBooking() {
 
   const fetchDoctorsAndAppointments = async () => {
     try {
-      const appointments = await AppointmentsService.list();
+      const appointments = await AppointmentsClient.list();
       setExistingAppointments(appointments || []);
 
       const staff = await listCollection<StaffMember>('staff');
@@ -154,7 +155,7 @@ export default function PatientAppointmentBooking() {
         bookedBy: 'patient',
       };
 
-      const createdAppointment = await AppointmentsService.create(newAppointment);
+      const createdAppointment = await AppointmentsClient.create(newAppointment);
       setExistingAppointments((prev) => [...prev, createdAppointment]);
 
       toast({

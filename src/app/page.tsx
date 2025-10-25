@@ -22,7 +22,7 @@ import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import PendingAppointmentsManager from "@/components/dashboard/pending-appointments-manager";
 import { StaffOnly } from "@/components/auth/ProtectedRoute";
 import { useToast } from '@/hooks/use-toast';
-import type { AppointmentCreateInput } from '@/services/appointments';
+import type { AppointmentCreateInput } from '@/services/appointments.types';
 import type { Patient } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 

@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { AppointmentCreateInput } from '@/services/appointments';
+import type { AppointmentCreateInput } from '@/services/appointments.types';
 async function fetchCollection<T>(collection: string): Promise<T[]> {
   const response = await fetch(`/api/collections/${collection}`);
   if (!response.ok) throw new Error(`Failed to fetch ${collection}`);

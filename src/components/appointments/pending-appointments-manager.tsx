@@ -20,7 +20,7 @@ import {
   Loader2 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AppointmentsService } from '@/services/appointments';
+import { AppointmentsClient } from '@/services/appointments.client';
 import { format } from 'date-fns';
 import type { Appointment } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -47,7 +47,8 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
 
   const fetchPendingAppointments = async () => {
     try {
-      const pending = await AppointmentsService.listPending();
+      const all = await AppointmentsClient.list();
+      const pending = all.filter(a => a.status === 'Pending').sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
       setPendingAppointments(pending);
     } catch (error) {
       console.error('Error fetching pending appointments:', error);
@@ -65,9 +66,11 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     setConfirmingIds(prev => new Set(prev).add(appointmentId));
     
     try {
-      await AppointmentsService.updateStatus(appointmentId, 'Confirmed', {
+      await AppointmentsClient.patch(appointmentId, {
+        status: 'Confirmed',
         confirmedAt: new Date(),
         confirmedBy: 'staff',
+        updatedAt: new Date(),
       });
       
       toast({
@@ -111,10 +114,12 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
     setConfirmingIds(prev => new Set(prev).add(appointmentId));
     
     try {
-      await AppointmentsService.updateStatus(appointmentId, 'Cancelled', {
+      await AppointmentsClient.patch(appointmentId, {
+        status: 'Cancelled',
         rejectedAt: new Date(),
         rejectedBy: 'staff',
         rejectionReason: notes,
+        updatedAt: new Date(),
       });
       
       toast({
