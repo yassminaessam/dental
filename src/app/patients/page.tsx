@@ -47,7 +47,8 @@ import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ResponsiveTableWrapper, MobileCard, MobileCardField } from '@/components/ui/responsive-table';
+import { MobileCard, MobileCardField } from '@/components/ui/responsive-table';
+import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Patient } from '@/lib/types';
 
@@ -170,7 +171,7 @@ export default function PatientsPage() {
             <AddPatientDialog onSave={handleSavePatient} />
           </div>
 
-          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {patientPageStats.map((stat) => {
               const Icon = iconMap[stat.icon as IconKey];
               return (
@@ -224,6 +225,86 @@ export default function PatientsPage() {
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   {t('common.loading')}
                 </div>
+              ) : isMobile ? (
+                filteredPatients.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    {filteredPatients.map((patient) => (
+                      <MobileCard key={patient.id}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                              <User className="h-5 w-5 text-primary" />
+                            </span>
+                            <div className="space-y-1">
+                              <p className="text-base font-semibold">{`${patient.name} ${patient.lastName}`}</p>
+                              <p className="text-xs text-muted-foreground">{t('patients.age')}: {patient.age}</p>
+                            </div>
+                          </div>
+                          <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>
+                            {patient.status === 'Active' ? t('common.active') : t('common.inactive')}
+                          </Badge>
+                        </div>
+
+                        <div className="grid gap-2 pt-3 text-sm">
+                          <MobileCardField label={t('patients.email')} value={patient.email} />
+                          <MobileCardField label={t('common.phone')} value={patient.phone || t('common.na')} />
+                          <MobileCardField label={t('patients.date_of_birth')} value={format(patient.dob, 'PPP')} />
+                          <MobileCardField label={t('patients.address')} value={patient.address || t('common.na')} className="items-start text-left" />
+                          <MobileCardField
+                            label={t('patients.emergency_contact')}
+                            value={
+                              <span className="flex flex-col text-right">
+                                <span>{patient.ecName || t('common.na')}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {patient.ecPhone || t('common.na')}{' '}
+                                  {patient.ecRelationship ? `(${patient.ecRelationship})` : ''}
+                                </span>
+                              </span>
+                            }
+                            className="items-start text-left"
+                          />
+                          <MobileCardField label={t('patients.insurance_provider')} value={patient.insuranceProvider || t('common.na')} />
+                          <MobileCardField label={t('patients.policy_number')} value={patient.policyNumber || t('common.na')} />
+                          <MobileCardField
+                            label={t('patients.medical_history')}
+                            value={
+                              patient.medicalHistory && patient.medicalHistory.length > 0
+                                ? patient.medicalHistory.map((h) => h.condition).join(', ')
+                                : t('common.na')
+                            }
+                            className="items-start text-left"
+                          />
+                          <MobileCardField label={t('patients.last_visit')} value={patient.lastVisit || t('common.na')} />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 pt-4">
+                          <Button size="sm" variant="secondary" onClick={() => setPatientToView(patient)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            {t('table.view_details')}
+                          </Button>
+                          <Button size="sm" variant="secondary" onClick={() => setPatientForHistory(patient)}>
+                            <History className="mr-2 h-4 w-4" />
+                            {t('patients.complete_history')}
+                          </Button>
+                          <Button size="sm" onClick={() => setPatientToEdit(patient)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            {t('table.edit')}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setPatientToDelete(patient)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {t('table.delete')}
+                          </Button>
+                        </div>
+                      </MobileCard>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-muted-foreground">
+                    <User className="h-12 w-12" />
+                    <h3 className="text-sm font-semibold text-foreground">{t('patients.no_patients_found')}</h3>
+                    <p className="text-sm">{t('patients.adjust_search_filters')}</p>
+                  </div>
+                )
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
