@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { neonAuth } from '@/services/neon-auth';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<Record<string, string>> }) {
   try {
+    const params = await context.params as { id: string };
     const token = request.headers.get('authorization')?.replace('Bearer ', '') || request.cookies.get('auth-token')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const currentUser = await neonAuth.verifyToken(token);

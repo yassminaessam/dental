@@ -10,8 +10,9 @@ async function authenticate(request: NextRequest) {
   return await neonAuth.verifyToken(token);
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<Record<string, string>> }) {
   try {
+    const params = await context.params as { id: string };
     const currentUser = await authenticate(request);
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -41,8 +42,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<Record<string, string>> }) {
   try {
+    const params = await context.params as { id: string };
     const currentUser = await authenticate(request);
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (currentUser.role !== 'admin' && currentUser.id !== params.id) {

@@ -90,11 +90,11 @@ export default function DashboardPage() {
             setRevenueData(chartData);
 
             // Process appointment types
-            const typeCounts = appointments.reduce((acc, entry) => {
+            const typeCounts = appointments.reduce<Record<string, number>>((acc, entry) => {
                 const type = typeof entry.type === 'string' ? entry.type : 'Other';
                 acc[type] = (acc[type] || 0) + 1;
                 return acc;
-            }, {} as Record<string, number>);
+            }, {});
             
             const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
             const appointmentTypeData = Object.entries(typeCounts).map(([name, value], index) => ({
@@ -141,8 +141,6 @@ export default function DashboardPage() {
             dateTime: data.dateTime.toISOString(),
             createdAt: data.createdAt?.toISOString(),
             updatedAt: data.updatedAt?.toISOString(),
-            confirmedAt: data.confirmedAt?.toISOString(),
-            rejectedAt: data.rejectedAt?.toISOString(),
           }),
         });
 
@@ -202,7 +200,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-          <PendingAppointmentsManager onAppointmentConfirmed={() => {
+          <PendingAppointmentsManager onAppointmentUpdate={() => {
             // Optionally refresh dashboard data when appointments are confirmed
             window.location.reload();
           }} />

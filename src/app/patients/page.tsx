@@ -42,7 +42,7 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { listCollection, saveDocument, patchDocument, removeDocument, generateDocumentId } from '@/services/datastore';
+import { listCollection, patchDocument, removeDocument, generateDocumentId } from '@/services/datastore';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
@@ -117,7 +117,8 @@ export default function PatientsPage() {
   const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
     try {
         const newPatient = { ...newPatientData, id: generateDocumentId('PAT') };
-        await saveDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
+        // Use PATCH upsert to allow creating with a client-generated ID
+        await patchDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
         setPatients(prev => [newPatient, ...prev]);
   toast({ title: t('patients.patient_added'), description: t('patients.patient_added_description') });
     } catch (error) {

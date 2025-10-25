@@ -4,38 +4,39 @@ import { getDbClient } from '@/services/database';
 // GET /api/documents/[collection]/[id] - Get a specific document
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ collection: string; id: string }> }
+  context: { params: Promise<{ collection: string; id: string }> }
 ) {
   try {
-    const { collection, id } = await params;
+    const { collection, id } = await context.params;
     
     const dbClient = await getDbClient();
+    const dbc: any = dbClient as any;
     const validCollections: { [key: string]: any } = {
-      'user': dbClient.user,
-      'patient': dbClient.patient,
-      'appointment': dbClient.appointment,
-      'treatment': dbClient.treatment,
-      'medicalRecord': dbClient.medicalRecord,
-      'clinicalImage': dbClient.clinicalImage,
-      'toothImageLink': dbClient.toothImageLink,
-      'invoice': dbClient.invoice,
-      'insuranceClaim': dbClient.insuranceClaim,
-      'insuranceProvider': dbClient.insuranceProvider,
-      'staff': dbClient.staff,
-      'inventoryItem': dbClient.inventoryItem,
-      'purchaseOrder': dbClient.purchaseOrder,
-      'supplier': dbClient.supplier,
-      'medication': dbClient.medication,
-      'prescription': dbClient.prescription,
-      'message': dbClient.message,
-      'referral': dbClient.referral,
-      'specialist': dbClient.specialist,
-      'portalUser': dbClient.portalUser,
-      'sharedDocument': dbClient.sharedDocument,
-      'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings,
+      'user': dbc['user'],
+      'patient': dbc['patient'],
+      'appointment': dbc['appointment'],
+      'treatment': dbc['treatment'],
+      'medicalRecord': dbc['medicalRecord'],
+      'clinicalImage': dbc['clinicalImage'],
+      'toothImageLink': dbc['toothImageLink'],
+      'invoice': dbc['invoice'],
+      'insuranceClaim': dbc['insuranceClaim'],
+      'insuranceProvider': dbc['insuranceProvider'],
+      'staff': dbc['staff'],
+      'inventoryItem': dbc['inventoryItem'],
+      'purchaseOrder': dbc['purchaseOrder'],
+      'supplier': dbc['supplier'],
+      'medication': dbc['medication'],
+      'prescription': dbc['prescription'],
+      'message': dbc['message'],
+      'referral': dbc['referral'],
+      'specialist': dbc['specialist'],
+      'portalUser': dbc['portalUser'],
+      'sharedDocument': dbc['sharedDocument'],
+      'transaction': dbc['transaction'],
+      'clinicSettings': dbc['clinicSettings'],
       // Added hyphenated alias for settings (matches collection route & client usage)
-      'clinic-settings': dbClient.clinicSettings
+      'clinic-settings': dbc['clinicSettings']
     };
 
     const model = validCollections[collection];
@@ -92,38 +93,39 @@ export async function GET(
 // PUT /api/documents/[collection]/[id] - Update a specific document
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ collection: string; id: string }> }
+  context: { params: Promise<{ collection: string; id: string }> }
 ) {
   try {
-    const { collection, id } = await params;
+    const { collection, id } = await context.params;
     const data = await request.json();
     
     const dbClient = await getDbClient();
+    const dbc: any = dbClient as any;
     const validCollections: { [key: string]: any } = {
-      'user': dbClient.user,
-      'patient': dbClient.patient,
-      'appointment': dbClient.appointment,
-      'treatment': dbClient.treatment,
-      'medicalRecord': dbClient.medicalRecord,
-      'clinicalImage': dbClient.clinicalImage,
-      'toothImageLink': dbClient.toothImageLink,
-      'invoice': dbClient.invoice,
-      'insuranceClaim': dbClient.insuranceClaim,
-      'insuranceProvider': dbClient.insuranceProvider,
-      'staff': dbClient.staff,
-      'inventoryItem': dbClient.inventoryItem,
-      'purchaseOrder': dbClient.purchaseOrder,
-      'supplier': dbClient.supplier,
-      'medication': dbClient.medication,
-      'prescription': dbClient.prescription,
-      'message': dbClient.message,
-      'referral': dbClient.referral,
-      'specialist': dbClient.specialist,
-      'portalUser': dbClient.portalUser,
-      'sharedDocument': dbClient.sharedDocument,
-      'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings,
-      'clinic-settings': dbClient.clinicSettings
+      'user': dbc['user'],
+      'patient': dbc['patient'],
+      'appointment': dbc['appointment'],
+      'treatment': dbc['treatment'],
+      'medicalRecord': dbc['medicalRecord'],
+      'clinicalImage': dbc['clinicalImage'],
+      'toothImageLink': dbc['toothImageLink'],
+      'invoice': dbc['invoice'],
+      'insuranceClaim': dbc['insuranceClaim'],
+      'insuranceProvider': dbc['insuranceProvider'],
+      'staff': dbc['staff'],
+      'inventoryItem': dbc['inventoryItem'],
+      'purchaseOrder': dbc['purchaseOrder'],
+      'supplier': dbc['supplier'],
+      'medication': dbc['medication'],
+      'prescription': dbc['prescription'],
+      'message': dbc['message'],
+      'referral': dbc['referral'],
+      'specialist': dbc['specialist'],
+      'portalUser': dbc['portalUser'],
+      'sharedDocument': dbc['sharedDocument'],
+      'transaction': dbc['transaction'],
+      'clinicSettings': dbc['clinicSettings'],
+      'clinic-settings': dbc['clinicSettings']
     };
 
     const model = validCollections[collection];
@@ -177,38 +179,39 @@ export async function PUT(
 // PATCH /api/documents/[collection]/[id] - Set/upsert a specific document
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ collection: string; id: string }> }
+  context: { params: Promise<{ collection: string; id: string }> }
 ) {
   try {
-    const { collection, id } = await params;
+    const { collection, id } = await context.params;
     const data = await request.json();
     
     const dbClient = await getDbClient();
+    const dbc: any = dbClient as any;
     const validCollections: { [key: string]: any } = {
-      'user': dbClient.user,
-      'patient': dbClient.patient,
-      'appointment': dbClient.appointment,
-      'treatment': dbClient.treatment,
-      'medicalRecord': dbClient.medicalRecord,
-      'clinicalImage': dbClient.clinicalImage,
-      'toothImageLink': dbClient.toothImageLink,
-      'invoice': dbClient.invoice,
-      'insuranceClaim': dbClient.insuranceClaim,
-      'insuranceProvider': dbClient.insuranceProvider,
-      'staff': dbClient.staff,
-      'inventoryItem': dbClient.inventoryItem,
-      'purchaseOrder': dbClient.purchaseOrder,
-      'supplier': dbClient.supplier,
-      'medication': dbClient.medication,
-      'prescription': dbClient.prescription,
-      'message': dbClient.message,
-      'referral': dbClient.referral,
-      'specialist': dbClient.specialist,
-      'portalUser': dbClient.portalUser,
-      'sharedDocument': dbClient.sharedDocument,
-      'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings,
-      'clinic-settings': dbClient.clinicSettings
+      'user': dbc['user'],
+      'patient': dbc['patient'],
+      'appointment': dbc['appointment'],
+      'treatment': dbc['treatment'],
+      'medicalRecord': dbc['medicalRecord'],
+      'clinicalImage': dbc['clinicalImage'],
+      'toothImageLink': dbc['toothImageLink'],
+      'invoice': dbc['invoice'],
+      'insuranceClaim': dbc['insuranceClaim'],
+      'insuranceProvider': dbc['insuranceProvider'],
+      'staff': dbc['staff'],
+      'inventoryItem': dbc['inventoryItem'],
+      'purchaseOrder': dbc['purchaseOrder'],
+      'supplier': dbc['supplier'],
+      'medication': dbc['medication'],
+      'prescription': dbc['prescription'],
+      'message': dbc['message'],
+      'referral': dbc['referral'],
+      'specialist': dbc['specialist'],
+      'portalUser': dbc['portalUser'],
+      'sharedDocument': dbc['sharedDocument'],
+      'transaction': dbc['transaction'],
+      'clinicSettings': dbc['clinicSettings'],
+      'clinic-settings': dbc['clinicSettings']
     };
 
     const model = validCollections[collection];
@@ -275,37 +278,38 @@ export async function PATCH(
 // DELETE /api/documents/[collection]/[id] - Delete a specific document
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ collection: string; id: string }> }
+  context: { params: Promise<{ collection: string; id: string }> }
 ) {
   try {
-    const { collection, id } = await params;
+    const { collection, id } = await context.params;
     
     const dbClient = await getDbClient();
+    const dbc: any = dbClient as any;
     const validCollections: { [key: string]: any } = {
-      'user': dbClient.user,
-      'patient': dbClient.patient,
-      'appointment': dbClient.appointment,
-      'treatment': dbClient.treatment,
-      'medicalRecord': dbClient.medicalRecord,
-      'clinicalImage': dbClient.clinicalImage,
-      'toothImageLink': dbClient.toothImageLink,
-      'invoice': dbClient.invoice,
-      'insuranceClaim': dbClient.insuranceClaim,
-      'insuranceProvider': dbClient.insuranceProvider,
-      'staff': dbClient.staff,
-      'inventoryItem': dbClient.inventoryItem,
-      'purchaseOrder': dbClient.purchaseOrder,
-      'supplier': dbClient.supplier,
-      'medication': dbClient.medication,
-      'prescription': dbClient.prescription,
-      'message': dbClient.message,
-      'referral': dbClient.referral,
-      'specialist': dbClient.specialist,
-      'portalUser': dbClient.portalUser,
-      'sharedDocument': dbClient.sharedDocument,
-      'transaction': dbClient.transaction,
-      'clinicSettings': dbClient.clinicSettings,
-      'clinic-settings': dbClient.clinicSettings
+      'user': dbc['user'],
+      'patient': dbc['patient'],
+      'appointment': dbc['appointment'],
+      'treatment': dbc['treatment'],
+      'medicalRecord': dbc['medicalRecord'],
+      'clinicalImage': dbc['clinicalImage'],
+      'toothImageLink': dbc['toothImageLink'],
+      'invoice': dbc['invoice'],
+      'insuranceClaim': dbc['insuranceClaim'],
+      'insuranceProvider': dbc['insuranceProvider'],
+      'staff': dbc['staff'],
+      'inventoryItem': dbc['inventoryItem'],
+      'purchaseOrder': dbc['purchaseOrder'],
+      'supplier': dbc['supplier'],
+      'medication': dbc['medication'],
+      'prescription': dbc['prescription'],
+      'message': dbc['message'],
+      'referral': dbc['referral'],
+      'specialist': dbc['specialist'],
+      'portalUser': dbc['portalUser'],
+      'sharedDocument': dbc['sharedDocument'],
+      'transaction': dbc['transaction'],
+      'clinicSettings': dbc['clinicSettings'],
+      'clinic-settings': dbc['clinicSettings']
     };
 
     const model = validCollections[collection];

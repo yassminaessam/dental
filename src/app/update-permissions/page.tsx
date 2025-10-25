@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { AuthService } from '@/lib/auth';
+import type { UserPermission } from '@/lib/types';
 
 export default function UpdatePermissionsPage() {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -24,7 +25,7 @@ export default function UpdatePermissionsPage() {
       const currentPermissions = user.permissions || [];
       
       // Add new patient portal permissions if they don't exist
-      const newPermissions = [
+      const newPermissions: UserPermission[] = [
         'view_patient_portal',
         'edit_patient_portal'
       ];
@@ -32,7 +33,7 @@ export default function UpdatePermissionsPage() {
       const updatedPermissions = [...currentPermissions];
       let addedCount = 0;
       
-      newPermissions.forEach(permission => {
+      newPermissions.forEach((permission) => {
         if (!updatedPermissions.includes(permission)) {
           updatedPermissions.push(permission);
           addedCount++;

@@ -3,7 +3,7 @@ import prisma from '@/lib/db';
 import type { User, UserRole, UserPermission, RegisterData } from '@/lib/types';
 import type { User as PrismaUser, Prisma } from '@prisma/client';
 
-// Map DB user to app User type (excluding hashedPassword)
+// Map DB user to app User type (excluding password hash)
 function mapDbUser(u: PrismaUser): User {
   return {
     id: u.id,
@@ -37,9 +37,9 @@ export const UsersService = {
     const u = await prisma.user.findUnique({ where: { email } });
     if (!u) return null;
     const mapped = mapDbUser(u);
-    // Backward-compat: some environments may still have the column named `passwordHash`.
-    // Prefer `hashedPassword` if present; otherwise fall back to `passwordHash`.
-    const hashed: string | undefined = (u as any).hashedPassword ?? (u as any).passwordHash ?? undefined;
+    // Backward-compat: some environments may still have the column named `hashedPassword`.
+    // Prefer `passwordHash` if present; otherwise fall back to `hashedPassword`.
+    const hashed: string | undefined = (u as any).passwordHash ?? (u as any).hashedPassword ?? undefined;
     return { ...mapped, hashedPassword: hashed };
   },
 
@@ -58,7 +58,7 @@ export const UsersService = {
     const created = await prisma.user.create({
       data: {
         email: data.email,
-        hashedPassword,
+        passwordHash: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
@@ -98,7 +98,7 @@ export const UsersService = {
     };
 
     if (password) {
-      data.hashedPassword = await bcrypt.hash(password, 10);
+      data.passwordHash = await bcrypt.hash(password, 10);
     }
 
     const updated = await prisma.user.update({ where: { id }, data });

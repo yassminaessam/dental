@@ -16,7 +16,7 @@ async function seedWithUserCredentials() {
     const adminUser = await prisma.user.create({
       data: {
         email: 'admin@cairodental.com',
-        hashedPassword: hashedPassword,
+        passwordHash: hashedPassword,
         firstName: 'Admin',
         lastName: 'User',
         role: 'admin',
@@ -42,7 +42,7 @@ async function seedWithUserCredentials() {
     const doctorUser = await prisma.user.create({
       data: {
         email: 'dr.ahmed@cairodental.com',
-        hashedPassword: doctorPassword,
+        passwordHash: doctorPassword,
         firstName: 'Dr. Ahmed',
         lastName: 'Hassan',
         role: 'doctor',
@@ -64,7 +64,7 @@ async function seedWithUserCredentials() {
     const receptionistUser = await prisma.user.create({
       data: {
         email: 'reception@cairodental.com',
-        hashedPassword: receptionistPassword,
+        passwordHash: receptionistPassword,
         firstName: 'Sarah',
         lastName: 'Mohamed',
         role: 'receptionist',

@@ -12,7 +12,7 @@ async function updateAdminCredentials() {
     const adminUser = await prisma.user.upsert({
       where: { email: 'admin@cairodental.com' },
       update: {
-        hashedPassword: hashedPassword,
+        passwordHash: hashedPassword,
         firstName: 'Admin',
         lastName: 'User',
         role: 'admin',
@@ -21,7 +21,7 @@ async function updateAdminCredentials() {
       },
       create: {
         email: 'admin@cairodental.com',
-        hashedPassword: hashedPassword,
+        passwordHash: hashedPassword,
         firstName: 'Admin',
         lastName: 'User',
         role: 'admin',

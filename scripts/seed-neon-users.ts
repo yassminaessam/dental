@@ -44,7 +44,7 @@ async function main() {
     await prisma.user.upsert({
       where: { email: user.email },
       update: {
-        hashedPassword,
+        passwordHash: hashedPassword,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
@@ -54,7 +54,7 @@ async function main() {
       },
       create: {
         email: user.email,
-        hashedPassword,
+        passwordHash: hashedPassword,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,

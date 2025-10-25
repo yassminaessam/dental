@@ -77,7 +77,7 @@ export class AuthService {
 
       // For demo purposes, we'll use a simple password check
       // In production, you should hash passwords properly
-      const isValidPassword = await bcrypt.compare(password, user.hashedPassword || '');
+      const isValidPassword = await bcrypt.compare(password, (user as any).passwordHash || '');
       
       if (!isValidPassword) {
         throw new Error('Invalid email or password');
@@ -137,7 +137,7 @@ export class AuthService {
           lastName: data.lastName,
           role: data.role as any,
           permissions: data.permissions || this.getDefaultPermissions(data.role),
-          hashedPassword,
+          passwordHash: hashedPassword,
           isActive: true,
           // Optional fields
           phone: data.phone,
@@ -263,7 +263,7 @@ export class AuthService {
       }
 
       // Verify current password
-      const isValidPassword = await bcrypt.compare(currentPassword, user.hashedPassword || '');
+      const isValidPassword = await bcrypt.compare(currentPassword, (user as any).passwordHash || '');
       if (!isValidPassword) {
         throw new Error('Current password is incorrect');
       }
@@ -275,7 +275,7 @@ export class AuthService {
       await prisma.user.update({
         where: { id: userId },
         data: { 
-          hashedPassword: hashedNewPassword,
+          passwordHash: hashedNewPassword,
           updatedAt: new Date()
         }
       });
@@ -333,7 +333,7 @@ export class AuthService {
       await prisma.user.update({
         where: { id: decoded.userId },
         data: { 
-          hashedPassword,
+          passwordHash: hashedPassword,
           updatedAt: new Date()
         }
       });

@@ -1,28 +1,4 @@
-import type {
-  Patient,
-  Appointment,
-  Treatment,
-  Invoice,
-  Staff,
-  InventoryItem,
-  MedicalRecord,
-  ClinicalImage,
-  ToothImageLink,
-  InsuranceClaim,
-  InsuranceProvider,
-  PurchaseOrder,
-  Supplier,
-  Medication,
-  Prescription,
-  Message,
-  Referral,
-  Specialist,
-  PortalUser,
-  SharedDocument,
-  Transaction,
-  ClinicSettings,
-  PrismaClient
-} from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import { resolveCollection } from '@/lib/collection-alias';
 
 // -----------------------------------------------------------------------------
@@ -339,7 +315,7 @@ export function listenToCollection<T>(
 // SEARCH FUNCTIONS
 
 // Search patients
-export async function searchPatients(searchTerm: string): Promise<Patient[]> {
+export async function searchPatients(searchTerm: string): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     // Note: You would need to create a search API endpoint for this
@@ -354,7 +330,7 @@ export async function searchPatients(searchTerm: string): Promise<Patient[]> {
       throw new Error('Database client not initialized');
     }
     try {
-      const patients = await (dbClient as PrismaClient).patient.findMany({
+      const patients = await (dbClient as any)['patient']?.findMany({
         where: {
           OR: [
             { firstName: { contains: searchTerm, mode: 'insensitive' } },
@@ -365,7 +341,7 @@ export async function searchPatients(searchTerm: string): Promise<Patient[]> {
         },
         orderBy: { createdAt: 'desc' }
       });
-      return patients;
+      return patients ?? [];
     } catch (error) {
       console.error('Error searching patients:', error);
       throw error;
@@ -377,7 +353,7 @@ export async function searchPatients(searchTerm: string): Promise<Patient[]> {
 export async function getAppointmentsByDateRange(
   startDate: Date,
   endDate: Date
-): Promise<Appointment[]> {
+): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     const response = await fetch(`/api/appointments/date-range?start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
@@ -391,7 +367,7 @@ export async function getAppointmentsByDateRange(
       throw new Error('Database client not initialized');
     }
     try {
-      const appointments = await (dbClient as PrismaClient).appointment.findMany({
+      const appointments = await (dbClient as any)['appointment']?.findMany({
         where: {
           dateTime: {
             gte: startDate,
@@ -404,7 +380,7 @@ export async function getAppointmentsByDateRange(
         },
         orderBy: { dateTime: 'asc' }
       });
-      return appointments;
+      return appointments ?? [];
     } catch (error) {
       console.error('Error fetching appointments by date range:', error);
       throw error;
@@ -413,7 +389,7 @@ export async function getAppointmentsByDateRange(
 }
 
 // Get treatments for a patient
-export async function getPatientTreatments(patientId: string): Promise<Treatment[]> {
+export async function getPatientTreatments(patientId: string): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     const response = await fetch(`/api/patients/${patientId}/treatments`);
@@ -427,7 +403,7 @@ export async function getPatientTreatments(patientId: string): Promise<Treatment
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const treatments = await (dbClient as PrismaClient).treatment.findMany({
+      const treatments = await (dbClient as any)['treatment']?.findMany({
         where: { patientId },
         include: {
           doctor: true,
@@ -435,7 +411,7 @@ export async function getPatientTreatments(patientId: string): Promise<Treatment
         },
         orderBy: { date: 'desc' }
       });
-      return treatments;
+      return treatments ?? [];
     } catch (error) {
       console.error('Error fetching patient treatments:', error);
       throw error;
@@ -444,7 +420,7 @@ export async function getPatientTreatments(patientId: string): Promise<Treatment
 }
 
 // Get patient's medical records
-export async function getPatientMedicalRecords(patientId: string): Promise<MedicalRecord[]> {
+export async function getPatientMedicalRecords(patientId: string): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     const response = await fetch(`/api/patients/${patientId}/medical-records`);
@@ -458,11 +434,11 @@ export async function getPatientMedicalRecords(patientId: string): Promise<Medic
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const records = await (dbClient as PrismaClient).medicalRecord.findMany({
+      const records = await (dbClient as any)['medicalRecord']?.findMany({
         where: { patientId },
         orderBy: { date: 'desc' }
       });
-      return records;
+      return records ?? [];
     } catch (error) {
       console.error('Error fetching patient medical records:', error);
       throw error;
@@ -471,7 +447,7 @@ export async function getPatientMedicalRecords(patientId: string): Promise<Medic
 }
 
 // Get low stock inventory items
-export async function getLowStockItems(): Promise<InventoryItem[]> {
+export async function getLowStockItems(): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     const response = await fetch('/api/inventory/low-stock');
@@ -485,7 +461,7 @@ export async function getLowStockItems(): Promise<InventoryItem[]> {
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const items = await (dbClient as PrismaClient).inventoryItem.findMany({
+      const items = await (dbClient as any)['inventoryItem']?.findMany({
         where: {
           quantity: {
             // Use a subquery or raw SQL for field comparison
@@ -494,7 +470,7 @@ export async function getLowStockItems(): Promise<InventoryItem[]> {
         },
         orderBy: { quantity: 'asc' }
       });
-      return items;
+      return items ?? [];
     } catch (error) {
       console.error('Error fetching low stock items:', error);
       throw error;
@@ -503,7 +479,7 @@ export async function getLowStockItems(): Promise<InventoryItem[]> {
 }
 
 // Get overdue invoices
-export async function getOverdueInvoices(): Promise<Invoice[]> {
+export async function getOverdueInvoices(): Promise<any[]> {
   if (isBrowser()) {
     // Client-side: make API call
     const response = await fetch('/api/invoices/overdue');
@@ -517,7 +493,7 @@ export async function getOverdueInvoices(): Promise<Invoice[]> {
       if (!dbClient) {
         throw new Error('Database client not initialized');
       }
-      const invoices = await (dbClient as PrismaClient).invoice.findMany({
+      const invoices = await (dbClient as any)['invoice']?.findMany({
         where: {
           status: { not: 'paid' },
           dueDate: { lt: new Date() }
@@ -527,7 +503,7 @@ export async function getOverdueInvoices(): Promise<Invoice[]> {
         },
         orderBy: { dueDate: 'asc' }
       });
-      return invoices;
+      return invoices ?? [];
     } catch (error) {
       console.error('Error fetching overdue invoices:', error);
       throw error;

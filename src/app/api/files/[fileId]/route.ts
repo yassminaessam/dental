@@ -23,8 +23,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const params = await context.params;
-    const fileId = params.fileId;
+    const { fileId } = await context.params;
 
     if (!fileId) {
       return NextResponse.json({ error: 'File ID is required' }, { status: 400 });

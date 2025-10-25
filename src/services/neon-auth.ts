@@ -69,7 +69,7 @@ class NeonAuthService {
           lastName: userData.lastName,
           role: userData.role || 'patient',
           permissions: defaultPermissions,
-          hashedPassword,
+          passwordHash: hashedPassword,
           isActive: true,
         }
       });
@@ -101,7 +101,7 @@ class NeonAuthService {
         where: { email: credentials.email }
       });
 
-      if (!user || !user.hashedPassword) {
+      if (!user || !(user as any).passwordHash) {
         throw new Error('Invalid email or password');
       }
 
@@ -110,7 +110,7 @@ class NeonAuthService {
       }
 
       // Verify password
-      const isPasswordValid = await bcrypt.compare(credentials.password, user.hashedPassword);
+      const isPasswordValid = await bcrypt.compare(credentials.password, (user as any).passwordHash);
       
       if (!isPasswordValid) {
         throw new Error('Invalid email or password');
@@ -201,12 +201,12 @@ class NeonAuthService {
         where: { id: userId }
       });
 
-      if (!user || !user.hashedPassword) {
+      if (!user || !(user as any).passwordHash) {
         throw new Error('User not found');
       }
 
       // Verify current password
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, (user as any).passwordHash);
       
       if (!isCurrentPasswordValid) {
         throw new Error('Current password is incorrect');
@@ -218,7 +218,7 @@ class NeonAuthService {
       // Update password
       await prisma.user.update({
         where: { id: userId },
-        data: { hashedPassword: hashedNewPassword }
+        data: { passwordHash: hashedNewPassword }
       });
 
       // Invalidate all sessions except current one
@@ -294,7 +294,7 @@ class NeonAuthService {
       await prisma.user.update({
         where: { id: tokenData.user_id },
         data: {
-          hashedPassword
+          passwordHash: hashedPassword
         }
       });
 
