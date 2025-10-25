@@ -47,6 +47,7 @@ import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useMaxWidth } from '@/hooks/use-breakpoint';
 import { MobileCard, MobileCardField } from '@/components/ui/responsive-table';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -76,7 +77,8 @@ export default function PatientsPage() {
   const [showHistory, setShowHistory] = React.useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { t } = useLanguage();
+  const isCompact = useMaxWidth(1024); // treat tablets/smaller laptops as compact for this page
+  const { t, isRTL } = useLanguage();
 
   React.useEffect(() => {
     async function fetchPatients() {
@@ -225,7 +227,7 @@ export default function PatientsPage() {
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   {t('common.loading')}
                 </div>
-              ) : isMobile ? (
+              ) : (isCompact || isMobile) ? (
                 filteredPatients.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {filteredPatients.map((patient) => (
@@ -249,11 +251,11 @@ export default function PatientsPage() {
                           <MobileCardField label={t('patients.email')} value={patient.email} />
                           <MobileCardField label={t('common.phone')} value={patient.phone || t('common.na')} />
                           <MobileCardField label={t('patients.date_of_birth')} value={format(patient.dob, 'PPP')} />
-                          <MobileCardField label={t('patients.address')} value={patient.address || t('common.na')} className="items-start text-left" />
+                          <MobileCardField label={t('patients.address')} value={patient.address || t('common.na')} className={isRTL ? 'items-start text-right' : 'items-start text-left'} />
                           <MobileCardField
                             label={t('patients.emergency_contact')}
                             value={
-                              <span className="flex flex-col text-right">
+                              <span className={cn('flex flex-col', isRTL ? 'text-right' : 'text-left')}>
                                 <span>{patient.ecName || t('common.na')}</span>
                                 <span className="text-xs text-muted-foreground">
                                   {patient.ecPhone || t('common.na')}{' '}
@@ -261,7 +263,7 @@ export default function PatientsPage() {
                                 </span>
                               </span>
                             }
-                            className="items-start text-left"
+                            className={isRTL ? 'items-start text-right' : 'items-start text-left'}
                           />
                           <MobileCardField label={t('patients.insurance_provider')} value={patient.insuranceProvider || t('common.na')} />
                           <MobileCardField label={t('patients.policy_number')} value={patient.policyNumber || t('common.na')} />
@@ -272,7 +274,7 @@ export default function PatientsPage() {
                                 ? patient.medicalHistory.map((h) => h.condition).join(', ')
                                 : t('common.na')
                             }
-                            className="items-start text-left"
+                            className={isRTL ? 'items-start text-right' : 'items-start text-left'}
                           />
                           <MobileCardField label={t('patients.last_visit')} value={patient.lastVisit || t('common.na')} />
                         </div>
