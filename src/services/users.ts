@@ -37,7 +37,10 @@ export const UsersService = {
     const u = await prisma.user.findUnique({ where: { email } });
     if (!u) return null;
     const mapped = mapDbUser(u);
-    return { ...mapped, hashedPassword: u.hashedPassword ?? undefined };
+    // Backward-compat: some environments may still have the column named `passwordHash`.
+    // Prefer `hashedPassword` if present; otherwise fall back to `passwordHash`.
+    const hashed: string | undefined = (u as any).hashedPassword ?? (u as any).passwordHash ?? undefined;
+    return { ...mapped, hashedPassword: hashed };
   },
 
   async listAll(): Promise<User[]> {
