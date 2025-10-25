@@ -1,4 +1,6 @@
 // Prisma-backed datastore providing document-style helpers for existing features.
+// Ensure this module is server-only and never bundled on the client.
+import 'server-only';
 
 import prisma from '@/lib/db';
 import { UsersService } from '@/services/users';

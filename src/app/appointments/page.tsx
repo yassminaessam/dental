@@ -43,7 +43,8 @@ import { EditAppointmentDialog } from '@/components/appointments/edit-appointmen
 import AppointmentCalendarView from '@/components/appointments/appointment-calendar-view';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AppointmentsService, type AppointmentCreateInput } from '@/services/appointments';
+import { AppointmentsClient } from '@/services/appointments.client';
+import type { AppointmentCreateInput } from '@/services/appointments.types';
 import type { Appointment } from '@/lib/types';
 
 export type { Appointment } from '@/lib/types';
@@ -65,7 +66,7 @@ export default function AppointmentsPage() {
   const fetchAppointments = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await AppointmentsService.list();
+      const data = await AppointmentsClient.list();
       setAppointments(sortAppointments(data));
     } catch (error) {
       const description = error instanceof Error ? error.message : undefined;
@@ -95,7 +96,7 @@ export default function AppointmentsPage() {
 
   const handleSaveAppointment = async (data: AppointmentCreateInput) => {
     try {
-      const created = await AppointmentsService.create(data);
+      const created = await AppointmentsClient.create(data);
       setAppointments((prev) => sortAppointments([created, ...prev.filter((appointment) => appointment.id !== created.id)]));
       toast({ title: t('appointments.toast.scheduled'), description: t('appointments.toast.scheduled_desc') });
     } catch (error) {
@@ -106,7 +107,7 @@ export default function AppointmentsPage() {
 
   const handleUpdateAppointment = async (updatedAppointment: Appointment) => {
     try {
-      const saved = await AppointmentsService.update(updatedAppointment);
+      const saved = await AppointmentsClient.update(updatedAppointment);
       setAppointments((prev) => sortAppointments(prev.map((appointment) => (appointment.id === saved.id ? saved : appointment))));
       setAppointmentToEdit(null);
       toast({ title: t('appointments.toast.updated'), description: t('appointments.toast.updated_desc') });
@@ -117,7 +118,7 @@ export default function AppointmentsPage() {
 
   const handleStatusChange = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
-      const updated = await AppointmentsService.updateStatus(appointmentId, newStatus);
+      const updated = await AppointmentsClient.updateStatus(appointmentId, newStatus);
       if (updated) {
         setAppointments((prev) => sortAppointments(prev.map((appointment) => (appointment.id === appointmentId ? updated : appointment))));
       }

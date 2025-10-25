@@ -1,5 +1,7 @@
 import { generateDocumentId, listCollection, saveDocument, patchDocument, readDocument, removeDocument } from '@/services/datastore.server';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
+import type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
+export type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
 
 const COLLECTION = 'appointments';
 
@@ -43,28 +45,7 @@ const serializePatch = (patch: AppointmentUpdateInput): AppointmentRecordPatch =
   return result;
 };
 
-export interface AppointmentCreateInput {
-  id?: string;
-  dateTime: Date;
-  patient: string;
-  patientId?: string;
-  patientEmail?: string;
-  patientPhone?: string;
-  doctor: string;
-  doctorId?: string;
-  type: string;
-  duration: string;
-  status?: AppointmentStatus;
-  treatmentId?: string;
-  notes?: string;
-  bookedBy?: Appointment['bookedBy'];
-  reason?: Appointment['reason'];
-  urgency?: Appointment['urgency'];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export type AppointmentUpdateInput = Partial<Omit<Appointment, 'id'>>;
+// Types moved to appointments.types.ts for shared use (client/server)
 
 async function get(id: string): Promise<Appointment | null> {
   const record = await readDocument<AppointmentRecord>(COLLECTION, id);
