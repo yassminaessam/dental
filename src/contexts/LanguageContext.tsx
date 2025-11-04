@@ -404,6 +404,7 @@ const translations: Translations = {
     // Patients specific translations
     'patients.new_patient': 'New Patient',
     'patients.add_patient': 'Add Patient',
+    'patients.add_patient_description': 'Add a new patient to the system.',
     'patients.search_patients': 'Search patients...',
     'patients.edit_patient': 'Edit Patient',
     'patients.delete_patient': 'Delete Patient',
@@ -432,7 +433,15 @@ const translations: Translations = {
   'patients.relationship.sibling': 'Sibling',
   'patients.relationship.friend': 'Friend',
   'patients.relationship.other': 'Other',
+  // For emergency contact relationship select options
+  'patients.relationships.spouse': 'Spouse',
+  'patients.relationships.parent': 'Parent',
+  'patients.relationships.child': 'Child',
+  'patients.relationships.sibling': 'Sibling',
+  'patients.relationships.friend': 'Friend',
+  'patients.relationships.other': 'Other',
   'patients.personal_information': 'Personal Information',
+  'patients.pick_date': 'Pick date',
   'patients.no_conditions_reported': 'No conditions reported.',
   'patients.comprehensive_history_title': 'Comprehensive Patient History',
   'patients.comprehensive_history_desc': 'Complete medical, dental, and billing history for patient ID: {id}',
@@ -453,6 +462,13 @@ const translations: Translations = {
   'patients.years_old': '{age} years old',
   'patients.personal_details': 'Personal Details',
   'patients.no_emergency_contact': 'No emergency contact information',
+  // Emergency contact fields (explicit keys used in Add Patient dialog)
+  'patients.emergency_contact_name': 'Emergency Contact Name',
+  'patients.emergency_contact_name_placeholder': 'Enter emergency contact name...',
+  'patients.emergency_contact_phone': 'Emergency Contact Phone',
+  'patients.emergency_contact_phone_placeholder': 'Enter emergency contact phone...',
+  'patients.emergency_contact_relationship': 'Relationship',
+  'patients.emergency_contact_relationship_placeholder': 'Select relationship',
   'patients.no_insurance_info': 'No insurance information',
   'patients.hint.swipe_tabs': 'Swipe tabs horizontally',
   'patients.hint.scroll_vertical_events': 'Scroll vertically to see all {count} timeline events',
@@ -467,6 +483,8 @@ const translations: Translations = {
   'patients.tabs.communications': 'Messages',
   'patients.tabs.prescriptions': 'Prescriptions',
   'patients.tabs.referrals': 'Referrals',
+  // Add condition CTA used in dialog
+  'patients.add_condition': 'Add Condition',
 
     // Appointments specific translations
     'appointments.new_appointment': 'New Appointment',
@@ -2295,6 +2313,7 @@ const translations: Translations = {
     // Patients specific translations (Arabic)
     'patients.new_patient': 'مريض جديد',
     'patients.add_patient': 'إضافة مريض',
+    'patients.add_patient_description': 'أضف مريضًا جديدًا إلى النظام.',
     'patients.search_patients': 'البحث عن المرضى...',
     'patients.edit_patient': 'تعديل المريض',
     'patients.delete_patient': 'حذف المريض',
@@ -2311,6 +2330,8 @@ const translations: Translations = {
     'patients.status': 'الحالة',
   'patients.registered_date': 'تاريخ التسجيل',
   'patients.patient_directory': 'دليل المرضى',
+  // عنوان قسم المعلومات الشخصية
+  'patients.personal_information': 'البيانات الشخصية',
   'patients.comprehensive_history_title': 'السجل الطبي الشامل للمريض',
   'patients.comprehensive_history_desc': 'السجل الطبي، السني، والفواتير للمريض برقم: {id}',
   'patients.loading_history': 'جاري تحميل السجل الطبي الشامل للمريض...',
@@ -2326,6 +2347,22 @@ const translations: Translations = {
   'patients.years_old': '{age} سنة',
   'patients.personal_details': 'البيانات الشخصية',
   'patients.no_emergency_contact': 'لا توجد معلومات لجهة اتصال الطوارئ',
+  // حقول جهة الاتصال للطوارئ (مستخدمة في نموذج إضافة مريض)
+  'patients.emergency_contact_name': 'اسم جهة الاتصال للطوارئ',
+  'patients.emergency_contact_name_placeholder': 'أدخل اسم جهة الاتصال للطوارئ...',
+  'patients.emergency_contact_phone': 'هاتف جهة الاتصال للطوارئ',
+  'patients.emergency_contact_phone_placeholder': 'أدخل هاتف جهة الاتصال للطوارئ...',
+  'patients.emergency_contact_relationship': 'العلاقة',
+  'patients.emergency_contact_relationship_placeholder': 'اختر العلاقة',
+  // خيارات العلاقة لقائمة الاختيار
+  'patients.relationships.spouse': 'الزوج/الزوجة',
+  'patients.relationships.parent': 'الوالد/الوالدة',
+  'patients.relationships.child': 'الابن/الابنة',
+  'patients.relationships.sibling': 'الأخ/الأخت',
+  'patients.relationships.friend': 'صديق/صديقة',
+  'patients.relationships.other': 'أخرى',
+  // نص اختيار التاريخ المستخدم في حقل تاريخ الميلاد
+  'patients.pick_date': 'اختر التاريخ',
   'patients.no_insurance_info': 'لا توجد معلومات تأمين',
   'patients.hint.swipe_tabs': 'اسحب التبويبات أفقيًا',
   'patients.hint.scroll_vertical_events': 'قم بالتمرير عموديًا لرؤية جميع {count} من أحداث المخطط الزمني',
@@ -2340,6 +2377,8 @@ const translations: Translations = {
   'patients.tabs.communications': 'رسائل',
   'patients.tabs.prescriptions': 'وصفات',
   'patients.tabs.referrals': 'إحالات',
+  // زر إضافة حالة طبية في السجل الطبي
+  'patients.add_condition': 'إضافة حالة',
   'patients.emergency_contact': 'جهة الاتصال للطوارئ',
   'patients.ec_name': 'اسم جهة الاتصال للطوارئ',
   'patients.ec_phone': 'هاتف جهة الاتصال للطوارئ',
