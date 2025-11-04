@@ -258,6 +258,25 @@ body {
   background: color-mix(in hsl, hsl(var(--primary)) 85%, black) !important;
 }
 
+/* Thin, neutral scrollbar utility */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent; /* slate-300 on transparent */
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* slate-300 */
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
 /* Responsive text utility classes */
 .text-responsive {
   @apply text-sm sm:text-base lg:text-lg;

@@ -143,7 +143,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="overflow-y-auto max-h-[calc(85vh-200px)] pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent'}}>
+        <div className="overflow-y-auto max-h-[calc(85vh-200px)] pr-2 thin-scrollbar">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div>
