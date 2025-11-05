@@ -1963,6 +1963,8 @@ const translations: Translations = {
   'billing.validation.at_least_one_item': 'مطلوب عنصر واحد على الأقل.',
   'billing.validation.payment_method_required': 'طريقة الدفع مطلوبة.',
   'billing.validation.amount_positive': 'يجب أن يكون المبلغ أكبر من الصفر.',
+  // Billing payment methods (ar) - ensure full coverage
+  'billing.payment_method_credit_card': 'بطاقة ائتمان',
   // Appointments calendar view extra
   'appointments.on_date_title': 'المواعيد بتاريخ {date}',
   'appointments.none_this_day': 'لا توجد مواعيد في هذا اليوم.',
@@ -2765,6 +2767,13 @@ const translations: Translations = {
   'financial.toast.transaction_updated_desc': 'تم تحديث المعاملة بنجاح.',
   'financial.toast.transaction_deleted': 'تم حذف المعاملة',
   'financial.toast.transaction_deleted_desc': 'تم حذف المعاملة بنجاح.',
+  // Financial dialogs (ar)
+  'financial.add_transaction': 'إضافة معاملة',
+  'financial.add_new_transaction': 'إضافة معاملة جديدة',
+  'financial.add_transaction_desc': 'سجّل معاملة مالية جديدة للعيادة.',
+  'financial.edit_transaction': 'تعديل المعاملة',
+  'financial.edit_transaction_desc': 'حدّث تفاصيل المعاملة {id}.',
+  'financial.save_transaction': 'حفظ المعاملة',
 
   
 
@@ -3540,6 +3549,10 @@ const translations: Translations = {
   'suppliers.all_active_suppliers': 'جميع الموردين النشطين',
   'suppliers.cancel_order': 'إلغاء الطلب',
   'suppliers.category': 'الفئة',
+  'suppliers.address': 'العنوان',
+  'suppliers.email': 'البريد الإلكتروني',
+  'suppliers.phone': 'الهاتف',
+  'suppliers.phone_placeholder': 'أدخل الهاتف...',
   'suppliers.confirm_delete_description': 'سيؤدي هذا إلى حذف المورد نهائيًا.',
   'suppliers.contact': 'الاتصال',
   'suppliers.create_purchase_order': 'إنشاء أمر شراء',
