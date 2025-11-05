@@ -342,7 +342,7 @@ export default function InventoryPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-orange-700">{t('purchase_orders.low_stock_alert')}</span>
-                <span className="text-sm font-medium text-muted-foreground">{numberFmt.format(lowStockItems.length)} items need attention</span>
+                <span className="text-sm font-medium text-muted-foreground">{numberFmt.format(lowStockItems.length)} {t('inventory.items_needing_attention')}</span>
               </div>
             </CardTitle>
           </CardHeader>

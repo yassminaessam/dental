@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -90,6 +91,7 @@ interface Supplier {
 }
 
 export default function PurchaseOrdersPage() {
+  const { t, language } = useLanguage();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -141,8 +143,8 @@ export default function PurchaseOrdersPage() {
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
-        title: "Error",
-        description: "Failed to fetch data",
+        title: t('common.error'),
+        description: t('communications.toast.error_fetching'),
         variant: "destructive",
       });
     }
@@ -208,14 +210,14 @@ export default function PurchaseOrdersPage() {
       await addDoc("purchase-orders", newOrder as any);
       fetchData();
       toast({
-        title: "Success",
-        description: `Quick order created for ${item.name}`,
+        title: t('suppliers.toast.quick_order_created'),
+        description: t('suppliers.toast.po_created_desc'),
       });
     } catch (error) {
       console.error("Error creating quick order:", error);
       toast({
-        title: "Error",
-        description: "Failed to create quick order",
+        title: t('suppliers.toast.error_quick_order'),
+        description: t('suppliers.toast.error_quick_order_desc'),
         variant: "destructive",
       });
     }
@@ -226,14 +228,13 @@ export default function PurchaseOrdersPage() {
       await updateDocument("purchase-orders", orderId, { status: newStatus } as any);
       fetchData();
       toast({
-        title: "Success",
-        description: "Order status updated",
+        title: t('suppliers.toast.status_updated'),
+        description: t('suppliers.toast.status_updated_desc'),
       });
     } catch (error) {
       console.error("Error updating order status:", error);
       toast({
-        title: "Error",
-        description: "Failed to update order status",
+        title: t('suppliers.toast.error_updating_status'),
         variant: "destructive",
       });
     }
@@ -244,16 +245,31 @@ export default function PurchaseOrdersPage() {
       await deleteDocument("purchase-orders", orderId);
       fetchData();
       toast({
-        title: "Success",
-        description: "Purchase order deleted",
+        title: t('common.success'),
+        description: t('purchase_orders.delete_order'),
       });
     } catch (error) {
       console.error("Error deleting order:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete order",
+        title: t('common.error'),
+        description: t('suppliers.toast.error_updating'),
         variant: "destructive",
       });
+    }
+  };
+
+  const statusLabel = (status: PurchaseOrder['status']) => {
+    switch (status) {
+      case 'Pending':
+        return t('common.pending');
+      case 'Shipped':
+        return t('suppliers.status.shipped');
+      case 'Delivered':
+        return t('suppliers.status.delivered');
+      case 'Cancelled':
+        return t('suppliers.status.cancelled');
+      default:
+        return status;
     }
   };
 
@@ -263,14 +279,14 @@ export default function PurchaseOrdersPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t('purchase_orders.title')}</h1>
               <p className="text-muted-foreground">
-                Manage purchase orders and supplier relationships
+                {t('suppliers.purchase_order_subtitle')}
               </p>
             </div>
             <Button onClick={() => setIsNewOrderDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              New Order
+              {t('purchase_orders.new_order')}
             </Button>
           </div>
 
@@ -280,10 +296,10 @@ export default function PurchaseOrdersPage() {
           <CardHeader>
             <CardTitle className="flex items-center text-orange-800">
               <AlertTriangle className="mr-2 h-5 w-5" />
-              Low Stock Alert ({lowStockItems.length} items)
+              {t('purchase_orders.low_stock_alert')} ({lowStockItems.length} {t('purchase_orders.items')})
             </CardTitle>
             <CardDescription>
-              These items are running low and may need reordering
+              {t('purchase_orders.low_stock_description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -293,10 +309,10 @@ export default function PurchaseOrdersPage() {
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      Stock: {item.stock} / Min: {item.min}
+                      {t('dashboard.supply_chain.current_stock')}: {item.stock} / {t('dashboard.supply_chain.min_stock')}: {item.min}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Supplier: {item.supplier}
+                      {t('suppliers.supplier')}: {item.supplier}
                     </p>
                   </div>
                   <Button
@@ -305,7 +321,7 @@ export default function PurchaseOrdersPage() {
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     <ShoppingCart className="h-4 w-4 mr-1" />
-                    Quick Order
+                    {t('inventory.quick_order')}
                   </Button>
                 </div>
               ))}
@@ -317,21 +333,21 @@ export default function PurchaseOrdersPage() {
       {/* Filters */}
       <div className="flex items-center space-x-4">
         <Input
-          placeholder="Search by supplier or order ID..."
+          placeholder={t('purchase_orders.search_placeholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t('purchase_orders.filter_by_status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Shipped">Shipped</SelectItem>
-            <SelectItem value="Delivered">Delivered</SelectItem>
-            <SelectItem value="Cancelled">Cancelled</SelectItem>
+            <SelectItem value="all">{t('common.all_status')}</SelectItem>
+            <SelectItem value="Pending">{t('common.pending')}</SelectItem>
+            <SelectItem value="Shipped">{t('suppliers.status.shipped')}</SelectItem>
+            <SelectItem value="Delivered">{t('suppliers.status.delivered')}</SelectItem>
+            <SelectItem value="Cancelled">{t('suppliers.status.cancelled')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -341,14 +357,14 @@ export default function PurchaseOrdersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Order Date</TableHead>
-              <TableHead>Delivery Date</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('suppliers.po_number')}</TableHead>
+              <TableHead>{t('suppliers.supplier')}</TableHead>
+              <TableHead>{t('suppliers.order_date')}</TableHead>
+              <TableHead>{t('suppliers.expected_delivery')}</TableHead>
+              <TableHead>{t('suppliers.total')}</TableHead>
+              <TableHead>{t('common.status')}</TableHead>
+              <TableHead>{t('purchase_orders.items')}</TableHead>
+              <TableHead className="text-right">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -362,45 +378,45 @@ export default function PurchaseOrdersPage() {
                 <TableCell>
                   <Badge className={getStatusColor(order.status)}>
                     {getStatusIcon(order.status)}
-                    <span className="ml-1">{order.status}</span>
+                    <span className="ml-1">{statusLabel(order.status)}</span>
                   </Badge>
                 </TableCell>
-                <TableCell>{order.items.length} item(s)</TableCell>
+                <TableCell>{order.items.length} {t('purchase_orders.items')}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                        <span className="sr-only">{t('common.open_menu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Shipped')}>
-                        Mark as Shipped
+                        {t('suppliers.mark_as_shipped')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Delivered')}>
-                        Mark as Delivered
+                        {t('suppliers.mark_as_delivered')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Cancelled')}>
-                        Cancel Order
+                        {t('suppliers.cancel_order')}
                       </DropdownMenuItem>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            Delete Order
+                            {t('purchase_orders.delete_order')}
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the purchase order.
+                              {t('purchase_orders.confirm_delete_description')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                             <AlertDialogAction onClick={() => deleteOrder(order.id)}>
-                              Delete
+                              {t('common.delete')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

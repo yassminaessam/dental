@@ -49,9 +49,10 @@ interface AddItemDialogProps {
   onSave: (data: any) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
-export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps) {
+export function AddItemDialog({ onSave, open, onOpenChange, showTrigger = true }: AddItemDialogProps) {
   const { t, language } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
@@ -87,13 +88,13 @@ export function AddItemDialog({ onSave, open, onOpenChange }: AddItemDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-       {!open && ( // To prevent showing a trigger if this dialog is opened programmatically
-        <DialogTrigger asChild>
-            <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('inventory.add_item')}
-            </Button>
-        </DialogTrigger>
+       {showTrigger && (
+      <DialogTrigger asChild>
+        <Button>
+        <Plus className="mr-2 h-4 w-4" />
+        {t('inventory.add_item')}
+        </Button>
+      </DialogTrigger>
        )}
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>

@@ -325,13 +325,18 @@ export function SupplyChainIntegration() {
     inventory
       .filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock')
       .forEach(item => {
+        const itemName = item.name || item.itemName;
+        const statusType: StockAlert['type'] = item.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock';
+        const message = statusType === 'Out of Stock'
+          ? t('dashboard.supply_chain.msg.out_of_stock', { item: itemName })
+          : t('dashboard.supply_chain.msg.status_message', { item: itemName, status: t('dashboard.supply_chain.alert_type.low_stock') });
         alerts.push({
           id: `inv-${item.id}`,
-          type: item.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock',
-          item: item.name || item.itemName,
+          type: statusType,
+          item: itemName,
           category: 'Inventory',
-          severity: item.status === 'Out of Stock' ? 'High' : 'Medium',
-          message: `${item.name} is ${item.status.toLowerCase()}`,
+          severity: statusType === 'Out of Stock' ? 'High' : 'Medium',
+          message,
           date: new Date().toISOString().split('T')[0]
         });
       });
@@ -340,13 +345,18 @@ export function SupplyChainIntegration() {
     medications
       .filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock')
       .forEach(med => {
+        const medName = med.name || med.medicationName;
+        const statusType: StockAlert['type'] = med.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock';
+        const message = statusType === 'Out of Stock'
+          ? t('dashboard.supply_chain.msg.out_of_stock', { item: medName })
+          : t('dashboard.supply_chain.msg.status_message', { item: medName, status: t('dashboard.supply_chain.alert_type.low_stock') });
         alerts.push({
           id: `med-${med.id}`,
-          type: med.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock',
-          item: med.name || med.medicationName,
+          type: statusType,
+          item: medName,
           category: 'Medication',
-          severity: med.status === 'Out of Stock' ? 'High' : 'Medium',
-          message: `${med.name} is ${med.status.toLowerCase()}`,
+          severity: statusType === 'Out of Stock' ? 'High' : 'Medium',
+          message,
           date: new Date().toISOString().split('T')[0]
         });
       });
@@ -359,7 +369,7 @@ export function SupplyChainIntegration() {
         item: 'Disposable Gloves',
         category: 'Inventory',
         severity: 'High',
-        message: 'Disposable Gloves are completely out of stock',
+        message: t('dashboard.supply_chain.msg.out_of_stock', { item: 'Disposable Gloves' }),
         date: '2024-02-03'
       },
       {
@@ -368,7 +378,7 @@ export function SupplyChainIntegration() {
         item: 'Dental Floss',
         category: 'Inventory',
         severity: 'Medium',
-        message: 'Only 3 boxes remaining, below minimum threshold',
+        message: t('dashboard.supply_chain.msg.only_remaining_below_threshold', { count: 3, unit: t('dashboard.supply_chain.unit.boxes') }),
         date: '2024-02-03'
       },
       {
@@ -377,7 +387,7 @@ export function SupplyChainIntegration() {
         item: 'Ibuprofen 200mg',
         category: 'Medication',
         severity: 'Medium',
-        message: 'Only 2 bottles remaining, reorder needed',
+        message: t('dashboard.supply_chain.msg.only_remaining_reorder_needed', { count: 2, unit: t('dashboard.supply_chain.unit.bottles') }),
         date: '2024-02-03'
       },
       {
@@ -386,7 +396,7 @@ export function SupplyChainIntegration() {
         item: 'Anesthetic Gel',
         category: 'Medication',
         severity: 'Low',
-        message: 'Will expire in 30 days',
+        message: t('dashboard.supply_chain.msg.will_expire_in_days', { days: 30 }),
         date: '2024-02-03'
       }
     ];
@@ -395,11 +405,19 @@ export function SupplyChainIntegration() {
   };
 
   // Action handlers
+  const handleViewInventory = () => {
+    router.push('/inventory');
+  };
+
+  const handleViewPharmacy = () => {
+    router.push('/pharmacy');
+  };
+
   const handleViewLowStock = () => {
     // Could open a modal or navigate to inventory page
     toast({
-      title: "Low Stock Items",
-      description: `Found ${lowStockItems.length} items with low stock`
+      title: t('dashboard.supply_chain.low_stock_items'),
+      description: t('dashboard.supply_chain.toast.found_low_stock_items', { count: lowStockItems.length })
     });
   };
 
@@ -413,8 +431,8 @@ export function SupplyChainIntegration() {
 
   const handleViewStockAlerts = () => {
     toast({
-      title: "Stock Alerts",
-      description: `${stockAlerts.length} active alerts require attention`
+      title: t('dashboard.supply_chain.stock_alerts'),
+      description: t('dashboard.supply_chain.toast.active_alerts_count', { count: stockAlerts.length })
     });
   };
 
@@ -438,6 +456,126 @@ export function SupplyChainIntegration() {
   if (score >= 60) return t('dashboard.supply_chain.score.good');
   if (score >= 40) return t('dashboard.supply_chain.score.moderate');
   return t('dashboard.supply_chain.score.poor');
+  };
+
+  const typeLabel = (type: StockAlert['type']) => {
+    switch (type) {
+      case 'Out of Stock':
+        return t('dashboard.supply_chain.alert_type.out_of_stock');
+      case 'Low Stock':
+        return t('dashboard.supply_chain.alert_type.low_stock');
+      case 'Expired':
+        return t('dashboard.supply_chain.alert_type.expired');
+      case 'Expiring Soon':
+        return t('dashboard.supply_chain.alert_type.expiring_soon');
+      default:
+        return type;
+    }
+  };
+
+  const categoryLabel = (category: string) => {
+    switch (category) {
+      case 'Inventory':
+        return t('dashboard.supply_chain.category.inventory');
+      case 'Medication':
+        return t('dashboard.supply_chain.category.medication');
+      default:
+        return category;
+    }
+  };
+
+  const unitLabel = (unit: string) => {
+    const raw = (unit || '').trim();
+    const u = raw.toLowerCase().replace(/\s+/g, '-');
+    // dynamic count patterns (e.g., sachets-20, strip-10)
+    const sachetMatch = u.match(/^sachets?-(\d+)$/);
+    if (sachetMatch) {
+      const count = sachetMatch[1];
+      return `${t('dashboard.supply_chain.unit.sachets')} (${count})`;
+    }
+    const stripMatch = u.match(/^strips?-(\d+)$/);
+    if (stripMatch) {
+      const count = stripMatch[1];
+      return `${t('dashboard.supply_chain.unit.strips')} (${count})`;
+    }
+    const cartonMatch = u.match(/^cartons?-(\d+)$/);
+    if (cartonMatch) {
+      const count = cartonMatch[1];
+      return `${t('dashboard.supply_chain.unit.cartons')} (${count})`;
+    }
+    const packMatch = u.match(/^packs?-(\d+)$/);
+    if (packMatch) {
+      const count = packMatch[1];
+      return `${t('dashboard.supply_chain.unit.packs')} (${count})`;
+    }
+    const bundleMatch = u.match(/^bundles?-(\d+)$/);
+    if (bundleMatch) {
+      const count = bundleMatch[1];
+      return `${t('dashboard.supply_chain.unit.bundles')} (${count})`;
+    }
+    switch (u) {
+      case 'box':
+      case 'boxes':
+        return t('dashboard.supply_chain.unit.boxes');
+      case 'box-small':
+      case 'boxes-small':
+      case 'small-box':
+      case 'small-boxes':
+        return t('dashboard.supply_chain.unit.box_small');
+      case 'box-large':
+      case 'boxes-large':
+      case 'large-box':
+      case 'large-boxes':
+        return t('dashboard.supply_chain.unit.box_large');
+      case 'bottle':
+      case 'bottles':
+        return t('dashboard.supply_chain.unit.bottles');
+      case 'unit':
+      case 'units':
+        return t('dashboard.supply_chain.unit.units');
+      case 'pc':
+      case 'pcs':
+        return t('dashboard.supply_chain.unit.pcs');
+      case 'pack':
+      case 'packs':
+        return t('dashboard.supply_chain.unit.packs');
+      case 'sachet':
+      case 'sachets':
+        return t('dashboard.supply_chain.unit.sachets');
+      case 'tube':
+      case 'tubes':
+        return t('dashboard.supply_chain.unit.tubes');
+      case 'vial':
+      case 'vials':
+        return t('dashboard.supply_chain.unit.vials');
+      case 'ampoule':
+      case 'ampoules':
+        return t('dashboard.supply_chain.unit.ampoules');
+      case 'strip':
+      case 'strips':
+        return t('dashboard.supply_chain.unit.strips');
+      case 'carton':
+      case 'cartons':
+        return t('dashboard.supply_chain.unit.cartons');
+      case 'roll':
+      case 'rolls':
+        return t('dashboard.supply_chain.unit.rolls');
+      case 'syringe':
+      case 'syringes':
+        return t('dashboard.supply_chain.unit.syringes');
+      case 'tablet':
+      case 'tablets':
+        return t('dashboard.supply_chain.unit.tablets');
+      case 'capsule':
+      case 'capsules':
+        return t('dashboard.supply_chain.unit.capsules');
+      case 'jar':
+        return t('dashboard.supply_chain.unit.jar');
+      case 'jars':
+        return t('dashboard.supply_chain.unit.jars');
+      default:
+        return raw;
+    }
   };
 
   if (loading) {
@@ -481,7 +619,14 @@ export function SupplyChainIntegration() {
         {/* Supply Chain Flow */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Suppliers */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card
+            className="border-blue-200 bg-blue-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
+            role="button"
+            tabIndex={0}
+            aria-label={t('dashboard.supply_chain.suppliers')}
+            onClick={() => router.push('/suppliers')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push('/suppliers'); } }}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-blue-700">
                 <Truck className="h-5 w-5" />
@@ -506,7 +651,14 @@ export function SupplyChainIntegration() {
           </Card>
 
           {/* Inventory */}
-          <Card className="border-green-200 bg-green-50">
+          <Card
+            className="border-green-200 bg-green-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-300"
+            role="button"
+            tabIndex={0}
+            aria-label={t('dashboard.supply_chain.inventory')}
+            onClick={handleViewInventory}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleViewInventory(); } }}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-green-700">
                 <Package className="h-5 w-5" />
@@ -531,7 +683,14 @@ export function SupplyChainIntegration() {
           </Card>
 
           {/* Pharmacy */}
-          <Card className="border-purple-200 bg-purple-50">
+          <Card
+            className="border-purple-200 bg-purple-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-300"
+            role="button"
+            tabIndex={0}
+            aria-label={t('dashboard.supply_chain.pharmacy')}
+            onClick={handleViewPharmacy}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleViewPharmacy(); } }}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-purple-700">
                 <Pill className="h-5 w-5" />
@@ -617,14 +776,14 @@ export function SupplyChainIntegration() {
                             <TableRow key={item.id}>
                               <TableCell className="font-medium">{item.name}</TableCell>
                               <TableCell>
-                                <Badge variant="outline">{item.category}</Badge>
+                                <Badge variant="outline">{categoryLabel(item.category)}</Badge>
                               </TableCell>
                               <TableCell>
                                 <span className={item.currentStock === 0 ? "text-red-600 font-bold" : "text-orange-600"}>
-                                  {item.currentStock} {item.unit}
+                                  {item.currentStock} {unitLabel(item.unit)}
                                 </span>
                               </TableCell>
-                              <TableCell>{item.minStock} {item.unit}</TableCell>
+                              <TableCell>{item.minStock} {unitLabel(item.unit)}</TableCell>
                               <TableCell>{item.supplier}</TableCell>
                               <TableCell>{item.lastOrdered}</TableCell>
                             </TableRow>
@@ -754,9 +913,9 @@ export function SupplyChainIntegration() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <Badge variant={getSeverityColor(alert.severity) as any}>
-                                {alert.type}
+                                {typeLabel(alert.type)}
                               </Badge>
-                              <Badge variant="outline">{alert.category}</Badge>
+                              <Badge variant="outline">{categoryLabel(alert.category)}</Badge>
                             </div>
                             <p className="font-medium">{alert.item}</p>
                             <p className="text-sm text-muted-foreground">{alert.message}</p>

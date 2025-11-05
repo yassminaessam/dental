@@ -53,6 +53,7 @@ import {
   Trash2,
   Check,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
@@ -422,6 +423,10 @@ export default function SuppliersPage() {
             <Button variant="outline" onClick={() => openNewPoDialog()}>
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t('suppliers.new_purchase_order')}
+            </Button>
+            <Button onClick={() => setIsAddItemOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('inventory.add_item')}
             </Button>
             <AddSupplierDialog onSave={handleSaveSupplier} />
           </div>
@@ -810,7 +815,7 @@ export default function SuppliersPage() {
         onAddItem={() => setIsAddItemOpen(true)}
       />
 
-      <AddItemDialog onSave={handleSaveItem} open={isAddItemOpen} onOpenChange={setIsAddItemOpen} />
+      <AddItemDialog onSave={handleSaveItem} open={isAddItemOpen} onOpenChange={setIsAddItemOpen} showTrigger={false} />
       
       {supplierToEdit && (
         <EditSupplierDialog
