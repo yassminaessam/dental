@@ -55,6 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
         isAuthenticated: false,
       });
+      // Ensure immediate redirect to login regardless of caller
+      if (typeof window !== 'undefined') {
+        // replace to prevent navigating back to protected pages
+        window.location.replace('/login');
+      }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;

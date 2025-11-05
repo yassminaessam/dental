@@ -96,6 +96,12 @@ export class AuthService {
    */
   static async signOut(): Promise<void> {
     try {
+      // Attempt to invalidate server-side session if present; ignore failures
+      try {
+        await fetch(`${AUTH_API_BASE}/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      } catch (_) {
+        // no-op
+      }
       clearSession();
     } catch (error: any) {
       console.error('Sign out error:', error);
