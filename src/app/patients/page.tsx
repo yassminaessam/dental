@@ -168,7 +168,7 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto">
+        <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto overflow-x-hidden">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-2xl sm:text-3xl font-bold">{t('patients.title')}</h1>
             <AddPatientDialog onSave={handleSavePatient} />
@@ -196,7 +196,7 @@ export default function PatientsPage() {
             })}
           </div>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
               <CardTitle className="text-lg sm:text-xl">{t('patients.patient_directory')}</CardTitle>
               <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
@@ -222,7 +222,7 @@ export default function PatientsPage() {
                 </Select>
               </div>
             </CardHeader>
-            <CardContent className="p-0 sm:p-6">
+            <CardContent className={cn("p-0", (isCompact || isMobile) && "sm:p-6")}>
               {loading ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -309,20 +309,19 @@ export default function PatientsPage() {
                   </div>
                 )
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden md:table-cell">{t('patients.email')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden md:table-cell">{t('common.phone')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden lg:table-cell">{t('patients.date_of_birth')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden xl:table-cell">{t('patients.address')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden xl:table-cell">{t('patients.emergency_contact')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden 2xl:table-cell">{t('patients.insurance_provider')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden 2xl:table-cell">{t('patients.policy_number')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden 2xl:table-cell">{t('patients.medical_history')}</TableHead>
-                        <TableHead className="whitespace-nowrap hidden lg:table-cell">{t('patients.last_visit')}</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.email')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('common.phone')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.date_of_birth')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.address')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.emergency_contact')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.insurance_provider')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.policy_number')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.medical_history')}</TableHead>
+                        <TableHead className="whitespace-nowrap">{t('patients.last_visit')}</TableHead>
                         <TableHead className="whitespace-nowrap">{t('common.status')}</TableHead>
                         <TableHead className="text-right whitespace-nowrap">{t('table.actions')}</TableHead>
                       </TableRow>
@@ -340,22 +339,22 @@ export default function PatientsPage() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap hidden md:table-cell">{patient.email}</TableCell>
-                            <TableCell className="whitespace-nowrap hidden md:table-cell">{patient.phone || t('common.na')}</TableCell>
-                            <TableCell className="whitespace-nowrap hidden lg:table-cell">{format(patient.dob, 'PPP')}</TableCell>
-                            <TableCell className="whitespace-nowrap max-w-xs truncate hidden xl:table-cell">{patient.address || t('common.na')}</TableCell>
-                            <TableCell className="whitespace-nowrap hidden xl:table-cell">
+                            <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.phone || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">{format(patient.dob, 'PPP')}</TableCell>
+                            <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">
                               <div>{patient.ecName || t('common.na')}</div>
                               <div className="text-xs text-muted-foreground">{patient.ecPhone || t('common.na')} {patient.ecRelationship ? `(${patient.ecRelationship})` : ''}</div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap hidden 2xl:table-cell">{patient.insuranceProvider || t('common.na')}</TableCell>
-                            <TableCell className="whitespace-nowrap hidden 2xl:table-cell">{patient.policyNumber || t('common.na')}</TableCell>
-                            <TableCell className="whitespace-nowrap max-w-xs truncate hidden 2xl:table-cell">
+                            <TableCell className="whitespace-nowrap">{patient.insuranceProvider || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.policyNumber || t('common.na')}</TableCell>
+                            <TableCell className="whitespace-nowrap max-w-xs truncate">
                               {patient.medicalHistory && patient.medicalHistory.length > 0
                                 ? patient.medicalHistory.map((h) => h.condition).join(', ')
                                 : t('common.na')}
                             </TableCell>
-                            <TableCell className="whitespace-nowrap hidden lg:table-cell">{patient.lastVisit}</TableCell>
+                            <TableCell className="whitespace-nowrap">{patient.lastVisit}</TableCell>
                             <TableCell className="whitespace-nowrap">{patient.status === 'Active' ? t('common.active') : t('common.inactive')}</TableCell>
                             <TableCell className="text-right whitespace-nowrap">
                               <DropdownMenu>
@@ -400,7 +399,6 @@ export default function PatientsPage() {
                       )}
                     </TableBody>
                   </Table>
-                </div>
               )}
           </CardContent>
           </Card>

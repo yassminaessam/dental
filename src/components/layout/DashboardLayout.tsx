@@ -157,7 +157,7 @@ export default function DashboardLayout({
           <SidebarNav />
         </SidebarContent>
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="overflow-x-hidden">
         <header className="elite-header flex h-16 sm:h-18 items-center gap-4 sm:gap-6 border-b border-border/50 px-6 sm:px-8">
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1">
