@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,12 +59,20 @@ export type SharedDocument = {
     sharedDate: string;
 };
 
+function TabSync({ onTab }: { onTab: (value: string) => void }) {
+  const searchParams = useSearchParams();
+  React.useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab) onTab(tab);
+  }, [searchParams, onTab]);
+  return null;
+}
+
 export default function PatientPortalPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
-  const searchParams = useSearchParams();
   const router = useRouter();
   
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -99,10 +107,9 @@ export default function PatientPortalPage() {
     fetchData();
   }, [toast, t]);
 
-  React.useEffect(() => {
-    const tab = searchParams?.get('tab');
-    if (tab) setActiveTab(tab);
-  }, [searchParams]);
+  // Sync tab from URL using Suspense-wrapped client effect
+  // This avoids the Next.js CSR bailout error during prerender
+  // by ensuring useSearchParams() runs inside a Suspense boundary.
 
   const onTabChange = (value: string) => {
     setActiveTab(value);
@@ -233,6 +240,11 @@ export default function PatientPortalPage() {
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+        {/* Sync tab from URL */}
+        <Suspense fallback={null}>
+          <TabSync onTab={setActiveTab} />
+        </Suspense>
+
         {/* Elite Patient Portal Header */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
