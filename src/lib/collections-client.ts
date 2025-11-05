@@ -43,10 +43,12 @@ function buildDocPath(collection: string, id?: string) {
   return id ? `${DOCS_BASE_PATH}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}` : `${DOCS_BASE_PATH}/${encodeURIComponent(collection)}`;
 }
 
-// Some collections are backed by direct Prisma models and live under /api/documents
+// Some collections can be backed by direct Prisma models and live under /api/documents
 // rather than the generic Firestore-like /api/collections abstraction.
+// Note: clinic-settings currently does NOT have a dedicated Prisma model in this project,
+// so we intentionally use the generic collections API for it.
 function isDirectDocCollection(collection: string) {
-  return collection === 'clinic-settings' || collection === 'clinicSettings';
+  return false;
 }
 
 export function generateDocumentId(prefix?: string): string {
@@ -62,17 +64,33 @@ export async function listCollection<T>(collection: string): Promise<T[]> {
 export const getCollection = listCollection;
 
 export async function getDocument<T>(collection: string, id: string): Promise<T | null> {
-  // Prefer direct documents endpoint for special collections
+  // Prefer direct documents endpoint for special collections (disabled for now)
   if (isDirectDocCollection(collection)) {
     const res = await fetch(buildDocPath(collection, id), { method: 'GET' });
     if (res.status === 404) return null;
+    if (res.status === 400) {
+      // Fall back to generic collections for unknown direct models
+      try {
+        const result = await request<{ document?: T }>(buildPath(collection, id), { method: 'GET' });
+        return result.document ?? null;
+      } catch (err: any) {
+        if (typeof err?.message === 'string' && err.message.includes('404')) return null;
+        throw err;
+      }
+    }
     if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
-    // documents endpoint returns the object directly (not wrapped)
     const data = (await res.json()) as T;
     return data ?? null;
   }
-  const result = await request<{ document?: T }>(buildPath(collection, id), { method: 'GET' });
-  return result.document ?? null;
+  try {
+    const result = await request<{ document?: T }>(buildPath(collection, id), { method: 'GET' });
+    return result.document ?? null;
+  } catch (err: any) {
+    // Normalize not-found responses to null so callers can upsert defaults
+    const msg = String(err?.message || '').toLowerCase();
+    if (msg.includes('404') || msg.includes('not found')) return null;
+    throw err;
+  }
 }
 
 export async function getDoc<T>(collection: string, id: string) {
@@ -97,20 +115,33 @@ export async function createDocument<T extends Record<string, unknown>>(collecti
 
 export async function setDocument<T extends Record<string, unknown>>(collection: string, id: string, data: T) {
   if (isDirectDocCollection(collection)) {
-    // documents endpoint accepts full object and returns updated entity
-    await request<unknown>(buildDocPath(collection, id), {
-      method: 'PUT',
-      body: data,
-    });
-    return;
+    try {
+      await request<unknown>(buildDocPath(collection, id), { method: 'PUT', body: data });
+      return;
+    } catch (err: any) {
+      if (typeof err?.message === 'string' && err.message.includes('400')) {
+        // Fall back to generic collections endpoint
+        await request<unknown>(buildPath(collection, id), { method: 'PUT', body: data });
+        return;
+      }
+      throw err;
+    }
   }
   await request<unknown>(buildPath(collection, id), { method: 'PUT', body: data });
 }
 
 export async function updateDocument<T extends Record<string, unknown>>(collection: string, id: string, patch: Partial<T>) {
   if (isDirectDocCollection(collection)) {
-    await request<unknown>(buildDocPath(collection, id), { method: 'PATCH', body: patch });
-    return;
+    try {
+      await request<unknown>(buildDocPath(collection, id), { method: 'PATCH', body: patch });
+      return;
+    } catch (err: any) {
+      if (typeof err?.message === 'string' && err.message.includes('400')) {
+        await request<unknown>(buildPath(collection, id), { method: 'PATCH', body: patch });
+        return;
+      }
+      throw err;
+    }
   }
   await request<unknown>(buildPath(collection, id), { method: 'PATCH', body: patch });
 }
@@ -119,8 +150,16 @@ export const patchDocument = updateDocument;
 
 export async function deleteDocument(collection: string, id: string) {
   if (isDirectDocCollection(collection)) {
-    await request<unknown>(buildDocPath(collection, id), { method: 'DELETE' });
-    return;
+    try {
+      await request<unknown>(buildDocPath(collection, id), { method: 'DELETE' });
+      return;
+    } catch (err: any) {
+      if (typeof err?.message === 'string' && err.message.includes('400')) {
+        await request<unknown>(buildPath(collection, id), { method: 'DELETE' });
+        return;
+      }
+      throw err;
+    }
   }
   await request<unknown>(buildPath(collection, id), { method: 'DELETE' });
 }

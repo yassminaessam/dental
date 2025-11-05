@@ -73,7 +73,6 @@ export default function SettingsPage() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const raw = (docSnap.data() as any) || {};
-          // Normalize server values to match UI state expectations (strings for selects)
           const normalized: ClinicSettings = {
             ...initialSettings,
             ...raw,
@@ -83,11 +82,31 @@ export default function SettingsPage() {
           };
           setSettings(normalized);
         } else {
-          console.log("No such document! Using initial settings.");
-          // Optionally, create the document if it doesn't exist
+          // Auto-create defaults then refetch so UI reflects persisted values
           await setDocument('clinic-settings', 'main', initialSettings);
+          try {
+            const again = await getDoc(docRef);
+            if (again.exists()) {
+              const raw = (again.data() as any) || {};
+              const normalized: ClinicSettings = {
+                ...initialSettings,
+                ...raw,
+                phoneNumber: raw.phoneNumber ?? raw.phone ?? initialSettings.phoneNumber,
+                appointmentDuration: String(raw.appointmentDuration ?? initialSettings.appointmentDuration),
+                bookingLimit: String(raw.bookingLimit ?? initialSettings.bookingLimit),
+              };
+              setSettings(normalized);
+            } else {
+              // Fallback: still not found; use local defaults
+              setSettings(initialSettings);
+            }
+          } catch (refetchErr) {
+            console.warn('Refetch after create failed:', refetchErr);
+            setSettings(initialSettings);
+          }
         }
   } catch (error) {
+    console.warn('Failed to fetch settings:', error);
     toast({ title: t('settings.toast.error_fetching'), variant: "destructive" });
       } finally {
         setLoading(false);
