@@ -152,10 +152,10 @@ export default function MedicalRecordsPage() {
   const medicalRecordsPageStats = React.useMemo(() => {
     const draftRecords = records.filter(r => r.status === 'Draft').length;
     return [
-      { title: t('medical_records.total_records'), value: records.length, description: t('medical_records.all_patient_records') },
-      { title: t('medical_records.clinical_images'), value: images.length, description: t('medical_records.all_uploaded_images') },
-      { title: t('medical_records.templates'), value: templates.length, description: t('medical_records.for_faster_documentation') },
-      { title: t('medical_records.draft_records'), value: draftRecords, description: t('medical_records.awaiting_finalization'), valueClassName: "text-orange-500" },
+      { title: t('medical_records.total_records'), value: records.length, description: t('medical_records.all_patient_records'), cardStyle: 'metric-card-blue' },
+      { title: t('medical_records.clinical_images'), value: images.length, description: t('medical_records.all_uploaded_images'), cardStyle: 'metric-card-green' },
+      { title: t('medical_records.templates'), value: templates.length, description: t('medical_records.for_faster_documentation'), cardStyle: 'metric-card-purple' },
+      { title: t('medical_records.draft_records'), value: draftRecords, description: t('medical_records.awaiting_finalization'), cardStyle: 'metric-card-orange' },
     ];
   }, [records, images, templates]);
 
@@ -318,18 +318,39 @@ export default function MedicalRecordsPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {medicalRecordsPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+          {medicalRecordsPageStats.map((stat, idx) => (
+            <Card
+              key={stat.title}
+              className={cn(
+                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                stat.cardStyle
+              )}
+              role="button"
+              tabIndex={0}
+              aria-label={stat.title}
+              onClick={() => {
+                // 0: total records -> records tab, 1: images -> images tab, 2: templates -> templates tab, 3: drafts -> records tab
+                if (idx === 0 || idx === 3) setActiveTab('medical-records');
+                else if (idx === 1) setActiveTab('clinical-images');
+                else if (idx === 2) setActiveTab('templates');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLDivElement).click();
+                }
+              }}
+            >
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={cn("text-2xl font-bold", stat.valueClassName)}>
+                <div className="text-2xl font-bold text-white drop-shadow-sm">
                   {stat.value}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/80 font-medium">
                   {stat.description}
                 </p>
               </CardContent>

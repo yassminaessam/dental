@@ -20,6 +20,7 @@ import type { StaffMember } from '@/app/staff/page';
 import type { Invoice } from '@/app/billing/page';
 import type { Treatment } from '@/app/treatments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 const iconMap = {
   Users,
@@ -31,17 +32,26 @@ const iconMap = {
 };
 
 type IconKey = keyof typeof iconMap;
+type StatItem = {
+  title: string;
+  value: string;
+  description: string;
+  icon: IconKey;
+  cardStyle: string;
+  href: string;
+};
 
 export default function OverviewStats() {
   const { t } = useLanguage();
-    const [stats, setStats] = React.useState([
-    { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue" },
-    { title: t('dashboard.todays_appointments'), value: "0", description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green" },
-    { title: t('dashboard.total_revenue'), value: "EGP 0", description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange" },
-    { title: t('dashboard.active_staff'), value: "0", description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple" },
-    { title: t('dashboard.pending_appointments'), value: "0", description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange" },
-    { title: t('dashboard.completed_treatments'), value: "0", description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green" },
-    ]);
+  const router = useRouter();
+  const [stats, setStats] = React.useState<StatItem[]>([
+    { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue", href: "/patients" },
+    { title: t('dashboard.todays_appointments'), value: "0", description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green", href: "/appointments" },
+    { title: t('dashboard.total_revenue'), value: "EGP 0", description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange", href: "/financial" },
+    { title: t('dashboard.active_staff'), value: "0", description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple", href: "/staff" },
+    { title: t('dashboard.pending_appointments'), value: "0", description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange", href: "/appointments" },
+    { title: t('dashboard.completed_treatments'), value: "0", description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green", href: "/treatments" },
+  ]);
 
     React.useEffect(() => {
         async function fetchStats() {
@@ -61,14 +71,15 @@ export default function OverviewStats() {
                 const pendingAppointments = appointments.filter(a => a.status === 'Pending').length;
                 const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
                 
-                setStats([
-          { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue" },
-          { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green" },
-          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange" },
-          { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple" },
-          { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange" },
-          { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green" },
-        ]);            } catch (error) {
+        setStats([
+          { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue", href: "/patients" },
+          { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green", href: "/appointments" },
+          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange", href: "/financial" },
+          { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple", href: "/staff" },
+          { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange", href: "/appointments" },
+          { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green", href: "/treatments" },
+        ]);
+            } catch (error) {
                 console.error("Failed to fetch overview stats:", error);
             }
         }
@@ -86,6 +97,16 @@ export default function OverviewStats() {
               "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
               stat.cardStyle
             )}
+            role="button"
+            tabIndex={0}
+            aria-label={stat.title}
+            onClick={() => router.push(stat.href)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                router.push(stat.href);
+              }
+            }}
           >
             {/* Animated Background Effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

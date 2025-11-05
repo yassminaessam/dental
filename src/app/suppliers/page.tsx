@@ -108,6 +108,7 @@ export default function SuppliersPage() {
   const { t, language } = useLanguage();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState<'suppliers' | 'purchase-orders' | 'receiving'>('suppliers');
   const [supplierToEdit, setSupplierToEdit] = React.useState<Supplier | null>(null);
   const [supplierToDelete, setSupplierToDelete] = React.useState<Supplier | null>(null);
   const [supplierSearchTerm, setSupplierSearchTerm] = React.useState('');
@@ -159,10 +160,10 @@ export default function SuppliersPage() {
     
     const currencyFormatter = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
     return [
-      { title: t('suppliers.total_suppliers'), value: totalSuppliers, icon: "Building2", description: t('suppliers.all_active_suppliers'), valueClassName: "" },
-      { title: t('suppliers.pending_pos'), value: pendingPOs, icon: "FileText", description: t('suppliers.orders_awaiting_shipment'), valueClassName: "text-orange-500" },
-      { title: t('suppliers.total_po_value'), value: currencyFormatter.format(totalPOValue), icon: "DollarSign", description: t('suppliers.value_of_all_orders'), valueClassName: "" },
-      { title: t('suppliers.top_rated'), value: `${topRatedSuppliers} ${t('suppliers.suppliers')}`, icon: "Star", description: t('suppliers.rating_4_5_or_higher'), valueClassName: "text-yellow-500" },
+      { title: t('suppliers.total_suppliers'), value: totalSuppliers, icon: "Building2", description: t('suppliers.all_active_suppliers'), cardStyle: 'metric-card-blue' },
+      { title: t('suppliers.pending_pos'), value: pendingPOs, icon: "FileText", description: t('suppliers.orders_awaiting_shipment'), cardStyle: 'metric-card-orange' },
+      { title: t('suppliers.total_po_value'), value: currencyFormatter.format(totalPOValue), icon: "DollarSign", description: t('suppliers.value_of_all_orders'), cardStyle: 'metric-card-green' },
+      { title: t('suppliers.top_rated'), value: `${topRatedSuppliers} ${t('suppliers.suppliers')}`, icon: "Star", description: t('suppliers.rating_4_5_or_higher'), cardStyle: 'metric-card-purple' },
     ];
   }, [suppliers, purchaseOrders, language, t]);
 
@@ -427,26 +428,55 @@ export default function SuppliersPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {suppliersPageStats.map((stat) => {
+          {suppliersPageStats.map((stat, idx) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+              <Card
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                  stat.cardStyle
+                )}
+                role="button"
+                tabIndex={0}
+                aria-label={stat.title}
+                onClick={() => {
+                  // 0: total suppliers -> suppliers tab, 1: pending POs -> purchase-orders with pending filter
+                  // 2: total PO value -> purchase-orders (all), 3: top rated -> suppliers tab
+                  if (idx === 0) {
+                    setActiveTab('suppliers');
+                    setSupplierSearchTerm('');
+                    setCategoryFilter('all');
+                  } else if (idx === 1) {
+                    setActiveTab('purchase-orders');
+                    setPoStatusFilter('pending');
+                  } else if (idx === 2) {
+                    setActiveTab('purchase-orders');
+                    setPoStatusFilter('all');
+                  } else if (idx === 3) {
+                    setActiveTab('suppliers');
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    (e.currentTarget as HTMLDivElement).click();
+                  }
+                }}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
-                  <Icon
-                    className={cn(
-                      "h-4 w-4 text-muted-foreground",
-                      stat.valueClassName
-                    )}
-                  />
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm">
+                    <Icon className="h-5 w-5 text-white drop-shadow-sm" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className={cn("text-2xl font-bold", stat.valueClassName)}>
+                  <div className="text-2xl font-bold text-white drop-shadow-sm">
                     {stat.value}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/80 font-medium">
                     {stat.description}
                   </p>
                 </CardContent>
@@ -455,7 +485,7 @@ export default function SuppliersPage() {
           })}
         </div>
 
-    <Tabs defaultValue="suppliers">
+    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
           <TabsList>
       <TabsTrigger value="suppliers">{t('suppliers.suppliers')}</TabsTrigger>
       <TabsTrigger value="purchase-orders">{t('purchase_orders.title')}</TabsTrigger>

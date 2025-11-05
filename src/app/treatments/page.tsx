@@ -150,21 +150,25 @@ export default function TreatmentsPage() {
         title: t('treatments.total_treatments'),
         value: total.toString(),
         description: t('treatments.all_status'),
+        cardStyle: 'metric-card-blue',
       },
       {
         title: t('treatments.completed_treatments'),
         value: completed.toString(),
         description: t('treatments.completed_status'),
+        cardStyle: 'metric-card-green',
       },
       {
         title: t('treatments.in_progress_status'),
         value: inProgress.toString(),
         description: t('treatments.in_progress'),
+        cardStyle: 'metric-card-purple',
       },
       {
         title: t('treatments.pending_treatments'),
         value: pending.toString(),
         description: t('treatments.pending_status'),
+        cardStyle: 'metric-card-orange',
       },
     ];
   }, [treatments, t]);
@@ -319,16 +323,38 @@ export default function TreatmentsPage() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {treatmentPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+          {treatmentPageStats.map((stat, idx) => (
+            <Card
+              key={stat.title}
+              className={cn(
+                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                stat.cardStyle
+              )}
+              role="button"
+              tabIndex={0}
+              aria-label={stat.title}
+              onClick={() => {
+                // 0: total, 1: completed, 2: in-progress, 3: pending
+                if (idx === 0) setStatusFilter('all');
+                else if (idx === 1) setStatusFilter('completed');
+                else if (idx === 2) setStatusFilter('in_progress');
+                else if (idx === 3) setStatusFilter('pending');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLDivElement).click();
+                }
+              }}
+            >
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-2xl font-bold text-white drop-shadow-sm">{stat.value}</div>
+                <p className="text-xs text-white/80 font-medium">
                   {stat.description}
                 </p>
               </CardContent>

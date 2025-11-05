@@ -106,10 +106,10 @@ export default function PatientsPage() {
     const averageAge = totalPatients > 0 ? Math.round(patients.reduce((acc, p) => acc + p.age, 0) / totalPatients) : 0;
 
    return [
-     { title: t('patients.total_patients'), value: totalPatients, icon: "User", description: t('patients.all_patients_description') },
-     { title: t('patients.new_patients_30d'), value: newPatients, icon: "UserPlus", description: t('patients.recent_visits_description'), valueClassName: "text-green-600" },
-     { title: t('patients.inactive_patients'), value: inactivePatients, icon: "UserMinus", description: t('patients.inactive_description'), valueClassName: "text-red-600" },
-     { title: t('patients.average_age'), value: averageAge, icon: "UserCheck", description: t('patients.average_age_description') },
+     { title: t('patients.total_patients'), value: totalPatients, icon: "User", description: t('patients.all_patients_description'), cardStyle: 'metric-card-blue' },
+     { title: t('patients.new_patients_30d'), value: newPatients, icon: "UserPlus", description: t('patients.recent_visits_description'), cardStyle: 'metric-card-green' },
+     { title: t('patients.inactive_patients'), value: inactivePatients, icon: "UserMinus", description: t('patients.inactive_description'), cardStyle: 'metric-card-orange' },
+     { title: t('patients.average_age'), value: averageAge, icon: "UserCheck", description: t('patients.average_age_description'), cardStyle: 'metric-card-purple' },
    ];
   }, [patients, t]);
 
@@ -175,21 +175,44 @@ export default function PatientsPage() {
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-            {patientPageStats.map((stat) => {
+            {patientPageStats.map((stat, idx) => {
               const Icon = iconMap[stat.icon as IconKey];
               return (
-                <Card key={stat.title}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                <Card
+                  key={stat.title}
+                  className={cn(
+                    'relative overflow-hidden border-0 shadow-xl transition-all duration-500',
+                    stat.cardStyle
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={stat.title}
+                  onClick={() => {
+                    // 0: total -> all, 1: new (no filter available, keep all), 2: inactive -> inactive filter, 3: avg age -> all
+                    if (idx === 2) setStatusFilter('inactive');
+                    else setStatusFilter('all');
+                    setSearchTerm('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      (e.currentTarget as HTMLDivElement).click();
+                    }
+                  }}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
+                    <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
                       {stat.title}
                     </CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm">
+                      <Icon className="h-5 w-5 text-white drop-shadow-sm" />
+                    </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className={cn('text-lg sm:text-2xl font-bold', stat.valueClassName)}>
+                    <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-sm">
                       {stat.value}
                     </div>
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                    <p className="text-xs text-white/80 font-medium">{stat.description}</p>
                   </CardContent>
                 </Card>
               );

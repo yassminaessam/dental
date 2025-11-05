@@ -29,7 +29,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2 } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2, Globe } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
@@ -38,6 +38,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { listDocuments, updateDocument, deleteDocument, setDocument } from '@/lib/data-client';
 import type { Message } from '@/lib/types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import AdminContent from '@/components/patient-portal/AdminContent';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 
 export type PortalUser = {
@@ -58,8 +61,11 @@ export type SharedDocument = {
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
@@ -85,13 +91,27 @@ export default function PatientPortalPage() {
         setPortalUsers(userData);
         setSharedDocuments(docData);
       } catch (error) {
-        toast({ title: 'Error fetching portal data', variant: 'destructive' });
+        toast({ title: t('patient_portal.toast.error_fetching'), variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [toast]);
+  }, [toast, t]);
+
+  React.useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
+  const onTabChange = (value: string) => {
+    setActiveTab(value);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', value);
+      router.replace(url.pathname + '?' + url.searchParams.toString());
+    }
+  };
 
 
   const pendingRequests = React.useMemo(() => {
@@ -101,12 +121,12 @@ export default function PatientPortalPage() {
   const patientPortalPageStats = React.useMemo(() => {
     const unreadMessages = messages.filter(m => m.status === 'Unread').length;
     return [
-      { title: "Active Portal Users", value: portalUsers.length, description: "Patients with portal access" },
-      { title: "Unread Messages", value: unreadMessages, description: "New messages from patients", valueClassName: "text-orange-500" },
-      { title: "Pending Requests", value: pendingRequests.length, description: "Appointment requests to review", valueClassName: "text-red-500" },
-      { title: "Shared Documents", value: sharedDocuments.length, description: "Documents available to patients" },
+      { title: t('patient_portal.active_portal_users'), value: portalUsers.length, description: t('patient_portal.patients_with_portal_access') },
+      { title: t('patient_portal.unread_messages'), value: unreadMessages, description: t('patient_portal.new_messages_from_patients'), valueClassName: "text-orange-500" },
+      { title: t('patient_portal.pending_requests'), value: pendingRequests.length, description: t('patient_portal.appointment_requests_to_review'), valueClassName: "text-red-500" },
+      { title: t('patient_portal.shared_documents'), value: sharedDocuments.length, description: t('patient_portal.documents_available_to_patients') },
     ];
-  }, [messages, portalUsers, pendingRequests, sharedDocuments]);
+  }, [messages, portalUsers, pendingRequests, sharedDocuments, t]);
 
 
   const handleRequestStatusChange = async (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
@@ -116,12 +136,12 @@ export default function PatientPortalPage() {
           appt.id === appointmentId ? { ...appt, status: newStatus } : appt
         ));
         toast({
-          title: `Request ${newStatus === 'Confirmed' ? 'Approved' : 'Declined'}`,
-          description: `Appointment ${appointmentId} has been marked as ${newStatus}.`,
+          title: t('patient_portal.toast.request_updated'),
+          description: t('patient_portal.toast.request_updated_desc'),
           variant: newStatus === 'Cancelled' ? 'destructive' : undefined,
         });
     } catch (error) {
-        toast({ title: 'Error updating request status', variant: 'destructive' });
+        toast({ title: t('patient_portal.toast.error_updating_request'), variant: 'destructive' });
     }
   };
 
@@ -153,11 +173,11 @@ export default function PatientPortalPage() {
       };
       await setDocument('messages', newMessage.id, newMessage);
       toast({
-        title: "Message Sent",
-        description: `A new ${data.type} has been sent to ${data.patient}.`,
+        title: t('patient_portal.toast.message_sent'),
+        description: t('patient_portal.toast.message_sent_desc'),
       });
     } catch(e) {
-        toast({ title: 'Error sending message', variant: 'destructive' });
+        toast({ title: t('patient_portal.toast.error_sending_message'), variant: 'destructive' });
     }
   };
 
@@ -170,19 +190,19 @@ export default function PatientPortalPage() {
         await updateDocument('portal-users', userId, { status: newStatus });
         setPortalUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
         toast({
-            title: "User Status Updated",
-            description: `${user.name}'s portal access has been ${newStatus.toLowerCase()}.`,
-            variant: newStatus === 'Deactivated' ? 'destructive' : undefined
+          title: t('patient_portal.toast.user_status_updated'),
+          description: t('patient_portal.toast.user_status_updated_desc'),
+          variant: newStatus === 'Deactivated' ? 'destructive' : undefined
         });
     } catch (e) {
-        toast({ title: 'Error updating user status', variant: 'destructive' });
+        toast({ title: t('patient_portal.toast.error_updating_user_status'), variant: 'destructive' });
     }
   };
 
   const handleResetPassword = (userName: string) => {
     toast({
-        title: "Password Reset Sent",
-        description: `A password reset link has been sent to ${userName}.`
+      title: t('patient_portal.toast.notification_sent'),
+      description: t('patient_portal.toast.notification_sent_desc')
     });
   };
 
@@ -193,19 +213,19 @@ export default function PatientPortalPage() {
         await deleteDocument('shared-documents', docId);
         setSharedDocuments(prev => prev.filter(d => d.id !== docId));
         toast({
-            title: "Document Access Revoked",
-            description: `Access to "${doc.name}" has been revoked for ${doc.patient}.`,
-            variant: "destructive",
+          title: t('patient_portal.toast.document_revoked'),
+          description: t('patient_portal.toast.document_revoked_desc'),
+          variant: "destructive",
         });
     } catch (e) {
-        toast({ title: 'Error revoking document', variant: 'destructive' });
+        toast({ title: t('patient_portal.toast.error_revoking_document'), variant: 'destructive' });
     }
   };
   
   const handleSaveChanges = () => {
     toast({
-        title: "Settings Saved",
-        description: "Your patient portal settings have been successfully updated.",
+      title: t('settings.toast.settings_saved'),
+      description: t('settings.toast.settings_saved_desc'),
     });
   };
 
@@ -220,25 +240,29 @@ export default function PatientPortalPage() {
               <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
                 <User className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Digital Portal</span>
+              <span className="text-sm font-medium text-muted-foreground">{t('patient_portal.title')}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Patient Portal Management
+              {t('patient_portal.management_title')}
             </h1>
             <p className="text-muted-foreground font-medium">
-              Elite Patient Experience Platform
+              {t('patient_portal.management_subtitle')}
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button variant="outline" onClick={() => setActiveTab('settings')} className="elite-button-outline">
+            <Button variant="outline" onClick={() => onTabChange('settings')} className="elite-button-outline">
               <Settings className="mr-2 h-4 w-4" />
-              Portal Settings
+              {t('patient_portal.portal_settings')}
+            </Button>
+            <Button variant="outline" onClick={() => onTabChange('content-admin')} className="elite-button-outline">
+              <Globe className="mr-2 h-4 w-4" />
+              {t('patient_portal_admin.portal_content_settings')}
             </Button>
             <NewMessageDialog 
               onSend={handleSendMessage}
-              triggerButtonText="Send Message"
-              dialogTitle="Send a New Message"
-              dialogDescription="Compose and send a message to a patient."
+              triggerButtonText={t('patient_portal.send_message')}
+              dialogTitle={t('patient_portal.dialog.send_new_message.title')}
+              dialogDescription={t('patient_portal.dialog.send_new_message.description')}
             />
           </div>
         </div>
@@ -279,7 +303,7 @@ export default function PatientPortalPage() {
                   </p>
                   <div className="flex items-center gap-2 mt-3">
                     <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    <span className="text-xs text-white/70 font-medium">Online</span>
+                    <span className="text-xs text-white/70 font-medium">{t('patient_portal.online')}</span>
                   </div>
                 </CardContent>
                 
@@ -290,49 +314,55 @@ export default function PatientPortalPage() {
         </div>
 
         {/* Elite Patient Portal Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl grid w-full grid-cols-2 md:w-auto md:grid-cols-5">
+        <Tabs value={activeTab} onValueChange={onTabChange}>
+          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl grid w-full grid-cols-2 md:w-auto md:grid-cols-6">
             <TabsTrigger 
               value="messages" 
               className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
             >
-              Messages
+              {t('patient_portal.tabs.messages')}
             </TabsTrigger>
             <TabsTrigger 
               value="requests" 
               className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
             >
-              Appointment Requests
+              {t('patient_portal.tabs.requests')}
               {pendingRequests.length > 0 && <Badge className="ml-2 bg-primary text-primary-foreground">{pendingRequests.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
               className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
             >
-              Portal Users
+              {t('patient_portal.tabs.users')}
             </TabsTrigger>
             <TabsTrigger 
               value="documents" 
               className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
             >
-              Documents
+              {t('patient_portal.tabs.documents')}
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
               className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
             >
-              Portal Settings
+              {t('patient_portal.tabs.settings')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="content-admin" 
+              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              {t('patient_portal_admin.tabs.content')}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="messages" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Patient Messages</CardTitle>
+                <CardTitle>{t('patient_portal.section.patient_messages')}</CardTitle>
                 <div className="relative w-full md:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search messages..."
+                    placeholder={t('patient_portal.search_messages')}
                     className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
                   />
                 </div>
@@ -341,13 +371,13 @@ export default function PatientPortalPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[150px]">Patient</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[150px]">{t('patient_portal.table.patient')}</TableHead>
+                      <TableHead>{t('patient_portal.table.subject')}</TableHead>
+                      <TableHead>{t('patient_portal.table.category')}</TableHead>
+                      <TableHead>{t('patient_portal.table.priority')}</TableHead>
+                      <TableHead>{t('patient_portal.table.date')}</TableHead>
+                      <TableHead>{t('patient_portal.table.status')}</TableHead>
+                      <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -367,14 +397,14 @@ export default function PatientPortalPage() {
                             <div className="text-sm text-muted-foreground">{message.snippet}</div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="capitalize">{message.category}</Badge>
+                            <Badge variant="outline" className="capitalize">{t(`patient_portal.category.${message.category}`) || message.category}</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant={message.priority === 'high' ? 'destructive' : 'secondary'}
                               className="capitalize"
                             >
-                              {message.priority}
+                              {message.priority === 'high' ? t('patient_portal.priority.high') : t('patient_portal.priority.normal')}
                             </Badge>
                           </TableCell>
                           <TableCell>{message.date}</TableCell>
@@ -384,18 +414,18 @@ export default function PatientPortalPage() {
                                     <Circle className="h-3 w-3 text-primary fill-primary" /> : 
                                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                                 }
-                                <span>{message.status}</span>
+                                <span>{message.status === 'Unread' ? t('patient_portal.message_status.unread') : t('patient_portal.message_status.sent')}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Button variant="outline" size="sm" onClick={() => setSelectedMessage(message)}>
                                 <Eye className="mr-2 h-3 w-3" />
-                                View
+                                {t('patient_portal.actions.view')}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleReply(message)}>
                                 <Reply className="mr-2 h-3 w-3" />
-                                Reply
+                                {t('patient_portal.actions.reply')}
                               </Button>
                             </div>
                           </TableCell>
@@ -404,7 +434,7 @@ export default function PatientPortalPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                          No messages found.
+                          {t('patient_portal.empty.no_messages')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -416,17 +446,17 @@ export default function PatientPortalPage() {
           <TabsContent value="requests" className="mt-4">
              <Card>
                 <CardHeader>
-                  <CardTitle>Pending Appointment Requests</CardTitle>
+                  <CardTitle>{t('patient_portal.section.pending_requests')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Requested Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t('patient_portal.table.patient')}</TableHead>
+                        <TableHead>{t('patient_portal.table.doctor')}</TableHead>
+                        <TableHead>{t('patient_portal.table.requested_date')}</TableHead>
+                        <TableHead>{t('patient_portal.table.type')}</TableHead>
+                        <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -442,10 +472,10 @@ export default function PatientPortalPage() {
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Confirmed')}>
-                                  <Check className="mr-2 h-4 w-4" /> Approve
+                                  <Check className="mr-2 h-4 w-4" /> {t('patient_portal.actions.approve')}
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Cancelled')}>
-                                  <X className="mr-2 h-4 w-4" /> Decline
+                                  <X className="mr-2 h-4 w-4" /> {t('patient_portal.actions.decline')}
                                 </Button>
                               </div>
                             </TableCell>
@@ -454,7 +484,7 @@ export default function PatientPortalPage() {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={5} className="h-24 text-center">
-                            No pending appointment requests found.
+                            {t('patient_portal.empty.no_requests')}
                           </TableCell>
                         </TableRow>
                       )}
@@ -466,18 +496,18 @@ export default function PatientPortalPage() {
           <TabsContent value="users" className="mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Portal Users</CardTitle>
-                    <CardDescription>Manage patient access to the portal.</CardDescription>
+                    <CardTitle>{t('patient_portal.section.portal_users')}</CardTitle>
+                    <CardDescription>{t('patient_portal.section.portal_users_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Patient</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Last Login</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t('patient_portal.table.patient')}</TableHead>
+                                <TableHead>{t('patient_portal.table.email')}</TableHead>
+                                <TableHead>{t('patient_portal.table.last_login')}</TableHead>
+                                <TableHead>{t('patient_portal.table.status')}</TableHead>
+                                <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -489,15 +519,15 @@ export default function PatientPortalPage() {
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>{user.lastLogin}</TableCell>
                                     <TableCell>
-                                        <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>{user.status}</Badge>
+                                        <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>{user.status === 'Active' ? t('patient_portal.user_status.active') : t('patient_portal.user_status.deactivated')}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button variant="outline" size="sm" onClick={() => handleUserStatusChange(user.id)}>
-                                                {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                                {user.status === 'Active' ? t('patient_portal.actions.deactivate') : t('patient_portal.actions.activate')}
                                             </Button>
                                             <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.name)}>
-                                                <KeyRound className="mr-2 h-4 w-4" /> Reset Password
+                                                <KeyRound className="mr-2 h-4 w-4" /> {t('patient_portal.actions.reset_password')}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -511,18 +541,18 @@ export default function PatientPortalPage() {
           <TabsContent value="documents" className="mt-4">
              <Card>
                 <CardHeader>
-                    <CardTitle>Shared Documents</CardTitle>
-                    <CardDescription>Manage documents shared with patients via the portal.</CardDescription>
+                    <CardTitle>{t('patient_portal.section.shared_documents')}</CardTitle>
+                    <CardDescription>{t('patient_portal.section.shared_documents_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Document Name</TableHead>
-                                <TableHead>Patient</TableHead>
-                                <TableHead>Shared On</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t('patient_portal.table.document_name')}</TableHead>
+                                <TableHead>{t('patient_portal.table.patient')}</TableHead>
+                                <TableHead>{t('patient_portal.table.shared_on')}</TableHead>
+                                <TableHead>{t('patient_portal.table.type')}</TableHead>
+                                <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -534,15 +564,15 @@ export default function PatientPortalPage() {
                                     <TableCell>{doc.patient}</TableCell>
                                     <TableCell>{doc.sharedDate}</TableCell>
                                     <TableCell>
-                                        <Badge variant="secondary">{doc.type}</Badge>
+                                        <Badge variant="secondary">{doc.type === 'Treatment Plan' ? t('patient_portal.document_type.treatment_plan') : doc.type === 'Invoice' ? t('patient_portal.document_type.invoice') : t('patient_portal.document_type.lab_result')}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button variant="outline" size="sm">
-                                                <Eye className="mr-2 h-4 w-4" /> View Document
+                                                <Eye className="mr-2 h-4 w-4" /> {t('patient_portal.actions.view_document')}
                                             </Button>
                                             <Button variant="destructive" size="sm" onClick={() => handleRevokeDocument(doc.id)}>
-                                                <Trash2 className="mr-2 h-4 w-4" /> Revoke Access
+                                                <Trash2 className="mr-2 h-4 w-4" /> {t('patient_portal.actions.revoke_access')}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -556,26 +586,26 @@ export default function PatientPortalPage() {
           <TabsContent value="settings" className="mt-4">
              <Card>
                 <CardHeader>
-                    <CardTitle>Portal Settings</CardTitle>
-                    <p className="text-muted-foreground">Configure patient portal features and access.</p>
+                    <CardTitle>{t('patient_portal.portal_settings')}</CardTitle>
+                    <p className="text-muted-foreground">{t('patient_portal.section.portal_settings_desc')}</p>
                 </CardHeader>
                 <CardContent className="space-y-8">
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Access & Registration</h3>
+                    <h3 className="font-semibold text-lg">{t('patient_portal.settings.access_and_registration')}</h3>
                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
                       <div className="flex flex-col">
-                        <Label htmlFor="allow-registration">Allow New Patient Registration</Label>
+                        <Label htmlFor="allow-registration">{t('patient_portal.settings.allow_registration')}</Label>
                         <span className="text-sm text-muted-foreground">
-                          Allow new users to register for the portal directly.
+                          {t('patient_portal.settings.allow_registration_desc')}
                         </span>
                       </div>
                       <Switch id="allow-registration" defaultChecked />
                     </div>
                      <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
                       <div className="flex flex-col">
-                        <Label htmlFor="auto-enroll">Automatically Enroll New Patients</Label>
+                        <Label htmlFor="auto-enroll">{t('patient_portal.settings.auto_enroll')}</Label>
                         <span className="text-sm text-muted-foreground">
-                          Send a portal invitation to every new patient added to the system.
+                          {t('patient_portal.settings.auto_enroll_desc')}
                         </span>
                       </div>
                       <Switch id="auto-enroll" />
@@ -583,30 +613,30 @@ export default function PatientPortalPage() {
                   </div>
 
                    <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Features</h3>
+                    <h3 className="font-semibold text-lg">{t('patient_portal.settings.features')}</h3>
                      <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
                       <div className="flex flex-col">
-                        <Label htmlFor="allow-booking">Online Appointment Booking</Label>
+                        <Label htmlFor="allow-booking">{t('patient_portal.settings.online_booking')}</Label>
                         <span className="text-sm text-muted-foreground">
-                          Allow patients to request new appointments through the portal.
+                          {t('patient_portal.settings.online_booking_desc')}
                         </span>
                       </div>
                       <Switch id="allow-booking" defaultChecked />
                     </div>
                      <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
                       <div className="flex flex-col">
-                        <Label htmlFor="allow-messaging">Secure Messaging</Label>
+                        <Label htmlFor="allow-messaging">{t('patient_portal.settings.secure_messaging')}</Label>
                         <span className="text-sm text-muted-foreground">
-                          Enable two-way secure messaging between patients and staff.
+                          {t('patient_portal.settings.secure_messaging_desc')}
                         </span>
                       </div>
                       <Switch id="allow-messaging" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
                       <div className="flex flex-col">
-                        <Label htmlFor="show-billing">Show Billing Information</Label>
+                        <Label htmlFor="show-billing">{t('patient_portal.settings.show_billing')}</Label>
                         <span className="text-sm text-muted-foreground">
-                          Allow patients to view their invoices and payment history.
+                          {t('patient_portal.settings.show_billing_desc')}
                         </span>
                       </div>
                       <Switch id="show-billing" />
@@ -614,9 +644,12 @@ export default function PatientPortalPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
-                    <Button onClick={handleSaveChanges}>Save Changes</Button>
+                    <Button onClick={handleSaveChanges}>{t('patient_portal.actions.save_changes')}</Button>
                 </CardFooter>
              </Card>
+          </TabsContent>
+          <TabsContent value="content-admin" className="mt-4">
+            <AdminContent />
           </TabsContent>
         </Tabs>
       </main>

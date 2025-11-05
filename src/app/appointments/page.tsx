@@ -87,10 +87,10 @@ export default function AppointmentsPage() {
     const todays = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
 
     return [
-      { title: t('reports.total_appointments'), value: total, description: t('appointments.stats.all_scheduled') },
-      { title: t('appointments.stats.pending'), value: pending, description: t('appointments.stats.awaiting_confirmation'), valueClassName: "text-orange-500" },
-      { title: t('appointments.stats.confirmed'), value: confirmed, description: t('appointments.stats.ready_for_visit'), valueClassName: "text-green-600" },
-      { title: t('dashboard.todays_appointments'), value: todays, description: t('appointments.stats.scheduled_for_today') },
+      { title: t('reports.total_appointments'), value: total, description: t('appointments.stats.all_scheduled'), cardStyle: 'metric-card-blue' },
+      { title: t('appointments.stats.pending'), value: pending, description: t('appointments.stats.awaiting_confirmation'), cardStyle: 'metric-card-orange' },
+      { title: t('appointments.stats.confirmed'), value: confirmed, description: t('appointments.stats.ready_for_visit'), cardStyle: 'metric-card-green' },
+      { title: t('dashboard.todays_appointments'), value: todays, description: t('appointments.stats.scheduled_for_today'), cardStyle: 'metric-card-purple' },
     ];
   }, [appointments, t]);
 
@@ -150,18 +150,49 @@ export default function AppointmentsPage() {
         </div>
 
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-          {appointmentPageStats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+          {appointmentPageStats.map((stat, idx) => (
+            <Card
+              key={stat.title}
+              className={cn(
+                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                stat.cardStyle
+              )}
+              role="button"
+              tabIndex={0}
+              aria-label={stat.title}
+              onClick={() => {
+                // 0: total (all), 1: pending, 2: confirmed, 3: today's
+                if (idx === 0) {
+                  setActiveView('list');
+                  setStatusFilter('all');
+                } else if (idx === 1) {
+                  setActiveView('list');
+                  setStatusFilter('pending');
+                } else if (idx === 2) {
+                  setActiveView('list');
+                  setStatusFilter('confirmed');
+                } else if (idx === 3) {
+                  setActiveView('calendar');
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLDivElement).click();
+                }
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className={cn("text-lg sm:text-2xl font-bold", stat.valueClassName)}>
+                <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-sm">
                   {stat.value}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/80 font-medium">
                   {stat.description}
                 </p>
               </CardContent>

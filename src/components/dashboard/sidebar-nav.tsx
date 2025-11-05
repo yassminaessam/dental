@@ -32,6 +32,7 @@ import {
   Receipt,
   Shield,
   LogOut,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -161,11 +162,11 @@ export function SidebarNav() {
       permission: "view_communications",
     },
     {
-      href: "/patient-home-admin",
+      href: "/patient-portal?tab=content-admin",
       icon: Globe,
-  label: t('nav.patient_portal'),
+  label: t('patient_portal.management_title'),
       subLabel: t('nav.patient_portal_admin_desc'),
-      permission: "view_patient_portal",
+      permission: "edit_patient_portal",
     },
     {
       href: "/patient-portal",
@@ -260,7 +261,9 @@ export function SidebarNav() {
       <SidebarMenu className="flex-grow space-y-2">
         {visibleItems.map((item, index) => {
           const IconComponent = item.icon;
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const hrefPath = typeof item.href === 'string' ? item.href.split('?')[0] : (item.href as any)?.pathname ?? '';
+          const isActive = pathname === hrefPath || (hrefPath !== "/" && pathname.startsWith(hrefPath));
+          const isPatientPortalExternal = hrefPath === '/patient-portal';
           const colors = colorStyles[index % colorStyles.length];
           
           return (
@@ -271,7 +274,7 @@ export function SidebarNav() {
                 className={`group relative w-full p-0 bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none`}
               >
                 <Link
-                  href={item.href}
+                  href={item.href as any}
                   className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-2xl px-4 py-4 min-h-24 border border-sidebar-border/20 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 transition-all duration-300 relative overflow-hidden`}
                 >
                   {/* Active bar */}
@@ -279,8 +282,16 @@ export function SidebarNav() {
                     className={`absolute ${direction === 'rtl' ? 'right-0' : 'left-0'} top-0 h-full w-1.5 rounded-${direction === 'rtl' ? 'l' : 'r'}-full transition-all duration-300 ${isActive ? 'bg-sidebar-primary opacity-100' : 'bg-sidebar-primary/0 opacity-0 group-hover:opacity-60'}`}
                   />
                   {/* Icon */}
-                  <div className={`flex-shrink-0 self-center flex items-center justify-center w-14 h-14 rounded-xl ${colors.iconBg} ${colors.ring} ring-1 backdrop-blur-sm transition-all duration-300 group-hover:scale-105`}> 
+                  <div className={`relative flex-shrink-0 self-center flex items-center justify-center w-14 h-14 rounded-xl ${colors.iconBg} ${colors.ring} ring-1 backdrop-blur-sm transition-all duration-300 group-hover:scale-105`}> 
                     <IconComponent className={`h-7 w-7 ${colors.iconText}`} />
+                    {user?.role === 'patient' && isPatientPortalExternal && (
+                      <div
+                        title={t('nav.patient_portal')}
+                        className={`absolute -bottom-1 ${direction === 'rtl' ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-sidebar-primary text-sidebar-background flex items-center justify-center ring-2 ring-sidebar-background`}
+                      >
+                        <User className="w-3 h-3" />
+                      </div>
+                    )}
                   </div>
                   {/* Text Block */}
                   <div className={`flex flex-col flex-1 justify-center ${direction === 'rtl' ? 'pr-1' : 'pl-1'} py-1`}> 
