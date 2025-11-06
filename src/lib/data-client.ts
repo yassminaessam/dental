@@ -45,15 +45,21 @@ export async function listDocuments<T = any>(collection: string, opts?: QueryOpt
 
 // Get a single document
 export async function getDocument<T = any>(collection: string, id: string): Promise<T | null> {
-  const res = await fetch(`/api/documents/${collection}/${id}`);
+  // Use generic collections endpoint to support collections without direct Prisma models
+  const res = await fetch(`/api/collections/${collection}/${id}`);
   if (res.status === 404) return null;
-  return handleJson(res);
+  const data = await handleJson(res);
+  if (data && typeof data === 'object' && 'document' in data) {
+    return (data as any).document as T ?? null;
+  }
+  return data as T;
 }
 
 // Create or overwrite (PATCH used in current API as upsert)
 export async function setDocument<T = any>(collection: string, id: string, data: any): Promise<T> {
-  const res = await fetch(`/api/documents/${collection}/${id}`, {
-    method: 'PATCH',
+  // PUT upsert on collections endpoint
+  const res = await fetch(`/api/collections/${collection}/${id}`, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
@@ -62,8 +68,9 @@ export async function setDocument<T = any>(collection: string, id: string, data:
 
 // Update (PUT) existing document (partial semantics server-side)
 export async function updateDocument<T = any>(collection: string, id: string, data: any): Promise<T> {
-  const res = await fetch(`/api/documents/${collection}/${id}`, {
-    method: 'PUT',
+  // PATCH for partial updates
+  const res = await fetch(`/api/collections/${collection}/${id}`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
@@ -72,7 +79,7 @@ export async function updateDocument<T = any>(collection: string, id: string, da
 
 // Delete document
 export async function deleteDocument(collection: string, id: string): Promise<void> {
-  const res = await fetch(`/api/documents/${collection}/${id}`, { method: 'DELETE' });
+  const res = await fetch(`/api/collections/${collection}/${id}`, { method: 'DELETE' });
   if (res.status === 404) return; // idempotent
   await handleJson(res);
 }
