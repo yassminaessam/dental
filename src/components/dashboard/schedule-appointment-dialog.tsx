@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient, StaffMember } from '@/lib/types';
@@ -244,7 +244,7 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                             field.onChange(date)
                             setDateOpen(false)
                           }}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) => date < startOfToday()}
                           initialFocus
                         />
                       </PopoverContent>
