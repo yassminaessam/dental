@@ -98,7 +98,13 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
           })) as Patient[]
         );
         const staffData = await fetchCollection<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+        // Include both 'doctor' and 'dentist' roles (case-insensitive)
+        setDoctors(
+          staffData.filter((s) => {
+            const r = (s.role || '').toLowerCase();
+            return r === 'dentist' || r === 'doctor';
+          })
+        );
       } catch (error) {
         console.error('Error loading scheduling data', error);
       }

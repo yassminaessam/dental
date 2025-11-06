@@ -91,7 +91,13 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
           })) as Patient[]
         );
         const staffData = await listCollection<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+        // Include both 'doctor' and 'dentist' roles (case-insensitive)
+        setDoctors(
+          staffData.filter((s) => {
+            const r = (s.role || '').toLowerCase();
+            return r === 'dentist' || r === 'doctor';
+          })
+        );
       } catch (error) {
         console.error('Error loading appointment data', error);
       }
