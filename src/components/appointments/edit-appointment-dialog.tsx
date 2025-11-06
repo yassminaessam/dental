@@ -28,6 +28,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Input } from '@/components/ui/input';
 import type { Appointment, Patient, StaffMember } from '@/lib/types';
 import { listCollection } from '@/services/datastore';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -53,14 +54,7 @@ const appointmentTypesData = [
   { name: "Root Canal" },
 ];
 
-const availableTimeSlots = [
-  "09:00",
-  "10:30",
-  "11:00",
-  "14:00",
-  "15:30",
-  "16:00",
-];
+// Time selection now uses input[type="time"] to allow any time.
 
 const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
@@ -250,20 +244,14 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               render={({ field }) => (
                 <FormItem>
       <FormLabel>{t('appointments.time')} *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-        <SelectValue placeholder={t('appointments.select_time')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableTimeSlots.map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      step={300}
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

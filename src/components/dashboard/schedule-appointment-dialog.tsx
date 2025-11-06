@@ -29,6 +29,7 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Input } from '@/components/ui/input';
 import type { Patient, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { AppointmentCreateInput } from '@/services/appointments.types';
@@ -61,14 +62,7 @@ const appointmentTypesData = [
   { name: "Root Canal" },
 ];
 
-const availableTimeSlots = [
-  "09:00",
-  "10:30",
-  "11:00",
-  "14:00",
-  "15:30",
-  "16:00",
-];
+// Time is now free-entry via input[type="time"].
 
 const appointmentDurations = ['30 minutes', '1 hour', '1.5 hours', '2 hours'];
 
@@ -259,20 +253,17 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 render={({ field }) => (
                   <FormItem>
         <FormLabel className="text-sm font-medium">{t('appointments.time')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9 sm:h-10">
-          <SelectValue placeholder={t('appointments.select_time')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableTimeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        step={300}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="h-9 sm:h-10"
+                        placeholder={t('appointments.select_time') || undefined}
+                        required
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
