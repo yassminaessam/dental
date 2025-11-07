@@ -22,21 +22,21 @@ interface ViewPatientDialogProps {
 }
 
 export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDialogProps) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   if (!patient) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl elite-dialog-content">
-        <DialogHeader className="elite-dialog-header">
-          <DialogTitle className="elite-dialog-title">{`${patient.name} ${patient.lastName}`}</DialogTitle>
+      <DialogContent dir={isRTL ? 'rtl' : 'ltr'} className={isRTL ? 'sm:max-w-3xl max-h-[90vh] overflow-y-auto elite-dialog-content text-right' : 'sm:max-w-3xl max-h-[90vh] overflow-y-auto elite-dialog-content'}>
+        <DialogHeader className={isRTL ? 'elite-dialog-header text-right items-end' : 'elite-dialog-header'}>
+          <DialogTitle className={isRTL ? 'elite-dialog-title flex flex-row-reverse items-center gap-2 justify-end text-right' : 'elite-dialog-title'}>{`${patient.name} ${patient.lastName}`}</DialogTitle>
           <DialogDescription asChild>
-            <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-muted/50 backdrop-blur-sm">
+            <div className={isRTL ? 'flex flex-row-reverse items-center gap-4 mt-3 justify-end' : 'flex items-center gap-4 mt-3'}>
+              <div className={isRTL ? 'flex flex-row-reverse items-center gap-2 px-3 py-1 rounded-lg bg-muted/50 backdrop-blur-sm' : 'flex items-center gap-2 px-3 py-1 rounded-lg bg-muted/50 backdrop-blur-sm'}>
                 <span className="text-sm font-medium text-muted-foreground">{t('patients.patient_id')}:</span>
                 <span className="font-mono text-sm font-bold">{patient.id}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={isRTL ? 'flex flex-row-reverse items-center gap-2' : 'flex items-center gap-2'}>
                 <span className="text-sm font-medium text-muted-foreground">{t('common.status')}:</span>
                 <Badge 
                   variant={patient.status === 'Active' ? 'default' : 'secondary'}
@@ -48,10 +48,10 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
             </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 text-sm">
+        <div className={isRTL ? 'grid gap-6 text-sm text-right' : 'grid gap-6 text-sm'}>
           
           <div className="elite-dialog-section">
-            <div className="flex items-center gap-2 mb-4">
+            <div className={isRTL ? 'flex flex-row-reverse items-center gap-2 mb-4 justify-end text-right' : 'flex items-center gap-2 mb-4'}>
               <div className="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-accent" />
               <h4 className="font-bold text-base bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 {t('patients.personal_information')}
@@ -81,8 +81,8 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
             </div>
           </div>
 
-          <div>
-      <h4 className="font-semibold text-base mb-2">{t('patients.emergency_contact')}</h4>
+            <div className={isRTL ? 'text-right' : undefined}>
+          <h4 className={isRTL ? 'font-semibold text-base mb-2 flex flex-row-reverse items-center justify-end' : 'font-semibold text-base mb-2'}>{t('patients.emergency_contact')}</h4>
              <div className="grid grid-cols-3 gap-4 border p-4 rounded-lg">
                 <div>
         <h5 className="font-medium text-muted-foreground">{t('patients.ec_name')}</h5>
@@ -99,8 +99,8 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
             </div>
           </div>
           
-           <div>
-      <h4 className="font-semibold text-base mb-2">{t('patients.insurance_information')}</h4>
+           <div className={isRTL ? 'text-right' : undefined}>
+         <h4 className={isRTL ? 'font-semibold text-base mb-2 flex flex-row-reverse items-center justify-end' : 'font-semibold text-base mb-2'}>{t('patients.insurance_information')}</h4>
              <div className="grid grid-cols-2 gap-4 border p-4 rounded-lg">
                 <div>
         <h5 className="font-medium text-muted-foreground">{t('patients.insurance_provider')}</h5>
@@ -113,8 +113,8 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
             </div>
           </div>
 
-          <div>
-      <h4 className="font-semibold text-base mb-2">{t('patients.medical_history')}</h4>
+            <div className={isRTL ? 'text-right' : undefined}>
+          <h4 className={isRTL ? 'font-semibold text-base mb-2 flex flex-row-reverse items-center justify-end' : 'font-semibold text-base mb-2'}>{t('patients.medical_history')}</h4>
              <div className="border p-4 rounded-lg">
                 {patient.medicalHistory && patient.medicalHistory.length > 0 ? (
                     <ul className="list-disc list-inside">

@@ -85,6 +85,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const isRTL = false; // Force LTR layout as requested
   // Local date helpers
   const toValidDate = React.useCallback((value: any): Date | null => {
     if (!value) return null;
@@ -376,13 +377,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
           {children}
         </DialogTrigger>
       )}
-  <DialogContent className="max-w-[98vw] sm:max-w-6xl lg:max-w-7xl h-[98vh] sm:h-[90vh] overflow-hidden flex flex-col p-2 sm:p-4 lg:p-6">
-        <DialogHeader className="flex-shrink-0 pb-2 sm:pb-4 border-b">
-          <DialogTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+    <DialogContent className="max-w-[96vw] sm:max-w-[92vw] md:max-w-4xl lg:max-w-6xl xl:max-w-7xl h-[95vh] sm:h-[92vh] md:h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col p-2 sm:p-3 md:p-5 lg:p-6" dir="ltr">
+      <DialogHeader className={cn("sticky top-0 z-10 bg-background/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm pb-2 sm:pb-3 md:pb-4 border-b shadow-sm", isRTL ? "text-right sm:text-right" : "text-left sm:text-left") }>
+          <DialogTitle className={cn("flex items-center gap-2 text-sm sm:text-base md:text-lg", isRTL ? "text-right sm:text-right" : "text-left sm:text-left") }>
             <User className="h-4 w-4 sm:h-5 sm:w-5" />
     <span className="truncate">{t('patients.comprehensive_history_title')} - {patient.name} {patient.lastName}</span>
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
+          <DialogDescription className={cn("text-xs sm:text-sm", isRTL ? "text-right sm:text-right" : "text-left sm:text-left") }>
     {t('patients.comprehensive_history_desc', { id: patient.id })}
           </DialogDescription>
         </DialogHeader>
@@ -395,89 +396,88 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
             </div>
           </div>
         ) : historyData && stats ? (
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <ScrollArea className="h-full w-full">
-              <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-1 pr-4">
+          <div className="flex-1 min-h-0">
+              <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-1 sm:p-2 md:p-0">
                 {/* Patient Overview Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-2 sm:gap-4">
-        <Card className="p-2 sm:p-3">
+              <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x sm:snap-none pb-2 sm:pb-0 [-webkit-overflow-scrolling:touch]">
+                {/* Stats cards */}
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalVisits}</div>
           <div className="text-xs text-muted-foreground">{t('patients.total_visits')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Stethoscope className="h-4 w-4 sm:h-6 sm:w-6 text-green-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.completedTreatments}</div>
           <div className="text-xs text-muted-foreground">{t('treatments.title')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <FileText className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalRecords}</div>
           <div className="text-xs text-muted-foreground">{t('patients.records_count_label')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Image className="h-4 w-4 sm:h-6 sm:w-6 text-orange-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalImages}</div>
           <div className="text-xs text-muted-foreground">{t('patients.images_count_label')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-red-600 mx-auto mb-1" />
                     <div className="text-sm sm:text-xl font-bold">EGP {stats.totalSpent.toLocaleString()}</div>
           <div className="text-xs text-muted-foreground">{t('patients.total_paid_label')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-indigo-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.activeClaims}</div>
           <div className="text-xs text-muted-foreground">{t('patients.active_claims')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Mail className="h-4 w-4 sm:h-6 sm:w-6 text-cyan-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalMessages}</div>
           <div className="text-xs text-muted-foreground">{t('patients.messages')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Heart className="h-4 w-4 sm:h-6 sm:w-6 text-pink-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.activePrescriptions}</div>
           <div className="text-xs text-muted-foreground">{t('patients.rx_active')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-violet-600 mx-auto mb-1" />
                     <div className="text-lg sm:text-xl font-bold">{stats.totalReferrals}</div>
           <div className="text-xs text-muted-foreground">{t('patients.referrals')}</div>
                   </div>
                 </Card>
-                <Card className="p-2 sm:p-3">
+                <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-gray-600 mx-auto mb-1" />
                     <div className="text-xs sm:text-sm font-bold">{stats.lastVisit}</div>
           <div className="text-xs text-muted-foreground">{t('patients.last_visit')}</div>
                   </div>
                 </Card>
-              </div>
+                </div>
 
-        <Tabs defaultValue="timeline" className="w-full">
+              <Tabs defaultValue="timeline" className="w-full mt-1 sm:mt-2">
                 {/* Horizontal scrollable tab list */}
                 <div className="relative border-b">
-                  <ScrollArea className="w-full" orientation="horizontal">
-                    <div className="w-full overflow-x-auto">
-                      <TabsList className="inline-flex h-10 items-center justify-start rounded-none bg-transparent p-0 w-max min-w-full">
+                  <div className="w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+                      <TabsList className={cn("inline-flex h-10 items-center rounded-none bg-transparent p-0 w-max", isRTL ? "justify-end" : "justify-start")}> 
             <TabsTrigger value="timeline" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.timeline')}</TabsTrigger>
             <TabsTrigger value="personal" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.personal')}</TabsTrigger>
             <TabsTrigger value="medical" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.medical')}</TabsTrigger>
@@ -489,7 +489,6 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
             <TabsTrigger value="referrals" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.referrals')}</TabsTrigger>
                       </TabsList>
                     </div>
-                  </ScrollArea>
                   <div className="sm:hidden text-center py-1 text-xs text-muted-foreground bg-muted/30">
           ← {t('patients.hint.swipe_tabs')} →
                   </div>
@@ -498,8 +497,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Timeline View */}
               <TabsContent value="timeline" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader className="pb-3 sm:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <CardHeader className={cn("pb-3 sm:pb-6", isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2 text-base sm:text-lg", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <History className="h-4 w-4 sm:h-5 sm:w-5" />
                       {t('patients.patient_history')}
                     </CardTitle>
@@ -510,7 +509,12 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                         {timeline.map((event, index) => {
                         const IconComponent = event.icon;
                         return (
-                          <div key={index} className="flex items-start gap-2 sm:gap-3 border-l-2 border-muted pl-3 sm:pl-4 pb-3 sm:pb-4">
+                          <div key={index} className={cn(
+                            "flex items-start gap-2 sm:gap-3 pb-3 sm:pb-4",
+                            isRTL ? "border-r-2 pr-3 sm:pr-4" : "border-l-2 pl-3 sm:pl-4",
+                            "border-muted",
+                            isRTL ? "flex-row-reverse" : undefined
+                          )}>
                             <div className={cn(
                               "rounded-full p-2 mt-1 flex-shrink-0",
                               event.color === 'blue' && "bg-blue-100 text-blue-600",
@@ -522,14 +526,14 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                               <IconComponent className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
+                              <div className={cn("flex items-center justify-between gap-2", isRTL ? "flex-row-reverse" : undefined)}>
                                 <p className="font-medium text-sm truncate">{event.title}</p>
                                 <Badge variant="outline" className="text-xs whitespace-nowrap">
                                   {event.status}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className={cn("text-sm text-muted-foreground mt-1 line-clamp-2", isRTL ? "text-right" : undefined)}>{event.description}</p>
+                              <p className={cn("text-xs text-muted-foreground mt-1", isRTL ? "text-right" : undefined)}>
                                 {format(event.date, 'PPP')}
                               </p>
                             </div>
@@ -551,13 +555,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               <TabsContent value="personal" className="space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                   <Card>
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <CardHeader className={cn("pb-3 sm:pb-6", isRTL ? "text-right" : undefined)}>
+                      <CardTitle className={cn("flex items-center gap-2 text-base sm:text-lg", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                         <User className="h-4 w-4 sm:h-5 sm:w-5" />
                         {t('patients.personal_details')}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 sm:space-y-3 pt-0">
+                    <CardContent className={cn("space-y-2 sm:space-y-3 pt-0", isRTL ? "text-right" : undefined)}>
                       <div className="flex items-center gap-2">
                         <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                         <span className="text-xs sm:text-sm truncate">{patient.email}</span>
@@ -580,13 +584,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                    <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                      <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                         <Heart className="h-5 w-5" />
                         {t('patients.emergency_contact')}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className={cn("space-y-3", isRTL ? "text-right" : undefined)}>
                       {patient.ecName ? (
                         <>
                           <div>
@@ -609,13 +613,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                    <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                      <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                         <Shield className="h-5 w-5" />
                         {t('patients.insurance_information')}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className={cn("space-y-3", isRTL ? "text-right" : undefined)}>
                       {patient.insuranceProvider ? (
                         <>
                           <div>
@@ -634,13 +638,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                    <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                      <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                         <Activity className="h-5 w-5" />
                         {t('patients.status')}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className={cn("space-y-3", isRTL ? "text-right" : undefined)}>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{t('patients.status')}:</span>
                         <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>
@@ -658,14 +662,14 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                 {/* Medical History */}
                 {patient.medicalHistory && patient.medicalHistory.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                    <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                      <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                         <Heart className="h-5 w-5" />
                         {t('patients.medical_history')}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ul className="list-disc list-inside space-y-1">
+                    <CardContent className={cn(isRTL ? "text-right" : undefined)}>
+                      <ul className="list-disc list-inside space-y-1"> 
                         {patient.medicalHistory.map((condition, index) => (
                           <li key={index} className="text-sm">{condition.condition}</li>
                         ))}
@@ -678,8 +682,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Medical Records */}
               <TabsContent value="medical" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <FileText className="h-5 w-5" />
                       {t('medical_records.medical_records')} ({historyData.medicalRecords.length})
                     </CardTitle>
@@ -717,13 +721,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                 <ScrollArea className="w-full" orientation="horizontal">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-[600px] p-1">
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                      <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                        <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                           <Stethoscope className="h-5 w-5" />
                           {t('treatments.title')} ({historyData.treatments.length})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className={cn(isRTL ? "text-right" : undefined)}>
                         <ScrollArea className="h-64 lg:h-80">
                           {historyData.treatments.length > 0 ? (
                             <div className="space-y-3 p-2">
@@ -754,13 +758,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     </Card>
 
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                      <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                        <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                           <Calendar className="h-5 w-5" />
                           {t('appointments.title')} ({historyData.appointments.length})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className={cn(isRTL ? "text-right" : undefined)}>
                         <ScrollArea className="h-64 lg:h-80">
                           {historyData.appointments.length > 0 ? (
                             <div className="space-y-3 p-2">
@@ -802,13 +806,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                 <ScrollArea className="w-full" orientation="horizontal">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-[600px] p-1">
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                      <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                        <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                           <DollarSign className="h-5 w-5" />
                           {t('billing.title')} ({historyData.invoices.length})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className={cn(isRTL ? "text-right" : undefined)}>
                         <ScrollArea className="h-64 lg:h-80">
                           {historyData.invoices.length > 0 ? (
                             <div className="space-y-3 p-2">
@@ -841,13 +845,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     </Card>
 
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                      <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                        <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                           <Shield className="h-5 w-5" />
                           {t('insurance.insurance_claims')} ({historyData.insuranceClaims.length})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className={cn(isRTL ? "text-right" : undefined)}>
                         <ScrollArea className="h-64 lg:h-80">
                           {historyData.insuranceClaims.length > 0 ? (
                             <div className="space-y-3 p-2">
@@ -889,8 +893,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Clinical Images */}
               <TabsContent value="images" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader className="pb-3 sm:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <CardHeader className={cn("pb-3 sm:pb-6", isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2 text-base sm:text-lg", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <Image className="h-4 w-4 sm:h-5 sm:w-5" />
                       {t('dental_chart.clinical_images')} ({historyData.clinicalImages.length})
                     </CardTitle>
@@ -947,8 +951,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Communications/Messages */}
               <TabsContent value="communications" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <Mail className="h-5 w-5" />
                       {t('communications.title')} ({historyData.messages.length})
                     </CardTitle>
@@ -989,8 +993,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Prescriptions */}
               <TabsContent value="prescriptions" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <Heart className="h-5 w-5" />
                       {t('pharmacy.prescriptions')} ({historyData.prescriptions.length})
                     </CardTitle>
@@ -1030,8 +1034,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               {/* Referrals */}
               <TabsContent value="referrals" className="space-y-3 sm:space-y-4 mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
                       <TrendingUp className="h-5 w-5" />
                       {t('referrals.specialist_network')} ({historyData.referrals.length})
                     </CardTitle>
@@ -1076,7 +1080,6 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
               </TabsContent>
             </Tabs>
               </div>
-            </ScrollArea>
           </div>
         ) : (
           <div className="text-center py-8">
