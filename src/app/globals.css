@@ -12,8 +12,8 @@ body {
     /* Elite Maritime Theme - Light Mode */
     --background: 220 18% 97%; /* Light Blue-Gray Background */
     --foreground: 220 20% 15%; /* Dark Blue-Gray Text */
-    --card: 0 0% 100%; /* Pure White Cards */
-    --card-foreground: 220 20% 15%;
+    --card: 220 15% 98%; /* Light RGBA-like color with subtle blue tint */
+    --card-foreground: 220 30% 10%; /* Darker text for better contrast */
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 15%;
     --primary: 200 100% 40%; /* Elite Blue */
@@ -54,8 +54,8 @@ body {
     /* Elite Maritime Theme - Dark Mode */
     --background: 220 25% 8%;
     --foreground: 220 15% 90%;
-    --card: 220 25% 10%;
-    --card-foreground: 220 15% 90%;
+    --card: 220 20% 12%; /* Slightly lighter dark card with blue tint */
+    --card-foreground: 220 10% 85%; /* Lighter text for dark mode readability */
     --popover: 220 25% 10%;
     --popover-foreground: 220 15% 90%;
     --primary: 195 100% 60%;
@@ -105,38 +105,48 @@ body {
 @layer components {
   /* Elite Maritime Card Styles */
   .elite-card {
-    @apply bg-card/95 backdrop-blur-sm border-border/50 shadow-lg hover:shadow-xl transition-all duration-300;
-    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--card)) 100%);
+    @apply backdrop-blur-sm border-border/50 shadow-lg hover:shadow-xl transition-all duration-300;
+    background: rgba(220, 230, 245, 0.75); /* Light RGBA with blue tint */
     border: 1px solid hsl(var(--border));
+  }
+  
+  .dark .elite-card {
+    background: rgba(30, 35, 45, 0.75); /* Dark RGBA with blue tint */
   }
   
   .elite-card-hover {
     @apply hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 cursor-pointer;
   }
   
-  /* Metric Card Colors */
+  /* Metric Card Colors - RGBA Light Colors with Dark Fonts */
   .metric-card-green {
-    @apply bg-gradient-to-br from-emerald-500 to-green-600 text-white;
+    background: rgba(16, 185, 129, 0.15); /* Light emerald RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   .metric-card-blue {
-    @apply bg-gradient-to-br from-blue-500 to-cyan-600 text-white;
+    background: rgba(59, 130, 246, 0.15); /* Light blue RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   .metric-card-orange {
-    @apply bg-gradient-to-br from-orange-500 to-amber-600 text-white;
+    background: rgba(249, 115, 22, 0.15); /* Light orange RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   .metric-card-purple {
-    @apply bg-gradient-to-br from-purple-500 to-violet-600 text-white;
+    background: rgba(168, 85, 247, 0.15); /* Light purple RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   .metric-card-red {
-    @apply bg-gradient-to-br from-red-500 to-rose-600 text-white;
+    background: rgba(239, 68, 68, 0.15); /* Light red RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   .metric-card-gray {
-    @apply bg-gradient-to-br from-gray-500 to-slate-600 text-white;
+    background: rgba(107, 114, 128, 0.15); /* Light gray RGBA */
+    @apply text-gray-900 dark:text-gray-100;
   }
   
   /* Elite Header */

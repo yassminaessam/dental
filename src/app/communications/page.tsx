@@ -224,26 +224,26 @@ export default function CommunicationsPage() {
                 <CardHeader className="pb-4 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                      <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
                         {stat.title}
                       </CardTitle>
                       <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
                         {stat.value}
                       </div>
                     </div>
-                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
-                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-900 dark:text-gray-100" />
                     </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-white/80 font-medium mb-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
                     {stat.description}
                   </p>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    <span className="text-xs text-white/70 font-medium">Live</span>
+                    <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Live</span>
                     <div className="ml-auto">
                       <div className="text-xs text-white/60 font-bold">↗</div>
                     </div>

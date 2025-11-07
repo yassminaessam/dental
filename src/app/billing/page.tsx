@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2, Trash2, Sparkles } from "lucide-react";
+import { Search, Plus, MoreHorizontal, FileText, DollarSign, Eye, Printer, Loader2, Trash2, Sparkles, AlertCircle, XCircle, CheckCircle } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
@@ -519,19 +519,27 @@ export default function BillingPage() {
                 tabIndex={0}
                 aria-label={stat.title}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
+                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
+                    {index === 0 && <DollarSign className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 1 && <AlertCircle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 2 && <XCircle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 3 && <CheckCircle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 4 && <FileText className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 5 && <Loader2 className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                  </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-sm">
+                  <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {stat.value}
                   </div>
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                     {stat.description}
                   </p>
                 </CardContent>

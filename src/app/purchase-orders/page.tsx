@@ -305,7 +305,7 @@ export default function PurchaseOrdersPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {lowStockItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                <div key={item.id} className="flex items-center justify-between p-3 bg-card rounded-lg border">
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">

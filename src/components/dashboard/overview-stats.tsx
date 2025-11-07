@@ -109,35 +109,35 @@ export default function OverviewStats() {
             }}
           >
             {/* Animated Background Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
               <div className="flex flex-col gap-1">
-                <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
-                <div className="text-3xl font-bold text-white drop-shadow-sm">
+                <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {stat.value}
                 </div>
               </div>
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm group-hover:bg-gray-900/15 dark:group-hover:bg-gray-100/15 transition-all duration-300">
+                <Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               </div>
             </CardHeader>
             
             <CardContent className="pt-0 relative z-10">
-              <p className="text-xs text-white/80 font-medium">
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                 {stat.description}
               </p>
               {/* Elite Metric Indicator */}
               <div className="flex items-center gap-2 mt-3">
-                <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                <span className="text-xs text-white/70 font-medium">Active</span>
+                <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
+                <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Active</span>
               </div>
             </CardContent>
             
             {/* Elite Corner Accent */}
-            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
+            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-gray-900/10 dark:from-gray-100/10 to-transparent" />
           </Card>
         );
       })}

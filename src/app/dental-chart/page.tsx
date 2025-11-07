@@ -330,9 +330,9 @@ export default function DentalChartPage() {
                 <CardContent className="flex flex-col gap-2 p-4">
                   <div className="flex items-center gap-2">
                     <span className={`h-3 w-3 rounded-full ${stat.color} flex-shrink-0 shadow-lg`}></span>
-                    <div className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">{t(stat.labelKey)}</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{t(stat.labelKey)}</div>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {teethCountByCondition[stat.condition] || 0}
                   </div>
                 </CardContent>

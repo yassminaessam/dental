@@ -316,17 +316,23 @@ export default function InventoryPage() {
                   cardStyle
                 )}
               >
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
+                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
+                    {index === 0 && <Boxes className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 1 && <PackageCheck className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 2 && <AlertTriangle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                    {index === 3 && <TrendingDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
+                  </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                  <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm mb-2">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {stat.value}
                   </div>
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                     {stat.description}
                   </p>
                 </CardContent>

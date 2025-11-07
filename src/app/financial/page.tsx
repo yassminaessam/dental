@@ -326,20 +326,23 @@ export default function FinancialPage() {
                 tabIndex={0}
                 aria-label={t(stat.titleKey as string)}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
+                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {t(stat.titleKey as string)}
                   </CardTitle>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
+                    <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                  </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                  <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm mb-2">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {stat.value}
                   </div>
                   {stat.descriptionKey && (
-                    <p className="text-xs text-white/80 font-medium">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                       {t(stat.descriptionKey as string)}
                     </p>
                   )}

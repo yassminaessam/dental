@@ -266,9 +266,9 @@ export default function PendingAppointmentsManager({ onAppointmentConfirmed }: P
 
                     {/* Notes */}
                     {appointment.notes && (
-                      <div className="bg-white/50 p-2 rounded border-l-2 border-orange-300">
-                        <Label className="text-xs text-gray-600">{t('appointments.notes')}:</Label>
-                        <p className="text-sm">{appointment.notes}</p>
+                      <div className="bg-muted/50 p-2 rounded border-l-2 border-orange-300">
+                        <Label className="text-xs text-muted-foreground">{t('appointments.notes')}:</Label>
+                        <p className="text-sm text-foreground">{appointment.notes}</p>
                       </div>
                     )}
 
