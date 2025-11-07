@@ -41,7 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2, UserPlus, Pencil, Trash2 } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2, UserPlus, Pencil, Trash2, Sparkles, Shield, TrendingUp, FileText, AlertCircle, DollarSign } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
@@ -220,104 +220,144 @@ export default function InsurancePage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
-        {/* Elite Insurance Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-indigo-200/30 via-purple-200/20 to-pink-200/10 dark:from-indigo-900/15 dark:via-purple-900/10 dark:to-pink-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-pink-200/30 via-violet-200/20 to-blue-200/10 dark:from-pink-900/15 dark:via-violet-900/10 dark:to-blue-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Ultra Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left side: Icon + Title */}
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-xl">
+                    <Shield className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-indigo-500 bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full">Claims Management</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">
+                    {t('insurance.insurance_claims')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Elite Insurance & Claims Operations
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Claims Management</span>
+
+              {/* Right side: Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={handleExport} className="gap-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30">
+                  <Download className="h-4 w-4" />
+                  <span>{t('insurance.exportClaims')}</span>
+                </Button>
+                <NewClaimDialog onSave={handleSaveClaim} />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('insurance.insurance_claims')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Insurance Operations
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button variant="outline" onClick={handleExport} className="elite-button-outline">
-              <Download className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-              {t('insurance.exportClaims')}
-            </Button>
-            <NewClaimDialog onSave={handleSaveClaim} />
           </div>
         </div>
 
-        {/* Elite Insurance Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Ultra Enhanced Stats Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {insurancePageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
+            const icons = [FileText, DollarSign, Clock, AlertCircle];
+            const Icon = icons[index % icons.length];
             
             return (
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
                   cardStyle
                 )}
               >
+                {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {stat.title}
-                    </CardTitle>
-                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
-                      {stat.value}
+                <CardHeader className="pb-4 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                        {stat.title}
+                      </CardTitle>
+                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <CheckCircle2 className="h-6 w-6 text-white drop-shadow-sm" />
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                    </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-white/80 font-medium mb-3">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
                     <span className="text-xs text-white/70 font-medium">Active</span>
+                    <div className="ml-auto">
+                      <div className="text-xs text-white/60 font-bold">↗</div>
+                    </div>
                   </div>
                 </CardContent>
-                
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}
         </div>
 
-    {/* Elite Insurance Tabs */}
-    <Tabs defaultValue="claims-management">
-          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl">
-            <TabsTrigger 
-              value="claims-management" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('insurance.claims_management')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="insurance-providers" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('insurance.insurance_providers')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="claims-reports" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('insurance.claims_reports')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="claims-management" className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-        <CardTitle>{t('insurance.insurance_claims')}</CardTitle>
+        {/* Ultra Enhanced Tabs */}
+        <Tabs defaultValue="claims-management" className="w-full">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-pink-500/5 rounded-2xl blur-xl"></div>
+            <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-3 shadow-lg">
+              <TabsTrigger 
+                value="claims-management" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <FileText className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('insurance.claims_management')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insurance-providers" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Shield className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('insurance.insurance_providers')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="claims-reports" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <TrendingUp className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('insurance.claims_reports')}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="claims-management" className="mt-0">
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+              <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between border-b-2 border-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
+                    <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    {t('insurance.insurance_claims')}
+                  </CardTitle>
+                </div>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
           <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
@@ -444,10 +484,17 @@ export default function InsurancePage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="insurance-providers" className="mt-4">
-             <Card>
-                <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-        <CardTitle>{t('insurance.insurance_providers')}</CardTitle>
+          <TabsContent value="insurance-providers" className="mt-0">
+             <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+                <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+                      <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                      {t('insurance.insurance_providers')}
+                    </CardTitle>
+                  </div>
                     <div className='flex items-center gap-2'>
                         <div className="relative w-full md:w-auto">
             <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
@@ -516,10 +563,21 @@ export default function InsurancePage() {
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="claims-reports">
-            <Card>
-              <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                {t('insurance.claims_reports')}
+          <TabsContent value="claims-reports" className="mt-0">
+            <Card className="border-2 border-dashed border-muted shadow-xl">
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-pink-500/10 to-red-500/10">
+                      <TrendingUp className="h-12 w-12 text-pink-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold mb-1">{t('insurance.claims_reports')}</h3>
+                    <p className="text-xs text-muted-foreground">Reports & analytics coming soon</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -131,6 +131,14 @@ body {
     @apply bg-gradient-to-br from-purple-500 to-violet-600 text-white;
   }
   
+  .metric-card-red {
+    @apply bg-gradient-to-br from-red-500 to-rose-600 text-white;
+  }
+  
+  .metric-card-gray {
+    @apply bg-gradient-to-br from-gray-500 to-slate-600 text-white;
+  }
+  
   /* Elite Header */
   .elite-header {
     @apply bg-card/95 backdrop-blur-md border-b border-border/50;
@@ -459,4 +467,111 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+}
+
+/* Settings Page Enhanced Animations */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Enhanced Input Fields */
+.enhanced-input {
+  @apply transition-all duration-300;
+  @apply focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500;
+  @apply hover:border-blue-300 dark:hover:border-blue-700;
+}
+
+/* Enhanced Select Fields */
+.enhanced-select {
+  @apply transition-all duration-300;
+  @apply hover:border-blue-300 dark:hover:border-blue-700;
+  @apply focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500;
+}
+
+/* Glass Morphism Effect */
+.glass-morphism {
+  @apply bg-background/80 backdrop-blur-md border border-white/20;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
+}
+
+/* Gradient Border */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
+  border-radius: 1rem;
+  padding: 2px;
+}
+
+.gradient-border > div {
+  @apply bg-background rounded-xl;
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Animation delay utilities to avoid inline styles */
+@layer utilities {
+  .animation-delay-1000 { animation-delay: 1s; }
+  .animation-delay-1200 { animation-delay: 1.2s; }
+  .animation-delay-1500 { animation-delay: 1.5s; }
+  .animation-delay-2000 { animation-delay: 2s; }
 }

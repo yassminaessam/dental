@@ -35,7 +35,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, List, Search, MoreHorizontal, Pencil, Loader2, CheckCircle } from "lucide-react";
+import { 
+  Plus, 
+  Calendar, 
+  List, 
+  Search, 
+  MoreHorizontal, 
+  Pencil, 
+  Loader2, 
+  CheckCircle,
+  CalendarCheck,
+  CalendarClock,
+  Clock,
+  Sparkles,
+  Filter,
+  CalendarDays,
+  AlertCircle,
+  CheckCircle2,
+  XCircle
+} from "lucide-react";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
@@ -142,12 +160,42 @@ export default function AppointmentsPage() {
 
   return (
     <ProtectedRoute requiredRoles={["receptionist", "admin", "doctor"]}>
-  <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold">{t('appointments.title')}</h1>
-          <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
-        </div>
+      <DashboardLayout>
+        <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+          {/* Decorative Background */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-green-200/25 via-teal-200/15 to-cyan-200/10 dark:from-green-900/12 dark:via-teal-900/8 dark:to-cyan-900/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-purple-200/25 via-pink-200/15 to-rose-200/10 dark:from-purple-900/12 dark:via-pink-900/8 dark:to-rose-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+          </div>
+
+          {/* Enhanced Header */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-teal-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-teal-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 text-white shadow-xl">
+                      <CalendarDays className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-green-600 via-teal-600 to-cyan-600 dark:from-green-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                      {t('appointments.title')}
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      إدارة وتنظيم مواعيد العيادة
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+                </div>
+              </div>
+            </div>
+          </div>
 
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {appointmentPageStats.map((stat, idx) => (

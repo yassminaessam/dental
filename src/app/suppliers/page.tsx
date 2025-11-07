@@ -54,6 +54,9 @@ import {
   Check,
   Loader2,
   Plus,
+  Sparkles,
+  Users,
+  Package,
 } from "lucide-react";
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
@@ -106,7 +109,7 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<'suppliers' | 'purchase-orders' | 'receiving'>('suppliers');
@@ -411,28 +414,47 @@ export default function SuppliersPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{`${t('suppliers.title')} & ${t('purchase_orders.title')}`}</h1>
-            <p className="text-muted-foreground">
-              {t('suppliers.page_description')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => openNewPoDialog()}>
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              {t('suppliers.new_purchase_order')}
-            </Button>
-            <Button onClick={() => setIsAddItemOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('inventory.add_item')}
-            </Button>
-            <AddSupplierDialog onSave={handleSaveSupplier} />
+      <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-indigo-200/30 via-blue-200/20 to-sky-200/10 dark:from-indigo-900/15 dark:via-blue-900/10 dark:to-sky-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-orange-200/30 via-amber-200/20 to-yellow-200/10 dark:from-orange-900/15 dark:via-amber-900/10 dark:to-yellow-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Enhanced Suppliers Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-blue-500/5 to-sky-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-xl">
+                    <Users className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-600 dark:from-indigo-400 dark:via-blue-400 dark:to-sky-400 bg-clip-text text-transparent animate-gradient">
+                    {t('suppliers.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    إدارة متقدمة للموردين وأوامر الشراء
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" onClick={() => openNewPoDialog()} className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                  <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                  {t('suppliers.new_purchase_order')}
+                </Button>
+                <AddSupplierDialog onSave={handleSaveSupplier} />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {suppliersPageStats.map((stat, idx) => {
             const Icon = iconMap[stat.icon as IconKey];
             return (

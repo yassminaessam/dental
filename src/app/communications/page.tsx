@@ -28,7 +28,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2, Send, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { NewTemplateDialog, Template } from "@/components/communications/new-template-dialog";
 import { useToast } from '@/hooks/use-toast';
@@ -158,102 +158,145 @@ export default function CommunicationsPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        {/* Elite Communications Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <MessageSquareIcon className="w-5 h-5 text-primary" />
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 via-purple-200/20 to-cyan-200/10 dark:from-blue-900/15 dark:via-purple-900/10 dark:to-cyan-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 via-teal-200/20 to-blue-200/10 dark:from-cyan-900/15 dark:via-teal-900/10 dark:to-blue-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Ultra Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left side: Icon + Title */}
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 text-white shadow-xl">
+                    <MessageSquareIcon className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">Communication Hub</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 dark:from-blue-400 dark:via-purple-400 dark:to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                    {t('communications.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Elite Messaging & Notification System
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Communication Hub</span>
+
+              {/* Right side: Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <NewTemplateDialog onSave={handleSaveTemplate} />
+                <NewMessageDialog onSend={handleSendMessage} />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('communications.title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Messaging System
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <NewTemplateDialog onSave={handleSaveTemplate} />
-            <NewMessageDialog onSend={handleSendMessage} />
           </div>
         </div>
 
-        {/* Elite Communications Stats */}
-        <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+        {/* Ultra Enhanced Stats Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {communicationsPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
+            const icons = [Send, CheckCircle2, TrendingUp, Zap];
+            const Icon = icons[index % icons.length];
             
             return (
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
                   cardStyle
                 )}
               >
+                {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {stat.title}
-                    </CardTitle>
-                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
-                      {stat.value}
+                <CardHeader className="pb-4 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                        {stat.title}
+                      </CardTitle>
+                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <MessageSquareIcon className="h-6 w-6 text-white drop-shadow-sm" />
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                    </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-white/80 font-medium mb-3">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
                     <span className="text-xs text-white/70 font-medium">Live</span>
+                    <div className="ml-auto">
+                      <div className="text-xs text-white/60 font-bold">↗</div>
+                    </div>
                   </div>
                 </CardContent>
-                
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}
         </div>
 
-        {/* Elite Communications Tabs */}
+        {/* Ultra Enhanced Tabs */}
         <Tabs defaultValue="history" className="w-full">
-          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl grid w-full grid-cols-3">
-            <TabsTrigger 
-              value="history" 
-              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-xs sm:text-sm"
-            >
-              {t('communications.history')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="templates" 
-              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-xs sm:text-sm"
-            >
-              {t('communications.templates')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="automated" 
-              className="rounded-lg px-4 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-xs sm:text-sm"
-            >
-              <span className="hidden sm:inline">{t('communications.automated')}</span>
-              <span className="sm:hidden">{t('communications.auto')}</span>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="history" className="mt-4">
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">{t('communications.recent_messages')}</CardTitle>
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl blur-xl"></div>
+            <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-3 shadow-lg">
+              <TabsTrigger 
+                value="history" 
+                className="rounded-xl px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Mail className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('communications.history')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="templates" 
+                className="rounded-xl px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Sparkles className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('communications.templates')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="automated" 
+                className="rounded-xl px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Zap className="h-4 w-4 mr-2 hidden sm:inline" />
+                <span className="hidden sm:inline">{t('communications.automated')}</span>
+                <span className="sm:hidden">{t('communications.auto')}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="history" className="mt-0">
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+              <CardHeader className="p-4 sm:p-6 border-b-2 border-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                      <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                      {t('communications.recent_messages')}
+                    </CardTitle>
+                  </div>
+                  <Badge variant="outline" className="font-bold">{messages.length} {t('communications.messages')}</Badge>
+                </div>
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
                 <div className="block sm:hidden">
@@ -261,76 +304,100 @@ export default function CommunicationsPage() {
                   <div className="space-y-4 p-4">
                     {loading ? (
                       <div className="flex items-center justify-center h-32">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                       </div>
                     ) : messages.length > 0 ? (
                       messages.map((message) => (
-                        <Card key={message.id} className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="font-medium text-sm">{message.patient}</div>
-                            <Badge variant={
-                              message.status === 'Sent' ? 'default' :
-                              message.status === 'Delivered' || message.status === 'Read' ? 'secondary' :
-                              'destructive'
-                            }>
-                              {getStatusLabel(message.status as unknown as string)}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2 text-xs text-muted-foreground">
-                            <div>
-                              <span className="font-medium">{t('communications.type')}:</span> {message.type === 'SMS' ? t('communications.sms') : t('communications.email')}
+                        <Card key={message.id} className="group relative overflow-hidden border-2 border-muted hover:border-blue-300 dark:hover:border-blue-700 p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                          <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="font-bold text-sm flex items-center gap-2">
+                                {message.type === 'SMS' ? (
+                                  <MessageSquareIcon className="h-4 w-4 text-blue-500" />
+                                ) : (
+                                  <Mail className="h-4 w-4 text-purple-500" />
+                                )}
+                                {message.patient}
+                              </div>
+                              <Badge variant={
+                                message.status === 'Sent' ? 'default' :
+                                message.status === 'Delivered' || message.status === 'Read' ? 'secondary' :
+                                'destructive'
+                              } className="font-bold">
+                                {getStatusLabel(message.status as unknown as string)}
+                              </Badge>
                             </div>
-                            <div>
-                              <span className="font-medium">{t('communications.content')}:</span> {message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content}
-                            </div>
-                            <div>
-                              <span className="font-medium">{t('communications.sent')}:</span> {new Date(message.sent).toLocaleDateString()}
+                            <div className="space-y-2 text-xs">
+                              <div className="p-3 rounded-lg bg-muted/30 backdrop-blur-sm">
+                                <span className="font-bold text-muted-foreground">{t('communications.type')}:</span>{' '}
+                                <span className="font-medium">{message.type === 'SMS' ? t('communications.sms') : t('communications.email')}</span>
+                              </div>
+                              <div className="p-3 rounded-lg bg-muted/30 backdrop-blur-sm">
+                                <span className="font-bold text-muted-foreground">{t('communications.content')}:</span>{' '}
+                                <span className="font-medium">{message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span className="font-medium">{new Date(message.sent).toLocaleDateString()}</span>
+                              </div>
                             </div>
                           </div>
                         </Card>
                       ))
                     ) : (
-                      <div className="text-center py-8">
-                        <MessageSquareIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-2 text-sm font-semibold">{t('communications.no_messages_found')}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{t('communications.send_first_message')}</p>
-                      </div>
+                      <Card className="text-center py-12 border-2 border-dashed">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                            <MessageSquareIcon className="h-12 w-12 text-blue-500" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold mb-1">{t('communications.no_messages_found')}</h3>
+                            <p className="text-xs text-muted-foreground">{t('communications.send_first_message')}</p>
+                          </div>
+                        </div>
+                      </Card>
                     )}
                   </div>
                 </div>
                 
                 <div className="hidden sm:block">
                   {/* Desktop Table View */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="whitespace-nowrap">{t('communications.patient')}</TableHead>
-                        <TableHead className="whitespace-nowrap">{t('communications.type')}</TableHead>
-                        <TableHead className="whitespace-nowrap">{t('communications.content')}</TableHead>
-                        <TableHead className="whitespace-nowrap">{t('communications.status')}</TableHead>
-                        <TableHead className="whitespace-nowrap">{t('communications.sent')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
+                        <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.patient')}</TableHead>
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.type')}</TableHead>
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.content')}</TableHead>
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.status')}</TableHead>
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.sent')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {loading ? (
                         <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                       ) : messages.length > 0 ? (
                         messages.map((message: any) => (
-                          <TableRow key={message.id}>
-                            <TableCell className="font-medium whitespace-nowrap">{message.patient}</TableCell>
+                          <TableRow key={message.id} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/30 dark:hover:from-blue-950/20 dark:hover:to-purple-950/10 transition-all duration-300">
+                            <TableCell className="font-bold whitespace-nowrap">{message.patient}</TableCell>
                             <TableCell className="whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {message.type === "SMS" ? (
-                                  <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
+                                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                    <MessageSquareIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                  </div>
                                 ) : (
-                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                  <div className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                    <Mail className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                  </div>
                                 )}
-                                <span>{message.type === 'SMS' ? t('communications.sms') : t('communications.email')}</span>
+                                <span className="font-medium">{message.type === 'SMS' ? t('communications.sms') : t('communications.email')}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap max-w-xs truncate">
-                              <div className="font-medium">{message.content}</div>
-                              {message.subContent && <div className="text-xs text-muted-foreground">{message.subContent}</div>}
+                            <TableCell className="whitespace-nowrap max-w-xs">
+                              <div className="font-medium truncate">{message.content}</div>
+                              {message.subContent && <div className="text-xs text-muted-foreground truncate">{message.subContent}</div>}
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
                               <Badge
@@ -340,8 +407,8 @@ export default function CommunicationsPage() {
                                     : "default"
                                 }
                                 className={cn(
-                                  "capitalize",
-                                  (message.status === "Delivered" || message.status === "Read") && "bg-foreground text-background hover:bg-foreground/80",
+                                  "capitalize font-bold",
+                                  (message.status === "Delivered" || message.status === "Read") && "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700",
                                 )}
                               >
                                 {message.status === 'Sent' ? (
@@ -352,49 +419,62 @@ export default function CommunicationsPage() {
                                 {getStatusLabel(message.status as unknown as string)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap">{new Date(message.sent).toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap font-medium text-muted-foreground">{new Date(message.sent).toLocaleString()}</TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={5} className="h-24 text-center">
-                            <div className="flex flex-col items-center justify-center">
-                              <MessageSquareIcon className="h-12 w-12 text-muted-foreground mb-2" />
-                              <h3 className="text-sm font-semibold">{t('communications.no_messages_found')}</h3>
-                              <p className="text-sm text-muted-foreground">{t('communications.send_first_message')}</p>
+                          <TableCell colSpan={5} className="h-48 text-center">
+                            <div className="flex flex-col items-center justify-center gap-4">
+                              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                                <MessageSquareIcon className="h-12 w-12 text-blue-500" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold mb-1">{t('communications.no_messages_found')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('communications.send_first_message')}</p>
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="templates" className="mt-4">
+          <TabsContent value="templates" className="mt-0">
              {templates.length > 0 ? (
               <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {templates.map((template) => (
-                  <Card key={template.name} className="flex flex-col">
-                    <CardHeader className="p-4 sm:p-6">
-                      <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-                        <span className="truncate mr-2">{template.name}</span>
-                        <Badge variant="outline" className="text-xs">{template.type}</Badge>
+                  <Card key={template.name} className="group relative flex flex-col overflow-hidden border-2 border-muted hover:border-purple-300 dark:hover:border-purple-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                    
+                    <CardHeader className="p-4 sm:p-6 relative z-10">
+                      <CardTitle className="flex items-center justify-between text-base sm:text-lg font-black">
+                        <span className="truncate mr-2 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">{template.name}</span>
+                        <Badge variant="outline" className="text-xs font-bold border-2 border-purple-200 dark:border-purple-800">
+                          {template.type}
+                        </Badge>
                       </CardTitle>
-                      <CardDescription className="text-sm">{template.subject}</CardDescription>
+                      <CardDescription className="text-sm font-medium mt-2">{template.subject}</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-grow p-4 sm:p-6 pt-0">
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {template.body}
-                      </p>
+                    
+                    <CardContent className="flex-grow p-4 sm:p-6 pt-0 relative z-10">
+                      <div className="p-4 rounded-xl bg-muted/30 backdrop-blur-sm">
+                        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                          {template.body}
+                        </p>
+                      </div>
                     </CardContent>
-                    <CardFooter className="flex justify-end gap-2 p-4 sm:p-6 pt-0">
-                      <Button variant="outline" size="sm" disabled>
+                    
+                    <CardFooter className="flex justify-end gap-2 p-4 sm:p-6 pt-0 relative z-10">
+                      <Button variant="outline" size="sm" disabled className="font-bold border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
                         <Pencil className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
                         <span className="hidden sm:inline">{t('communications.edit')}</span>
                       </Button>
-                       <Button variant="destructive" size="sm" onClick={() => setTemplateToDelete(template)}>
+                      <Button variant="destructive" size="sm" onClick={() => setTemplateToDelete(template)} className="font-bold shadow-lg hover:shadow-xl">
                         <Trash2 className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
                         <span className="hidden sm:inline">{t('communications.delete')}</span>
                       </Button>
@@ -403,17 +483,40 @@ export default function CommunicationsPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-4 sm:p-6">
-                  {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : t('communications.no_templates_found')}
+              <Card className="border-2 border-dashed border-muted shadow-xl">
+                <CardContent className="h-48 text-center flex items-center justify-center p-4 sm:p-6">
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+                        <Sparkles className="h-12 w-12 text-purple-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold mb-1">{t('communications.no_templates_found')}</h3>
+                        <p className="text-xs text-muted-foreground">Create your first template to get started</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
           </TabsContent>
-          <TabsContent value="automated">"
-            <Card>
-              <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                {t('communications.no_automated_messages')}
+          <TabsContent value="automated" className="mt-0">
+            <Card className="border-2 border-dashed border-muted shadow-xl">
+              <CardContent className="h-48 text-center flex items-center justify-center p-6">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 to-pink-500/10">
+                      <Zap className="h-12 w-12 text-orange-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold mb-1">{t('communications.no_automated_messages')}</h3>
+                    <p className="text-xs text-muted-foreground">Automated workflows coming soon</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

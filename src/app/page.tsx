@@ -4,7 +4,18 @@
 import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { 
+  Loader2, 
+  TrendingUp, 
+  Users, 
+  Calendar, 
+  DollarSign,
+  Activity,
+  Sparkles,
+  Zap,
+  Clock,
+  CheckCircle2
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -173,29 +184,79 @@ export default function DashboardPage() {
   return (
     <StaffOnly>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6 max-w-screen-2xl mx-auto">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-              <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
-              <AddPatientDialog onSave={handleSavePatient} />
+        <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden">
+          {/* Decorative Background */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 via-purple-200/20 to-pink-200/10 dark:from-blue-900/15 dark:via-purple-900/10 dark:to-pink-900/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute top-1/2 -left-40 w-96 h-96 bg-gradient-to-tr from-green-200/30 via-cyan-200/20 to-blue-200/10 dark:from-green-900/15 dark:via-cyan-900/10 dark:to-blue-900/5 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
+          </div>
+
+          {/* Welcome Section */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-xl">
+                      <Activity className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">
+                      {t('dashboard.title')}
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <ScheduleAppointmentDialog onSave={handleSaveAppointment} />
+                  <AddPatientDialog onSave={handleSavePatient} />
+                </div>
+              </div>
             </div>
           </div>
-          <OverviewStats />
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-5">
-      <Card className="lg:col-span-3">
-              <CardHeader>
-        <CardTitle className="text-lg sm:text-xl">{t('analytics.revenue_trend')}</CardTitle>
+          {/* Enhanced Overview Stats */}
+          <div className="relative z-10">
+            <OverviewStats />
+          </div>
+
+          {/* Enhanced Charts Section */}
+          <div className="grid gap-6 lg:grid-cols-5">
+            <Card className="group lg:col-span-3 relative border-2 border-muted hover:border-blue-200 dark:hover:border-blue-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-blue-50/10 dark:to-blue-950/5">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+              <CardHeader className="relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:from-blue-500/20 group-hover:to-purple-500/20 transition-colors">
+                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    {t('analytics.revenue_trend')}
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="pl-2">
+              <CardContent className="pl-2 relative z-10">
                 <RevenueTrendsChart data={revenueData} />
               </CardContent>
             </Card>
-            <Card className="lg:col-span-2">
-              <CardHeader>
-        <CardTitle className="text-lg sm:text-xl">{t('dashboard.appointments_by_type')}</CardTitle>
+
+            <Card className="group lg:col-span-2 relative border-2 border-muted hover:border-purple-200 dark:hover:border-purple-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-purple-50/10 dark:to-purple-950/5">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+              <CardHeader className="relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 group-hover:from-purple-500/20 group-hover:to-pink-500/20 transition-colors">
+                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                    {t('dashboard.appointments_by_type')}
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="flex justify-center p-4">
+              <CardContent className="flex justify-center p-4 relative z-10">
                 <AppointmentTypesChart data={appointmentTypes} />
               </CardContent>
             </Card>

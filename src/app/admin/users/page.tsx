@@ -26,7 +26,9 @@ import {
   Calendar,
   Phone,
   Mail,
-  Activity
+  Activity,
+  Sparkles,
+  UserCog
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
@@ -174,24 +176,55 @@ export default function UserManagementPage() {
   return (
     <AdminOnly>
       <DashboardLayout>
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">{t('nav.user_management')}</h1>
-              <p className="text-muted-foreground">{t('users.page_subtitle')}</p>
+        <div className="container mx-auto p-6 space-y-6 relative">
+          {/* Decorative Background */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-violet-200/30 via-purple-200/20 to-fuchsia-200/10 dark:from-violet-900/15 dark:via-purple-900/10 dark:to-fuchsia-900/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-fuchsia-200/30 via-pink-200/20 to-rose-200/10 dark:from-fuchsia-900/15 dark:via-pink-900/10 dark:to-rose-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+          </div>
+
+          {/* Ultra Enhanced Header */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-purple-500/5 to-fuchsia-500/5 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                {/* Left side: Icon + Title */}
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 text-white shadow-xl">
+                      <UserCog className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-bold text-violet-500 bg-violet-100 dark:bg-violet-900/30 px-3 py-1 rounded-full">Admin Panel</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent animate-gradient">
+                      {t('nav.user_management')}
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      {t('users.page_subtitle')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right side: Action Button */}
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="h-11 px-6 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700">
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      {t('users.add_user')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                    <CreateUserForm onSubmit={handleCreateUser} />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  {t('users.add_user')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <CreateUserForm onSubmit={handleCreateUser} />
-              </DialogContent>
-          </Dialog>
-        </div>
+          </div>
 
         {/* Users Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -212,37 +245,52 @@ export default function UserManagementPage() {
             ))
           ) : (
             users.map((user) => (
-              <Card key={user.id} className={`${!user.isActive ? 'opacity-60' : ''}`}>
-                <CardHeader className="pb-3">
+              <Card 
+                key={user.id} 
+                className={`relative overflow-hidden border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group ${!user.isActive ? 'opacity-60' : ''}`}
+              >
+                {/* Animated Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                
+                <CardHeader className="pb-3 relative z-10">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
+                    <CardTitle className="text-lg font-bold group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                       {user.firstName} {user.lastName}
                     </CardTitle>
-                    <Badge variant={getRoleBadgeVariant(user.role)} className="flex items-center gap-1">
+                    <Badge variant={getRoleBadgeVariant(user.role)} className="flex items-center gap-1 font-bold shadow-md">
                       {getRoleIcon(user.role)}
                       {user.role}
                     </Badge>
                   </div>
-                  <CardDescription className="flex items-center gap-1">
+                  <CardDescription className="flex items-center gap-1 font-medium">
                     <Mail className="h-3 w-3" />
                     {user.email}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                
+                <CardContent className="space-y-3 relative z-10">
                   {user.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-3 w-3 text-muted-foreground" />
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <div className="p-1 rounded bg-violet-100 dark:bg-violet-900/30">
+                        <Phone className="h-3 w-3 text-violet-600 dark:text-violet-400" />
+                      </div>
                       {user.phone}
                     </div>
                   )}
                   {user.lastLoginAt && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                      <div className="p-1 rounded bg-purple-100 dark:bg-purple-900/30">
+                        <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                      </div>
                       {t('users.last_login')}: {format(user.lastLoginAt, 'MMM dd, yyyy')}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                    <Badge 
+                      variant={user.isActive ? 'default' : 'secondary'} 
+                      className="font-bold shadow-sm"
+                    >
                       {user.isActive ? t('common.active') : t('common.inactive')}
                     </Badge>
                   </div>
@@ -254,6 +302,7 @@ export default function UserManagementPage() {
                         setSelectedUser(user);
                         setIsViewDialogOpen(true);
                       }}
+                      className="flex-1 font-bold hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors"
                     >
                       <Eye className="h-3 w-3 mr-1" />
                       {t('common.view')}
@@ -262,6 +311,7 @@ export default function UserManagementPage() {
                       size="sm" 
                       variant={user.isActive ? 'destructive' : 'default'}
                       onClick={() => handleToggleUserStatus(user.id, user.isActive)}
+                      className="flex-1 font-bold"
                     >
                       {user.isActive ? (
                         <>

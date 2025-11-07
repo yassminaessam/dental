@@ -35,7 +35,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2, Sparkles, TrendingUp, Users, Activity, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 import { useToast } from '@/hooks/use-toast';
@@ -220,107 +220,148 @@ export default function ReferralsPage() {
 
   return (
     <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        {/* Elite Referrals Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <Send className="w-5 h-5 text-primary" />
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-green-200/30 via-teal-200/20 to-cyan-200/10 dark:from-green-900/15 dark:via-teal-900/10 dark:to-cyan-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 via-blue-200/20 to-purple-200/10 dark:from-cyan-900/15 dark:via-blue-900/10 dark:to-purple-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Ultra Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-teal-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left side: Icon + Title */}
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-cyan-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-green-500 via-teal-500 to-cyan-500 text-white shadow-xl">
+                    <Send className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">Specialist Network</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-green-600 via-teal-600 to-cyan-600 dark:from-green-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                    {t('referrals.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Elite Referral & Specialist Management
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Specialist Network</span>
+
+              {/* Right side: Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <AddSpecialistDialog onSave={handleSaveSpecialist} />
+                <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} patients={patients} />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('referrals.title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Referral Management
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <AddSpecialistDialog onSave={handleSaveSpecialist} />
-            <NewReferralDialog onSave={handleSaveReferral} specialists={specialists} patients={patients} />
           </div>
         </div>
 
-        {/* Elite Referrals Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Ultra Enhanced Stats Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {referralPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
+            const icons = [Activity, Clock, CheckCircle2, Users];
+            const Icon = icons[index % icons.length];
             
             return (
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
                   cardStyle
                 )}
               >
+                {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {stat.title}
-                    </CardTitle>
-                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
-                      {stat.value}
+                <CardHeader className="pb-4 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                        {stat.title}
+                      </CardTitle>
+                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <Send className="h-6 w-6 text-white drop-shadow-sm" />
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                    </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-white/80 font-medium mb-3">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
                     <span className="text-xs text-white/70 font-medium">Active</span>
+                    <div className="ml-auto">
+                      <div className="text-xs text-white/60 font-bold">↗</div>
+                    </div>
                   </div>
                 </CardContent>
-                
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}
         </div>
 
-    {/* Elite Referrals Tabs */}
-    <Tabs defaultValue="outgoing">
-          <TabsList className="bg-background/60 backdrop-blur-sm border border-border/50 p-1 rounded-xl">
-            <TabsTrigger 
-              value="outgoing" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('referrals.tabs.outgoing')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="incoming" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('referrals.tabs.incoming')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="network" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('referrals.tabs.network')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="analytics" 
-              className="rounded-lg px-6 py-3 font-semibold transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              {t('referrals.tabs.analytics')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="outgoing" className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-        <CardTitle>{t('referrals.outgoing_referrals')}</CardTitle>
+        {/* Ultra Enhanced Tabs */}
+        <Tabs defaultValue="outgoing" className="w-full">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-cyan-500/5 rounded-2xl blur-xl"></div>
+            <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-2 lg:grid-cols-4 shadow-lg">
+              <TabsTrigger 
+                value="outgoing" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Send className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('referrals.tabs.outgoing')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="incoming" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Eye className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('referrals.tabs.incoming')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="network" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Users className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('referrals.tabs.network')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="analytics" 
+                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <TrendingUp className="h-4 w-4 mr-2 hidden sm:inline" />
+                {t('referrals.tabs.analytics')}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="outgoing" className="mt-0">
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+              <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between border-b-2 border-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-green-500/10 to-teal-500/10">
+                    <Send className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 bg-clip-text text-transparent">
+                    {t('referrals.outgoing_referrals')}
+                  </CardTitle>
+                </div>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
                     <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
@@ -346,36 +387,58 @@ export default function ReferralsPage() {
                   </Select>
                 </div>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-            <TableHead>{t('referrals.patient')}</TableHead>
-            <TableHead>{t('referrals.specialist')}</TableHead>
-            <TableHead>{t('referrals.reason')}</TableHead>
-            <TableHead>{t('referrals.urgency')}</TableHead>
-            <TableHead>{t('referrals.status')}</TableHead>
-            <TableHead>{t('referrals.referral_date')}</TableHead>
-            <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('referrals.actions')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
+              <CardContent className="p-0 sm:p-6">
+                <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
+                      <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
+                        <TableHead className="font-bold text-foreground">{t('referrals.patient')}</TableHead>
+                        <TableHead className="font-bold text-foreground">{t('referrals.specialist')}</TableHead>
+                        <TableHead className="font-bold text-foreground">{t('referrals.reason')}</TableHead>
+                        <TableHead className="font-bold text-foreground">{t('referrals.urgency')}</TableHead>
+                        <TableHead className="font-bold text-foreground">{t('referrals.status')}</TableHead>
+                        <TableHead className="font-bold text-foreground">{t('referrals.referral_date')}</TableHead>
+                        <TableHead className={cn(isRTL ? 'text-left font-bold text-foreground' : 'text-right font-bold text-foreground')}>{t('referrals.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {loading ? (
                         <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredReferrals.length > 0 ? (
                       filteredReferrals.map((referral) => (
-                        <TableRow key={referral.id}>
-                          <TableCell className="font-medium">{referral.patient}</TableCell>
+                        <TableRow key={referral.id} className="group hover:bg-gradient-to-r hover:from-green-50/50 hover:to-teal-50/30 dark:hover:from-green-950/20 dark:hover:to-teal-950/10 transition-all duration-300">
+                          <TableCell className="font-bold">{referral.patient}</TableCell>
                           <TableCell>
                             <div className="font-medium">{referral.specialist}</div>
                             <div className="text-xs text-muted-foreground">{referral.specialty}</div>
                           </TableCell>
                           <TableCell className="max-w-[300px] truncate">{referral.reason}</TableCell>
                           <TableCell>
-                            <Badge variant={referral.urgency === 'urgent' ? 'destructive' : 'outline'} className="capitalize">
-                {referral.urgency === 'routine' && t('referrals.urgency.routine')}
-                {referral.urgency === 'urgent' && t('referrals.urgency.urgent')}
-                {referral.urgency === 'emergency' && t('referrals.urgency.emergency')}
+                            <Badge 
+                              variant={referral.urgency === 'urgent' || referral.urgency === 'emergency' ? 'destructive' : 'outline'} 
+                              className={cn(
+                                "capitalize font-bold",
+                                referral.urgency === 'routine' && 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                              )}
+                            >
+                              {referral.urgency === 'routine' && (
+                                <>
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {t('referrals.urgency.routine')}
+                                </>
+                              )}
+                              {referral.urgency === 'urgent' && (
+                                <>
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  {t('referrals.urgency.urgent')}
+                                </>
+                              )}
+                              {referral.urgency === 'emergency' && (
+                                <>
+                                  <AlertCircle className="h-3 w-3 mr-1 animate-pulse" />
+                                  {t('referrals.urgency.emergency')}
+                                </>
+                              )}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -417,27 +480,54 @@ export default function ReferralsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-              {t('referrals.no_outgoing_referrals')}
+                        <TableCell colSpan={7} className="h-48 text-center">
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/10 to-teal-500/10">
+                              <Send className="h-12 w-12 text-green-500" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold mb-1">{t('referrals.no_outgoing_referrals')}</h3>
+                              <p className="text-xs text-muted-foreground">Create your first referral to get started</p>
+                            </div>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="incoming" className="mt-4">
-            <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-        <p>{t('referrals.no_incoming_referrals')}</p>
+          <TabsContent value="incoming" className="mt-0">
+            <Card className="border-2 border-dashed border-muted shadow-xl">
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10">
+                      <Eye className="h-12 w-12 text-teal-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold mb-1">{t('referrals.no_incoming_referrals')}</h3>
+                    <p className="text-xs text-muted-foreground">No incoming referrals at this time</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="network" className="mt-4">
-             <Card>
-                <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-          <CardTitle>{t('referrals.specialist_network')}</CardTitle>
+          <TabsContent value="network" className="mt-0">
+             <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+                <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+                      <Users className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
+                      {t('referrals.specialist_network')}
+                    </CardTitle>
+                  </div>
                     <div className="relative w-full md:w-auto">
                         <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
                         <Input
@@ -449,14 +539,15 @@ export default function ReferralsPage() {
                         />
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                <TableHead>{t('referrals.specialist')}</TableHead>
-                <TableHead>{t('referrals.specialty')}</TableHead>
-                <TableHead>{t('referrals.contact_info')}</TableHead>
-                <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('referrals.actions')}</TableHead>
+                <CardContent className="p-0 sm:p-6">
+                    <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
+                            <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
+                              <TableHead className="font-bold text-foreground">{t('referrals.specialist')}</TableHead>
+                              <TableHead className="font-bold text-foreground">{t('referrals.specialty')}</TableHead>
+                              <TableHead className="font-bold text-foreground">{t('referrals.contact_info')}</TableHead>
+                              <TableHead className={cn(isRTL ? 'text-left font-bold text-foreground' : 'text-right font-bold text-foreground')}>{t('referrals.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -464,7 +555,7 @@ export default function ReferralsPage() {
                                 <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                             ) : filteredSpecialists.length > 0 ? (
                                 filteredSpecialists.map((specialist) => (
-                                    <TableRow key={specialist.id}>
+                                    <TableRow key={specialist.id} className="group hover:bg-gradient-to-r hover:from-cyan-50/50 hover:to-blue-50/30 dark:hover:from-cyan-950/20 dark:hover:to-blue-950/10 transition-all duration-300">
                                         <TableCell>
                                             <div className="font-medium">{specialist.name}</div>
                                             {specialist.clinicName && <div className="text-xs text-muted-foreground">{specialist.clinicName}</div>}
@@ -501,20 +592,40 @@ export default function ReferralsPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                    {t('referrals.no_specialists_found')}
+                                    <TableCell colSpan={4} className="h-48 text-center">
+                                      <div className="flex flex-col items-center gap-4">
+                                        <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+                                          <Users className="h-12 w-12 text-cyan-500" />
+                                        </div>
+                                        <div>
+                                          <h3 className="text-sm font-bold mb-1">{t('referrals.no_specialists_found')}</h3>
+                                          <p className="text-xs text-muted-foreground">Add specialists to your network</p>
+                                        </div>
+                                      </div>
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="analytics" className="mt-4">
-            <Card>
-              <CardContent className="flex h-48 items-center justify-center p-6 text-center text-muted-foreground">
-        <p>{t('referrals.analytics_placeholder')}</p>
+          <TabsContent value="analytics" className="mt-0">
+            <Card className="border-2 border-dashed border-muted shadow-xl">
+              <CardContent className="flex h-48 items-center justify-center p-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                      <TrendingUp className="h-12 w-12 text-blue-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold mb-1">{t('referrals.analytics_placeholder')}</h3>
+                    <p className="text-xs text-muted-foreground">Analytics & insights coming soon</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

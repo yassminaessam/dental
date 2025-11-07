@@ -52,6 +52,9 @@ import {
   Package,
   Loader2,
   MoreHorizontal,
+  Sparkles,
+  Activity,
+  PillBottle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -141,7 +144,7 @@ type IconKey = keyof typeof iconMap;
 
 
 export default function PharmacyPage() {
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
     const [medications, setMedications] = React.useState<Medication[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [medicationToEdit, setMedicationToEdit] = React.useState<Medication | null>(null);
@@ -378,31 +381,45 @@ export default function PharmacyPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
-        {/* Elite Header Section */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <Pill className="w-5 h-5 text-primary" />
+      <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-200/30 via-green-200/20 to-teal-200/10 dark:from-emerald-900/15 dark:via-green-900/10 dark:to-teal-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-rose-200/30 via-pink-200/20 to-red-200/10 dark:from-rose-900/15 dark:via-pink-900/10 dark:to-red-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Enhanced Pharmacy Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-xl">
+                    <Activity className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent animate-gradient">
+                    {t('pharmacy.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    إدارة صيدلانية شاملة ومتطورة
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Pharmacy Management</span>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <NewPrescriptionDialog onSave={handleSavePrescription} medications={medications} />
+                <AddMedicationDialog onSave={handleSaveMedication} />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('pharmacy.title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Pharmaceutical Control
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <NewPrescriptionDialog onSave={handleSavePrescription} medications={medications} />
-            <AddMedicationDialog onSave={handleSaveMedication} />
           </div>
         </div>
 
-        {/* Elite Pharmacy Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Enhanced Pharmacy Stats */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {pharmacyPageStats.map((stat, index) => {
             const Icon = iconMap[stat.icon as IconKey];
             const cardStyles = [
@@ -417,40 +434,24 @@ export default function PharmacyPage() {
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
                   cardStyle
                 )}
               >
-                {/* Animated Background Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {stat.title}
-                    </CardTitle>
-                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
-                      {stat.value}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <Icon className="h-6 w-6 text-white drop-shadow-sm" />
-                  </div>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
+                    {stat.title}
+                  </CardTitle>
                 </CardHeader>
                 
-                <CardContent className="pt-0 relative z-10">
+                <CardContent className="pt-0">
+                  <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm mb-2">
+                    {stat.value}
+                  </div>
                   <p className="text-xs text-white/80 font-medium">
                     {stat.description}
                   </p>
-                  {/* Elite Status Indicator */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    <span className="text-xs text-white/70 font-medium">Active</span>
-                  </div>
                 </CardContent>
-                
-                {/* Elite Corner Accent */}
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}

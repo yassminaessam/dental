@@ -45,6 +45,9 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Sparkles,
+  BarChart3,
+  PieChart,
 } from "lucide-react";
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
@@ -265,34 +268,48 @@ export default function FinancialPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
-        {/* Elite Financial Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <DollarSign className="w-5 h-5 text-primary" />
+      <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/30 via-yellow-200/20 to-lime-200/10 dark:from-amber-900/15 dark:via-yellow-900/10 dark:to-lime-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 via-blue-200/20 to-indigo-200/10 dark:from-cyan-900/15 dark:via-blue-900/10 dark:to-indigo-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Enhanced Financial Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-yellow-500/5 to-lime-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white shadow-xl">
+                    <DollarSign className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-amber-600 via-yellow-600 to-lime-600 dark:from-amber-400 dark:via-yellow-400 dark:to-lime-400 bg-clip-text text-transparent animate-gradient">
+                    {t('financial.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    إدارة مالية شاملة ومتطورة
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Financial Control</span>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                  <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                  {t('reports.export_report')}
+                </Button>
+                <AddTransactionDialog onSave={handleSaveTransaction} />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('financial.title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Financial Management
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button variant="outline" className="elite-button-outline">
-              <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-              {t('reports.export_report')}
-            </Button>
-            <AddTransactionDialog onSave={handleSaveTransaction} />
           </div>
         </div>
 
-        {/* Elite Financial Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Enhanced Financial Stats */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {financialPageStats.map((stat, index) => {
             const Icon = iconMap[stat.icon as IconKey];
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
@@ -302,62 +319,69 @@ export default function FinancialPage() {
               <Card 
                 key={stat.titleKey}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
                   cardStyle
                 )}
+                role="button"
+                tabIndex={0}
+                aria-label={t(stat.titleKey as string)}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {t(stat.titleKey as string)}
-                    </CardTitle>
-                    <div className="text-2xl font-bold text-white drop-shadow-sm">
-                      {stat.value}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <Icon className={cn(
-                      "h-6 w-6 text-white drop-shadow-sm",
-                      stat.icon === "TrendingUp" && "text-green-200",
-                      stat.icon === "TrendingDown" && "text-red-200"
-                    )} />
-                  </div>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
+                    {t(stat.titleKey as string)}
+                  </CardTitle>
                 </CardHeader>
                 
-                <CardContent className="pt-0 relative z-10">
+                <CardContent className="pt-0">
+                  <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm mb-2">
+                    {stat.value}
+                  </div>
                   {stat.descriptionKey && (
                     <p className="text-xs text-white/80 font-medium">
                       {t(stat.descriptionKey as string)}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    <span className="text-xs text-white/70 font-medium">Live</span>
-                  </div>
                 </CardContent>
-                
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>{t('financial.revenue_vs_expenses')}</CardTitle>
+          <Card className="lg:col-span-3 group relative border-2 border-muted hover:border-amber-200 dark:hover:border-amber-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-amber-50/10 dark:to-amber-950/5">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/5 to-yellow-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+            
+            <CardHeader className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-yellow-500/10 group-hover:from-amber-500/20 group-hover:to-yellow-500/20 transition-colors">
+                  <BarChart3 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 dark:from-amber-400 dark:to-yellow-400 bg-clip-text text-transparent">
+                  {t('financial.revenue_vs_expenses')}
+                </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="pl-2">
+            <CardContent className="pl-2 relative z-10">
               <RevenueVsExpensesChart data={chartData} />
             </CardContent>
           </Card>
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>{t('financial.expenses_by_category')}</CardTitle>
+          
+          <Card className="lg:col-span-2 group relative border-2 border-muted hover:border-cyan-200 dark:hover:border-cyan-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-cyan-50/10 dark:to-cyan-950/5">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+            
+            <CardHeader className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 group-hover:from-cyan-500/20 group-hover:to-blue-500/20 transition-colors">
+                  <PieChart className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
+                  {t('financial.expenses_by_category')}
+                </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="h-[350px]">
+            <CardContent className="h-[350px] relative z-10">
               <ExpensesByCategoryChart data={expensesByCategory} />
             </CardContent>
           </Card>
@@ -371,25 +395,38 @@ export default function FinancialPage() {
             <TabsTrigger value="reports">{t('nav.reports')}</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>{t('financial.transaction_history')}</CardTitle>
+            <Card className="group relative border-2 border-muted hover:border-lime-200 dark:hover:border-lime-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-lime-50/10 dark:to-lime-950/5">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-lime-500/5 to-green-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+              
+              <CardHeader className="relative z-10 flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-lime-500/10 to-green-500/10 group-hover:from-lime-500/20 group-hover:to-green-500/20 transition-colors">
+                    <FileText className="h-5 w-5 text-lime-600 dark:text-lime-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-lime-600 to-green-600 dark:from-lime-400 dark:to-green-400 bg-clip-text text-transparent">
+                    {t('financial.transaction_history')}
+                  </CardTitle>
+                </div>
+                
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
-                  <div className="relative w-full md:w-auto">
-                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
-                    <Input
-                      type="search"
-                      placeholder={t('financial.search_transactions')}
-                      className={cn(
-                        "w-full rounded-lg bg-background lg:w-[336px]",
-                        isRTL ? 'pr-8 text-right' : 'pl-8'
-                      )}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                  <div className="relative w-full md:w-auto group/search">
+                    <div className="absolute inset-0 bg-gradient-to-r from-lime-500/20 to-green-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative">
+                      <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-lime-500 transition-colors duration-300", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        type="search"
+                        placeholder={t('financial.search_transactions')}
+                        className={cn(
+                          "w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-lime-300 dark:hover:border-lime-700 focus:border-lime-500 dark:focus:border-lime-600 py-5 h-auto lg:w-[336px] shadow-sm hover:shadow-md transition-all duration-300",
+                          isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'
+                        )}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger className="w-full md:w-[180px] rounded-xl border-2 hover:border-green-300 dark:hover:border-green-700 transition-colors">
                       <SelectValue placeholder={t('common.all_types')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -400,7 +437,7 @@ export default function FinancialPage() {
                   </Select>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <Table>
                   <TableHeader>
                     <TableRow>

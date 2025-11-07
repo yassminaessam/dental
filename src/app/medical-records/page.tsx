@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal, Replace, Link as LinkIcon } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal, Replace, Link as LinkIcon, Sparkles, FileText, Images } from "lucide-react";
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { ReplaceImageDialog } from "@/components/medical-records/replace-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
@@ -308,21 +308,49 @@ export default function MedicalRecordsPage() {
   return (
     <ErrorBoundary>
       <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">{t('medical_records.title')}</h1>
-          <div className="flex items-center gap-2">
-            <UploadImageDialog onUpload={handleImageUpload} />
-            <NewRecordDialog onSave={handleSaveRecord} />
+      <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-rose-200/30 via-red-200/20 to-orange-200/10 dark:from-rose-900/15 dark:via-red-900/10 dark:to-orange-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-teal-200/30 via-emerald-200/20 to-green-200/10 dark:from-teal-900/15 dark:via-emerald-900/10 dark:to-green-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Enhanced Header Section */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-red-500/5 to-orange-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500 to-red-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-xl">
+                    <FileText className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-rose-600 via-red-600 to-orange-600 dark:from-rose-400 dark:via-red-400 dark:to-orange-400 bg-clip-text text-transparent animate-gradient">
+                    {t('medical_records.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    نظام شامل لإدارة السجلات والصور الطبية
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <UploadImageDialog onUpload={handleImageUpload} />
+                <NewRecordDialog onSave={handleSaveRecord} />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {medicalRecordsPageStats.map((stat, idx) => (
             <Card
               key={stat.title}
               className={cn(
-                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                "relative overflow-hidden border-0 shadow-xl transition-all duration-500 cursor-pointer hover:scale-105",
                 stat.cardStyle
               )}
               role="button"
@@ -341,16 +369,18 @@ export default function MedicalRecordsPage() {
                 }
               }}
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
               <CardHeader className="pb-4">
-                <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white drop-shadow-sm">
+              <CardContent className="pt-0">
+                <div className="text-xl sm:text-2xl font-bold text-white drop-shadow-sm">
                   {stat.value}
                 </div>
-                <p className="text-xs text-white/80 font-medium">
+                <p className="text-xs text-white/80 font-medium mt-2">
                   {stat.description}
                 </p>
               </CardContent>
@@ -365,22 +395,35 @@ export default function MedicalRecordsPage() {
             <TabsTrigger value="templates">{t('medical_records.templates')}</TabsTrigger>
           </TabsList>
           <TabsContent value="medical-records" className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-                <CardTitle>{t('medical_records.patient_medical_records')}</CardTitle>
+            <Card className="group relative border-2 border-muted hover:border-rose-200 dark:hover:border-rose-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-rose-50/10 dark:to-rose-950/5">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-rose-500/5 to-red-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+              
+              <CardHeader className="relative z-10 flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-rose-500/10 to-red-500/10 group-hover:from-rose-500/20 group-hover:to-red-500/20 transition-colors">
+                    <FileText className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-rose-600 to-red-600 dark:from-rose-400 dark:to-red-400 bg-clip-text text-transparent">
+                    {t('medical_records.patient_medical_records')}
+                  </CardTitle>
+                </div>
+                
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
-                  <div className="relative w-full md:w-auto">
-                    <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
-                    <Input
-                      type="search"
-                      placeholder={t('medical_records.search_records')}
-                      className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
-                      value={recordSearchTerm}
-                      onChange={(e) => setRecordSearchTerm(e.target.value)}
-                    />
+                  <div className="relative w-full md:w-auto group/search">
+                    <div className="absolute inset-0 bg-gradient-to-r from-rose-500/20 to-red-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative">
+                      <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-rose-500 transition-colors duration-300", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        type="search"
+                        placeholder={t('medical_records.search_records')}
+                        className={cn("w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-rose-300 dark:hover:border-rose-700 focus:border-rose-500 dark:focus:border-rose-600 py-5 h-auto lg:w-[336px] shadow-sm hover:shadow-md transition-all duration-300", isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4')}
+                        value={recordSearchTerm}
+                        onChange={(e) => setRecordSearchTerm(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <Select value={recordTypeFilter} onValueChange={setRecordTypeFilter}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger className="w-full md:w-[180px] rounded-xl border-2 hover:border-red-300 dark:hover:border-red-700 transition-colors">
                       <SelectValue placeholder={t('medical_records.all_types')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -392,7 +435,7 @@ export default function MedicalRecordsPage() {
                   </Select>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -471,23 +514,36 @@ export default function MedicalRecordsPage() {
             </Card>
           </TabsContent>
           <TabsContent value="clinical-images" className="mt-4">
-             <Card>
-                <CardHeader>
+             <Card className="group relative border-2 border-muted hover:border-teal-200 dark:hover:border-teal-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-teal-50/10 dark:to-teal-950/5">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-teal-500/5 to-emerald-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                
+                <CardHeader className="relative z-10">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>{t('medical_records.clinical_images')}</CardTitle>
-                        <div className="relative w-full md:w-auto">
-                            <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
-                            <Input
-                            type="search"
-                            placeholder={t('medical_records.search_images') + '...'}
-                            className={cn("w-full rounded-lg bg-background md:w-[250px] lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
-                            value={imageSearchTerm}
-                            onChange={(e) => setImageSearchTerm(e.target.value)}
-                            />
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 group-hover:from-teal-500/20 group-hover:to-emerald-500/20 transition-colors">
+                            <Images className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                          </div>
+                          <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                            {t('medical_records.clinical_images')}
+                          </CardTitle>
+                        </div>
+                        
+                        <div className="relative w-full md:w-auto group/search">
+                            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
+                            <div className="relative">
+                              <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-teal-500 transition-colors duration-300", isRTL ? 'right-3' : 'left-3')} />
+                              <Input
+                                type="search"
+                                placeholder={t('medical_records.search_images') + '...'}
+                                className={cn("w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-teal-300 dark:hover:border-teal-700 focus:border-teal-500 dark:focus:border-teal-600 py-5 h-auto md:w-[250px] lg:w-[336px] shadow-sm hover:shadow-md transition-all duration-300", isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4')}
+                                value={imageSearchTerm}
+                                onChange={(e) => setImageSearchTerm(e.target.value)}
+                              />
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative z-10">
                     {loading ? (
                       <div className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : filteredImages.length > 0 ? (

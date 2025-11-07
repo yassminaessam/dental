@@ -29,7 +29,24 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { listCollection } from '@/lib/collections-client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Eye, Loader2, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
+import { 
+  Eye, 
+  Loader2, 
+  MoreHorizontal, 
+  Pencil, 
+  Search, 
+  Trash2,
+  Stethoscope,
+  Activity,
+  Sparkles,
+  Filter,
+  Heart,
+  Zap,
+  CheckCircle,
+  Clock,
+  Play,
+  AlertCircle
+} from 'lucide-react';
 
 export type { TreatmentAppointment } from '@/lib/types';
 
@@ -316,10 +333,40 @@ export default function TreatmentsPage() {
 
   return (
     <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-6 p-6 max-w-screen-2xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold">{t('treatments.title')}</h1>
-          <NewTreatmentPlanDialog onSave={handleSavePlan} />
+      <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-indigo-200/25 via-purple-200/15 to-pink-200/10 dark:from-indigo-900/12 dark:via-purple-900/8 dark:to-pink-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/3 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-200/25 via-blue-200/15 to-indigo-200/10 dark:from-cyan-900/12 dark:via-blue-900/8 dark:to-indigo-900/5 rounded-full blur-3xl animate-pulse animation-delay-1200"></div>
+        </div>
+
+        {/* Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-xl">
+                    <Activity className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">
+                    {t('treatments.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    إدارة شاملة لخطط العلاج والإجراءات
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <NewTreatmentPlanDialog onSave={handleSavePlan} />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

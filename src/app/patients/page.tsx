@@ -21,7 +21,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Loader2, UserPlus, UserMinus, UserCheck, Eye, History } from "lucide-react";
+import { 
+  Search, 
+  User, 
+  MoreHorizontal, 
+  Pencil, 
+  Trash2, 
+  Loader2, 
+  UserPlus, 
+  UserMinus, 
+  UserCheck, 
+  Eye, 
+  History,
+  Users as UsersIcon,
+  Sparkles,
+  Filter,
+  SortAsc,
+  Calendar,
+  Phone,
+  Mail,
+  MapPin
+} from "lucide-react";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -168,10 +188,40 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <main className="flex w-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 max-w-screen-2xl mx-auto overflow-x-hidden">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-2xl sm:text-3xl font-bold">{t('patients.title')}</h1>
-            <AddPatientDialog onSave={handleSavePatient} />
+        <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:gap-8 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto overflow-x-hidden relative">
+          {/* Decorative Background */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/25 via-purple-200/15 to-pink-200/10 dark:from-blue-900/12 dark:via-purple-900/8 dark:to-pink-900/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/3 -left-40 w-96 h-96 bg-gradient-to-tr from-green-200/25 via-cyan-200/15 to-blue-200/10 dark:from-green-900/12 dark:via-cyan-900/8 dark:to-blue-900/5 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
+          </div>
+
+          {/* Enhanced Header */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-xl">
+                      <UsersIcon className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">
+                      {t('patients.title')}
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      إدارة شاملة لسجلات المرضى
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <AddPatientDialog onSave={handleSavePatient} />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
@@ -219,23 +269,42 @@ export default function PatientsPage() {
             })}
           </div>
 
-          <Card className="overflow-hidden">
-            <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="text-lg sm:text-xl">{t('patients.patient_directory')}</CardTitle>
-              <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
-                <div className="relative w-full md:w-auto">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder={t('patients.search_patients')}
-                    className="w-full rounded-lg bg-background pl-8 h-9 sm:h-10 lg:w-[300px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+          <Card className="group relative border-2 border-muted hover:border-blue-200 dark:hover:border-blue-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-blue-50/10 dark:to-blue-950/5">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+            
+            <CardHeader className="relative z-10 flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:from-blue-500/20 group-hover:to-purple-500/20 transition-colors">
+                  <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
+                <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                  {t('patients.patient_directory')}
+                </CardTitle>
+              </div>
+              
+              <div className="flex w-full flex-col items-center gap-3 md:w-auto md:flex-row">
+                {/* Enhanced Search Bar */}
+                <div className="relative w-full md:w-auto group/search">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-blue-500 transition-colors duration-300" />
+                    <Input
+                      type="search"
+                      placeholder={t('patients.search_patients')}
+                      className="w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-blue-300 dark:hover:border-blue-700 focus:border-blue-500 dark:focus:border-blue-600 pl-10 pr-4 py-5 h-auto lg:w-[320px] shadow-sm hover:shadow-md transition-all duration-300"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Enhanced Status Filter */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[150px] h-9 sm:h-10">
-                    <SelectValue placeholder={t('patients.select_status')} />
+                  <SelectTrigger className="w-full md:w-[160px] h-auto py-3 rounded-xl border-2 border-muted hover:border-purple-300 dark:hover:border-purple-700 focus:border-purple-500 dark:focus:border-purple-600 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 group">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <SelectValue placeholder={t('patients.select_status')} />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('common.all_status')}</SelectItem>

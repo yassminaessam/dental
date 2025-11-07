@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { cn } from "../../lib/utils";
-import { Download, DollarSign, Users, Calendar, TrendingUp, Loader2 } from "lucide-react";
+import { Download, DollarSign, Users, Calendar, TrendingUp, Loader2, Sparkles, FileText, BarChart3, PieChart, Activity } from "lucide-react";
 import RevenueTrendChart from "../../components/reports/revenue-trend-chart";
 import PatientGrowthChart from "../../components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "../../components/reports/treatments-by-type-chart";
@@ -206,53 +206,77 @@ export default function ReportsPage() {
 
   return (
     <DashboardLayout>
-  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
-        {/* Elite Reports Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <TrendingUp className="w-5 h-5 text-primary" />
+  <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative">
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-200/30 via-teal-200/20 to-cyan-200/10 dark:from-emerald-900/15 dark:via-teal-900/10 dark:to-cyan-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 via-blue-200/20 to-indigo-200/10 dark:from-cyan-900/15 dark:via-blue-900/10 dark:to-indigo-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Ultra Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left side: Icon + Title */}
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-xl">
+                    <FileText className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full">Analytics & Reports</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                    {t('reports.title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Elite Business Intelligence & Insights
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Analytics & Reports</span>
+
+              {/* Right side: Filters & Actions */}
+              <div className="flex flex-wrap gap-3">
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted/50 font-bold hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
+                    <SelectValue placeholder={t('reports.last_30_days')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">{t('reports.last_30_days')}</SelectItem>
+                    <SelectItem value="60">{t('reports.last_60_days')}</SelectItem>
+                    <SelectItem value="90">{t('reports.last_90_days')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={exportFormat} onValueChange={setExportFormat}>
+                  <SelectTrigger className="w-[100px] h-11 rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted/50 font-bold hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
+                    <SelectValue placeholder={t('reports.csv')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">{t('reports.csv')}</SelectItem>
+                    <SelectItem value="pdf">{t('reports.pdf')}</SelectItem>
+                    <SelectItem value="png">{t('reports.png')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={handleExport}
+                  className="h-11 px-6 rounded-xl font-bold border-2 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {t('reports.export_report')}
+                </Button>
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('reports.title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              Elite Business Intelligence
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder={t('reports.last_30_days')} />
-              </SelectTrigger>
-              <SelectContent>
-        <SelectItem value="30">{t('reports.last_30_days')}</SelectItem>
-        <SelectItem value="60">{t('reports.last_60_days')}</SelectItem>
-        <SelectItem value="90">{t('reports.last_90_days')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={exportFormat} onValueChange={setExportFormat}>
-              <SelectTrigger className="w-[100px]">
-        <SelectValue placeholder={t('reports.csv')} />
-              </SelectTrigger>
-              <SelectContent>
-        <SelectItem value="csv">{t('reports.csv')}</SelectItem>
-        <SelectItem value="pdf">{t('reports.pdf')}</SelectItem>
-        <SelectItem value="png">{t('reports.png')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-      {t('reports.export_report')}
-            </Button>
           </div>
         </div>
 
-        {/* Elite Reports Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Ultra Enhanced Stats Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
             {reportsPageStats.map((stat, index) => {
                 const Icon = iconMap[stat.icon as IconKey];
                 const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
@@ -262,70 +286,107 @@ export default function ReportsPage() {
                     <Card 
                       key={stat.title}
                       className={cn(
-                        "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                        "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
                         cardStyle
                       )}
                     >
+                      {/* Animated Background Layers */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                       
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                        <div className="flex flex-col gap-1">
-                          <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                            {stat.title}
-                          </CardTitle>
-                          <div className="text-2xl font-bold text-white drop-shadow-sm">
-                            {stat.value}
+                      <CardHeader className="pb-4 relative z-10">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                              {stat.title}
+                            </CardTitle>
+                            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                              {stat.value}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                          <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+                          <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                          </div>
                         </div>
                       </CardHeader>
                       
                       <CardContent className="pt-0 relative z-10">
-                        <p className="text-xs text-white/80 font-medium">
+                        <p className="text-xs text-white/80 font-medium mb-3">
                           {stat.description}
                         </p>
-                        <div className="flex items-center gap-2 mt-3">
+                        <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                          <span className="text-xs text-white/70 font-medium">Live</span>
+                          <span className="text-xs text-white/70 font-medium">Live Data</span>
+                          <div className="ml-auto">
+                            <div className="text-xs text-white/60 font-bold">↗</div>
+                          </div>
                         </div>
                       </CardContent>
-                      
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
                     </Card>
                 );
             })}
         </div>
         
+        {/* Ultra Enhanced Chart Cards */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <Card>
-                <CardHeader>
-        <CardTitle>{t('reports.revenue_trend')}</CardTitle>
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
+                      <BarChart3 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <CardTitle className="text-lg font-black bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+                      {t('reports.revenue_trend')}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <RevenueTrendChart data={revenueTrendData} />
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-        <CardTitle>{t('reports.patient_growth')}</CardTitle>
+            
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10">
+                      <Activity className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    <CardTitle className="text-lg font-black bg-gradient-to-r from-teal-600 to-cyan-600 dark:from-teal-400 dark:to-cyan-400 bg-clip-text text-transparent">
+                      {t('reports.patient_growth')}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <PatientGrowthChart data={patientGrowthData} />
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-        <CardTitle>{t('reports.treatments_by_type')}</CardTitle>
+            
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+                      <PieChart className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <CardTitle className="text-lg font-black bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
+                      {t('reports.treatments_by_type')}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <TreatmentsByTypeChart data={treatmentsByTypeData} />
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-        <CardTitle>{t('reports.appointment_distribution')}</CardTitle>
+            
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="border-b-2 border-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10">
+                      <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <CardTitle className="text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                      {t('reports.appointment_distribution')}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <AppointmentDistributionChart data={appointmentDistributionData} />
