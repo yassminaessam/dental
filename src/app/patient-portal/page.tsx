@@ -29,7 +29,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2, Globe } from "lucide-react";
+import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2, Globe, Sparkles, Users } from "lucide-react";
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
@@ -239,48 +239,76 @@ export default function PatientPortalPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto">
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative">
         {/* Sync tab from URL */}
         <Suspense fallback={null}>
           <TabSync onTab={setActiveTab} />
         </Suspense>
 
-        {/* Elite Patient Portal Header */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
-                <User className="w-5 h-5 text-primary" />
+        {/* Decorative Background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 via-indigo-200/20 to-purple-200/10 dark:from-blue-900/15 dark:via-indigo-900/10 dark:to-purple-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-purple-200/30 via-pink-200/20 to-rose-200/10 dark:from-purple-900/15 dark:via-pink-900/10 dark:to-rose-900/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
+        </div>
+
+        {/* Ultra Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left side: Icon + Title */}
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 text-white shadow-xl">
+                    <Users className="h-8 w-8" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">Patient Portal</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
+                    {t('patient_portal.management_title')}
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    {t('patient_portal.management_subtitle')}
+                  </p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">{t('patient_portal.title')}</span>
+
+              {/* Right side: Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => onTabChange('settings')} 
+                  className="h-11 px-6 rounded-xl font-bold border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-300"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t('patient_portal.portal_settings')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => onTabChange('content-admin')} 
+                  className="h-11 px-6 rounded-xl font-bold border-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all duration-300"
+                >
+                  <Globe className="mr-2 h-4 w-4" />
+                  {t('patient_portal_admin.portal_content_settings')}
+                </Button>
+                <NewMessageDialog 
+                  onSend={handleSendMessage}
+                  triggerButtonText={t('patient_portal.send_message')}
+                  dialogTitle={t('patient_portal.dialog.send_new_message.title')}
+                  dialogDescription={t('patient_portal.dialog.send_new_message.description')}
+                />
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('patient_portal.management_title')}
-            </h1>
-            <p className="text-muted-foreground font-medium">
-              {t('patient_portal.management_subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button variant="outline" onClick={() => onTabChange('settings')} className="elite-button-outline">
-              <Settings className="mr-2 h-4 w-4" />
-              {t('patient_portal.portal_settings')}
-            </Button>
-            <Button variant="outline" onClick={() => onTabChange('content-admin')} className="elite-button-outline">
-              <Globe className="mr-2 h-4 w-4" />
-              {t('patient_portal_admin.portal_content_settings')}
-            </Button>
-            <NewMessageDialog 
-              onSend={handleSendMessage}
-              triggerButtonText={t('patient_portal.send_message')}
-              dialogTitle={t('patient_portal.dialog.send_new_message.title')}
-              dialogDescription={t('patient_portal.dialog.send_new_message.description')}
-            />
           </div>
         </div>
 
-        {/* Elite Patient Portal Stats */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Ultra Enhanced Stats Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {patientPortalPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
@@ -289,37 +317,42 @@ export default function PatientPortalPage() {
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
                   cardStyle
                 )}
               >
+                {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-sm font-semibold text-white/90 uppercase tracking-wide">
-                      {stat.title}
-                    </CardTitle>
-                    <div className={cn("text-2xl font-bold text-white drop-shadow-sm")}>
-                      {stat.value}
+                <CardHeader className="pb-4 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 uppercase tracking-wide mb-3">
+                        {stat.title}
+                      </CardTitle>
+                      <div className={cn("text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300")}>
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <User className="h-6 w-6 text-white drop-shadow-sm" />
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                    </div>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-white/80 font-medium">
+                  <p className="text-xs text-white/80 font-medium mb-3">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
                     <span className="text-xs text-white/70 font-medium">{t('patient_portal.online')}</span>
+                    <div className="ml-auto">
+                      <div className="text-xs text-white/60 font-bold">↗</div>
+                    </div>
                   </div>
                 </CardContent>
-                
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/20 to-transparent" />
               </Card>
             );
           })}
