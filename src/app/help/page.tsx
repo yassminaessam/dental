@@ -119,11 +119,24 @@ export default function HelpPage() {
       },
       { rootMargin: '0px 0px -70% 0px', threshold: [0, 0.25, 0.5] }
     );
-    filtered.forEach(s => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
+    
+    // Use requestAnimationFrame to ensure DOM is ready
+    const observeElements = () => {
+      filtered.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (el && el instanceof Element) {
+          observer.observe(el);
+        }
+      });
+    };
+    
+    // Small delay to ensure elements are rendered
+    const timeoutId = setTimeout(observeElements, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
   }, [filtered]);
 
   React.useEffect(() => {
