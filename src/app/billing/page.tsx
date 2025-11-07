@@ -447,7 +447,7 @@ export default function BillingPage() {
         {/* Decorative Background */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-200/30 via-teal-200/20 to-cyan-200/10 dark:from-emerald-900/15 dark:via-teal-900/10 dark:to-cyan-900/5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-amber-200/30 via-orange-200/20 to-red-200/10 dark:from-amber-900/15 dark:via-orange-900/10 dark:to-red-900/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
+          <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-gradient-to-tr from-amber-200/30 via-orange-200/20 to-red-200/10 dark:from-amber-900/15 dark:via-orange-900/10 dark:to-red-900/5 rounded-full blur-3xl animate-pulse [animation-delay:1.5s]"></div>
         </div>
 
         {/* Enhanced Header Section */}

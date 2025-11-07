@@ -53,14 +53,10 @@ const ToothComponent = ({ id, x, y, condition, isSelected, isHighlighted, onSele
                 cx={x} cy={y} r="12" 
                 className={cn(
                     colorClass, 
-                    'transition-all duration-300 drop-shadow-md',
-                    'group-hover:r-[14]',
-                    isSelected ? 'stroke-primary stroke-[3] drop-shadow-xl' : 'stroke-border stroke-[1.5]',
+                    'transition-all duration-300',
+                    isSelected ? 'stroke-primary stroke-[3] [filter:drop-shadow(0_0_8px_hsl(var(--primary)))]' : 'stroke-border stroke-[1.5] [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.1))]',
                     isHighlighted && !isSelected && 'stroke-black dark:stroke-white stroke-[2.5] animate-pulse'
                 )}
-                style={{
-                    filter: isSelected ? 'drop-shadow(0 0 8px hsl(var(--primary)))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                }}
             />
             
             {/* Tooth number */}
