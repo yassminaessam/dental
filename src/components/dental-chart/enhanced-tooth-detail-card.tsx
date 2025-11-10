@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Tooth, ToothCondition } from '@/app/dental-chart/page';
-import type { ClinicalImage, MedicalRecord } from '@/app/medical-records/page';
+import type { ClinicalImage, MedicalRecord } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,8 +66,8 @@ export function EnhancedToothDetailCard({
                 DentalIntegrationService.getToothMedicalRecords(tooth.id, patientName)
             ]);
             
-            setRelatedImages(images);
-            setRelatedRecords(records);
+            setRelatedImages(() => images as ClinicalImage[]);
+            setRelatedRecords(() => records as MedicalRecord[]);
         } catch (error) {
             console.error('Error loading integrated data:', error);
             toast({

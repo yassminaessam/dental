@@ -56,6 +56,7 @@ import {
   Activity,
   PillBottle,
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,

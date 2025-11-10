@@ -1,31 +1,14 @@
 "use client";
 
 // Client-safe DentalIntegrationService. Replaces legacy Prisma-coupled implementation.
-import { listCollection, createDocument } from '@/lib/collections-client';
+import { listCollection, createDocument, generateDocumentId } from '@/lib/collections-client';
+import type { ClinicalImage, MedicalRecord } from '@/lib/types';
 
 export type ToothCondition = string; // Simplified placeholder
 
-export interface ClinicalImage {
-  id: string;
-  patient: string;
-  type: string;
-  date: string;
-  caption?: string;
-}
-
-export interface MedicalRecord {
-  id?: string;
-  patient: string;
-  type: string;
-  complaint: string;
-  provider: string;
-  date: string;
-  status: 'Final' | 'Draft';
-  content: string;
-  toothNumber?: number;
-}
-
+// Extend base MedicalRecord with tooth-specific metadata without redefining core fields.
 export interface DentalTreatmentRecord extends MedicalRecord {
+  toothNumber?: number;
   toothCondition?: ToothCondition;
   previousCondition?: ToothCondition;
   treatmentType: 'condition_change' | 'treatment_plan' | 'follow_up' | 'clinical_image';
@@ -50,19 +33,20 @@ export class DentalIntegrationService {
     notes?: string
   ): Promise<string> {
     const record: DentalTreatmentRecord = {
+      id: generateDocumentId('mr'),
       patient: patientName,
       type: 'Treatment Plan',
       complaint: `Tooth #${toothId} condition change: ${oldCondition} → ${newCondition}`,
       provider: 'Dental System',
       date: new Date().toISOString(),
       status: 'Final',
-      content: this.generateTreatmentContent(toothId, oldCondition, newCondition, notes),
+      notes: this.generateTreatmentContent(toothId, oldCondition, newCondition, notes),
       toothNumber: toothId,
       toothCondition: newCondition,
       previousCondition: oldCondition,
       treatmentType: 'condition_change'
     };
-    const id = await createDocument('medical-records', record);
+    const id = await createDocument('medical-records', record as unknown as Record<string, unknown>);
     return id;
   }
 
@@ -79,7 +63,7 @@ export class DentalIntegrationService {
       linkDate: new Date().toISOString(),
       imageType
     };
-    return createDocument('tooth-image-links', link);
+    return createDocument('tooth-image-links', link as unknown as Record<string, unknown>);
   }
 
   static async getPatientImages(patient: string): Promise<ClinicalImage[]> {
@@ -110,17 +94,18 @@ export class DentalIntegrationService {
     nextAppointment?: string
   ): Promise<string> {
     const record: DentalTreatmentRecord = {
+      id: generateDocumentId('mr'),
       patient: patientName,
       type: 'Clinical Note',
       complaint: `Follow-up treatment for Tooth #${toothId}`,
       provider: 'Dental System',
       date: new Date().toISOString(),
       status: 'Final',
-      content: this.generateFollowUpContent(toothId, treatmentNotes, nextAppointment),
+      notes: this.generateFollowUpContent(toothId, treatmentNotes, nextAppointment),
       toothNumber: toothId,
       treatmentType: 'follow_up'
     };
-    return createDocument('medical-records', record);
+    return createDocument('medical-records', record as unknown as Record<string, unknown>);
   }
 
   static async createImageRecord(
@@ -129,18 +114,19 @@ export class DentalIntegrationService {
     linkedToothNumber?: number
   ): Promise<string> {
     const record: DentalTreatmentRecord = {
+      id: generateDocumentId('mr'),
       patient: patientName,
       type: 'Clinical Note',
       complaint: `Clinical imaging documentation${linkedToothNumber ? ` for Tooth #${linkedToothNumber}` : ''}`,
       provider: 'Dental System',
       date: new Date().toISOString(),
       status: 'Final',
-      content: this.generateImageRecordContent(imageData, linkedToothNumber),
+      notes: this.generateImageRecordContent(imageData, linkedToothNumber),
       toothNumber: linkedToothNumber,
       treatmentType: 'clinical_image',
       relatedImageIds: [imageData.id]
     };
-    return createDocument('medical-records', record);
+    return createDocument('medical-records', record as unknown as Record<string, unknown>);
   }
 
   private static generateTreatmentContent(

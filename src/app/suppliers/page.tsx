@@ -58,6 +58,7 @@ import {
   Users,
   Package,
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { NewPurchaseOrderDialog } from "@/components/suppliers/new-purchase-order-dialog";
 import { AddSupplierDialog } from "@/components/suppliers/add-supplier-dialog";
 import { useToast } from '@/hooks/use-toast';

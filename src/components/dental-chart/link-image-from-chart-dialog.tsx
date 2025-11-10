@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Link as LinkIcon, Camera, Calendar, Upload, ExternalLink } from "lucide-react";
-import { ClinicalImage } from '@/app/medical-records/page';
+import type { ClinicalImage } from '@/lib/types';
 import { DentalIntegrationService } from '@/services/dental-integration';
 import { useToast } from '@/hooks/use-toast';
 import { toothNames } from '@/lib/data/dental-chart-data';
@@ -62,8 +62,8 @@ export function LinkImageToToothFromChartDialog({
       const linkedImages = await DentalIntegrationService.getToothImages(toothNumber, patientName);
       const linkedImageIds = linkedImages.map(img => img.id);
       
-      const availableImages = allImages.filter(img => !linkedImageIds.includes(img.id));
-      setAvailableImages(availableImages);
+      const nextAvailable: ClinicalImage[] = allImages.filter(img => !linkedImageIds.includes(img.id));
+      setAvailableImages(() => nextAvailable);
     } catch (error) {
       console.error('Error loading available images:', error);
       toast({

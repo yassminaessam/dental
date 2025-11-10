@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Settings, Search, User, Eye, Reply, Circle, CheckCircle2, Check, X, FileText, Trash2, KeyRound, Loader2, Globe, Sparkles, Users } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewMessageDialog } from '@/components/patient-portal/view-message-dialog';
