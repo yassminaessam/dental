@@ -1,46 +1,65 @@
-// Prisma schema for Neon Postgres (cleaned)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Typed enums (new)
+enum AppointmentStatus {
+  Confirmed
+  Pending
+  Cancelled
+  Completed
+}
+
+enum PatientStatus {
+  Active
+  Inactive
+}
+
+// New enum for treatments
+enum TreatmentStatus {
+  Pending
+  InProgress
+  Completed
+}
+
+enum InvoiceStatus {
+  Draft
+  Sent
+  Paid
+  Overdue
+  Cancelled
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum UserRole {
-  admin
-  doctor
-  receptionist
-  patient
-}
-
 model User {
-  id               String    @id @default(uuid())
-  email            String    @unique
-  passwordHash     String
-  firstName        String
-  lastName         String
-  role             UserRole
-  permissions      String[]
-  isActive         Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  lastLoginAt      DateTime?
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            UserRole
+  permissions     String[]
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLoginAt     DateTime?
+  specialization  String?
+  licenseNumber   String?
+  employeeId      String?
+  department      String?
+  patientId       String?
+  phone           String?
+  address         String?
+  profileImageUrl String?
 
-  // Optional profile fields
-  specialization   String?
-  licenseNumber    String?
-  employeeId       String?
-  department       String?
-  patientId        String?
-  phone            String?
-  address          String?
-  profileImageUrl  String?
+  // Optional staff linkage for employees
+  staff           Staff?
 }
 
-// Generic JSON collection to provide backward-compatible Firestore-like storage
 model CollectionDoc {
   id         String
   collection String
@@ -50,4 +69,195 @@ model CollectionDoc {
 
   @@id([collection, id])
   @@index([collection])
+}
+
+// Typed Appointment model
+model Appointment {
+  id               String            @id @default(uuid())
+  dateTime         DateTime
+  patient          String
+  patientId        String?
+  patientEmail     String?
+  patientPhone     String?
+  doctor           String
+  doctorId         String?
+  type             String
+  duration         String
+  status           AppointmentStatus @default(Confirmed)
+  treatmentId      String?
+  treatment        Treatment?        @relation(fields: [treatmentId], references: [id])
+  notes            String?
+  bookedBy         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  reason           String?
+  urgency          String?
+  confirmedAt      DateTime?
+  confirmedBy      String?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  rejectedBy       String?
+
+  @@index([dateTime])
+  @@index([status])
+  @@index([treatmentId])
+}
+
+model Patient {
+  id                String        @id @default(uuid())
+  name              String
+  lastName          String
+  email             String        @unique
+  phone             String
+  dob               DateTime
+  lastVisit         DateTime?
+  status            PatientStatus @default(Active)
+  address           String?
+  ecName            String?
+  ecPhone           String?
+  ecRelationship    String?
+  insuranceProvider String?
+  policyNumber      String?
+  medicalHistory    Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  invoices          Invoice[]
+
+  @@index([status])
+  @@index([lastVisit])
+}
+
+// Typed Treatment model (appointments are linked via Appointment.treatmentId)
+model Treatment {
+  id         String         @id @default(uuid())
+  patient    String
+  patientId  String?
+  doctor     String
+  doctorId   String?
+  procedure  String
+  cost       String
+  status     TreatmentStatus @default(Pending)
+  notes      String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  appointments Appointment[]
+  invoices     Invoice[]
+
+  @@index([status])
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+enum UserRole {
+  admin
+  doctor
+  receptionist
+  patient
+}
+
+enum StaffStatus {
+  Active
+  Inactive
+}
+
+model Staff {
+  id         String      @id @default(uuid())
+  userId     String?     @unique
+  user       User?       @relation(fields: [userId], references: [id])
+  name       String
+  role       String
+  email      String       @unique
+  phone      String
+  schedule   String
+  salary     String
+  hireDate   DateTime
+  status     StaffStatus  @default(Active)
+  notes      String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status])
+  @@index([role])
+}
+
+// Inventory & Suppliers
+enum SupplierStatus {
+  Active
+  Inactive
+}
+
+enum InventoryItemStatus {
+  Normal
+  LowStock
+  OutOfStock
+}
+
+model Supplier {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  address      String?
+  phone        String?
+  email        String?
+  category     String?
+  paymentTerms String?
+  rating       Float?
+  status       SupplierStatus @default(Active)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        InventoryItem[]
+
+  @@index([status])
+}
+
+model InventoryItem {
+  id           String               @id @default(uuid())
+  name         String
+  category     String?
+  supplierId   String?
+  supplier     Supplier?            @relation(fields: [supplierId], references: [id])
+  quantity     Int                  @default(0)
+  minQuantity  Int                  @default(0)
+  maxQuantity  Int                  @default(0)
+  unitCost     Decimal              @db.Decimal(12,2)
+  status       InventoryItemStatus  @default(Normal)
+  expires      DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([quantity])
+  @@index([expires])
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  number      String        @unique
+  patientId   String?
+  patient     Patient?      @relation(fields: [patientId], references: [id])
+  treatmentId String?
+  treatment   Treatment?    @relation(fields: [treatmentId], references: [id])
+  date        DateTime
+  dueDate     DateTime?
+  amount      Decimal        @db.Decimal(12,2)
+  status      InvoiceStatus  @default(Draft)
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  items       InvoiceItem[]
+
+  @@index([patientId])
+  @@index([treatmentId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id         String   @id @default(uuid())
+  invoiceId  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(12,2)
+  total       Decimal  @db.Decimal(12,2)
 }

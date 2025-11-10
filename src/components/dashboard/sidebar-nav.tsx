@@ -352,6 +352,9 @@ export function SidebarNav() {
             </Button>
           </SidebarMenuButton>
         </SidebarMenuItem>
+        
+        {/* Bottom spacing */}
+        <div className="pb-6" />
       </div>
     </div>
   );

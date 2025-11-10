@@ -135,7 +135,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
         <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
             {t('patients.add_patient')}
           </DialogTitle>
           <DialogDescription className="text-sm sm:text-base text-muted-foreground">

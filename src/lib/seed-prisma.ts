@@ -214,12 +214,13 @@ async function seedDatabase() {
     for (const user of sampleUsers) {
       // Hash default password for demo (use a secure password in production)
       const hashedPassword = await bcrypt.hash('Password123!', 12);
-      
+
       await prisma.user.create({
         data: {
           ...user,
-          hashedPassword
-        } as any
+          // Ensure correct column name matches current schema (passwordHash)
+          passwordHash: hashedPassword
+        }
       });
     }
     console.log(`✅ Created ${sampleUsers.length} users`);

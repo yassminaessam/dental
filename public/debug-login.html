@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Session & Test Login</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        .danger {
+            background: #e00;
+        }
+        .danger:hover {
+            background: #c00;
+        }
+        .success {
+            background: #0a0;
+        }
+        .info {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            color: #666;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .divider {
+            margin: 30px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cairo Dental - Debug Tool</h1>
+        
+        <div class="info">
+            <strong>Current localStorage:</strong>
+            <pre id="storage-info"></pre>
+        </div>
+
+        <button class="danger" onclick="clearSession()">Clear Session (Fix 404 Loop)</button>
+        
+        <hr class="divider">
+        
+        <h2>Test Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="admin@cairodental.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="Admin123!" required>
+            </div>
+            <button type="submit">Test Sign In</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <hr class="divider">
+        
+        <button class="success" onclick="goToApp()">Go to App</button>
+    </div>
+
+    <script>
+        function updateStorageInfo() {
+            const sessionUserId = localStorage.getItem('sessionUserId');
+            const info = {
+                sessionUserId: sessionUserId || 'none',
+                allKeys: Object.keys(localStorage)
+            };
+            document.getElementById('storage-info').textContent = JSON.stringify(info, null, 2);
+        }
+        
+        function clearSession() {
+            localStorage.clear();
+            updateStorageInfo();
+            showResult('Session cleared! The 404 loop should stop.', 'success');
+        }
+        
+        function goToApp() {
+            window.location.href = '/';
+        }
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.className = 'result ' + type;
+            result.innerHTML = message;
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('Signing in...', 'success');
+            
+            try {
+                const response = await fetch('/api/auth/sign-in', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store session
+                    localStorage.setItem('sessionUserId', data.user.id);
+                    updateStorageInfo();
+                    
+                    showResult(
+                        `✅ Success!<br><br>` +
+                        `User ID: ${data.user.id}<br>` +
+                        `Name: ${data.user.firstName} ${data.user.lastName}<br>` +
+                        `Role: ${data.user.role}<br><br>` +
+                        `<strong>You can now go to the app!</strong>`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `❌ Failed<br><br>` +
+                        `Status: ${response.status}<br>` +
+                        `Error: ${data.error || 'Unknown error'}<br><br>` +
+                        `Check the browser console for details.`,
+                        'error'
+                    );
+                    console.error('Sign in failed:', data);
+                }
+            } catch (error) {
+                showResult(
+                    `❌ Network Error<br><br>` +
+                    `${error.message}<br><br>` +
+                    `Make sure the server is running.`,
+                    'error'
+                );
+                console.error('Sign in error:', error);
+            }
+        });
+        
+        // Update on load
+        updateStorageInfo();
+    </script>
+</body>
+</html>

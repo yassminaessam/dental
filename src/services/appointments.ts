@@ -1,101 +1,123 @@
-import { generateDocumentId, listCollection, saveDocument, patchDocument, readDocument, removeDocument } from '@/services/datastore.server';
+import prisma from '@/lib/db';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
 import type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
 export type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
 
-const COLLECTION = 'appointments';
-
-type AppointmentRecord = Omit<Appointment, 'dateTime' | 'createdAt' | 'updatedAt' | 'confirmedAt' | 'rejectedAt'> & {
-  dateTime: string;
-  createdAt?: string;
-  updatedAt?: string;
-  confirmedAt?: string;
-  rejectedAt?: string;
-};
-
-type AppointmentRecordPatch = Partial<Omit<AppointmentRecord, 'id'>> & { id?: string };
-
-const toRecord = (appointment: Appointment): AppointmentRecord => ({
-  ...appointment,
-  dateTime: appointment.dateTime.toISOString(),
-  createdAt: appointment.createdAt ? appointment.createdAt.toISOString() : undefined,
-  updatedAt: appointment.updatedAt ? appointment.updatedAt.toISOString() : undefined,
-  confirmedAt: appointment.confirmedAt ? appointment.confirmedAt.toISOString() : undefined,
-  rejectedAt: appointment.rejectedAt ? appointment.rejectedAt.toISOString() : undefined,
-});
-
-const fromRecord = (record: AppointmentRecord): Appointment => ({
-  ...record,
-  dateTime: new Date(record.dateTime),
-  createdAt: record.createdAt ? new Date(record.createdAt) : undefined,
-  updatedAt: record.updatedAt ? new Date(record.updatedAt) : undefined,
-  confirmedAt: record.confirmedAt ? new Date(record.confirmedAt) : undefined,
-  rejectedAt: record.rejectedAt ? new Date(record.rejectedAt) : undefined,
-});
-
-const serializePatch = (patch: AppointmentUpdateInput): AppointmentRecordPatch => {
-  const result: AppointmentRecordPatch = { ...(patch as Record<string, unknown>) };
-
-  if (patch.dateTime) result.dateTime = patch.dateTime.toISOString();
-  if (patch.createdAt) result.createdAt = patch.createdAt.toISOString();
-  if (patch.updatedAt) result.updatedAt = patch.updatedAt.toISOString();
-  if (patch.confirmedAt) result.confirmedAt = patch.confirmedAt.toISOString();
-  if (patch.rejectedAt) result.rejectedAt = patch.rejectedAt.toISOString();
-
-  return result;
-};
-
-// Types moved to appointments.types.ts for shared use (client/server)
+function mapRowToAppointment(row: any): Appointment {
+  return {
+    id: row.id,
+    dateTime: new Date(row.dateTime),
+    patient: row.patient,
+    patientId: row.patientId ?? undefined,
+    patientEmail: row.patientEmail ?? undefined,
+    patientPhone: row.patientPhone ?? undefined,
+    doctor: row.doctor,
+    doctorId: row.doctorId ?? undefined,
+    type: row.type,
+    duration: row.duration,
+    status: row.status as AppointmentStatus,
+    treatmentId: row.treatmentId ?? undefined,
+    notes: row.notes ?? undefined,
+    bookedBy: row.bookedBy ?? undefined,
+    createdAt: row.createdAt ?? undefined,
+    updatedAt: row.updatedAt ?? undefined,
+    reason: row.reason ?? undefined,
+    urgency: row.urgency ?? undefined,
+    confirmedAt: row.confirmedAt ?? undefined,
+    confirmedBy: row.confirmedBy ?? undefined,
+    rejectedAt: row.rejectedAt ?? undefined,
+    rejectionReason: row.rejectionReason ?? undefined,
+    rejectedBy: row.rejectedBy ?? undefined,
+  };
+}
 
 async function get(id: string): Promise<Appointment | null> {
-  const record = await readDocument<AppointmentRecord>(COLLECTION, id);
-  return record ? fromRecord(record) : null;
+  const row = await prisma.appointment.findUnique({ where: { id } });
+  return row ? mapRowToAppointment(row) : null;
 }
 
 async function list(): Promise<Appointment[]> {
-  const records = await listCollection<AppointmentRecord>(COLLECTION);
-  return records.map(fromRecord);
+  const rows = await prisma.appointment.findMany({ orderBy: { dateTime: 'desc' } });
+  return rows.map(mapRowToAppointment);
 }
 
 async function create(input: AppointmentCreateInput): Promise<Appointment> {
-  const now = new Date();
-  const appointment: Appointment = {
-    id: input.id ?? generateDocumentId('APT'),
-    dateTime: input.dateTime,
-    patient: input.patient,
-    patientId: input.patientId,
-    patientEmail: input.patientEmail,
-    patientPhone: input.patientPhone,
-    doctor: input.doctor,
-    doctorId: input.doctorId,
-    type: input.type,
-    duration: input.duration,
-    status: input.status ?? 'Confirmed',
-    treatmentId: input.treatmentId,
-    notes: input.notes,
-    bookedBy: input.bookedBy,
-    reason: input.reason,
-    urgency: input.urgency,
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-
-  await saveDocument(COLLECTION, appointment.id, toRecord(appointment));
-  return appointment;
+  const created = await prisma.appointment.create({
+    data: {
+      id: input.id, // allow custom ids if provided
+      dateTime: input.dateTime,
+      patient: input.patient,
+      patientId: input.patientId ?? null,
+      patientEmail: input.patientEmail ?? null,
+      patientPhone: input.patientPhone ?? null,
+      doctor: input.doctor,
+      doctorId: input.doctorId ?? null,
+      type: input.type,
+      duration: input.duration,
+      status: (input.status ?? 'Confirmed') as any,
+      treatmentId: input.treatmentId ?? null,
+      notes: input.notes ?? null,
+      bookedBy: input.bookedBy ?? null,
+      reason: input.reason ?? null,
+      urgency: input.urgency ?? null,
+      createdAt: input.createdAt,
+      updatedAt: input.updatedAt,
+      confirmedAt: input.confirmedAt,
+      confirmedBy: input.confirmedBy ?? null,
+      rejectedAt: input.rejectedAt,
+      rejectionReason: input.rejectionReason ?? null,
+      rejectedBy: input.rejectedBy ?? null,
+    },
+  });
+  return mapRowToAppointment(created);
 }
 
 async function update(appointment: Appointment): Promise<Appointment> {
-  const next: Appointment = {
-    ...appointment,
-    updatedAt: new Date(),
-  };
-  await saveDocument(COLLECTION, appointment.id, toRecord(next));
-  return next;
+  const updated = await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: {
+      dateTime: appointment.dateTime,
+      patient: appointment.patient,
+      patientId: appointment.patientId ?? null,
+      patientEmail: appointment.patientEmail ?? null,
+      patientPhone: appointment.patientPhone ?? null,
+      doctor: appointment.doctor,
+      doctorId: appointment.doctorId ?? null,
+      type: appointment.type,
+      duration: appointment.duration,
+      status: appointment.status as any,
+      treatmentId: appointment.treatmentId ?? null,
+      notes: appointment.notes ?? null,
+      bookedBy: appointment.bookedBy ?? null,
+      reason: appointment.reason ?? null,
+      urgency: appointment.urgency ?? null,
+      confirmedAt: appointment.confirmedAt ?? null,
+      confirmedBy: appointment.confirmedBy ?? null,
+      rejectedAt: appointment.rejectedAt ?? null,
+      rejectionReason: appointment.rejectionReason ?? null,
+      rejectedBy: appointment.rejectedBy ?? null,
+    },
+  });
+  return mapRowToAppointment(updated);
 }
 
 async function patch(id: string, patchInput: AppointmentUpdateInput): Promise<void> {
-  const payload = serializePatch({ ...patchInput, updatedAt: patchInput.updatedAt ?? new Date() });
-  await patchDocument<AppointmentRecord>(COLLECTION, id, payload);
+  const data: Record<string, any> = { ...patchInput };
+  if ('patientId' in data) data.patientId ??= null;
+  if ('patientEmail' in data) data.patientEmail ??= null;
+  if ('patientPhone' in data) data.patientPhone ??= null;
+  if ('doctorId' in data) data.doctorId ??= null;
+  if ('treatmentId' in data) data.treatmentId ??= null;
+  if ('notes' in data) data.notes ??= null;
+  if ('bookedBy' in data) data.bookedBy ??= null;
+  if ('reason' in data) data.reason ??= null;
+  if ('urgency' in data) data.urgency ??= null;
+  if ('confirmedAt' in data) data.confirmedAt ??= null;
+  if ('confirmedBy' in data) data.confirmedBy ??= null;
+  if ('rejectedAt' in data) data.rejectedAt ??= null;
+  if ('rejectionReason' in data) data.rejectionReason ??= null;
+  if ('rejectedBy' in data) data.rejectedBy ??= null;
+  await prisma.appointment.update({ where: { id }, data });
 }
 
 async function updateStatus(
@@ -108,14 +130,12 @@ async function updateStatus(
 }
 
 async function listPending(): Promise<Appointment[]> {
-  const appointments = await list();
-  return appointments
-    .filter((appointment) => appointment.status === 'Pending')
-    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  const rows = await prisma.appointment.findMany({ where: { status: 'Pending' as any }, orderBy: { dateTime: 'asc' } });
+  return rows.map(mapRowToAppointment);
 }
 
 async function remove(id: string): Promise<void> {
-  await removeDocument(COLLECTION, id);
+  await prisma.appointment.delete({ where: { id } });
 }
 
 export const AppointmentsService = {

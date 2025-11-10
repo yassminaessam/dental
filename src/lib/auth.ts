@@ -26,6 +26,11 @@ async function getSessionUser(): Promise<User | null> {
       method: 'GET',
       cache: 'no-store',
     });
+    if (response.status === 404) {
+      // Stale session id -> clear and treat as signed out
+      clearSession();
+      return null;
+    }
     if (!response.ok) return null;
     const { user } = (await response.json()) as { user: User };
     return user ?? null;

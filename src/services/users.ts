@@ -34,7 +34,8 @@ export const UsersService = {
   },
 
   async getByEmail(email: string): Promise<(User & { hashedPassword?: string }) | null> {
-    const u = await prisma.user.findUnique({ where: { email } });
+    const normalized = email.trim().toLowerCase();
+    const u = await prisma.user.findFirst({ where: { email: { equals: normalized, mode: 'insensitive' } } as any });
     if (!u) return null;
     const mapped = mapDbUser(u);
     // Backward-compat: some environments may still have the column named `hashedPassword`.
@@ -55,9 +56,10 @@ export const UsersService = {
 
   async create(data: RegisterData & { permissions: UserPermission[] }): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    const normalizedEmail = data.email.trim().toLowerCase();
     const created = await prisma.user.create({
       data: {
-        email: data.email,
+        email: normalizedEmail,
         passwordHash: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -81,7 +83,7 @@ export const UsersService = {
     const { password, ...rest } = updates;
 
     const data: Prisma.UserUncheckedUpdateInput = {
-      email: rest.email,
+      email: rest.email ? rest.email.trim().toLowerCase() : undefined,
       firstName: rest.firstName,
       lastName: rest.lastName,
       role: rest.role,

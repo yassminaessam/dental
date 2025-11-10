@@ -495,7 +495,7 @@ export async function getOverdueInvoices(): Promise<any[]> {
       }
       const invoices = await (dbClient as any)['invoice']?.findMany({
         where: {
-          status: { not: 'paid' },
+          status: { not: 'Paid' },
           dueDate: { lt: new Date() }
         },
         include: {

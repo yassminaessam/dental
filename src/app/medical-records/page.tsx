@@ -326,7 +326,7 @@ export default function MedicalRecordsPage() {
                   </div>
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-rose-600 via-red-600 to-orange-600 dark:from-rose-400 dark:via-red-400 dark:to-orange-400 bg-clip-text text-transparent animate-gradient">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-600 dark:from-blue-400 dark:via-cyan-400 dark:to-sky-400 bg-clip-text text-transparent animate-gradient">
                     {t('medical_records.title')}
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">

@@ -19,6 +19,11 @@ export interface AppointmentCreateInput {
   urgency?: Appointment['urgency'];
   createdAt?: Date;
   updatedAt?: Date;
+  confirmedAt?: Date | null;
+  confirmedBy?: string | null;
+  rejectedAt?: Date | null;
+  rejectionReason?: string | null;
+  rejectedBy?: string | null;
 }
 
 export type AppointmentUpdateInput = Partial<Omit<Appointment, 'id'>>;

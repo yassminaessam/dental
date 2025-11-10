@@ -300,7 +300,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
-                  <h1 className="relative text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">
+                  <h1 className="relative text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 dark:from-blue-400 dark:via-cyan-400 dark:to-indigo-400 bg-clip-text text-transparent animate-gradient">
                     {t('settings.title')}
                   </h1>
                 </div>
