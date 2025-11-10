@@ -148,6 +148,26 @@ body {
     background: rgba(107, 114, 128, 0.15); /* Light gray RGBA */
     @apply text-gray-900 dark:text-gray-100;
   }
+
+  /* Metric card compact spacing: reduce vertical padding globally */
+  .metric-card-blue .p-6,
+  .metric-card-green .p-6,
+  .metric-card-orange .p-6,
+  .metric-card-purple .p-6,
+  .metric-card-red .p-6,
+  .metric-card-gray .p-6 {
+    padding: 0.75rem !important; /* Tailwind p-3 */
+  }
+  .metric-card-blue .pb-4,
+  .metric-card-green .pb-4,
+  .metric-card-orange .pb-4,
+  .metric-card-purple .pb-4,
+  .metric-card-red .pb-4,
+  .metric-card-gray .pb-4 {
+    padding-bottom: 0.25rem !important; /* Tailwind pb-1 */
+  }
+
+  /* Card icon global classes removed — CardIcon now supplies Tailwind utilities inline */
   
   /* Elite Header */
   .elite-header {

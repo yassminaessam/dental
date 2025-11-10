@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal, Replace, Link as LinkIcon, Sparkles, FileText, Images } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { ReplaceImageDialog } from "@/components/medical-records/replace-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
@@ -372,12 +373,12 @@ export default function MedicalRecordsPage() {
                 <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                  {idx === 0 && <FileText className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 1 && <Images className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 2 && <User className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 3 && <Pencil className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                </div>
+                <CardIcon variant={(['blue','green','pink','purple'] as const)[idx % 4]} aria-hidden="true">
+                  {idx === 0 && <FileText className="h-5 w-5" />}
+                  {idx === 1 && <Images className="h-5 w-5" />}
+                  {idx === 2 && <User className="h-5 w-5" />}
+                  {idx === 3 && <Pencil className="h-5 w-5" />}
+                </CardIcon>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">

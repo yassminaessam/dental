@@ -54,6 +54,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { ViewAppointmentDialog } from '@/components/appointments/view-appointment-dialog';
@@ -209,60 +210,52 @@ export default function AppointmentsPage() {
           </div>
 
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-          {appointmentPageStats.map((stat, idx) => (
-            <Card
-              key={stat.title}
-              className={cn(
-                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
-                stat.cardStyle
-              )}
-              role="button"
-              tabIndex={0}
-              aria-label={stat.title}
-              onClick={() => {
-                // 0: total (all), 1: pending, 2: confirmed, 3: today's
-                if (idx === 0) {
-                  setActiveView('list');
-                  setStatusFilter('all');
-                } else if (idx === 1) {
-                  setActiveView('list');
-                  setStatusFilter('pending');
-                } else if (idx === 2) {
-                  setActiveView('list');
-                  setStatusFilter('confirmed');
-                } else if (idx === 3) {
-                  setActiveView('calendar');
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  (e.currentTarget as HTMLDivElement).click();
-                }
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-                <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                  {stat.title}
-                </CardTitle>
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                  {idx === 0 && <CalendarDays className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 1 && <Clock className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 2 && <CheckCircle2 className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  {idx === 3 && <CalendarCheck className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {stat.value}
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {appointmentPageStats.map((stat, idx) => {
+            const variants = ['blue','orange','green','purple'] as const;
+            const variant = variants[idx % variants.length];
+            return (
+              <Card
+                key={stat.title}
+                className={cn(
+                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
+                  stat.cardStyle
+                )}
+                role="button"
+                tabIndex={0}
+                aria-label={stat.title}
+                onClick={() => {
+                  if (idx === 0) { setActiveView('list'); setStatusFilter('all'); }
+                  else if (idx === 1) { setActiveView('list'); setStatusFilter('pending'); }
+                  else if (idx === 2) { setActiveView('list'); setStatusFilter('confirmed'); }
+                  else if (idx === 3) { setActiveView('calendar'); }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLDivElement).click(); }
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
+                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                    {stat.title}
+                  </CardTitle>
+                  <CardIcon variant={variant} aria-hidden="true">
+                    {idx === 0 && <CalendarDays className="h-5 w-5" />}
+                    {idx === 1 && <Clock className="h-5 w-5" />}
+                    {idx === 2 && <CheckCircle2 className="h-5 w-5" />}
+                    {idx === 3 && <CalendarCheck className="h-5 w-5" />}
+                  </CardIcon>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {stat.value}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                    {stat.description}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-2 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">

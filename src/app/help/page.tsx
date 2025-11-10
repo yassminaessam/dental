@@ -251,12 +251,15 @@ export default function HelpPage() {
                   <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                    {index === 0 && <BookOpen className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 1 && <HelpCircle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 2 && <Users className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 3 && <HeadphonesIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  </div>
+                  <CardIcon 
+                    variant={(['blue', 'green', 'orange', 'purple'] as const)[index % 4]}
+                    aria-hidden="true"
+                  >
+                    {index === 0 && <BookOpen className="h-5 w-5" />}
+                    {index === 1 && <HelpCircle className="h-5 w-5" />}
+                    {index === 2 && <Users className="h-5 w-5" />}
+                    {index === 3 && <HeadphonesIcon className="h-5 w-5" />}
+                  </CardIcon>
                 </CardHeader>
                 
                 <CardContent className="pt-0">

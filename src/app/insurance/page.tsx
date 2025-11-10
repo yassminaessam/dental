@@ -296,9 +296,14 @@ export default function InsurancePage() {
                         {stat.value}
                       </div>
                     </div>
-                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
-                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-900 dark:text-gray-100" />
-                    </div>
+                    <CardIcon 
+                      variant={(['blue', 'green', 'orange', 'purple'] as const)[index % 4]}
+                      size="lg"
+                      className="group-hover:rotate-12"
+                      aria-hidden="true"
+                    >
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </CardIcon>
                   </div>
                 </CardHeader>
                 

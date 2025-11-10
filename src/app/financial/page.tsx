@@ -49,6 +49,7 @@ import {
   BarChart3,
   PieChart,
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-chart";
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
@@ -314,12 +315,13 @@ export default function FinancialPage() {
             const Icon = iconMap[stat.icon as IconKey];
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
-            
+            const variants = ['blue','green','orange','purple'] as const;
+            const variant = variants[index % variants.length];
             return (
-              <Card 
+              <Card
                 key={stat.titleKey}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
                   cardStyle
                 )}
                 role="button"
@@ -327,16 +329,14 @@ export default function FinancialPage() {
                 aria-label={t(stat.titleKey as string)}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
                 <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
                   <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {t(stat.titleKey as string)}
                   </CardTitle>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                    <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-                  </div>
+                  <CardIcon variant={variant} aria-hidden="true">
+                    <Icon className="h-5 w-5" />
+                  </CardIcon>
                 </CardHeader>
-                
                 <CardContent className="pt-0">
                   <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {stat.value}

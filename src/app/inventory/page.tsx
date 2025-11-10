@@ -46,6 +46,7 @@ import {
   Boxes,
   PackageCheck,
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -300,19 +301,15 @@ export default function InventoryPage() {
         {/* Enhanced Inventory Stats */}
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {inventoryPageStats.map((stat, index) => {
-            const cardStyles = [
-              'metric-card-blue',
-              'metric-card-green', 
-              'metric-card-orange',
-              'metric-card-purple'
-            ];
+            const cardStyles = ['metric-card-blue','metric-card-green','metric-card-orange','metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
-            
+            const variants = ['blue','green','orange','purple'] as const;
+            const variant = variants[index % variants.length];
             return (
-              <Card 
+              <Card
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
                   cardStyle
                 )}
               >
@@ -320,14 +317,13 @@ export default function InventoryPage() {
                   <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                    {index === 0 && <Boxes className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 1 && <PackageCheck className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 2 && <AlertTriangle className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 3 && <TrendingDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  </div>
+                  <CardIcon variant={variant} aria-hidden="true">
+                    {index === 0 && <Boxes className="h-5 w-5" />}
+                    {index === 1 && <PackageCheck className="h-5 w-5" />}
+                    {index === 2 && <AlertTriangle className="h-5 w-5" />}
+                    {index === 3 && <TrendingDown className="h-5 w-5" />}
+                  </CardIcon>
                 </CardHeader>
-                
                 <CardContent className="pt-0">
                   <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {stat.value}

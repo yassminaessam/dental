@@ -31,3 +31,19 @@ This app now uses Neon (Postgres) on Vercel. Firebase has been removed. A lightw
 - Prisma is configured with a `User` model aligned to current `src/lib/types.ts`.
 - `src/services/users.ts` provides Postgres-backed CRUD for users.
 - A Firestore compatibility shim exists at `src/services/firestore.ts` to keep pages compiling; it returns empty results for most collections until they’re migrated to SQL.
+
+### Card Icon Styles
+
+- Use `CardIcon` for metric/stat cards to ensure consistent pastel RGBA backgrounds.
+- Component: `src/components/ui/card-icon.tsx` with variants: `blue`, `pink`, `green`, `neutral`.
+- CSS utilities live in `src/app/globals.css` (`.card-icon-wrapper`, `.card-icon--*`).
+- Example:
+
+   ```tsx
+   import { Users } from 'lucide-react';
+   import { CardIcon } from '@/components/ui/card-icon';
+
+   <CardIcon variant="blue">
+      <Users className="h-5 w-5" />
+   </CardIcon>
+   ```

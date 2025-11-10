@@ -42,6 +42,7 @@ import {
   Mail,
   MapPin
 } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
 import {
   DropdownMenu,
@@ -227,18 +228,19 @@ export default function PatientsPage() {
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {patientPageStats.map((stat, idx) => {
               const Icon = iconMap[stat.icon as IconKey];
+              const variants = ['blue','green','orange','purple'] as const;
+              const variant = variants[idx % variants.length];
               return (
                 <Card
                   key={stat.title}
                   className={cn(
-                    'relative overflow-hidden border-0 shadow-xl transition-all duration-500',
+                    'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
                     stat.cardStyle
                   )}
                   role="button"
                   tabIndex={0}
                   aria-label={stat.title}
                   onClick={() => {
-                    // 0: total -> all, 1: new (no filter available, keep all), 2: inactive -> inactive filter, 3: avg age -> all
                     if (idx === 2) setStatusFilter('inactive');
                     else setStatusFilter('all');
                     setSearchTerm('');
@@ -254,9 +256,9 @@ export default function PatientsPage() {
                     <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                       {stat.title}
                     </CardTitle>
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                      <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-                    </div>
+                    <CardIcon variant={variant} aria-hidden="true">
+                      <Icon className="h-5 w-5" />
+                    </CardIcon>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">

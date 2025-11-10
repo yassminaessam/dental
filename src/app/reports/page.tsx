@@ -19,6 +19,7 @@ import {
 } from "../../components/ui/select";
 import { cn } from "../../lib/utils";
 import { Download, DollarSign, Users, Calendar, TrendingUp, Loader2, Sparkles, FileText, BarChart3, PieChart, Activity } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import RevenueTrendChart from "../../components/reports/revenue-trend-chart";
 import PatientGrowthChart from "../../components/reports/patient-growth-chart";
 import TreatmentsByTypeChart from "../../components/reports/treatments-by-type-chart";
@@ -279,50 +280,48 @@ export default function ReportsPage() {
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
             {reportsPageStats.map((stat, index) => {
                 const Icon = iconMap[stat.icon as IconKey];
-                const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
+                const cardStyles = ['metric-card-blue','metric-card-green','metric-card-orange','metric-card-purple'];
                 const cardStyle = cardStyles[index % cardStyles.length];
-                
+                const variants = ['blue','green','pink','neutral'];
+                const variant = variants[index % variants.length] as 'blue'|'green'|'pink'|'neutral';
                 return (
-                    <Card 
-                      key={stat.title}
-                      className={cn(
-                        "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
-                        cardStyle
-                      )}
-                    >
-                      {/* Animated Background Layers */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                      
-                      <CardHeader className="pb-4 relative z-10">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                              {stat.title}
-                            </CardTitle>
-                            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
-                              {stat.value}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm group-hover:bg-white/30 group-hover:rotate-12 transition-all duration-300 shadow-lg">
-                            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-900 dark:text-gray-100" />
+                  <Card
+                    key={stat.title}
+                    className={cn(
+                      'relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group',
+                      cardStyle
+                    )}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                    <CardHeader className="pb-4 relative z-10">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+                            {stat.title}
+                          </CardTitle>
+                          <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                            {stat.value}
                           </div>
                         </div>
-                      </CardHeader>
-                      
-                      <CardContent className="pt-0 relative z-10">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
-                          {stat.description}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
-                          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Live Data</span>
-                          <div className="ml-auto">
-                            <div className="text-xs text-white/60 font-bold">↗</div>
-                          </div>
+                        <CardIcon variant={variant} className="group-hover:rotate-12">
+                          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </CardIcon>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 relative z-10">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
+                        {stat.description}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Live Data</span>
+                        <div className="ml-auto">
+                          <div className="text-xs text-white/60 font-bold">↗</div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
             })}
         </div>

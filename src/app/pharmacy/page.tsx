@@ -442,9 +442,12 @@ export default function PharmacyPage() {
                   <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                    <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-                  </div>
+                  <CardIcon 
+                    variant={(['blue', 'green', 'orange', 'purple'] as const)[index % 4]}
+                    aria-hidden="true"
+                  >
+                    <Icon className="h-5 w-5" />
+                  </CardIcon>
                 </CardHeader>
                 
                 <CardContent className="pt-0">

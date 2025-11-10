@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2, UserPlus, Clock, Sparkles, Users, Briefcase } from "lucide-react";
+import { CardIcon } from '@/components/ui/card-icon';
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
 import {
@@ -207,18 +208,15 @@ export default function StaffPage() {
         {/* Enhanced Staff Stats */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {staffPageStats.map((stat, index) => {
-            const cardStyles = [
-              'metric-card-blue',
-              'metric-card-green', 
-              'metric-card-purple'
-            ];
+            const cardStyles = ['metric-card-blue','metric-card-green','metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
-            
+            const variants = ['blue','green','pink'];
+            const variant = variants[index % variants.length] as 'blue'|'green'|'pink';
             return (
-              <Card 
+              <Card
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
                   cardStyle
                 )}
                 role="button"
@@ -226,18 +224,16 @@ export default function StaffPage() {
                 aria-label={stat.title}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
                 <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
                   <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     {stat.title}
                   </CardTitle>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm">
-                    {index === 0 && <Users className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 1 && <UserPlus className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                    {index === 2 && <Briefcase className="h-5 w-5 text-gray-700 dark:text-gray-300" />}
-                  </div>
+                  <CardIcon variant={variant} aria-hidden="true">
+                    {index === 0 && <Users className="h-5 w-5" />}
+                    {index === 1 && <UserPlus className="h-5 w-5" />}
+                    {index === 2 && <Briefcase className="h-5 w-5" />}
+                  </CardIcon>
                 </CardHeader>
-                
                 <CardContent className="pt-0">
                   <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {stat.value}
