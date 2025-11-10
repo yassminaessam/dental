@@ -86,6 +86,17 @@ export default function OverviewStats() {
     fetchStats();
   }, [t]);
 
+  // RGBA icon tint classes mapped to metric card styles for لوحة التحكم
+  // Lightened RGBA tints (reduced opacity for softer look)
+  const iconTintMap: Record<string, string> = {
+    'metric-card-blue': 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
+    'metric-card-green': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
+    'metric-card-orange': 'bg-orange-500/10 text-orange-600 dark:text-orange-300',
+    'metric-card-purple': 'bg-purple-500/10 text-purple-600 dark:text-purple-300',
+    'metric-card-red': 'bg-red-500/10 text-red-600 dark:text-red-300',
+    'metric-card-gray': 'bg-gray-500/10 text-gray-700 dark:text-gray-300',
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {stats.map((stat, index) => {
@@ -120,8 +131,13 @@ export default function OverviewStats() {
                   {stat.value}
                 </div>
               </div>
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-sm group-hover:bg-gray-900/15 dark:group-hover:bg-gray-100/15 transition-all duration-300">
-                <Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+              <div
+                className={cn(
+                  'flex items-center justify-center w-12 h-12 rounded-xl backdrop-blur-sm transition-all duration-300 group-hover:scale-110 border border-transparent',
+                  iconTintMap[stat.cardStyle] || 'bg-gray-500/10 text-gray-700 dark:text-gray-300'
+                )}
+              >
+                <Icon className="h-6 w-6" />
               </div>
             </CardHeader>
             
@@ -136,8 +152,6 @@ export default function OverviewStats() {
               </div>
             </CardContent>
             
-            {/* Elite Corner Accent */}
-            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-gray-900/10 dark:from-gray-100/10 to-transparent" />
           </Card>
         );
       })}

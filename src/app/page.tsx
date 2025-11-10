@@ -193,14 +193,12 @@ export default function DashboardPage() {
 
           {/* Welcome Section */}
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl"></div>
-            <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+            <div className="relative elite-card rounded-3xl p-6 md:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-4">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
-                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-xl">
-                      <Activity className="h-8 w-8" />
+                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300 backdrop-blur-sm shadow-md">
+                      <Activity className="h-7 w-7" />
                     </div>
                   </div>
                   <div>
@@ -227,12 +225,11 @@ export default function DashboardPage() {
 
           {/* Enhanced Charts Section */}
           <div className="grid gap-6 lg:grid-cols-5">
-            <Card className="group lg:col-span-3 relative border-2 border-muted hover:border-blue-200 dark:hover:border-blue-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-blue-50/10 dark:to-blue-950/5">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-              <CardHeader className="relative z-10">
+            <Card className="group lg:col-span-3 relative elite-card hover:shadow-2xl transition-all duration-500 overflow-hidden">
+              <CardHeader className="relative z-10 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:from-blue-500/20 group-hover:to-purple-500/20 transition-colors">
-                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300 backdrop-blur-sm">
+                    <TrendingUp className="h-5 w-5" />
                   </div>
                   <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                     {t('analytics.revenue_trend')}
@@ -244,12 +241,11 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="group lg:col-span-2 relative border-2 border-muted hover:border-purple-200 dark:hover:border-purple-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-purple-50/10 dark:to-purple-950/5">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-              <CardHeader className="relative z-10">
+            <Card className="group lg:col-span-2 relative elite-card hover:shadow-2xl transition-all duration-500 overflow-hidden">
+              <CardHeader className="relative z-10 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 group-hover:from-purple-500/20 group-hover:to-pink-500/20 transition-colors">
-                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300 backdrop-blur-sm">
+                    <Calendar className="h-5 w-5" />
                   </div>
                   <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                     {t('dashboard.appointments_by_type')}
