@@ -41,6 +41,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardIcon } from '@/components/ui/card-icon';
 
 export default function HelpPage() {
   const router = useRouter();
