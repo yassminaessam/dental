@@ -1,28 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createFtpsDriver } from '@/lib/storage/ftps-driver';
+import { createLocalDriver } from '@/lib/storage/local-driver';
 import type { StorageDriver } from '@/lib/storage';
 
-// Simple driver factory (extend later with S3, local, etc.)
+// Use local driver (writes to public/) – suitable for dev or non-serverless env.
 function getDriver(): StorageDriver {
-  const driver = createFtpsDriver();
-  if (!driver.isConfigured()) {
-    console.warn('[uploads] FTPS driver not fully configured – falling back to error responses');
-  }
-  return driver;
+  return createLocalDriver();
 }
 
 export const runtime = 'nodejs';
-export const preferredRegion = 'auto';
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB temporary cap
-const ALLOWED_TYPES = new Set(['image/png','image/jpeg','image/webp','application/pdf']);
+const MAX_BYTES = 15 * 1024 * 1024; // 15MB cap
+const ALLOWED_TYPES = new Set(['image/png','image/jpeg','image/webp','image/gif','application/pdf']);
 
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
     const file = form.get('file');
-    const category = (form.get('category') as string) || 'uploads';
-    const subPath = (form.get('subPath') as string) || '';
+    const category = (form.get('category') as string) || 'clinical-images';
+    const patientId = (form.get('patientId') as string) || '';
+    const imageType = (form.get('imageType') as string) || '';
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: 'Missing file' }, { status: 400 });
@@ -36,21 +32,35 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const driver = getDriver();
-    if (!driver.isConfigured()) {
-      return NextResponse.json({ error: 'Storage not configured on server' }, { status: 500 });
-    }
-
+    const timestamp = Date.now();
+    const baseName = `${patientId || 'anon'}_${imageType || 'image'}_${timestamp}`;
     const result = await driver.upload({
       buffer,
       originalName: file.name,
       contentType: file.type,
       category,
-      subPath
+      subPath: patientId ? patientId : undefined,
+      fileName: baseName + '_' + file.name.replace(/[^A-Za-z0-9._-]/g, '')
     });
 
     return NextResponse.json({ url: result.url, path: result.path, driver: result.driver });
   } catch (err: any) {
     console.error('Upload failed', err);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const urlParam = req.nextUrl.searchParams.get('url');
+    if (!urlParam) {
+      return NextResponse.json({ error: 'url query param is required' }, { status: 400 });
+    }
+    const driver = getDriver();
+    await driver.delete(urlParam);
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error('Delete failed', err);
+    return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
   }
 }

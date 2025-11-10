@@ -30,6 +30,7 @@ import { format } from 'date-fns';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ScrollArea } from '../ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PatientRecord {
   id: string;
@@ -99,6 +100,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const [open, setOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<PatientRecord[]>([]);
   const [doctors, setDoctors] = React.useState<StaffRecord[]>([]);
+  const { user } = useAuth();
   const { t, language } = useLanguage();
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
 
@@ -124,14 +126,23 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
       const patientData = await fetchCollection<PatientRecord>('patients');
       setPatients(patientData);
       const staffData = await fetchCollection<StaffRecord>('staff');
-      setDoctors(staffData.filter((staff) => staff.role === 'Dentist'));
+      // Normalize role filtering: support 'doctor', 'Doctor', 'Dentist', 'dentist'
+      const doctorRecords = staffData.filter((staff) => ['doctor','Doctor','Dentist','dentist'].includes(staff.role));
+      setDoctors(doctorRecords);
+      // Auto-select current authenticated doctor if applicable and not already chosen
+      if (user?.role === 'doctor' && form.getValues('doctor') === undefined) {
+        const match = doctorRecords.find(d => d.id === user.id || d.name.toLowerCase().includes(user.firstName.toLowerCase()));
+        if (match) {
+          form.setValue('doctor', match.id);
+        }
+      }
     }
     if (open) {
       fetchData().catch(() => {
         /** handled via parent toast */
       });
     }
-  }, [open]);
+  }, [open, user, form]);
 
   const handleDateSelect = (days: Date[] | undefined) => {
     const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());

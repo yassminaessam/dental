@@ -135,13 +135,24 @@ export default function AppointmentsPage() {
   };
 
   const handleStatusChange = async (appointmentId: string, newStatus: Appointment['status']) => {
+    // Take a snapshot for rollback in case the API fails
+    const prevSnapshot = appointments;
+    // Optimistic UI update so the table reflects changes immediately
+    setAppointments((prev) =>
+      sortAppointments(
+        prev.map((a) => (a.id === appointmentId ? { ...a, status: newStatus, updatedAt: new Date() } : a))
+      )
+    );
+
     try {
       const updated = await AppointmentsClient.updateStatus(appointmentId, newStatus);
       if (updated) {
-        setAppointments((prev) => sortAppointments(prev.map((appointment) => (appointment.id === appointmentId ? updated : appointment))));
+        setAppointments((prev) => sortAppointments(prev.map((a) => (a.id === appointmentId ? updated : a))));
       }
       toast({ title: t('appointments.toast.status_updated'), description: t('appointments.toast.status_updated_desc') });
     } catch (error) {
+      // Roll back on failure
+      setAppointments(prevSnapshot);
       toast({ title: t('appointments.toast.error_status'), variant: "destructive", description: error instanceof Error ? error.message : undefined });
     }
   };

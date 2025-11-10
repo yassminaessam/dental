@@ -252,12 +252,9 @@ export default function MedicalRecordsPage() {
     if (!imageToDelete) return;
     
     try {
-      // Delete from Firebase Storage (only if it's a Firebase Storage URL)
-      if (imageToDelete.imageUrl.includes('firebasestorage.googleapis.com') || imageToDelete.imageUrl.includes('storage.googleapis.com')) {
-        await clinicalImagesStorage.deleteClinicalImage(imageToDelete.imageUrl);
-      }
-      
-      // Always delete from Firestore regardless of URL type
+      // Delete underlying file (local or previous Firebase) always
+      await clinicalImagesStorage.deleteClinicalImage(imageToDelete.imageUrl);
+      // Delete record from datastore
       await removeClinicalImage(imageToDelete.id);
       
       setImages(prev => prev.filter(img => img.id !== imageToDelete.id));

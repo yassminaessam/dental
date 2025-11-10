@@ -64,26 +64,14 @@ export function ReplaceImageDialog({
     
     setReplacing(true);
     try {
-      let newImageUrl: string;
-      
-      // Check if the current image is from Firebase Storage
-      if (image.imageUrl.includes('firebasestorage.googleapis.com') || image.imageUrl.includes('storage.googleapis.com')) {
-        // Replace image in Firebase Storage
-        newImageUrl = await clinicalImagesStorage.replaceClinicalImage(
-          image.imageUrl,
-          data.file[0],
-          image.id.split('_')[0], // Extract patient ID from image ID
-          image.type
-        );
-      } else {
-        // If it's an external URL (like Unsplash), just upload new image
-        const patientId = image.patient.replace(/\s+/g, '_').toLowerCase(); // Convert patient name to ID-like format
-        newImageUrl = await clinicalImagesStorage.uploadClinicalImage(
-          data.file[0],
-          patientId,
-          image.type
-        );
-      }
+      // Always replace via our storage API (deletes old then uploads new)
+      const patientId = image.patient.replace(/\s+/g, '_').toLowerCase();
+      const newImageUrl = await clinicalImagesStorage.replaceClinicalImage(
+        image.imageUrl,
+        data.file[0],
+        patientId,
+        image.type
+      );
 
       // Update the image record
       onReplace(image.id, newImageUrl, data.caption);

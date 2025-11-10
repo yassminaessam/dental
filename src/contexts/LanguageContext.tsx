@@ -1224,7 +1224,11 @@ const translations: Translations = {
   'medical_records.update_record_details': 'Update record details',
   'medical_records.upload_clinical_image': 'Upload Clinical Image',
   'medical_records.upload_clinical_image_desc': 'Upload clinical images to attach to records.',
+  'medical_records.upload_image_description': 'Upload clinical images to attach to records.',
+  'medical_records.upper_right_molar_placeholder': 'e.g., Panoramic radiograph showing impacted wisdom tooth',
   'medical_records.upload_image': 'Upload Image',
+  'medical_records.upload': 'Upload',
+  'medical_records.uploading': 'Uploading',
   'medical_records.use_template': 'Use Template',
   'medical_records.view_full_image': 'View full image',
   // Messages & notifications (en)
@@ -3141,7 +3145,11 @@ const translations: Translations = {
   'medical_records.update_record_details': 'تحديث تفاصيل السجل',
   'medical_records.upload_clinical_image': 'رفع صورة سريرية',
   'medical_records.upload_clinical_image_desc': 'قم برفع صور سريرية لإرفاقها بالسجلات.',
+  'medical_records.upload_image_description': 'قم برفع صور سريرية لإرفاقها بالسجلات.',
+  'medical_records.upper_right_molar_placeholder': 'مثال: صورة أشعة بانورامية تظهر سن العقل المنطمر',
   'medical_records.upload_image': 'رفع صورة',
+  'medical_records.upload': 'رفع',
+  'medical_records.uploading': 'جاري الرفع',
   'medical_records.use_template': 'استخدام قالب',
   'medical_records.view_full_image': 'عرض الصورة كاملة',
   // Messages & notifications (ar)
@@ -3899,15 +3907,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    let text = translations[language][key] || key;
-    
+    // Primary lookup
+    let text = translations[language][key];
+
+    // Fallback: attempt English if missing and we are not already in English
+    if (text === undefined && language !== 'en') {
+      text = translations.en[key];
+    }
+
+    // If still missing, derive a friendly label from the key (last segment)
+    if (text === undefined) {
+      const lastSegment = key.split('.').pop() || key;
+      // Replace underscores/dashes with spaces and capitalize words
+      text = lastSegment
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+
+    // Parameter interpolation
     if (params) {
       Object.entries(params).forEach(([paramKey, value]) => {
-        text = text.replace(`{${paramKey}}`, String(value));
+        text = text!.replace(`{${paramKey}}`, String(value));
       });
     }
-    
-    return text;
+
+    return text as string;
   };
 
   useEffect(() => {

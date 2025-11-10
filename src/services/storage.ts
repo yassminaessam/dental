@@ -1,35 +1,37 @@
-// Mock-only storage layer (Firebase removed). For production, consider Vercel Blob.
-const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const USE_MOCK_UPLOAD = true;
+// Local upload through Next.js API (saves to public/clinical-images)
 
-// Mock upload function for development
-async function mockUpload(file: File, path: string, fileName?: string): Promise<string> {
-  console.log('Using mock upload for development:', { fileName: file.name, size: file.size });
-  
-  // Simulate upload delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Create a mock URL that looks like Firebase Storage
-  const mockFileName = fileName || `${Date.now()}_${file.name}`;
-  const mockUrl = `https://firebasestorage.googleapis.com/v0/b/dental-a627d.appspot.com/o/${path}%2F${mockFileName}?alt=media&token=mock-token-${Date.now()}`;
-  
-  console.log('Mock upload completed:', mockUrl);
-  return mockUrl;
+async function apiUpload(file: File, category: string, fileName?: string, extra?: Record<string, string>): Promise<string> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('category', category);
+  if (fileName) form.append('fileName', fileName);
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) form.append(k, v);
+  }
+  const res = await fetch('/api/uploads', { method: 'POST', body: form });
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(`Upload failed: ${res.status} ${msg}`);
+  }
+  const data = await res.json();
+  return data.url as string;
 }
 
-// Upload a file to Firebase Storage with fallback to mock
+async function apiDelete(url: string): Promise<void> {
+  const res = await fetch(`/api/uploads?url=${encodeURIComponent(url)}`, { method: 'DELETE' });
+  if (!res.ok) {
+    console.warn('Delete failed', await res.text());
+  }
+}
+
 export async function uploadFile(file: File, path: string, fileName?: string): Promise<string> {
-  // Mock only
-  return await mockUpload(file, path, fileName);
+  return await apiUpload(file, path, fileName);
 }
 
-// Delete a file from Firebase Storage
 export async function deleteFile(fileUrl: string): Promise<void> {
-  // Mock only: nothing to delete
-  console.log('Mock delete file:', fileUrl);
+  await apiDelete(fileUrl);
 }
 
-// Replace an existing file with a new one
 export async function replaceFile(
   oldFileUrl: string,
   newFile: File,
@@ -37,74 +39,58 @@ export async function replaceFile(
   fileName?: string
 ): Promise<string> {
   try {
-    // Delete the old file first (only if it's a Firebase Storage URL)
-    if (oldFileUrl && (oldFileUrl.includes('firebasestorage.googleapis.com') || oldFileUrl.includes('storage.googleapis.com'))) {
-      try {
-        await deleteFile(oldFileUrl);
-      } catch (error) {
-        console.warn('Warning: Could not delete old file:', error);
-      }
+    if (oldFileUrl) {
+      await deleteFile(oldFileUrl);
     }
-    
-    // Upload the new file
-    const newFileUrl = await uploadFile(newFile, path, fileName);
-    return newFileUrl;
+    return await uploadFile(newFile, path, fileName);
   } catch (error) {
     console.error('Error replacing file:', error);
     throw new Error('Failed to replace file');
   }
 }
 
-// List all files in a directory
 export async function listFiles(_path: string): Promise<string[]> {
-  // Mock only: return empty list
   return [];
 }
 
-// Get the storage path from a download URL
 export function getStoragePathFromUrl(url: string): string {
   try {
-    const urlParts = url.split('/');
-    const fileName = urlParts[urlParts.length - 1].split('?')[0];
-    return decodeURIComponent(fileName);
+    const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    return decodeURIComponent(u.pathname.replace(/^\//, ''));
   } catch (error) {
     console.error('Error parsing storage path:', error);
     return '';
   }
 }
 
-// Clinical Images specific functions
 export const clinicalImagesStorage = {
-  // Upload clinical image
   async uploadClinicalImage(
-    file: File, 
-    patientId: string, 
+    file: File,
+    patientId: string,
     imageType: string
   ): Promise<string> {
     const timestamp = Date.now();
     const fileName = `${patientId}_${imageType}_${timestamp}_${file.name}`;
-    return await uploadFile(file, 'clinical-images', fileName);
+    return await apiUpload(file, 'clinical-images', fileName, { patientId, imageType });
   },
 
-  // Replace clinical image
   async replaceClinicalImage(
     oldImageUrl: string,
     newFile: File,
     patientId: string,
     imageType: string
   ): Promise<string> {
+    await apiDelete(oldImageUrl);
     const timestamp = Date.now();
     const fileName = `${patientId}_${imageType}_${timestamp}_${newFile.name}`;
-    return await replaceFile(oldImageUrl, newFile, 'clinical-images', fileName);
+    return await apiUpload(newFile, 'clinical-images', fileName, { patientId, imageType });
   },
 
-  // Delete clinical image
   async deleteClinicalImage(imageUrl: string): Promise<void> {
-    return await deleteFile(imageUrl);
+    await apiDelete(imageUrl);
   },
 
-  // List all clinical images
   async listClinicalImages(): Promise<string[]> {
-    return await listFiles('clinical-images');
+    return [];
   }
 };
