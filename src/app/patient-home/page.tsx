@@ -30,6 +30,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { listDocuments } from '@/lib/data-client';
 import PatientAppointmentBooking from '@/components/appointments/patient-appointment-booking';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Promotion {
   id: string;
@@ -153,6 +154,7 @@ const services = [
 
 export default function PatientHomePage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [promotions, setPromotions] = React.useState<Promotion[]>([]);
   const [portalContent, setPortalContent] = React.useState<PatientPortalContent | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -247,7 +249,7 @@ export default function PatientHomePage() {
         <PatientLayout>
           <div className="p-6 flex items-center justify-center min-h-96">
             <div className="text-center">
-              <div className="animate-pulse text-lg">Loading your portal...</div>
+              <div className="animate-pulse text-lg">{t('patient_pages.home.loading')}</div>
             </div>
           </div>
         </PatientLayout>
@@ -262,28 +264,38 @@ export default function PatientHomePage() {
           {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {displayContent.welcomeMessage.replace('{{firstName}}', user?.firstName || 'Patient')} 👋
+              {t('patient_pages.home.welcome_back').replace('{{firstName}}', user?.firstName || t('patient_pages.home.patient'))} 👋
             </h1>
             <p className="text-gray-600">
-              {displayContent.clinicInfo.description || 'Your dental health dashboard - stay up to date with your care.'}
+              {t('patient_pages.home.dashboard_desc')}
             </p>
           </div>
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <PatientAppointmentBooking />
-            <Button size="lg" variant="outline" className="h-16 text-left justify-start">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="h-16 text-left justify-start"
+              onClick={() => window.location.href = '/patient-messages'}
+            >
               <MessageSquare className="h-6 w-6 mr-3" />
               <div>
-                <div className="font-semibold">Send Message</div>
-                <div className="text-sm text-gray-600">Contact your dental team</div>
+                <div className="font-semibold">{t('patient_pages.home.send_message')}</div>
+                <div className="text-sm text-gray-600">{t('patient_pages.home.contact_team')}</div>
               </div>
             </Button>
-            <Button size="lg" variant="outline" className="h-16 text-left justify-start">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="h-16 text-left justify-start"
+              onClick={() => window.location.href = '/patient-records'}
+            >
               <FileText className="h-6 w-6 mr-3" />
               <div>
-                <div className="font-semibold">View Records</div>
-                <div className="text-sm text-gray-600">Access your dental history</div>
+                <div className="font-semibold">{t('patient_pages.home.view_records')}</div>
+                <div className="text-sm text-gray-600">{t('patient_pages.home.access_history')}</div>
               </div>
             </Button>
           </div>
@@ -293,10 +305,10 @@ export default function PatientHomePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 <Gift className="inline h-6 w-6 mr-2 text-primary" />
-                Special Offers for You
+                {t('patient_pages.home.special_offers')}
               </h2>
               <Button variant="outline" size="sm">
-                View All Offers
+                {t('patient_pages.home.view_all_offers')}
               </Button>
             </div>
             
@@ -305,7 +317,7 @@ export default function PatientHomePage() {
                 <Card key={promo.id} className={`${promo.featured ? 'ring-2 ring-primary shadow-lg' : ''} hover:shadow-xl transition-shadow`}>
                   {promo.featured && (
                     <div className="bg-primary text-white text-sm font-medium px-4 py-1 text-center">
-                      FEATURED OFFER
+                      {t('patient_pages.home.featured_offer')}
                     </div>
                   )}
                   <CardHeader>
@@ -322,16 +334,19 @@ export default function PatientHomePage() {
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Valid until:</span>
+                        <span className="text-gray-600">{t('patient_pages.home.valid_until')}:</span>
                         <span className="font-medium">{new Date(promo.validUntil).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Promo Code:</span>
+                        <span className="text-gray-600">{t('patient_pages.home.promo_code')}:</span>
                         <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{promo.code}</code>
                       </div>
-                      <Button className="w-full">
+                      <Button 
+                        className="w-full"
+                        onClick={() => window.location.href = '/patient-appointments'}
+                      >
                         <Calendar className="h-4 w-4 mr-2" />
-                        Book Now & Save
+                        {t('patient_pages.home.book_save')}
                       </Button>
                     </div>
                   </CardContent>
@@ -347,34 +362,38 @@ export default function PatientHomePage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Calendar className="h-5 w-5 mr-2" />
-                  Upcoming Appointments
+                  {t('patient_pages.home.upcoming_appointments')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <div>
-                      <p className="font-medium">Regular Checkup</p>
+                      <p className="font-medium">{t('patient_pages.home.regular_checkup')}</p>
                       <p className="text-sm text-gray-600">Dr. Smith</p>
-                      <p className="text-sm text-blue-600">Tomorrow, 2:00 PM</p>
+                      <p className="text-sm text-blue-600">{t('patient_pages.home.tomorrow')}, 2:00 PM</p>
                     </div>
                     <Button size="sm" variant="outline">
-                      Reschedule
+                      {t('patient_pages.home.reschedule')}
                     </Button>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium">Cleaning</p>
+                      <p className="font-medium">{t('patient_pages.home.cleaning')}</p>
                       <p className="text-sm text-gray-600">Dr. Johnson</p>
-                      <p className="text-sm text-gray-600">Next Week, Mon 10:00 AM</p>
+                      <p className="text-sm text-gray-600">{t('patient_pages.home.next_week')}, Mon 10:00 AM</p>
                     </div>
                     <Button size="sm" variant="outline">
-                      View Details
+                      {t('patient_pages.home.view_details')}
                     </Button>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full mt-4">
-                  View All Appointments
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => window.location.href = '/patient-appointments'}
+                >
+                  {t('patient_pages.home.view_all_appointments')}
                 </Button>
               </CardContent>
             </Card>
@@ -384,31 +403,35 @@ export default function PatientHomePage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Heart className="h-5 w-5 mr-2" />
-                  Your Dental Health
+                  {t('patient_pages.home.dental_health')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Last Visit</span>
-                    <span className="font-medium">2 weeks ago</span>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.last_visit')}</span>
+                    <span className="font-medium">{t('patient_pages.home.weeks_ago')}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Next Cleaning Due</span>
-                    <span className="font-medium text-blue-600">Next Week</span>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.next_cleaning')}</span>
+                    <span className="font-medium text-blue-600">{t('patient_pages.home.next_week')}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Outstanding Balance</span>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.outstanding_balance')}</span>
                     <span className="font-medium text-green-600">$0.00</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Insurance Status</span>
-                    <Badge variant="default">Active</Badge>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.insurance_status')}</span>
+                    <Badge variant="default">{t('patient_pages.home.active')}</Badge>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => window.location.href = '/patient-billing'}
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  View Billing Details
+                  {t('patient_pages.home.view_billing')}
                 </Button>
               </CardContent>
             </Card>
@@ -419,7 +442,7 @@ export default function PatientHomePage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2" />
-                Recent Messages
+                {t('patient_pages.home.recent_messages')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -429,9 +452,9 @@ export default function PatientHomePage() {
                     <MessageSquare className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Appointment Reminder</p>
-                    <p className="text-sm text-gray-600">Don't forget your appointment tomorrow at 2:00 PM with Dr. Smith.</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
+                    <p className="text-sm font-medium">{t('patient_pages.home.appointment_reminder')}</p>
+                    <p className="text-sm text-gray-600">{t('patient_pages.home.reminder_text')}</p>
+                    <p className="text-xs text-gray-500">{t('patient_pages.home.hours_ago')}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -439,14 +462,18 @@ export default function PatientHomePage() {
                     <FileText className="h-4 w-4 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Treatment Plan Available</p>
-                    <p className="text-sm text-gray-600">Your customized treatment plan is ready for review.</p>
-                    <p className="text-xs text-gray-500">1 day ago</p>
+                    <p className="text-sm font-medium">{t('patient_pages.home.treatment_plan')}</p>
+                    <p className="text-sm text-gray-600">{t('patient_pages.home.treatment_text')}</p>
+                    <p className="text-xs text-gray-500">{t('patient_pages.home.day_ago')}</p>
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-4">
-                View All Messages
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => window.location.href = '/patient-messages'}
+              >
+                {t('patient_pages.home.view_all_messages')}
               </Button>
             </CardContent>
           </Card>
@@ -455,21 +482,21 @@ export default function PatientHomePage() {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               <Sparkles className="inline h-6 w-6 mr-2 text-primary" />
-              Dental Health Tips
+              {t('patient_pages.home.health_tips')}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <Smile className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">Daily Oral Care</CardTitle>
+                  <CardTitle className="text-lg">{t('patient_pages.home.daily_care')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-4">
-                    Learn the best practices for maintaining excellent oral hygiene at home.
+                    {t('patient_pages.home.daily_care_desc')}
                   </p>
                   <Button variant="outline" size="sm">
-                    Read More
+                    {t('patient_pages.home.read_more')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
@@ -478,14 +505,14 @@ export default function PatientHomePage() {
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <Award className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">Nutrition for Teeth</CardTitle>
+                  <CardTitle className="text-lg">{t('patient_pages.home.nutrition')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-4">
-                    Discover foods that promote strong teeth and healthy gums.
+                    {t('patient_pages.home.nutrition_desc')}
                   </p>
                   <Button variant="outline" size="sm">
-                    Learn More
+                    {t('patient_pages.home.learn_more')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
@@ -494,14 +521,14 @@ export default function PatientHomePage() {
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CheckCircle className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">Preventive Care</CardTitle>
+                  <CardTitle className="text-lg">{t('patient_pages.home.preventive_care')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-4">
-                    Understanding the importance of regular dental checkups and cleanings.
+                    {t('patient_pages.home.preventive_desc')}
                   </p>
                   <Button variant="outline" size="sm">
-                    Find Out More
+                    {t('patient_pages.home.find_out')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>

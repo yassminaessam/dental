@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CardIcon } from '@/components/ui/card-icon';
+import { LiveChatWidget } from '@/components/chat/LiveChatWidget';
 
 export default function HelpPage() {
   const router = useRouter();
@@ -49,6 +50,7 @@ export default function HelpPage() {
   const [activeId, setActiveId] = React.useState<string>('quickstart');
   const [query, setQuery] = React.useState('');
   const [showTop, setShowTop] = React.useState(false);
+  const [chatOpen, setChatOpen] = React.useState(false);
 
   const handlePrint = () => typeof window !== 'undefined' && window.print();
 
@@ -583,6 +585,7 @@ export default function HelpPage() {
                       <p className="text-sm text-muted-foreground mb-4">تحدث مع خبير الآن</p>
                       <Button 
                         variant="outline"
+                        onClick={() => setChatOpen(true)}
                         className="gap-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-300 group-hover:scale-105"
                       >
                         <MessageCircle className="h-4 w-4" />
@@ -627,6 +630,13 @@ export default function HelpPage() {
             <ArrowUp className="h-5 w-5 group-hover:-translate-y-1 transition-transform duration-300" />
           </Button>
         )}
+
+        {/* Live Chat Widget */}
+        <LiveChatWidget 
+          open={chatOpen} 
+          onClose={() => setChatOpen(false)}
+          userName="ضيف"
+        />
       </main>
     </DashboardShell>
   );

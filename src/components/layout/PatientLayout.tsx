@@ -20,43 +20,52 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
+// Navigation items will be translated in the component
 const patientNavItems = [
   {
-    title: 'Home',
+    titleKey: 'nav.dashboard',
     href: '/patient-home',
     icon: Home,
-    description: 'Your dental care dashboard'
+    descriptionKey: 'patient_pages.home.dashboard_desc'
   },
   {
-    title: 'My Appointments',
+    titleKey: 'patient_pages.appointments.title',
     href: '/patient-appointments',
     icon: Calendar,
-    description: 'View and manage your appointments'
+    descriptionKey: 'patient_pages.appointments.subtitle'
   },
   {
-    title: 'Messages',
+    titleKey: 'patient_pages.messages.title',
     href: '/patient-messages',
     icon: MessageSquare,
-    description: 'Communicate with your dental team'
+    descriptionKey: 'patient_pages.messages.subtitle'
   },
   {
-    title: 'Medical Records',
+    titleKey: 'patient_pages.records.title',
     href: '/patient-records',
     icon: FileText,
-    description: 'Access your dental records'
+    descriptionKey: 'patient_pages.records.subtitle'
   },
   {
-    title: 'Billing',
+    titleKey: 'patient_pages.billing.title',
     href: '/patient-billing',
     icon: CreditCard,
-    description: 'View invoices and payment history'
+    descriptionKey: 'patient_pages.billing.subtitle'
   },
   {
-    title: 'Profile',
+    titleKey: 'patient_pages.profile.title',
     href: '/patient-profile',
     icon: User,
-    description: 'Manage your profile information'
+    descriptionKey: 'patient_pages.profile.subtitle'
   }
 ];
 
@@ -68,7 +77,35 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const { isRTL, t } = useLanguage();
+  const { isRTL, t, language, setLanguage } = useLanguage();
+  const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
+  const [notificationCount, setNotificationCount] = React.useState(0);
+
+  React.useEffect(() => {
+    async function fetchNotifications() {
+      if (!user?.email) return;
+      
+      try {
+        const response = await fetch(`/api/patient-messages?patientEmail=${user.email}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Filter for staff replies
+          const replies = (data.messages || []).filter((m: any) => 
+            m.from === 'فريق الدعم' || m.from === 'Staff'
+          );
+          setStaffReplies(replies.slice(0, 5));
+          setNotificationCount(replies.length);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    }
+    
+    fetchNotifications();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user?.email]);
 
   const handleSignOut = async () => {
     try {
@@ -131,12 +168,12 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     )}
                   />
                   <div className="flex-1">
-                    <div>{item.title}</div>
+                    <div>{t(item.titleKey)}</div>
                     <div className={cn(
                       'text-xs',
                       isActive ? 'text-primary-foreground/80' : 'text-gray-400'
                     )}>
-                      {item.description}
+                      {t(item.descriptionKey)}
                     </div>
                   </div>
                 </Link>
@@ -177,23 +214,100 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        {/* Top bar for mobile */}
-        <div className="md:hidden">
-          <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
-            <div className="flex-1 px-4 flex justify-between items-center">
-              <div className={cn('flex items-center', isRTL ? 'space-x-reverse space-x-2' : 'space-x-2')}>
-                <Heart className="h-6 w-6 text-primary" />
-                <span className="text-lg font-bold">{t('dashboard.clinic_name')}</span>
+        {/* Top bar for all screens */}
+        <header className="flex h-16 sm:h-18 items-center gap-4 sm:gap-6 border-b border-border/50 px-6 sm:px-8 bg-white shadow-sm">
+          {/* Mobile menu button - hidden on desktop */}
+          <div className="md:hidden">
+            <Heart className="h-6 w-6 text-primary" />
+          </div>
+          
+          <div className="flex-1 flex items-center">
+            <span className="text-lg font-bold text-gray-900">{t('dashboard.clinic_name')}</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {/* Notifications */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-accent/10 transition-all duration-300">
+                  <Bell className="h-5 w-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-xs text-white font-bold shadow-lg animate-pulse">
+                      {notificationCount}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {staffReplies.length > 0 ? (
+                  <>
+                    {staffReplies.map((reply) => (
+                      <DropdownMenuItem key={reply.id} asChild>
+                        <Link href="/patient-messages" className="flex items-start gap-2 p-3">
+                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm">{t('patient_pages.messages.new_reply')}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {reply.subject}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(reply.date || reply.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/patient-messages" className="text-center text-xs text-primary font-semibold w-full justify-center">
+                        {t('patient_pages.messages.view_all')}
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem disabled className="p-3">
+                    {t('header.no_notifications')}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Language Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              aria-label="Language"
+              className="rounded-xl bg-background/60 backdrop-blur-sm border-border/50 hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold min-w-[3rem]"
+            >
+              {language === 'en' ? 'AR' : 'EN'}
+            </Button>
+
+            {/* Notifications */}
+            <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl hover:bg-accent/10 transition-all duration-300">
+              <Bell className="h-5 w-5" />
+            </Button>
+
+            {/* User Profile Dropdown */}
+            <div className="flex items-center gap-3 hover:bg-accent/10 rounded-xl px-3 py-2 transition-all duration-300 group">
+              <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                <User className="h-5 w-5" />
               </div>
-              <div className="flex items-center space-x-2">
-                <Bell className="h-5 w-5 text-gray-400" />
-                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
+              <div className="hidden flex-col items-start md:flex">
+                <span className="text-sm font-semibold text-foreground">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <span className="text-xs text-muted-foreground font-medium">{t('roles.patient')}</span>
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">

@@ -33,6 +33,7 @@ import {
   Shield,
   LogOut,
   User,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -160,6 +161,14 @@ export function SidebarNav() {
   label: t('nav.communications'),
       subLabel: t('nav.communications_desc'),
       permission: "view_communications",
+    },
+    {
+      href: "/admin/chats",
+      icon: MessageCircle,
+      label: "المحادثات المباشرة",
+      subLabel: "إدارة دعم العملاء",
+      permission: null,
+      roleRequired: "admin",
     },
     {
       href: "/patient-portal?tab=content-admin",

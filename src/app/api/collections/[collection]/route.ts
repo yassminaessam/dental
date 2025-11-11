@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addDocument, getCollection } from '@/services/database';
+import { addDocument, getCollection } from '@/services/datastore.server';
 
 const normalizePayload = (data: unknown) => {
   if (!data || typeof data !== 'object') return {} as Record<string, unknown>;

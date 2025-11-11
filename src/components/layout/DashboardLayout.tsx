@@ -36,6 +36,7 @@ import { usePathname } from 'next/navigation'
 
 type AppointmentLite = { id: string; status: string; patient: string; type: string }
 type InventoryItemLite = { id: string; status: string; name: string; stock: number }
+type PatientMessageLite = { id: string; patientName: string; patientEmail: string; subject: string; from: string; createdAt: string }
 
 export default function DashboardLayout({
   children,
@@ -51,22 +52,31 @@ export default function DashboardLayout({
 
   const [pendingAppointments, setPendingAppointments] = React.useState<AppointmentLite[]>([])
   const [lowStockItems, setLowStockItems] = React.useState<InventoryItemLite[]>([])
+  const [unreadPatientMessages, setUnreadPatientMessages] = React.useState<PatientMessageLite[]>([])
 
   React.useEffect(() => {
     async function fetchNotifications() {
-      const [appointments, inventory] = await Promise.all([
+      const [appointments, inventory, messages] = await Promise.all([
         listDocuments<AppointmentLite>('appointments'),
         listDocuments<InventoryItemLite>('inventory'),
+        listDocuments<PatientMessageLite>('patient-messages'),
       ])
       setPendingAppointments(appointments.filter((a) => a.status === 'Pending'))
       setLowStockItems(
         inventory.filter((i) => i.status === 'Low Stock' || i.status === 'Out of Stock')
       )
+      // Filter patient messages (exclude staff replies)
+      setUnreadPatientMessages(
+        messages.filter((m) => m.from !== 'فريق الدعم' && m.from !== 'Staff').slice(0, 5)
+      )
     }
     fetchNotifications()
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
   }, [])
 
-  const notificationCount = pendingAppointments.length + lowStockItems.length
+  const notificationCount = pendingAppointments.length + lowStockItems.length + unreadPatientMessages.length
 
   const getUserInitials = () => {
     if (!user) return 'U'
@@ -213,6 +223,29 @@ export default function DashboardLayout({
                             <p className="font-semibold text-sm">{t('notification.pending_appointment')}</p>
                             <p className="text-xs text-muted-foreground truncate">
                               {appt.patient} - {appt.type}
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                {unreadPatientMessages.length > 0 && (
+                  <>
+                    {unreadPatientMessages.map((msg) => (
+                      <DropdownMenuItem key={msg.id} asChild>
+                        <Link href="/admin/chats" className="flex items-start gap-2 p-3">
+                          <Bell className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm">رسالة جديدة من مريض</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {msg.patientName}: {msg.subject}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleTimeString('ar-EG', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </p>
                           </div>
                         </Link>
