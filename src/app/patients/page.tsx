@@ -63,7 +63,7 @@ import {
 import { EditPatientDialog } from '@/components/patients/edit-patient-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { listCollection, patchDocument, removeDocument, generateDocumentId, setDocument } from '@/services/datastore';
+import { listCollection, patchDocument, removeDocument, generateDocumentId, setDocument } from '@/lib/collections-client';
 import { ViewPatientDialog } from '@/components/patients/view-patient-dialog';
 import { ComprehensivePatientHistory } from '@/components/patients/comprehensive-patient-history';
 import { format } from 'date-fns';

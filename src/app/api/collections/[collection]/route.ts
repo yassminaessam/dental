@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDocument, listCollection } from '@/services/datastore.server';
+import { addDocument, getCollection } from '@/services/database';
 
 const normalizePayload = (data: unknown) => {
   if (!data || typeof data !== 'object') return {} as Record<string, unknown>;
@@ -9,7 +9,7 @@ const normalizePayload = (data: unknown) => {
 export async function GET(_request: Request, context: { params: Promise<{ collection: string }> }) {
   try {
     const { collection } = await context.params;
-    const items = await listCollection<Record<string, unknown>>(collection);
+    const items = await getCollection<Record<string, unknown>>(collection);
     return NextResponse.json({ items });
   } catch (error) {
     console.error('[api/collections/[collection]] GET error', error);
@@ -25,8 +25,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     }
 
     const { collection } = await context.params;
-    const id = await createDocument(collection, body);
-    return NextResponse.json({ id }, { status: 201 });
+    const result = await addDocument(collection, body);
+    return NextResponse.json({ id: result.id }, { status: 201 });
   } catch (error) {
     console.error('[api/collections/[collection]] POST error', error);
     return NextResponse.json({ error: 'Failed to create document.' }, { status: 500 });

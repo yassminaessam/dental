@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '@/components/ui/input';
 import type { Appointment, Patient, StaffMember } from '@/lib/types';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 

@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { MedicalRecord, Patient, StaffMember } from '@/lib/types';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({

@@ -9,7 +9,7 @@ import { Trash2 } from 'lucide-react';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { AppointmentStatus, Patient, StaffMember, Treatment } from '@/lib/types';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 
 import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';

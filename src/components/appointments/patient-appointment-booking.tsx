@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 import { AppointmentsClient } from '@/services/appointments.client';
 import type { AppointmentCreateInput } from '@/services/appointments.types';
 import type { Appointment, StaffMember } from '@/lib/types';

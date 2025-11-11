@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
 import { FileText, DollarSign, Shield } from 'lucide-react';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 

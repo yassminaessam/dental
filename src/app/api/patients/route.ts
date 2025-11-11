@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDocument, generateDocumentId } from '@/services/datastore.server';
+import { addDocument } from '@/services/database';
+import { generateDocumentId } from '@/lib/collections-client';
 
 interface PatientCreatePayload {
   id?: string;
@@ -35,9 +36,9 @@ export async function POST(request: NextRequest) {
       dob: new Date(payload.dob).toISOString(),
     };
 
-    await createDocument('patients', record);
+    const result = await addDocument('patients', record);
 
-    return NextResponse.json({ patient: record }, { status: 201 });
+    return NextResponse.json({ patient: { ...record, id: result.id } }, { status: 201 });
   } catch (error) {
     console.error('[api/patients] POST error', error);
     return NextResponse.json({ error: 'Failed to create patient.' }, { status: 500 });

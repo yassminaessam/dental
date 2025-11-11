@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Upload, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { listCollection } from '@/services/datastore';
+import { listCollection } from '@/lib/collections-client';
 import type { Patient } from '@/lib/types';
 import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';

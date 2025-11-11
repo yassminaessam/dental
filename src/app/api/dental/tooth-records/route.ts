@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDocument, listCollection } from '@/services/datastore.server';
+import { addDocument, getCollection } from '@/services/database';
 
 const COLLECTION = 'tooth-medical-records';
 
 export async function GET(request: NextRequest) {
   try {
     const toothId = request.nextUrl.searchParams.get('toothId');
-    const items = await listCollection<Record<string, any>>(COLLECTION);
+    const items = await getCollection<Record<string, any>>(COLLECTION);
     const filtered = toothId ? items.filter(i => i.toothId === toothId) : items;
     return NextResponse.json({ items: filtered });
   } catch (error) {
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     if (!body.toothId) {
       return NextResponse.json({ error: 'Missing toothId.' }, { status: 400 });
     }
-    const id = await createDocument(COLLECTION, body as Record<string, any>);
-    return NextResponse.json({ id }, { status: 201 });
+    const result = await addDocument<Record<string, any>>(COLLECTION, body as Record<string, any>);
+    return NextResponse.json({ id: result.id }, { status: 201 });
   } catch (error) {
     console.error('[api/dental/tooth-records] POST error', error);
     return NextResponse.json({ error: 'Failed to create tooth medical record.' }, { status: 500 });
