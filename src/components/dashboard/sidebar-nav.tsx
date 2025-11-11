@@ -221,13 +221,21 @@ export function SidebarNav() {
   ];
 
   // Filter navigation items based on user permissions
+  // Admin override: show all navigation items regardless of permission flags.
   const visibleItems = navigationItems.filter((item) => {
-    // Check role-specific access
-    if (item.roleRequired && user?.role !== item.roleRequired) {
+    if (!user) return false;
+    if (user.role === 'admin') {
+      // Admin sees everything; still respect roleRequired if explicitly not admin (none currently).
+      if (item.roleRequired && item.roleRequired !== 'admin') return false;
+      return true;
+    }
+
+    // Check role-specific access for non-admin roles
+    if (item.roleRequired && user.role !== item.roleRequired) {
       return false;
     }
 
-    // Check permission-based access
+    // Check permission-based access for non-admin roles
     if (item.permission && !AuthService.hasPermission(user, item.permission)) {
       return false;
     }
