@@ -104,10 +104,13 @@ export default function PatientsPage() {
   React.useEffect(() => {
     async function fetchPatients() {
       try {
-        const data = await listCollection<any>('patients');
-        setPatients(data.map(p => ({...p, dob: new Date(p.dob) })));
+        const response = await fetch('/api/patients');
+        if (!response.ok) throw new Error('Failed to fetch patients');
+        
+        const data = await response.json();
+        setPatients(data.patients.map((p: any) => ({...p, dob: new Date(p.dob) })));
       } catch (error) {
-    toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
+        toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -135,38 +138,71 @@ export default function PatientsPage() {
   }, [patients, t]);
 
 
-  const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
+  const handleSavePatient = async (newPatientData: Omit<Patient, 'id'> & { createUserAccount?: boolean; userPassword?: string }) => {
     try {
-        const newPatient = { ...newPatientData, id: generateDocumentId('PAT') };
-        // Use PUT upsert to create or replace the document with a client-generated ID
-        await setDocument('patients', newPatient.id, { ...newPatient, dob: newPatient.dob.toISOString() });
+        const response = await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newPatientData,
+            dob: newPatientData.dob.toISOString(),
+            createUserAccount: newPatientData.createUserAccount || false,
+            userPassword: newPatientData.userPassword,
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to create patient');
+        
+        const data = await response.json();
+        const newPatient = { ...data.patient, dob: new Date(data.patient.dob) };
         setPatients(prev => [newPatient, ...prev]);
-  toast({ title: t('patients.patient_added'), description: t('patients.patient_added_description') });
+        
+        const successMessage = newPatientData.createUserAccount 
+          ? 'Patient and user account created successfully'
+          : t('patients.patient_added_description');
+        
+        toast({ title: t('patients.patient_added'), description: successMessage });
     } catch (error) {
-  toast({ title: t('patients.error_adding'), variant: "destructive" });
+        toast({ title: t('patients.error_adding'), variant: "destructive" });
     }
   };
 
   const handleUpdatePatient = async (updatedPatient: Patient) => {
     try {
-        await patchDocument('patients', updatedPatient.id, { ...updatedPatient, dob: updatedPatient.dob.toISOString() });
+        const response = await fetch(`/api/patient/profile`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientId: updatedPatient.id,
+            ...updatedPatient,
+            dob: updatedPatient.dob,
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update patient');
+        
         setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
         setPatientToEdit(null);
-  toast({ title: t('patients.patient_updated'), description: t('patients.patient_updated_description') });
+        toast({ title: t('patients.patient_updated'), description: t('patients.patient_updated_description') });
     } catch (error) {
-  toast({ title: t('patients.error_updating'), variant: "destructive" });
+        toast({ title: t('patients.error_updating'), variant: "destructive" });
     }
   };
 
   const handleDeletePatient = async () => {
     if (patientToDelete) {
       try {
-        await removeDocument('patients', patientToDelete.id);
+        const response = await fetch(`/api/patient/profile?patientId=${patientToDelete.id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete patient');
+        
         setPatients(prev => prev.filter(p => p.id !== patientToDelete.id));
-  toast({ title: t('patients.patient_deleted'), description: t('patients.patient_deleted_description'), variant: "destructive" });
+        toast({ title: t('patients.patient_deleted'), description: t('patients.patient_deleted_description'), variant: "destructive" });
         setPatientToDelete(null);
       } catch (error) {
-  toast({ title: t('patients.error_deleting'), variant: "destructive" });
+        toast({ title: t('patients.error_deleting'), variant: "destructive" });
       }
     }
   };

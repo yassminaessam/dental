@@ -25,7 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
@@ -35,7 +35,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
-  email: z.union([z.string().email({ message: 'Invalid email address' }), z.literal('')]),
+  email: z.string().email({ message: 'Invalid email address' }).min(1, { message: 'Email is required' }),
   phone: z.string().min(1, { message: 'Phone number is required' }),
   dob: z.date({ required_error: 'Date of birth is required' }),
   address: z.string().optional(),
@@ -45,6 +45,21 @@ const patientSchema = z.object({
   insuranceProvider: z.string().optional(),
   policyNumber: z.string().optional(),
   medicalHistory: z.array(z.object({ condition: z.string().min(1, 'Condition cannot be empty') })).optional(),
+  createUserAccount: z.boolean().optional(),
+  userPassword: z.string().optional(),
+}).refine((data) => {
+  // If createUserAccount is true, password is required
+  if (data.createUserAccount && !data.userPassword) {
+    return false;
+  }
+  // If password is provided, it should be at least 8 characters
+  if (data.userPassword && data.userPassword.length < 8) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Password must be at least 8 characters when creating user account',
+  path: ['userPassword'],
 });
 
 type PatientFormData = z.infer<typeof patientSchema>;
@@ -65,6 +80,7 @@ const emergencyContactRelationships = [
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -80,6 +96,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       insuranceProvider: '',
       policyNumber: '',
       medicalHistory: [],
+      createUserAccount: false,
+      userPassword: '',
     },
   });
 
@@ -170,19 +188,6 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                         <FormLabel className="text-sm font-medium">{t('patients.last_name')} *</FormLabel>
                         <FormControl>
                           <Input placeholder={t('patients.last_name_placeholder')} {...field} className="h-10" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">{t('patients.email')}</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder={t('patients.email_placeholder')} {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -397,6 +402,99 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-base sm:text-lg font-medium mb-3">{t('patients.user_account')}</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="createUserAccount"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base font-medium">
+                            {t('patients.create_user_account')}
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            {t('patients.create_user_account_description')}
+                          </p>
+                        </div>
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="h-4 w-4"
+                            aria-label={t('patients.create_user_account')}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('createUserAccount') && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">
+                              {t('patients.email')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="email" 
+                                placeholder={t('patients.email_placeholder')} 
+                                {...field} 
+                                className="h-10" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="userPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">
+                              {t('patients.user_password')} *
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder={t('patients.user_password_placeholder')}
+                                  {...field} 
+                                  className="h-10 pr-10" 
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                  aria-label={showPassword ? t('common.hide_password') : t('common.show_password')}
+                                >
+                                  {showPassword ? (
+                                    <EyeOff className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">
+                              {t('patients.password_requirements')}
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
               
               {/* Spacer at the bottom */}

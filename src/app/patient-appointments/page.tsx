@@ -20,18 +20,20 @@ export default function PatientAppointmentsPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetchAppointments();
+    if (user?.email) {
+      fetchAppointments();
+    }
   }, [user]);
 
   const fetchAppointments = async () => {
+    if (!user?.email) return;
+    
     try {
-      const response = await fetch('/api/appointments');
+      const response = await fetch(`/api/patient/appointments?email=${encodeURIComponent(user.email)}`);
+      if (!response.ok) throw new Error('Failed to fetch appointments');
+      
       const data = await response.json();
-      // Filter appointments for the current patient
-      const userAppointments = data.appointments.filter((apt: any) => 
-        apt.patientEmail === user?.email || apt.patient === `${user?.firstName} ${user?.lastName}`
-      );
-      setAppointments(userAppointments);
+      setAppointments(data.appointments || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
       toast({

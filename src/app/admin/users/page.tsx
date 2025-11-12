@@ -55,11 +55,15 @@ const ALL_PERMISSIONS: UserPermission[] = [
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -67,11 +71,16 @@ export default function UserManagementPage() {
     loadUsers();
   }, []);
 
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm, roleFilter, statusFilter]);
+
   const loadUsers = async () => {
     try {
       setIsLoading(true);
       const userData = await AuthService.getAllUsers();
       setUsers(userData);
+      setFilteredUsers(userData);
     } catch (error: any) {
       toast({
         title: t('common.error'),
@@ -81,6 +90,35 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterUsers = () => {
+    let filtered = [...users];
+
+    // Search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.firstName.toLowerCase().includes(searchLower) ||
+        user.lastName.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        (user.phone && user.phone.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(user =>
+        statusFilter === 'active' ? user.isActive : !user.isActive
+      );
+    }
+
+    setFilteredUsers(filtered);
   };
 
   const handleCreateUser = async (data: RegisterData & { permissions?: UserPermission[] }) => {
@@ -226,6 +264,82 @@ export default function UserManagementPage() {
             </div>
           </div>
 
+          {/* Smart Filters */}
+          <Card className="border-2 border-muted/50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                {t('users.filters')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Search Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t('users.search')}</Label>
+                  <Input
+                    placeholder={t('users.search_placeholder')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t('users.role')}</Label>
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder={t('users.all_roles')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('users.all_roles')}</SelectItem>
+                      <SelectItem value="admin">{t('users.admin')}</SelectItem>
+                      <SelectItem value="doctor">{t('users.doctor')}</SelectItem>
+                      <SelectItem value="receptionist">{t('users.receptionist')}</SelectItem>
+                      <SelectItem value="patient">{t('users.patient')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t('users.status')}</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder={t('users.all_statuses')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('users.all_statuses')}</SelectItem>
+                      <SelectItem value="active">{t('users.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('users.inactive')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Filter Stats */}
+              <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {t('users.showing')} {filteredUsers.length} {t('users.of')} {users.length} {t('users.users')}
+                </span>
+                {(searchTerm || roleFilter !== 'all' || statusFilter !== 'all') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setRoleFilter('all');
+                      setStatusFilter('all');
+                    }}
+                  >
+                    {t('users.clear_filters')}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
         {/* Users Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
@@ -243,8 +357,18 @@ export default function UserManagementPage() {
                 </CardContent>
               </Card>
             ))
+          ) : filteredUsers.length === 0 ? (
+            <Card className="col-span-full">
+              <CardContent className="py-12 text-center">
+                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">{t('users.no_users_found')}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t('users.no_users_found_description')}
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            users.map((user) => (
+            filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
                 className={`relative overflow-hidden border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group ${!user.isActive ? 'opacity-60' : ''}`}

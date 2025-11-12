@@ -31,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { listDocuments } from '@/lib/data-client';
 import PatientAppointmentBooking from '@/components/appointments/patient-appointment-booking';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 
 interface Promotion {
   id: string;
@@ -158,25 +159,38 @@ export default function PatientHomePage() {
   const [promotions, setPromotions] = React.useState<Promotion[]>([]);
   const [portalContent, setPortalContent] = React.useState<PatientPortalContent | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [dashboardStats, setDashboardStats] = React.useState<any>(null);
 
   React.useEffect(() => {
-    fetchPortalData();
-  }, []);
+    if (user?.email) {
+      fetchDashboardData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
-  const fetchPortalData = async () => {
+  const fetchDashboardData = async () => {
     try {
-      // Fetch promotions
-  const promotionsData = await listDocuments<Promotion>('patient-promotions');
-      const activePromotions = promotionsData?.filter(p => p.active) || [];
-      setPromotions(activePromotions);
-
-      // Fetch portal content
-  const contentData = await listDocuments<PatientPortalContent>('patient-portal-content');
-      if (contentData && contentData.length > 0) {
-        setPortalContent(contentData[0]);
+      // Fetch dashboard stats from Neon database
+      if (user?.email) {
+        const statsResponse = await fetch(
+          `/api/patient/dashboard?email=${encodeURIComponent(user.email)}`
+        );
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setDashboardStats(statsData.stats);
+        }
       }
+
+      // Use default promotions and content for now
+      // TODO: Create admin endpoints to manage these
+      setPromotions(defaultPromotions);
+      setPortalContent(defaultContent);
     } catch (error) {
-      console.error('Error fetching portal data:', error);
+      console.error('Error fetching dashboard data:', error);
+      // Still show default content on error
+      setPromotions(defaultPromotions);
+      setPortalContent(defaultContent);
     } finally {
       setLoading(false);
     }
@@ -366,28 +380,32 @@ export default function PatientHomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{t('patient_pages.home.regular_checkup')}</p>
-                      <p className="text-sm text-gray-600">Dr. Smith</p>
-                      <p className="text-sm text-blue-600">{t('patient_pages.home.tomorrow')}, 2:00 PM</p>
+                {dashboardStats?.nextAppointment ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{dashboardStats.nextAppointment.treatmentType}</p>
+                        <p className="text-sm text-gray-600">{dashboardStats.nextAppointment.doctor}</p>
+                        <p className="text-sm text-blue-600">
+                          {new Date(dashboardStats.nextAppointment.date).toLocaleDateString()} - {dashboardStats.nextAppointment.time}
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => window.location.href = '/patient-appointments'}>
+                        {t('patient_pages.home.view_details')}
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline">
-                      {t('patient_pages.home.reschedule')}
-                    </Button>
+                    {dashboardStats.upcomingAppointments > 1 && (
+                      <p className="text-sm text-center text-gray-600">
+                        +{dashboardStats.upcomingAppointments - 1} {t('patient_pages.home.more_appointments')}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{t('patient_pages.home.cleaning')}</p>
-                      <p className="text-sm text-gray-600">Dr. Johnson</p>
-                      <p className="text-sm text-gray-600">{t('patient_pages.home.next_week')}, Mon 10:00 AM</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      {t('patient_pages.home.view_details')}
-                    </Button>
+                ) : (
+                  <div className="py-8 text-center text-gray-500">
+                    <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>{t('patient_pages.home.no_upcoming_appointments')}</p>
                   </div>
-                </div>
+                )}
                 <Button 
                   variant="outline" 
                   className="w-full mt-4"
@@ -410,19 +428,29 @@ export default function PatientHomePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">{t('patient_pages.home.last_visit')}</span>
-                    <span className="font-medium">{t('patient_pages.home.weeks_ago')}</span>
+                    <span className="font-medium">
+                      {dashboardStats?.lastVisit 
+                        ? new Date(dashboardStats.lastVisit).toLocaleDateString()
+                        : t('patient_pages.home.no_visits')}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t('patient_pages.home.next_cleaning')}</span>
-                    <span className="font-medium text-blue-600">{t('patient_pages.home.next_week')}</span>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.upcoming_appointments')}</span>
+                    <span className="font-medium text-blue-600">
+                      {dashboardStats?.upcomingAppointments || 0}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">{t('patient_pages.home.outstanding_balance')}</span>
-                    <span className="font-medium text-green-600">$0.00</span>
+                    <span className={`font-medium ${dashboardStats?.pendingAmount > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                      {formatEGP(dashboardStats?.pendingAmount || 0)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t('patient_pages.home.insurance_status')}</span>
-                    <Badge variant="default">{t('patient_pages.home.active')}</Badge>
+                    <span className="text-sm text-gray-600">{t('patient_pages.home.unread_messages')}</span>
+                    <Badge variant={dashboardStats?.unreadMessages > 0 ? 'default' : 'secondary'}>
+                      {dashboardStats?.unreadMessages || 0}
+                    </Badge>
                   </div>
                 </div>
                 <Button 

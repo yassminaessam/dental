@@ -17,39 +17,46 @@ export default function PatientMessagesPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [conversations, setConversations] = React.useState<any[]>([]);
   const [messages, setMessages] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sending, setSending] = React.useState(false);
-  const [subject, setSubject] = React.useState('');
   const [messageContent, setMessageContent] = React.useState('');
-  const [selectedMessage, setSelectedMessage] = React.useState<any>(null);
+  const [selectedConversation, setSelectedConversation] = React.useState<any>(null);
 
   React.useEffect(() => {
     if (user?.email) {
-      fetchMessages();
+      fetchConversations();
     }
   }, [user]);
 
-  const fetchMessages = async () => {
+  const fetchConversations = async () => {
+    if (!user?.email) return;
+    
     try {
-      const response = await fetch(`/api/patient-messages?patientEmail=${user?.email}`);
+      const response = await fetch(`/api/patient/chat?patientEmail=${encodeURIComponent(user.email)}`);
+      if (!response.ok) throw new Error('Failed to fetch conversations');
+      
       const data = await response.json();
-      setMessages(data.messages || []);
-      if (data.messages && data.messages.length > 0) {
-        setSelectedMessage(data.messages[0]);
+      const convs = data.conversations || [];
+      setConversations(convs);
+      
+      if (convs.length > 0) {
+        setSelectedConversation(convs[0]);
+        setMessages(convs[0].messages || []);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!subject.trim() || !messageContent.trim()) {
+    if (!messageContent.trim()) {
       toast({
         title: 'Missing Information',
-        description: 'Please provide both subject and message',
+        description: 'Please provide a message',
         variant: 'destructive'
       });
       return;
@@ -57,15 +64,13 @@ export default function PatientMessagesPage() {
 
     setSending(true);
     try {
-      const response = await fetch('/api/patient-messages', {
+      const response = await fetch('/api/patient/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientEmail: user?.email,
           patientName: `${user?.firstName} ${user?.lastName}`,
-          subject,
           message: messageContent,
-          from: `${user?.firstName} ${user?.lastName}`
         })
       });
 
@@ -76,9 +81,8 @@ export default function PatientMessagesPage() {
         description: t('patient_pages.messages.message_sent_desc')
       });
 
-      setSubject('');
       setMessageContent('');
-      fetchMessages();
+      fetchConversations();
     } catch (error) {
       toast({
         title: t('patient_pages.messages.error_sending'),
@@ -113,7 +117,7 @@ export default function PatientMessagesPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Message List */}
+            {/* Conversation List */}
             <div className="lg:col-span-1">
               <Card>
                 <CardHeader>
@@ -124,33 +128,83 @@ export default function PatientMessagesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {messages.length === 0 ? (
-                      <p className="text-center text-gray-500 py-4">No messages yet</p>
-                    ) : messages.map((message, index) => (
-                      <div 
-                        key={message.id || index}
-                        className={`p-3 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                          message.status === 'unread' ? 'bg-blue-50' : ''
-                        } ${selectedMessage?.id === message.id ? 'border-2 border-primary' : ''}`}
-                        onClick={() => setSelectedMessage(message)}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="font-medium text-sm">{message.subject}</p>
-                          {message.status === 'unread' && (
-                            <Badge variant="default" className="text-xs">New</Badge>
+                    {conversations.length === 0 ? (
+                      <p className="text-center text-gray-500 py-4">No conversations yet</p>
+                    ) : conversations.map((conversation) => {
+                      const lastMessage = conversation.messages?.[0];
+                      const unreadCount = conversation.messages?.filter((m: any) => !m.isRead && m.senderType === 'staff').length || 0;
+                      
+                      return (
+                        <div 
+                          key={conversation.id}
+                          className={`p-3 rounded-lg cursor-pointer hover:bg-gray-50 ${
+                            unreadCount > 0 ? 'bg-blue-50' : ''
+                          } ${selectedConversation?.id === conversation.id ? 'border-2 border-primary' : ''}`}
+                          onClick={() => {
+                            setSelectedConversation(conversation);
+                            setMessages(conversation.messages || []);
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <p className="font-medium text-sm">
+                              {conversation.staffName || 'CairoDental Support'}
+                            </p>
+                            {unreadCount > 0 && (
+                              <Badge variant="default" className="text-xs">{unreadCount}</Badge>
+                            )}
+                          </div>
+                          {lastMessage && (
+                            <>
+                              <p className="text-xs text-gray-600 truncate">{lastMessage.message}</p>
+                              <p className="text-xs text-gray-500">{new Date(lastMessage.createdAt).toLocaleDateString()}</p>
+                            </>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600">{message.from}</p>
-                        <p className="text-xs text-gray-500">{new Date(message.date).toLocaleDateString()}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Message Detail / Compose */}
+            {/* Message Thread / Compose */}
             <div className="lg:col-span-2">
+              {selectedConversation && messages.length > 0 ? (
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <MessageSquare className="h-5 w-5 mr-2" />
+                      {t('patient_pages.messages.conversation')}
+                    </CardTitle>
+                    <CardDescription>
+                      with {selectedConversation.staffName || 'CairoDental Support'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {messages.slice().reverse().map((message: any, index: number) => (
+                        <div 
+                          key={message.id || index}
+                          className={`p-3 rounded-lg ${
+                            message.senderType === 'patient' 
+                              ? 'bg-primary text-white ml-auto max-w-[80%]' 
+                              : 'bg-gray-100 mr-auto max-w-[80%]'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <p className="text-xs font-medium">{message.senderName}</p>
+                            <p className="text-xs opacity-75">
+                              {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <p className="text-sm">{message.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -162,18 +216,10 @@ export default function PatientMessagesPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">{t('patient_pages.messages.subject')}</label>
-                      <Input 
-                        placeholder={t('patient_pages.messages.subject_placeholder')} 
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                      />
-                    </div>
-                    <div>
                       <label className="text-sm font-medium mb-2 block">{t('patient_pages.messages.message')}</label>
                       <Textarea 
                         placeholder={t('patient_pages.messages.message_placeholder')} 
-                        rows={8}
+                        rows={6}
                         value={messageContent}
                         onChange={(e) => setMessageContent(e.target.value)}
                       />
@@ -189,35 +235,6 @@ export default function PatientMessagesPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Recent Message Detail */}
-              {selectedMessage && (
-                <Card className="mt-4">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle>{selectedMessage.subject}</CardTitle>
-                        <CardDescription>{t('patient_pages.messages.from')}: {selectedMessage.from}</CardDescription>
-                      </div>
-                      <p className="text-sm text-gray-500">{new Date(selectedMessage.date).toLocaleDateString()}</p>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700">{selectedMessage.content}</p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => {
-                        setSubject(`Re: ${selectedMessage.subject}`);
-                        setMessageContent('');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                    >
-                      {t('patient_pages.messages.reply')}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
         </div>

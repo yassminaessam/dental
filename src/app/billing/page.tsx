@@ -42,6 +42,7 @@ import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/li
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 
 export type InvoiceLineItem = {
     id: string;
@@ -93,9 +94,16 @@ export default function BillingPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-      const [invoiceData, patientData, treatmentData, appointmentData, claimData] = await Promise.all([
-        listDocuments<Invoice>('invoices'),
-        listDocuments<Patient>('patients'),
+      // Fetch invoices from Neon database
+      const invoiceResponse = await fetch('/api/invoices');
+      const invoiceData = invoiceResponse.ok ? (await invoiceResponse.json()).invoices || [] : [];
+
+      // Fetch patients from Neon database
+      const patientsResponse = await fetch('/api/patients');
+      const patientData = patientsResponse.ok ? (await patientsResponse.json()).patients || [] : [];
+
+      // For now, keep legacy data for treatments, appointments, and claims
+      const [treatmentData, appointmentData, claimData] = await Promise.all([
         listDocuments<any>('treatments'),
         listDocuments<any>('appointments'),
         listDocuments<any>('insurance-claims'),
@@ -111,11 +119,17 @@ export default function BillingPage() {
               return invoice;
             });
             
-            setInvoices(updatedInvoices);
-            setPatients(patientData);
-            setTreatments(treatmentData);
-            setAppointments(appointmentData.map(a => ({...a, dateTime: new Date(a.dateTime)})));
-            setInsuranceClaims(claimData);
+      // Map patient data to ensure proper date format
+      const mappedPatients = patientData.map((p: any) => ({
+        ...p,
+        dob: p.dob ? new Date(p.dob) : new Date()
+      }));
+
+      setInvoices(updatedInvoices);
+      setPatients(mappedPatients);
+      setTreatments(treatmentData);
+      setAppointments(appointmentData.map(a => ({...a, dateTime: new Date(a.dateTime)})));
+      setInsuranceClaims(claimData);
     } catch (error) {
       toast({ title: t('billing.toast.error_fetching'), variant: 'destructive' });
         } finally {
@@ -656,7 +670,6 @@ export default function BillingPage() {
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
                     const patient = patients.find(p => p.name === invoice.patient);
-                    const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
                     return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.id}</TableCell>
@@ -664,8 +677,8 @@ export default function BillingPage() {
                       <TableCell>{patient?.phone || t('common.na')}</TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
-                      <TableCell>{currency.format(invoice.totalAmount)}</TableCell>
-                      <TableCell>{currency.format(invoice.amountPaid)}</TableCell>
+                      <TableCell>{formatEGP(invoice.totalAmount)}</TableCell>
+                      <TableCell>{formatEGP(invoice.amountPaid)}</TableCell>
                       <TableCell>
                         <Badge
                           variant={

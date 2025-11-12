@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
@@ -38,8 +38,8 @@ const buildPatientSchema = (t: (key: string, params?: Record<string, string | nu
   z.object({
     name: z.string().min(1, { message: t('patients.validation.first_name_required') }),
     lastName: z.string().min(1, { message: t('patients.validation.last_name_required') }),
-    // Email is optional: allow empty string or a valid email
-    email: z.union([z.string().email({ message: t('validation.invalid_email') }), z.literal('')]),
+    // Email is required for user account creation
+    email: z.string().email({ message: t('validation.invalid_email') }).min(1, { message: 'Email is required' }),
     phone: z.string().min(1, { message: t('patients.validation.phone_required') }),
     dob: z.date({ required_error: t('patients.validation.dob_required') }),
     status: z.enum(['Active', 'Inactive']),
@@ -56,6 +56,21 @@ const buildPatientSchema = (t: (key: string, params?: Record<string, string | nu
         })
       )
       .optional(),
+    createUserAccount: z.boolean().optional(),
+    userPassword: z.string().optional(),
+  }).refine((data) => {
+    // If createUserAccount is true, password is required
+    if (data.createUserAccount && !data.userPassword) {
+      return false;
+    }
+    // If password is provided, it should be at least 8 characters
+    if (data.userPassword && data.userPassword.length < 8) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'Password must be at least 8 characters when creating user account',
+    path: ['userPassword'],
   });
 
 
@@ -81,6 +96,8 @@ const emergencyContactRelationships = [
 export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditPatientDialogProps) {
   const { t } = useLanguage();
   const [dobOpen, setDobOpen] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [hasUserAccount, setHasUserAccount] = React.useState(false);
   const form = useForm<PatientFormData>({
     resolver: zodResolver(buildPatientSchema(t)),
   });
@@ -89,6 +106,24 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
     control: form.control,
     name: "medicalHistory",
   });
+
+  // Check if patient has user account
+  React.useEffect(() => {
+    const checkUserAccount = async () => {
+      if (patient && patient.email) {
+        try {
+          const response = await fetch(`/api/patient/profile?email=${encodeURIComponent(patient.email)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setHasUserAccount(!!data.patient);
+          }
+        } catch (error) {
+          console.log('Could not check user account status');
+        }
+      }
+    };
+    checkUserAccount();
+  }, [patient]);
 
   React.useEffect(() => {
     if (patient) {
@@ -106,6 +141,8 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
         insuranceProvider: patient.insuranceProvider,
         policyNumber: patient.policyNumber,
         medicalHistory: patient.medicalHistory || [],
+        createUserAccount: false,
+        userPassword: '',
       });
     }
   }, [patient, form]);
@@ -153,19 +190,6 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                         <FormLabel>{t('patients.last_name')} *</FormLabel>
                         <FormControl>
                         <Input placeholder="Ali" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>{t('patients.email')}</FormLabel>
-                        <FormControl>
-                        <Input type="email" placeholder={t('patients.email_placeholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -307,6 +331,110 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                       </div>
                     ))}
                     <Button type="button" variant="outline" onClick={() => append({ condition: '' })}><Plus className="mr-2 h-4 w-4" />{t('patients.add_medical_condition')}</Button>
+                  </div>
+                </div>
+
+                {/* User Account Section */}
+                <div className="border-t pt-4">
+                  <h3 className="text-base sm:text-lg font-medium mb-3">{t('patients.user_account')}</h3>
+                  <div className="space-y-4">
+                    {!hasUserAccount && (
+                      <FormField
+                        control={form.control}
+                        name="createUserAccount"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base font-medium">
+                                {t('patients.create_user_account')}
+                              </FormLabel>
+                              <p className="text-sm text-muted-foreground">
+                                {t('patients.create_user_account_description')}
+                              </p>
+                            </div>
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4"
+                                aria-label={t('patients.create_user_account')}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {hasUserAccount && (
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-4">
+                        <p className="text-sm text-green-800">
+                          ✓ {t('patients.user_account_exists')}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {(hasUserAccount || form.watch('createUserAccount')) && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">
+                                {t('patients.email')} *
+                              </FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder={t('patients.email_placeholder')} 
+                                  {...field} 
+                                  className="h-10" 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="userPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">
+                                {hasUserAccount ? t('patients.new_password') : t('patients.user_password')} {!hasUserAccount && '*'}
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input 
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder={hasUserAccount ? t('patients.new_password_placeholder') : t('patients.user_password_placeholder')}
+                                    {...field} 
+                                    className="h-10 pr-10" 
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    aria-label={showPassword ? t('common.hide_password') : t('common.show_password')}
+                                  >
+                                    {showPassword ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <p className="text-xs text-muted-foreground">
+                                {hasUserAccount ? t('patients.password_update_hint') : t('patients.password_requirements')}
+                              </p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
             </form>
