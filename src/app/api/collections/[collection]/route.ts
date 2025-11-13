@@ -25,8 +25,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     }
 
     const { collection } = await context.params;
-    const result = await addDocument(collection, body);
-    return NextResponse.json({ id: result.id }, { status: 201 });
+    const id = await addDocument(collection, body);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     console.error('[api/collections/[collection]] POST error', error);
     return NextResponse.json({ error: 'Failed to create document.' }, { status: 500 });

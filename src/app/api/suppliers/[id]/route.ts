@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { SuppliersService } from '@/services/suppliers';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, context: any) {
   try {
-    const supplier = await SuppliersService.get(params.id);
+    const supplier = await SuppliersService.get(context?.params?.id);
     if (!supplier) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ supplier });
   } catch (e) {
@@ -12,10 +12,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, context: any) {
   try {
     const body = await req.json();
-    const supplier = await SuppliersService.update({ id: params.id, ...body });
+    const supplier = await SuppliersService.update({ id: context?.params?.id, ...body });
     return NextResponse.json({ supplier });
   } catch (e: any) {
     console.error('[api/suppliers/[id]] PATCH error', e);
@@ -23,11 +23,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, context: any) {
   try {
-    const existing = await SuppliersService.get(params.id);
+    const existing = await SuppliersService.get(context?.params?.id);
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    await SuppliersService.remove(params.id);
+    await SuppliersService.remove(context?.params?.id);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('[api/suppliers/[id]] DELETE error', e);

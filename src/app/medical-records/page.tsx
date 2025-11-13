@@ -58,15 +58,7 @@ import { LinkImageToToothDialog } from '@/components/medical-records/link-image-
 import { ViewImageDialog } from '@/components/medical-records/view-image-dialog';
 import type { ClinicalImage, MedicalRecord, MedicalRecordTemplate } from '@/lib/types';
 import {
-  listMedicalRecords,
-  listClinicalImages,
   listMedicalRecordTemplates,
-  createMedicalRecord,
-  updateMedicalRecord,
-  removeMedicalRecord,
-  createClinicalImage,
-  updateClinicalImage,
-  removeClinicalImage,
 } from '@/services/medical-records';
 import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -81,6 +73,7 @@ export default function MedicalRecordsPage() {
   const [records, setRecords] = React.useState<MedicalRecord[]>([]);
   const [images, setImages] = React.useState<ClinicalImage[]>([]);
   const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>([]);
+  const [patients, setPatients] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const [recordSearchTerm, setRecordSearchTerm] = React.useState('');
@@ -130,14 +123,22 @@ export default function MedicalRecordsPage() {
   React.useEffect(() => {
     async function fetchData() {
         try {
-        const [recordsData, imagesData, templatesData] = await Promise.all([
-          listMedicalRecords(),
-          listClinicalImages(),
+        // Fetch all data from Neon database
+        const [patientsResponse, recordsResponse, imagesResponse, templatesData] = await Promise.all([
+          fetch('/api/patients'),
+          fetch('/api/medical-records'),
+          fetch('/api/clinical-images'),
           listMedicalRecordTemplates(),
         ]);
-            setRecords(recordsData);
-            setImages(imagesData);
+        
+        const patientsData = patientsResponse.ok ? await patientsResponse.json() : { patients: [] };
+        const recordsData = recordsResponse.ok ? await recordsResponse.json() : { records: [] };
+        const imagesData = imagesResponse.ok ? await imagesResponse.json() : { images: [] };
+        
+            setRecords(recordsData.records || []);
+            setImages(imagesData.images || []);
             setTemplates(templatesData);
+            setPatients(patientsData.patients || []);
         } catch (e) {
             console.error('Error fetching data:', e);
             toast({ title: t('medical_records.toast.error_fetching'), variant: 'destructive' });
@@ -148,7 +149,7 @@ export default function MedicalRecordsPage() {
     fetchData().catch(error => {
       console.error('Unhandled error in fetchData:', error);
     });
-  }, [toast]);
+  }, [toast, t]);
 
   const medicalRecordsPageStats = React.useMemo(() => {
     const draftRecords = records.filter(r => r.status === 'Draft').length;
@@ -160,13 +161,31 @@ export default function MedicalRecordsPage() {
     ];
   }, [records, images, templates]);
 
-  const handleSaveRecord = async (data: Omit<MedicalRecord, 'id' | 'status'>) => {
+  const handleSaveRecord = async (data: any) => {
     try {
-      const created = await createMedicalRecord({
-        ...data,
-        status: 'Final',
+      // Find patient to get patientId
+      const patient = patients.find(p => p.id === data.patient);
+      
+      const response = await fetch('/api/medical-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient: patient?.name || '',
+          patientId: data.patient,
+          type: data.type,
+          complaint: data.complaint || '',
+          provider: data.provider,
+          providerId: data.providerId,
+          date: data.date,
+          status: data.status || 'Final',
+          notes: data.notes || '',
+        }),
       });
-      setRecords((prev) => [created, ...prev]);
+      
+      if (!response.ok) throw new Error('Failed to create medical record');
+      
+      const { record } = await response.json();
+      setRecords((prev) => [record, ...prev]);
       toast({
         title: t('medical_records.toast.record_created'),
         description: t('medical_records.toast.record_created_desc'),
@@ -178,8 +197,16 @@ export default function MedicalRecordsPage() {
 
   const handleUpdateRecord = async (updatedRecord: MedicalRecord) => {
     try {
-      await updateMedicalRecord(updatedRecord);
-      setRecords(prev => prev.map(rec => rec.id === updatedRecord.id ? updatedRecord : rec));
+      const response = await fetch(`/api/medical-records/${updatedRecord.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRecord),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update medical record');
+      
+      const { record } = await response.json();
+      setRecords(prev => prev.map(rec => rec.id === record.id ? record : rec));
       setRecordToEdit(null);
       toast({
         title: t('medical_records.toast.record_updated'),
@@ -193,7 +220,12 @@ export default function MedicalRecordsPage() {
   const handleDeleteRecord = async () => {
     if (!recordToDelete) return;
     try {
-      await removeMedicalRecord(recordToDelete.id);
+      const response = await fetch(`/api/medical-records/${recordToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete medical record');
+      
       setRecords(prev => prev.filter(record => record.id !== recordToDelete.id));
       setRecordToDelete(null);
       toast({
@@ -208,14 +240,26 @@ export default function MedicalRecordsPage() {
 
   const handleImageUpload = async (data: any) => {
      try {
-      const created = await createClinicalImage({
-        patient: data.patientName,
-        type: data.type,
-        date: new Date().toLocaleDateString(),
-        imageUrl: data.imageUrl,
-        caption: data.caption,
+      // Find patient to get patientId
+      const patient = patients.find(p => p.name === data.patientName);
+      
+      const response = await fetch('/api/clinical-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient: data.patientName,
+          patientId: patient?.id,
+          type: data.type,
+          imageUrl: data.imageUrl,
+          caption: data.caption || '',
+          date: new Date().toISOString(),
+        }),
       });
-      setImages(prev => [created, ...prev]);
+      
+      if (!response.ok) throw new Error('Failed to upload clinical image');
+      
+      const { image } = await response.json();
+      setImages(prev => [image, ...prev]);
       toast({
         title: t('medical_records.toast.image_uploaded'),
         description: t('medical_records.toast.image_uploaded_desc'),
@@ -234,11 +278,19 @@ export default function MedicalRecordsPage() {
         ...updatedImage,
         imageUrl: newImageUrl,
         caption: caption || updatedImage.caption,
-        date: new Date().toLocaleDateString(), // Update date when replaced
+        date: new Date().toISOString(),
       };
 
-      await updateClinicalImage(updatedImageData);
-      setImages(prev => prev.map(img => img.id === imageId ? updatedImageData : img));
+      const response = await fetch(`/api/clinical-images/${imageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedImageData),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update clinical image');
+      
+      const { image } = await response.json();
+      setImages(prev => prev.map(img => img.id === imageId ? image : img));
       
       toast({
         title: t('medical_records.toast.image_replaced'),
@@ -255,8 +307,13 @@ export default function MedicalRecordsPage() {
     try {
       // Delete underlying file (local or previous Firebase) always
       await clinicalImagesStorage.deleteClinicalImage(imageToDelete.imageUrl);
-      // Delete record from datastore
-      await removeClinicalImage(imageToDelete.id);
+      
+      // Delete record from Neon database
+      const response = await fetch(`/api/clinical-images/${imageToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete clinical image');
       
       setImages(prev => prev.filter(img => img.id !== imageToDelete.id));
       setImageToDelete(null);
@@ -277,6 +334,12 @@ export default function MedicalRecordsPage() {
       description: t('medical_records.toast.downloading_record_desc')
     });
   };
+
+  // Helper function to get patient phone by name
+  const getPatientPhone = React.useCallback((patientName: string) => {
+    const patient = patients.find(p => p.name === patientName);
+    return patient?.phone || '-';
+  }, [patients]);
 
   const filteredRecords = React.useMemo(() => {
     return records
@@ -445,17 +508,18 @@ export default function MedicalRecordsPage() {
                     <TableRow>
                       <TableHead>{t('medical_records.record_id')}</TableHead>
                       <TableHead>{t('common.patient')}</TableHead>
+                      <TableHead>{t('common.phone')}</TableHead>
                       <TableHead>{t('medical_records.type')}</TableHead>
                       <TableHead>{t('medical_records.chief_complaint')}</TableHead>
                       <TableHead>{t('medical_records.provider')}</TableHead>
                       <TableHead>{t('common.date')}</TableHead>
                       <TableHead>{t('common.status')}</TableHead>
-                      <TableHead className="text-right">{t('table.actions')}</TableHead>
+                      <TableHead className={cn("text-right", isRTL && "text-left")}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredRecords.length > 0 ? (
                       filteredRecords.map((record) => (
                         <TableRow key={record.id}>
@@ -466,6 +530,7 @@ export default function MedicalRecordsPage() {
                               <span>{record.patient}</span>
                             </div>
                           </TableCell>
+                          <TableCell className="text-muted-foreground">{getPatientPhone(record.patient)}</TableCell>
                           <TableCell>
                             <Badge variant={record.type === 'SOAP' ? 'default' : 'secondary'}>{record.type}</Badge>
                           </TableCell>
@@ -475,7 +540,7 @@ export default function MedicalRecordsPage() {
                           <TableCell>
                             <Badge variant="outline">{record.status === 'Draft' ? t('medical_records.draft') : t('medical_records.final')}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn("text-right", isRTL && "text-left")}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -483,21 +548,21 @@ export default function MedicalRecordsPage() {
                                   <span className="sr-only">{t('common.actions')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align={isRTL ? "start" : "end"}>
                                 <DropdownMenuItem onClick={() => setRecordToView(record)}>
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
                                   {t('table.view')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setRecordToEdit(record)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
+                                  <Pencil className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
                                   {t('table.edit')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDownloadRecord(record.id)}>
-                                  <Download className="mr-2 h-4 w-4" />
+                                  <Download className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
                                   {t('table.download')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setRecordToDelete(record)} className="text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <Trash2 className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
                                   {t('table.delete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -507,7 +572,7 @@ export default function MedicalRecordsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-24 text-center">
+                        <TableCell colSpan={9} className="h-24 text-center">
                           {t('medical_records.no_records_found')}
                         </TableCell>
                       </TableRow>

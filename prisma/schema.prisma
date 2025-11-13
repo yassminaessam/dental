@@ -149,6 +149,58 @@ model Treatment {
   @@index([doctorId])
 }
 
+// Medical Records
+enum MedicalRecordStatus {
+  Draft
+  Final
+}
+
+model MedicalRecord {
+  id         String              @id @default(uuid())
+  patient    String
+  patientId  String?
+  type       String              // SOAP, Clinical Note, Treatment Plan, Consultation
+  complaint  String?
+  provider   String
+  providerId String?
+  date       DateTime            @default(now())
+  status     MedicalRecordStatus @default(Final)
+  notes      String?             @db.Text
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([date])
+}
+
+// Clinical Images
+model ClinicalImage {
+  id         String   @id @default(uuid())
+  patient    String
+  patientId  String?
+  type       String
+  imageUrl   String
+  caption    String?  @db.Text
+  date       DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([date])
+}
+
+// Dental Charts
+model DentalChart {
+  id         String   @id @default(uuid())
+  patientId  String   @unique
+  chartData  Json     // Stores the entire tooth chart as JSON
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([patientId])
+}
+
 enum UserRole {
   admin
   doctor

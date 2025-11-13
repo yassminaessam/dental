@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,13 +25,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get medical records from Neon database
+    const medicalRecords = await prisma.medicalRecord.findMany({
+      where: {
+        patientId: patient.id,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+
     // Get treatments (acts as medical records)
     const treatments = await prisma.treatment.findMany({
       where: {
         patientId: patient.id,
       },
       orderBy: {
-        date: 'desc',
+        updatedAt: 'desc',
       },
     });
 
@@ -49,16 +57,29 @@ export async function GET(request: NextRequest) {
       take: 10,
     });
 
+    // Transform Neon medical records
+    const neonRecords = medicalRecords.map((record) => ({
+      id: record.id,
+      type: record.type || 'Medical Record',
+      title: record.complaint || 'Medical Record',
+      description: record.notes || record.complaint || '',
+      date: record.date,
+      doctor: record.provider,
+      status: record.status,
+      category: 'Medical Record',
+      notes: record.notes,
+    }));
+
     // Transform treatments into medical records format
-    const records = treatments.map((treatment) => ({
+    const treatmentRecords = treatments.map((treatment) => ({
       id: treatment.id,
       type: 'Treatment',
-      title: treatment.name,
-      description: treatment.description,
-      date: treatment.date,
-      doctor: treatment.dentist,
+      title: treatment.procedure,
+      description: treatment.notes || treatment.procedure,
+      date: treatment.updatedAt,
+      doctor: treatment.doctor,
       status: treatment.status,
-      category: treatment.category,
+      category: 'Treatment',
       cost: treatment.cost,
       notes: treatment.notes,
     }));
@@ -76,8 +97,8 @@ export async function GET(request: NextRequest) {
       notes: apt.notes,
     }));
 
-    // Combine and sort by date
-    const allRecords = [...records, ...appointmentRecords].sort(
+    // Combine all records and sort by date
+    const allRecords = [...neonRecords, ...treatmentRecords, ...appointmentRecords].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
@@ -95,7 +116,5 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

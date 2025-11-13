@@ -32,22 +32,34 @@ export class DentalIntegrationService {
     newCondition: ToothCondition,
     notes?: string
   ): Promise<string> {
-    const record: DentalTreatmentRecord = {
-      id: generateDocumentId('mr'),
-      patient: patientName,
-      type: 'Treatment Plan',
-      complaint: `Tooth #${toothId} condition change: ${oldCondition} → ${newCondition}`,
-      provider: 'Dental System',
-      date: new Date().toISOString(),
-      status: 'Final',
-      notes: this.generateTreatmentContent(toothId, oldCondition, newCondition, notes),
-      toothNumber: toothId,
-      toothCondition: newCondition,
-      previousCondition: oldCondition,
-      treatmentType: 'condition_change'
-    };
-    const id = await createDocument('medical-records', record as unknown as Record<string, unknown>);
-    return id;
+    try {
+      // Create medical record in Neon database
+      const response = await fetch('/api/medical-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient: patientName,
+          patientId: patientId,
+          type: 'Treatment Plan',
+          complaint: `Tooth #${toothId} condition change: ${oldCondition} → ${newCondition}`,
+          provider: 'Dental System',
+          providerId: null,
+          date: new Date().toISOString(),
+          status: 'Final',
+          notes: this.generateTreatmentContent(toothId, oldCondition, newCondition, notes),
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create medical record');
+      }
+      
+      const { record } = await response.json();
+      return record.id;
+    } catch (error) {
+      console.error('Error creating treatment record:', error);
+      throw error;
+    }
   }
 
   static async linkImageToTooth(
@@ -82,8 +94,22 @@ export class DentalIntegrationService {
   }
 
   static async getToothMedicalRecords(toothNumber: number, patient: string): Promise<MedicalRecord[]> {
-    const records = await listCollection<DentalTreatmentRecord>('medical-records');
-    return records.filter(r => r.toothNumber === toothNumber && r.patient === patient);
+    try {
+      // Fetch all medical records from Neon database
+      const response = await fetch('/api/medical-records');
+      if (!response.ok) return [];
+      
+      const { records } = await response.json();
+      
+      // Filter records that mention this tooth number in the complaint or notes
+      return records.filter((r: MedicalRecord) => 
+        r.patient === patient && 
+        (r.complaint?.includes(`Tooth #${toothNumber}`) || r.notes?.includes(`Tooth #${toothNumber}`))
+      );
+    } catch (error) {
+      console.error('Error fetching tooth medical records:', error);
+      return [];
+    }
   }
 
   static async createFollowUpRecord(
@@ -93,19 +119,34 @@ export class DentalIntegrationService {
     treatmentNotes: string,
     nextAppointment?: string
   ): Promise<string> {
-    const record: DentalTreatmentRecord = {
-      id: generateDocumentId('mr'),
-      patient: patientName,
-      type: 'Clinical Note',
-      complaint: `Follow-up treatment for Tooth #${toothId}`,
-      provider: 'Dental System',
-      date: new Date().toISOString(),
-      status: 'Final',
-      notes: this.generateFollowUpContent(toothId, treatmentNotes, nextAppointment),
-      toothNumber: toothId,
-      treatmentType: 'follow_up'
-    };
-    return createDocument('medical-records', record as unknown as Record<string, unknown>);
+    try {
+      // Create follow-up record in Neon database
+      const response = await fetch('/api/medical-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient: patientName,
+          patientId: patientId,
+          type: 'Clinical Note',
+          complaint: `Follow-up treatment for Tooth #${toothId}`,
+          provider: 'Dental System',
+          providerId: null,
+          date: new Date().toISOString(),
+          status: 'Final',
+          notes: this.generateFollowUpContent(toothId, treatmentNotes, nextAppointment),
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create follow-up record');
+      }
+      
+      const { record } = await response.json();
+      return record.id;
+    } catch (error) {
+      console.error('Error creating follow-up record:', error);
+      throw error;
+    }
   }
 
   static async createImageRecord(

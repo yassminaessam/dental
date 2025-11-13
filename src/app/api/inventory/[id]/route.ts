@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server';
-import { InventoryService, type InventoryPatchInput } from '@/services/inventory';
+import { InventoryService, type InventoryUpdateInput } from '@/services/inventory';
 
-const parsePatch = async (req: Request): Promise<InventoryPatchInput> => {
+const parsePatch = async (req: Request): Promise<Partial<InventoryUpdateInput>> => {
   const b = await req.json();
-  const patch: InventoryPatchInput = {};
+  const patch: Partial<InventoryUpdateInput> = {};
   if ('name' in b) patch.name = b.name;
   if ('category' in b) patch.category = b.category;
   if ('supplierId' in b) patch.supplierId = b.supplierId;
   if ('quantity' in b) patch.quantity = Number(b.quantity);
-  if ('minQuantity' in b) patch.minQuantity = b.minQuantity != null ? Number(b.minQuantity) : null;
-  if ('maxQuantity' in b) patch.maxQuantity = b.maxQuantity != null ? Number(b.maxQuantity) : null;
+  if ('minQuantity' in b) patch.minQuantity = b.minQuantity != null ? Number(b.minQuantity) : undefined;
+  if ('maxQuantity' in b) patch.maxQuantity = b.maxQuantity != null ? Number(b.maxQuantity) : undefined;
   if ('unitCost' in b) patch.unitCost = Number(b.unitCost);
   if ('status' in b) patch.status = b.status;
-  if ('expires' in b) patch.expires = b.expires ? new Date(b.expires) : null;
+  if ('expires' in b) patch.expires = b.expires ? new Date(b.expires) : undefined;
   return patch;
 };
 
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
+export async function GET(_req: Request, ctx: any) {
   try {
-    const item = await InventoryService.get(ctx.params.id);
+    const item = await InventoryService.get(ctx?.params?.id);
     if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ item });
   } catch (e) {
@@ -27,10 +27,10 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
   }
 }
 
-export async function PATCH(req: Request, ctx: { params: { id: string } }) {
+export async function PATCH(req: Request, ctx: any) {
   try {
     const patch = await parsePatch(req);
-    const item = await InventoryService.update(ctx.params.id, patch);
+    const item = await InventoryService.update({ id: ctx?.params?.id, ...patch } as InventoryUpdateInput);
     return NextResponse.json({ item });
   } catch (e: any) {
     console.error('[api/inventory/:id] PATCH error', e);
@@ -38,9 +38,9 @@ export async function PATCH(req: Request, ctx: { params: { id: string } }) {
   }
 }
 
-export async function DELETE(_req: Request, ctx: { params: { id: string } }) {
+export async function DELETE(_req: Request, ctx: any) {
   try {
-    await InventoryService.remove(ctx.params.id);
+    await InventoryService.remove(ctx?.params?.id);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('[api/inventory/:id] DELETE error', e);

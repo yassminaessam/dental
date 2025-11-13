@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { InvoicesService, type InvoiceUpdateInput } from '@/services/invoices';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, context: any) {
   try {
-    const invoice = await InvoicesService.get(params.id);
+    const invoice = await InvoicesService.get(context?.params?.id);
     if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ invoice });
   } catch (error) {
@@ -31,9 +31,9 @@ const parsePatchPayload = async (request: Request, id: string): Promise<InvoiceU
   } as InvoiceUpdateInput;
 };
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, context: any) {
   try {
-    const payload = await parsePatchPayload(request, params.id);
+    const payload = await parsePatchPayload(request, context?.params?.id);
     const updated = await InvoicesService.update(payload);
     return NextResponse.json({ invoice: updated });
   } catch (error: any) {
@@ -43,11 +43,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, context: any) {
   try {
-    const invoice = await InvoicesService.get(params.id);
+    const invoice = await InvoicesService.get(context?.params?.id);
     if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    await InvoicesService.remove(params.id);
+    await InvoicesService.remove(context?.params?.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[api/invoices/[id]] DELETE error', error);

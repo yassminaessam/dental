@@ -111,7 +111,7 @@ export default function BillingPage() {
             
             // Update overdue invoices
             const today = new Date();
-            const updatedInvoices = invoiceData.map(invoice => {
+            const updatedInvoices = invoiceData.map((invoice: any) => {
               const dueDate = new Date(invoice.dueDate);
               if (dueDate < today && invoice.status === 'Unpaid' && invoice.amountPaid < invoice.totalAmount) {
                 return { ...invoice, status: 'Overdue' as const };

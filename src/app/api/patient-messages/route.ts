@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    const result = await addDocument('patient-messages', newMessage);
+    const newId = await addDocument('patient-messages', newMessage);
 
     return NextResponse.json({ 
       success: true, 
-      messageId: result.id,
-      message: { ...newMessage, id: result.id }
+      messageId: newId,
+      message: { ...newMessage, id: newId }
     }, { status: 201 });
   } catch (error) {
     console.error('[api/patient-messages] POST error', error);

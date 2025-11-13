@@ -91,8 +91,8 @@ export const PatientUserSyncService = {
         role: 'patient' as const,
         phone: patient.phone,
         address: patient.address,
-        permissions: ['view_own_data'], // Default patient permissions
-      };
+        permissions: ['view_own_data'] as any, // Default patient permissions as UserPermission[]
+      } as any;
 
       const newUser = await UsersService.create(userData);
 

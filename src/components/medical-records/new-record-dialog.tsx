@@ -101,9 +101,18 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
   }, [open]);
 
   const onSubmit = (data: RecordFormData) => {
-    const patientName = patients.find(p => p.id === data.patient)?.name;
-    const providerName = doctors.find(d => d.id === data.provider)?.name;
-    onSave({ ...data, patient: patientName, provider: providerName, date: data.date.toLocaleDateString() });
+    const patientData = patients.find(p => p.id === data.patient);
+    const providerData = doctors.find(d => d.id === data.provider);
+    
+    onSave({ 
+      ...data, 
+      patient: data.patient, // Keep patientId
+      patientName: patientData?.name || '',
+      provider: data.provider, // Keep providerId
+      providerName: providerData?.name || '',
+      providerId: data.provider,
+      date: data.date.toISOString(),
+    });
     form.reset();
     setOpen(false);
   };

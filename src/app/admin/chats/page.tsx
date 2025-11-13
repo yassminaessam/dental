@@ -130,7 +130,7 @@ export default function AdminChatsPage() {
             body: JSON.stringify({
               patientEmail: selectedConv.patientEmail,
               patientName: selectedConv.patientName,
-              subject: `Re: ${selectedConv.messages[0]?.subject || 'Reply'}`,
+              subject: `Re: ${((selectedConv.messages[0] as any)?.subject as string) || 'Reply'}`,
               message: messageText,
               from: 'فريق الدعم',
             }),

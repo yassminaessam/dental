@@ -39,7 +39,7 @@ import type { StaffMember } from '@/app/staff/page';
 type EmployeeFormData = {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone?: string;
   role: string;
   hireDate: Date;
@@ -155,7 +155,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   const [dateOpen, setDateOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const form = useForm<EmployeeFormData>({
-    resolver: zodResolver(employeeSchema),
+    resolver: zodResolver(employeeSchema) as any,
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -175,7 +175,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
       onSave({
         name: `${data.firstName} ${data.lastName}`,
         role: data.role,
-        email: data.email,
+        email: data.email || '',
         phone: data.phone || '',
         salary: data.salary,
         hireDate: data.hireDate.toISOString(),

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,9 +29,7 @@ export async function GET(request: NextRequest) {
     const upcomingAppointments = await prisma.appointment.count({
       where: {
         patientEmail: email,
-        date: {
-          gte: new Date(),
-        },
+        dateTime: { gte: new Date() },
         status: {
           in: ['Pending', 'Confirmed'],
         },
@@ -46,10 +42,8 @@ export async function GET(request: NextRequest) {
         conversation: {
           patientEmail: email,
         },
-        senderRole: {
-          not: 'patient',
-        },
-        read: false,
+        senderType: { not: 'patient' },
+        isRead: false,
       },
     });
 
@@ -57,7 +51,7 @@ export async function GET(request: NextRequest) {
     const pendingInvoices = await prisma.invoice.count({
       where: {
         patientId: patient.id,
-        status: 'Pending',
+        status: { in: ['Draft', 'Sent', 'Overdue'] },
       },
     });
 
@@ -65,28 +59,23 @@ export async function GET(request: NextRequest) {
     const pendingInvoicesData = await prisma.invoice.findMany({
       where: {
         patientId: patient.id,
-        status: 'Pending',
+        status: { in: ['Draft', 'Sent', 'Overdue'] },
       },
       select: {
-        total: true,
+        amount: true,
       },
     });
 
-    const pendingAmount = pendingInvoicesData.reduce(
-      (sum, invoice) => sum + invoice.total,
-      0
-    );
+    const pendingAmount = pendingInvoicesData.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
 
     // Get last appointment
     const lastAppointment = await prisma.appointment.findFirst({
       where: {
         patientEmail: email,
-        date: {
-          lt: new Date(),
-        },
+        dateTime: { lt: new Date() },
       },
       orderBy: {
-        date: 'desc',
+        dateTime: 'desc',
       },
     });
 
@@ -94,15 +83,13 @@ export async function GET(request: NextRequest) {
     const nextAppointment = await prisma.appointment.findFirst({
       where: {
         patientEmail: email,
-        date: {
-          gte: new Date(),
-        },
+        dateTime: { gte: new Date() },
         status: {
           in: ['Pending', 'Confirmed'],
         },
       },
       orderBy: {
-        date: 'asc',
+        dateTime: 'asc',
       },
     });
 
@@ -112,13 +99,12 @@ export async function GET(request: NextRequest) {
         unreadMessages,
         pendingInvoices,
         pendingAmount,
-        lastVisit: lastAppointment?.date || null,
+        lastVisit: lastAppointment?.dateTime || null,
         nextAppointment: nextAppointment
           ? {
               id: nextAppointment.id,
-              date: nextAppointment.date,
-              time: nextAppointment.time,
-              treatmentType: nextAppointment.treatmentType,
+              dateTime: nextAppointment.dateTime,
+              type: nextAppointment.type,
               doctor: nextAppointment.doctor,
             }
           : null,
@@ -130,7 +116,5 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

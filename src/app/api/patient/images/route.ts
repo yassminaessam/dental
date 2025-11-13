@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,43 +25,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, return empty array as we don't have an images table yet
-    // This will be populated when file storage is implemented
-    // TODO: Create MedicalImage model in Prisma schema
-    // TODO: Integrate with Firebase Storage or similar
+    // Get clinical images from Neon database
+    const clinicalImages = await prisma.clinicalImage.findMany({
+      where: {
+        patientId: patient.id,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
 
-    // Placeholder structure for when images are available
-    const images: any[] = [];
-
-    // If you have images stored in CollectionDoc (old system), fetch them
-    try {
-      const collectionDocs = await prisma.collectionDoc.findMany({
-        where: {
-          collection: 'medical-images',
-          data: {
-            path: ['patientId'],
-            equals: patient.id,
-          },
-        },
-      });
-
-      const legacyImages = collectionDocs.map((doc: any) => {
-        const data = doc.data as any;
-        return {
-          id: doc.id,
-          title: data.title || 'Medical Image',
-          type: data.type || 'Image',
-          date: data.date || doc.createdAt,
-          url: data.url || '',
-          thumbnail: data.thumbnail || data.url || '',
-          description: data.description || '',
-        };
-      });
-
-      images.push(...legacyImages);
-    } catch (err) {
-      console.log('No legacy images found');
-    }
+    const images = clinicalImages.map((image) => ({
+      id: image.id,
+      title: image.caption || 'Clinical Image',
+      type: image.type,
+      date: image.date,
+      url: image.imageUrl,
+      thumbnail: image.imageUrl,
+      description: image.caption || '',
+    }));
 
     return NextResponse.json({
       images: images.sort(
@@ -81,7 +61,5 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

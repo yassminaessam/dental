@@ -489,7 +489,7 @@ const translations: Translations = {
   'patients.tabs.referrals': 'Referrals',
   // Add condition CTA used in dialog
   'patients.add_condition': 'Add Condition',
-  'patients.medical_condition_placeholder': 'Enter medical condition...',
+  
   'patients.user_account': 'User Account',
   'patients.create_user_account': 'Create User Account',
   'patients.create_user_account_description': 'Patient can access patient portal',
@@ -2700,7 +2700,7 @@ const translations: Translations = {
   'patients.tabs.referrals': 'إحالات',
   // زر إضافة حالة طبية في السجل الطبي
   'patients.add_condition': 'إضافة حالة',
-  'patients.medical_condition_placeholder': 'أدخل الحالة الطبية...',
+  
   'patients.user_account': 'حساب المستخدم',
   'patients.create_user_account': 'إنشاء حساب مستخدم',
   'patients.create_user_account_description': 'يمكن للمريض الوصول إلى بوابة المرضى',

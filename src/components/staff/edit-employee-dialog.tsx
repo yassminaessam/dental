@@ -129,10 +129,10 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
       
       // Check if staff member has a linked user account
       const checkUserAccount = async () => {
-        console.log('[EditEmployeeDialog] Checking user account for staff:', staffMember.name, 'userId:', staffMember.userId);
-        if (staffMember.userId) {
+        console.log('[EditEmployeeDialog] Checking user account for staff:', staffMember.name, 'userId:', (staffMember as any).userId);
+        if ((staffMember as any).userId) {
           try {
-            const response = await fetch(`/api/users/${staffMember.userId}`);
+            const response = await fetch(`/api/users/${(staffMember as any).userId}`);
             console.log('[EditEmployeeDialog] User fetch response status:', response.status);
             if (response.ok) {
               const data = await response.json();
@@ -193,7 +193,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
         salary: staffMember.salary.replace(/[^0-9.-]+/g,""),
         status: staffMember.status,
         notes: staffMember.notes || '',
-        hasUserAccount: !!staffMember.userId,
+        hasUserAccount: !!(staffMember as any).userId,
         createUserAccount: false,
         userPassword: '',
         userSpecialization: '',
@@ -207,7 +207,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
       const updatedStaffMember: StaffMember = {
         ...staffMember,
         name: `${data.firstName} ${data.lastName}`,
-        email: data.email,
+        email: data.email || '',
         phone: data.phone || '',
         role: data.role,
         hireDate: new Date(data.hireDate).toLocaleDateString(),

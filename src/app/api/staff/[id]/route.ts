@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { StaffService } from '@/services/staff';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, context: any) {
   try {
-    const member = await StaffService.get(params.id);
+    const member = await StaffService.get(context?.params?.id);
     if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ staff: member });
   } catch (e) {
@@ -12,10 +12,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, context: any) {
   try {
     const body = await request.json();
-    const updated = await StaffService.update({ id: params.id, ...body, hireDate: body.hireDate ? new Date(body.hireDate) : undefined });
+    const updated = await StaffService.update({ id: context?.params?.id, ...body, hireDate: body.hireDate ? new Date(body.hireDate) : undefined });
     return NextResponse.json({ staff: updated });
   } catch (e: any) {
     console.error('[api/staff/[id]] PATCH error', e);
@@ -23,11 +23,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, context: any) {
   try {
-    const existing = await StaffService.get(params.id);
+    const existing = await StaffService.get(context?.params?.id);
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    await StaffService.remove(params.id);
+    await StaffService.remove(context?.params?.id);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('[api/staff/[id]] DELETE error', e);

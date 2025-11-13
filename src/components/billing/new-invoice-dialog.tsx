@@ -15,14 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
@@ -108,20 +102,18 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel className="text-sm font-medium">{t('billing.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9 sm:h-10">
-                          <SelectValue placeholder={t('patients.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('patients.select_patient')}
+                        searchPlaceholder={language === 'ar' ? 'ابحث بالاسم أو الهاتف...' : 'Search by name or phone...'}
+                        emptyMessage={language === 'ar' ? 'لا يوجد مريض' : 'No patient found.'}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

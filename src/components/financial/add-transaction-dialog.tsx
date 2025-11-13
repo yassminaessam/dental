@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -57,7 +58,7 @@ interface AddTransactionDialogProps {
 }
 
 export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
-  const { t, isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
@@ -185,22 +186,19 @@ export function AddTransactionDialog({ onSave }: AddTransactionDialogProps) {
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>{t('common.patient')} ({t('common.if_applicable')})</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('patients.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('patients.select_patient')}
+                        searchPlaceholder={language === 'ar' ? 'ابحث بالاسم أو الهاتف...' : 'Search by name or phone...'}
+                        emptyMessage={language === 'ar' ? 'لا يوجد مريض' : 'No patient found.'}
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

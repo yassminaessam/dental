@@ -19,20 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { cn } from "@/lib/utils";
 import { allHealthyDentalChart } from "@/lib/data/dental-chart-data";
 import { Download, Printer, RotateCw, Search, User, Loader2, Sparkles, Activity } from "lucide-react";
@@ -43,8 +30,6 @@ import { ToothHistoryDialog } from '@/components/dental-chart/tooth-history-dial
 import { UploadImageDialog } from '@/components/medical-records/upload-image-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
-import { getCollection, setDocument } from '@/services/firestore';
-import { doc, getDoc, db } from '@/services/firestore';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ToothCondition = 'healthy' | 'cavity' | 'filling' | 'crown' | 'missing' | 'root-canal';
@@ -67,7 +52,7 @@ const dentalChartStats: { condition: ToothCondition; labelKey: string; color: st
 export default function DentalChartPage() {
     const [loading, setLoading] = React.useState(false);
     const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
     const [patients, setPatients] = React.useState<Patient[]>([]);
     const [chartData, setChartData] = React.useState<Record<number, Tooth>>({ ...allHealthyDentalChart });
     const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
@@ -75,7 +60,6 @@ export default function DentalChartPage() {
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
     const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
     const [showUploadDialog, setShowUploadDialog] = React.useState(false);
-    const [open, setOpen] = React.useState(false);
     const { toast } = useToast();
 
     // Handle image upload from dental chart context
@@ -128,10 +112,10 @@ export default function DentalChartPage() {
     const fetchChartData = async (patientId: string) => {
         setLoading(true);
         try {
-            const docRef = doc(db, 'dental-charts', patientId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setChartData(docSnap.data().chart);
+            const response = await fetch(`/api/dental-charts?patientId=${patientId}`);
+            if (response.ok) {
+                const { chart } = await response.json();
+                setChartData(chart || { ...allHealthyDentalChart });
             } else {
                 setChartData({ ...allHealthyDentalChart });
             }
@@ -167,7 +151,17 @@ export default function DentalChartPage() {
         newChartData[toothId] = toothToUpdate;
         
         try {
-            await setDocument('dental-charts', selectedPatientId, { chart: newChartData });
+            const response = await fetch('/api/dental-charts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patientId: selectedPatientId,
+                    chartData: newChartData,
+                }),
+            });
+            
+            if (!response.ok) throw new Error('Failed to save dental chart');
+            
             setChartData(newChartData);
             setSelectedTooth(newChartData[toothId]);
       toast({
@@ -182,7 +176,17 @@ export default function DentalChartPage() {
     const handleResetChart = async () => {
         if (!selectedPatientId) return;
         try {
-            await setDocument('dental-charts', selectedPatientId, { chart: allHealthyDentalChart });
+            const response = await fetch('/api/dental-charts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patientId: selectedPatientId,
+                    chartData: allHealthyDentalChart,
+                }),
+            });
+            
+            if (!response.ok) throw new Error('Failed to reset dental chart');
+            
             setChartData({ ...allHealthyDentalChart });
             setSelectedTooth(null);
             setHighlightedCondition('all');
@@ -298,56 +302,15 @@ export default function DentalChartPage() {
           </CardHeader>
           
           <CardContent className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className={cn(
-                    "w-full justify-between rounded-xl border-2 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors h-10",
-                    !selectedPatientId && "text-muted-foreground"
-                  )}
-                >
-                  {selectedPatientId
-                    ? patients.find((patient) => patient.id === selectedPatientId)?.name || t('dental_chart.select_patient')
-                    : t('dental_chart.select_patient')}
-                  <ChevronsUpDown className={cn("ml-2 h-4 w-4 shrink-0 opacity-50", isRTL && "ml-0 mr-2")} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput 
-                    placeholder={t('dental_chart.search_patient')} 
-                    className={isRTL ? "text-right" : "text-left"}
-                  />
-                  <CommandList>
-                    <CommandEmpty>{t('dental_chart.no_patient_found')}</CommandEmpty>
-                    <CommandGroup>
-                      {patients.map((patient) => (
-                        <CommandItem
-                          key={patient.id}
-                          value={`${patient.name} ${patient.lastName || ''}`}
-                          onSelect={() => {
-                            handlePatientChange(patient.id);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              isRTL && "mr-0 ml-2",
-                              selectedPatientId === patient.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {patient.name} {patient.lastName || ''}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <PatientCombobox
+              patients={patients}
+              value={selectedPatientId || ''}
+              onValueChange={handlePatientChange}
+              placeholder={t('dental_chart.select_patient')}
+              searchPlaceholder={language === 'ar' ? 'ابحث بالاسم أو الهاتف...' : 'Search by name or phone...'}
+              emptyMessage={t('dental_chart.no_patient_found')}
+              className="rounded-xl border-2 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+            />
             <div className="relative group/search">
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
