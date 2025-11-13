@@ -30,15 +30,11 @@ import { format, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '@/components/ui/input';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
+import { DoctorCombobox } from '@/components/ui/doctor-combobox';
 import type { Patient, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { AppointmentCreateInput } from '@/services/appointments.types';
-async function fetchCollection<T>(collection: string): Promise<T[]> {
-  const response = await fetch(`/api/collections/${collection}`);
-  if (!response.ok) throw new Error(`Failed to fetch ${collection}`);
-  const payload = await response.json();
-  return (payload.items ?? payload.data ?? []) as T[];
-}
 
 
 
@@ -84,21 +80,23 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const patientData = await fetchCollection<Record<string, unknown>>('patients');
+        // Fetch patients from Neon database
+        const patientsResponse = await fetch('/api/patients');
+        if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+        const { patients: patientData } = await patientsResponse.json();
+        
         setPatients(
-          patientData.map((patient) => ({
+          patientData.map((patient: any) => ({
             ...patient,
-            dob: patient.dob ? new Date(patient.dob as string) : new Date(),
+            dob: patient.dob ? new Date(patient.dob) : new Date(),
           })) as Patient[]
         );
-        const staffData = await fetchCollection<StaffMember>('staff');
-        // Include both 'doctor' and 'dentist' roles (case-insensitive)
-        setDoctors(
-          staffData.filter((s) => {
-            const r = (s.role || '').toLowerCase();
-            return r === 'dentist' || r === 'doctor';
-          })
-        );
+        
+        // Fetch doctors from Neon database
+        const doctorsResponse = await fetch('/api/doctors');
+        if (!doctorsResponse.ok) throw new Error('Failed to fetch doctors');
+        const { doctors: doctorData } = await doctorsResponse.json();
+        setDoctors(doctorData as StaffMember[]);
       } catch (error) {
         console.error('Error loading scheduling data', error);
       }
@@ -162,22 +160,18 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel className="text-sm font-medium">{t('appointments.patient_name')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9 sm:h-10">
-          <SelectValue placeholder={t('appointments.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="text-sm font-medium">{t('appointments.patient_name')} *</FormLabel>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('appointments.select_patient')}
+                        searchPlaceholder={t('appointments.search_patient_placeholder') || "Search by name or phone..."}
+                        emptyMessage={t('appointments.no_patient_found') || "No patient found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -186,22 +180,18 @@ export function ScheduleAppointmentDialog({ onSave }: ScheduleAppointmentDialogP
                 control={form.control}
                 name="doctor"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel className="text-sm font-medium">{t('appointments.doctor')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9 sm:h-10">
-          <SelectValue placeholder={t('appointments.select_practitioner')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="text-sm font-medium">{t('appointments.doctor')} *</FormLabel>
+                    <FormControl>
+                      <DoctorCombobox
+                        doctors={doctors}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('appointments.select_practitioner')}
+                        searchPlaceholder={t('appointments.search_doctor_placeholder') || "Search by name or phone..."}
+                        emptyMessage={t('appointments.no_doctor_found') || "No doctor found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

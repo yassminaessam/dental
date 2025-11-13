@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const { t } = useLanguage();
     const [revenueData, setRevenueData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
     const [appointmentTypes, setAppointmentTypes] = React.useState<{ name: string; value: number; color: string }[]>([]);
+    const [statsRefreshKey, setStatsRefreshKey] = React.useState(0);
 
     // Redirect patients to their specific homepage
     React.useEffect(() => {
@@ -74,6 +75,7 @@ export default function DashboardPage() {
               const appointmentsJson = await appointmentsResponse.json();
 
               const transactions = (transactionsJson.items ?? []) as Array<Record<string, unknown>>;
+              // ✅ Appointments already come from Neon database via /api/appointments
               const appointments = (appointmentsJson.appointments ?? []) as Array<Record<string, unknown>>;
 
             // Process revenue data for chart
@@ -136,6 +138,9 @@ export default function DashboardPage() {
           throw new Error(details.error ?? 'Failed to add patient');
         }
             toast({ title: t('dashboard.toast.patient_added'), description: t('dashboard.toast.patient_added_desc', { name: newPatientData.name }) });
+        
+        // Refresh the stats to show updated patient count
+        setStatsRefreshKey(prev => prev + 1);
         } catch (error) {
             toast({ title: t('dashboard.toast.error_adding_patient'), variant: "destructive" });
         }
@@ -163,6 +168,9 @@ export default function DashboardPage() {
         const result = await response.json();
         const appointment = result.appointment as { patient?: string } | undefined;
         toast({ title: t('dashboard.toast.appointment_scheduled'), description: t('dashboard.toast.appointment_scheduled_desc', { patient: appointment?.patient ?? data.patient }) });
+        
+        // Refresh the stats to show updated appointment counts
+        setStatsRefreshKey(prev => prev + 1);
         } catch (error) {
             toast({ title: t('dashboard.toast.error_scheduling'), variant: "destructive" });
         throw (error instanceof Error ? error : new Error('Failed to schedule appointment'));
@@ -220,7 +228,7 @@ export default function DashboardPage() {
           </div>
           {/* Enhanced Overview Stats */}
           <div className="relative z-10">
-            <OverviewStats />
+            <OverviewStats refreshKey={statsRefreshKey} />
           </div>
 
           {/* Enhanced Charts Section */}
@@ -258,8 +266,8 @@ export default function DashboardPage() {
             </Card>
           </div>
           <PendingAppointmentsManager onAppointmentUpdate={() => {
-            // Optionally refresh dashboard data when appointments are confirmed
-            window.location.reload();
+            // Refresh stats when appointments are confirmed/rejected
+            setStatsRefreshKey(prev => prev + 1);
           }} />
           <SupplyChainIntegration />
           <KpiSuggestions />

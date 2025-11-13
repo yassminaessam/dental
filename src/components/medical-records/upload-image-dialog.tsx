@@ -85,9 +85,15 @@ export function UploadImageDialog({
   
   React.useEffect(() => {
     async function fetchPatients() {
-        type PatientRecord = Omit<Patient, 'dob'> & { dob: string };
-        const data = await listCollection<PatientRecord>('patients');
-        setPatients(data.map((patient) => ({ ...patient, dob: new Date(patient.dob) })));
+        // ✅ Fetch patients from Neon database
+        const response = await fetch('/api/patients');
+        if (!response.ok) throw new Error('Failed to fetch patients');
+        const { patients: data } = await response.json();
+        
+        setPatients(data.map((patient: any) => ({ 
+            ...patient, 
+            dob: new Date(patient.dob) 
+        })));
     }
     if (open) {
         fetchPatients();

@@ -41,7 +41,11 @@ type StatItem = {
   href: string;
 };
 
-export default function OverviewStats() {
+interface OverviewStatsProps {
+  refreshKey?: number;
+}
+
+export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = React.useState<StatItem[]>([
@@ -56,13 +60,37 @@ export default function OverviewStats() {
     React.useEffect(() => {
         async function fetchStats() {
             try {
-        const [patients, appointments, staff, invoices, treatments] = await Promise.all([
-          listDocuments<Patient>('patients'),
-          listDocuments<Appointment>('appointments'),
-          listDocuments<StaffMember>('staff'),
-          listDocuments<Invoice>('invoices'),
-          listDocuments<Treatment>('treatments'),
-        ]);
+                // ✅ Fetch data from Neon database
+                const [patientsResponse, appointmentsResponse] = await Promise.all([
+                    fetch('/api/patients'),
+                    fetch('/api/appointments'),
+                ]);
+                
+                if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+                if (!appointmentsResponse.ok) throw new Error('Failed to fetch appointments');
+                
+                const { patients: patientsData } = await patientsResponse.json();
+                const { appointments: appointmentsData } = await appointmentsResponse.json();
+                
+                // Fetch other data from Firestore (for now)
+                const [staff, invoices, treatments] = await Promise.all([
+                    listDocuments<StaffMember>('staff'),
+                    listDocuments<Invoice>('invoices'),
+                    listDocuments<Treatment>('treatments'),
+                ]);
+                
+                const patients = patientsData.map((p: any) => ({
+                    ...p,
+                    dob: new Date(p.dob)
+                })) as Patient[];
+                
+                // Parse appointments dates
+                const appointments = appointmentsData.map((a: any) => ({
+                    ...a,
+                    dateTime: new Date(a.dateTime),
+                    createdAt: a.createdAt ? new Date(a.createdAt) : undefined,
+                    updatedAt: a.updatedAt ? new Date(a.updatedAt) : undefined,
+                })) as Appointment[];
 
                 const totalPatients = patients.length;
                 const todaysAppointments = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
@@ -84,7 +112,7 @@ export default function OverviewStats() {
             }
         }
     fetchStats();
-  }, [t]);
+  }, [t, refreshKey]);
 
   // RGBA icon tint classes mapped to metric card styles for لوحة التحكم
   // Lightened RGBA tints (reduced opacity for softer look)

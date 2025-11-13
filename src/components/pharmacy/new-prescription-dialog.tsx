@@ -30,8 +30,8 @@ import { Calendar as CalendarIcon, ClipboardPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-// Migrated from server getCollection to client listDocuments
-import { listDocuments } from '@/lib/data-client';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
+import { DoctorCombobox } from '@/components/ui/doctor-combobox';
 import { Patient } from '@/app/patients/page';
 import { StaffMember } from '@/app/staff/page';
 import type { Medication } from '@/app/pharmacy/page';
@@ -72,10 +72,27 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
 
   React.useEffect(() => {
     async function fetchData() {
-  const patientData = await listDocuments<Patient>('patients');
-        setPatients(patientData);
-  const staffData = await listDocuments<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+      try {
+        // Fetch patients from Neon database
+        const patientsResponse = await fetch('/api/patients');
+        if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+        const { patients: patientData } = await patientsResponse.json();
+        
+        setPatients(
+          patientData.map((p: any) => ({
+            ...p,
+            dob: p.dob ? new Date(p.dob) : new Date(),
+          })) as Patient[]
+        );
+        
+        // Fetch doctors from Neon database
+        const doctorsResponse = await fetch('/api/doctors');
+        if (!doctorsResponse.ok) throw new Error('Failed to fetch doctors');
+        const { doctors: doctorData } = await doctorsResponse.json();
+        setDoctors(doctorData as StaffMember[]);
+      } catch (error) {
+        console.error('Error loading data', error);
+      }
     }
     if (open) {
         fetchData();
@@ -121,20 +138,16 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('common.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('patients.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('patients.select_patient')}
+                        searchPlaceholder={t('pharmacy.search_patient') || "Search by name or phone..."}
+                        emptyMessage={t('pharmacy.no_patient_found') || "No patient found."}
+                      />
+                    </FormControl>
                     <FormMessage>
                       {form.formState.errors.patient?.message && t(String(form.formState.errors.patient.message))}
                     </FormMessage>
@@ -145,22 +158,18 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
                 control={form.control}
                 name="doctor"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>{t('common.doctor')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('staff.select_doctor')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <DoctorCombobox
+                        doctors={doctors}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('staff.select_doctor')}
+                        searchPlaceholder={t('pharmacy.search_doctor') || "Search by name or phone..."}
+                        emptyMessage={t('pharmacy.no_doctor_found') || "No doctor found."}
+                      />
+                    </FormControl>
                     <FormMessage>
                       {form.formState.errors.doctor?.message && t(String(form.formState.errors.doctor.message))}
                     </FormMessage>

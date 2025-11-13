@@ -71,8 +71,10 @@ export default function StaffPage() {
   React.useEffect(() => {
     async function fetchStaff() {
       try {
-  // Switched from getCollection to listDocuments (client-side data fetch)
-  const data = await listDocuments<StaffMember>('staff');
+        // ✅ Fetch from Neon database via API
+        const response = await fetch('/api/staff');
+        if (!response.ok) throw new Error('Failed to fetch staff');
+        const { staff: data } = await response.json();
         setStaff(data);
       } catch (error) {
         toast({ title: t('staff.toast.error_fetching'), variant: "destructive" });
@@ -103,46 +105,84 @@ export default function StaffPage() {
 
   const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
     try {
-      const newEmployee: StaffMember = {
-        id: `EMP-${Date.now()}`,
-        name: `${data.name}`,
-        role: data.role,
-        email: data.email,
-        phone: data.phone,
-        schedule: 'Mon-Fri, 9-5',
-        salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
-        hireDate: new Date(data.hireDate).toLocaleDateString(),
-        status: 'Active'
-      };
-      await setDocument('staff', newEmployee.id, newEmployee);
+      // ✅ Create via API (Neon database)
+      const response = await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          role: data.role,
+          email: data.email,
+          phone: data.phone,
+          schedule: 'Mon-Fri, 9-5',
+          salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
+          hireDate: new Date(data.hireDate).toISOString(),
+          status: 'Active',
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create staff');
+      }
+      
+      const { staff: newEmployee } = await response.json();
       setStaff(prev => [newEmployee, ...prev]);
       toast({
         title: t('staff.toast.employee_added'),
         description: t('staff.toast.employee_added_desc'),
       });
-    } catch (e) {
-      toast({ title: t('staff.toast.error_adding'), variant: "destructive" });
+    } catch (e: any) {
+      toast({ 
+        title: t('staff.toast.error_adding'), 
+        description: e.message,
+        variant: "destructive" 
+      });
     }
   };
   
   const handleUpdateEmployee = async (updatedStaff: StaffMember) => {
     try {
-      await updateDocument('staff', updatedStaff.id, updatedStaff);
+      // ✅ Update via API (Neon database)
+      const response = await fetch(`/api/staff/${updatedStaff.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedStaff),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update staff');
+      }
+      
       setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
       setStaffToEdit(null);
       toast({
         title: t('staff.toast.employee_updated'),
         description: t('staff.toast.employee_updated_desc'),
       });
-    } catch(e) {
-      toast({ title: t('staff.toast.error_updating'), variant: "destructive" });
+    } catch(e: any) {
+      toast({ 
+        title: t('staff.toast.error_updating'), 
+        description: e.message,
+        variant: "destructive" 
+      });
     }
   };
 
   const handleDeleteEmployee = async () => {
     if (staffToDelete) {
       try {
-        await deleteDocument('staff', staffToDelete.id);
+        // ✅ Delete via API (Neon database)
+        const response = await fetch(`/api/staff/${staffToDelete.id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete staff');
+        }
+        
         setStaff(prev => prev.filter(s => s.id !== staffToDelete.id));
         toast({
           title: t('staff.toast.employee_deleted'),

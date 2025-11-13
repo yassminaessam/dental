@@ -56,12 +56,15 @@ export default function KpiSuggestions() {
 
   useEffect(() => {
     async function fetchData() {
-      const [invoices, patients] = await Promise.all([
-        listDocuments<Invoice>('invoices'),
-        listDocuments<Patient>('patients'),
-      ]);
+      // ✅ Fetch patients from Neon database
+      const patientsResponse = await fetch('/api/patients');
+      if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+      const { patients: patientsData } = await patientsResponse.json();
+      
+      const invoices = await listDocuments<Invoice>('invoices');
+      
       const totalRevenue = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
-      const patientCount = patients.length;
+      const patientCount = patientsData.length;
       setKpiData(prev => ({...prev, currentRevenue: totalRevenue, patientCount }));
     }
     fetchData();

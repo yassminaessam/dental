@@ -26,6 +26,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Plus, Trash2 } from 'lucide-react';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
+import { DoctorCombobox } from '@/components/ui/doctor-combobox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ScrollArea } from '../ui/scroll-area';
@@ -123,15 +126,33 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
 
   React.useEffect(() => {
     async function fetchData() {
-      const patientData = await fetchCollection<PatientRecord>('patients');
-      setPatients(patientData);
-      const staffData = await fetchCollection<StaffRecord>('staff');
-      // Normalize role filtering: support 'doctor', 'Doctor', 'Dentist', 'dentist'
-      const doctorRecords = staffData.filter((staff) => ['doctor','Doctor','Dentist','dentist'].includes(staff.role));
-      setDoctors(doctorRecords);
+      // Fetch patients from Neon database
+      const patientsResponse = await fetch('/api/patients');
+      if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+      const { patients: patientData } = await patientsResponse.json();
+      
+      setPatients(
+        patientData.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          phone: p.phone || '',
+        })) as PatientRecord[]
+      );
+      
+      // Fetch doctors from Neon database
+      const doctorsResponse = await fetch('/api/doctors');
+      if (!doctorsResponse.ok) throw new Error('Failed to fetch doctors');
+      const { doctors: doctorData } = await doctorsResponse.json();
+      setDoctors(doctorData.map((d: any) => ({ 
+        id: d.id, 
+        name: d.name, 
+        phone: d.phone || '',
+        specialization: d.specialization || '',
+        role: d.role 
+      })));
       // Auto-select current authenticated doctor if applicable and not already chosen
       if (user?.role === 'doctor' && form.getValues('doctor') === undefined) {
-        const match = doctorRecords.find(d => d.id === user.id || d.name.toLowerCase().includes(user.firstName.toLowerCase()));
+        const match = doctorData.find((d: any) => d.id === user.id || d.name.toLowerCase().includes(user.firstName.toLowerCase()));
         if (match) {
           form.setValue('doctor', match.id);
         }
@@ -195,20 +216,16 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('treatments.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('treatments.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients as any}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('treatments.select_patient')}
+                        searchPlaceholder={t('treatments.search_patient') || "Search by name or phone..."}
+                        emptyMessage={t('treatments.no_patient_found') || "No patient found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -217,22 +234,18 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 control={form.control}
                 name="doctor"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>{t('treatments.doctor')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('treatments.select_doctor')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <DoctorCombobox
+                        doctors={doctors as any}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('treatments.select_doctor')}
+                        searchPlaceholder={t('treatments.search_doctor') || "Search by name or phone..."}
+                        emptyMessage={t('treatments.no_doctor_found') || "No doctor found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

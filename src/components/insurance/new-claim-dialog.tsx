@@ -84,13 +84,16 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   });
 
   React.useEffect(() => {
-  async function fetchData() {
+    async function fetchData() {
         if (open) {
-      const [patientData, providerData] = await Promise.all([
-    listDocuments<{ id: string; name: string }>('patients'),
-        listDocuments<InsuranceProvider>('insurance-providers')
-      ]);
-    setPatients(patientData.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+            // ✅ Fetch patients from Neon database
+            const patientsResponse = await fetch('/api/patients');
+            if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+            const { patients: patientData } = await patientsResponse.json();
+            
+            const providerData = await listDocuments<InsuranceProvider>('insurance-providers');
+            
+            setPatients(patientData.map((p: any) => ({ id: p.id, name: p.name })));
             setProviders(providerData);
         }
     }

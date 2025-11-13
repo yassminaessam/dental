@@ -44,6 +44,13 @@ export const UsersService = {
     return { ...mapped, hashedPassword: hashed };
   },
 
+  async getByPhone(phone: string): Promise<User | null> {
+    const normalized = phone.trim();
+    // Phone stored as-is; use case-insensitive equality where supported
+    const u = await prisma.user.findFirst({ where: { phone: normalized } as any });
+    return u ? mapDbUser(u) : null;
+  },
+
   async listAll(): Promise<User[]> {
     const rows = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
     return rows.map(mapDbUser);

@@ -80,9 +80,18 @@ export function NewMessageDialog({
   });
 
   React.useEffect(() => {
-  async function fetchPatients() {
-    const data = await listDocuments<Patient>('patients');
-    setPatients(data);
+    async function fetchPatients() {
+      // ✅ Fetch patients from Neon database
+      const response = await fetch('/api/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      const { patients: data } = await response.json();
+      
+      setPatients(
+        data.map((p: any) => ({
+          ...p,
+          dob: p.dob ? new Date(p.dob) : new Date(),
+        })) as Patient[]
+      );
     }
     if (open) {
         fetchPatients();

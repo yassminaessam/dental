@@ -46,8 +46,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error: any) {
-    console.error('[api/auth/register] Error', error);
-    const message = error?.message ?? 'Failed to create user.';
+    console.error('[api/auth/register] Error:', error);
+    console.error('[api/auth/register] Error stack:', error?.stack);
+    console.error('[api/auth/register] Error code:', error?.code);
+    
+    let message = 'Failed to create user.';
+    
+    // Handle Prisma-specific errors
+    if (error?.code === 'P2002') {
+      const target = error?.meta?.target;
+      if (target?.includes('email')) {
+        message = 'A user with this email already exists.';
+      } else {
+        message = `Unique constraint failed on: ${target?.join(', ')}`;
+      }
+    } else if (error?.message) {
+      message = error.message;
+    }
+    
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

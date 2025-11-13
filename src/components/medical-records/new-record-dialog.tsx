@@ -30,7 +30,8 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { listCollection } from '@/lib/collections-client';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
+import { DoctorCombobox } from '@/components/ui/doctor-combobox';
 import type { Patient, StaffMember } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -72,11 +73,27 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
   
   React.useEffect(() => {
     async function fetchData() {
-        type PatientRecord = Omit<Patient, 'dob'> & { dob: string };
-        const patientData = await listCollection<PatientRecord>('patients');
-        setPatients(patientData.map((patient) => ({ ...patient, dob: new Date(patient.dob) })));
-        const staffData = await listCollection<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+      try {
+        // Fetch patients from Neon database
+        const patientsResponse = await fetch('/api/patients');
+        if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+        const { patients: patientData } = await patientsResponse.json();
+        
+        setPatients(
+          patientData.map((patient: any) => ({
+            ...patient,
+            dob: patient.dob ? new Date(patient.dob) : new Date(),
+          })) as Patient[]
+        );
+        
+        // Fetch doctors from Neon database
+        const doctorsResponse = await fetch('/api/doctors');
+        if (!doctorsResponse.ok) throw new Error('Failed to fetch doctors');
+        const { doctors: doctorData } = await doctorsResponse.json();
+        setDoctors(doctorData as StaffMember[]);
+      } catch (error) {
+        console.error('Error loading data', error);
+      }
     }
     if (open) {
         fetchData();
@@ -113,22 +130,18 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel>{t('common.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-          <SelectValue placeholder={t('medical_records.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t('common.patient')} *</FormLabel>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('medical_records.select_patient')}
+                        searchPlaceholder={t('medical_records.search_patient') || "Search by name or phone..."}
+                        emptyMessage={t('medical_records.no_patient_found') || "No patient found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -137,22 +150,18 @@ export function NewRecordDialog({ onSave }: NewRecordDialogProps) {
                 control={form.control}
                 name="provider"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel>{t('medical_records.provider')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-          <SelectValue placeholder={t('medical_records.select_provider')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t('medical_records.provider')} *</FormLabel>
+                    <FormControl>
+                      <DoctorCombobox
+                        doctors={doctors}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('medical_records.select_provider')}
+                        searchPlaceholder={t('medical_records.search_provider') || "Search by name or phone..."}
+                        emptyMessage={t('medical_records.no_provider_found') || "No provider found."}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -76,7 +76,11 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
   React.useEffect(() => {
     async function fetchPatients() {
         if(open) {
-            const patientData = await listDocuments<any>('patients');
+            // ✅ Fetch patients from Neon database
+            const response = await fetch('/api/patients');
+            if (!response.ok) throw new Error('Failed to fetch patients');
+            const { patients: patientData } = await response.json();
+            
             setPatients(patientData.map((p: any) => ({...p, dob: new Date(p.dob)})));
         }
     }
