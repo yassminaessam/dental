@@ -6,16 +6,22 @@
  * Format a number as Egyptian Pounds
  * @param amount - The amount to format
  * @param showSymbol - Whether to show the currency symbol (default: true)
+ * @param language - Language code ('ar' or 'en') for formatting (default: 'ar')
  * @returns Formatted currency string
  */
-export function formatEGP(amount: number | string, showSymbol: boolean = true): string {
+export function formatEGP(amount: number | string, showSymbol: boolean = true, language: string = 'ar'): string {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   
   if (isNaN(numAmount)) {
     return showSymbol ? '0.00 جم' : '0.00';
   }
   
-  const formatted = numAmount.toFixed(2);
+  // Use Arabic numerals for Arabic language
+  const formatted = numAmount.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  
   return showSymbol ? `${formatted} جم` : formatted;
 }
 

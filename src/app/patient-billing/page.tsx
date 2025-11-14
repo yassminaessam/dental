@@ -13,20 +13,47 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatEGP } from '@/lib/currency';
 
 export default function PatientBillingPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
   const [invoices, setInvoices] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [patientId, setPatientId] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (user?.email) {
-      fetchPatientProfile();
+  const fetchInvoices = React.useCallback(async (patId: string) => {
+    try {
+      const response = await fetch(`/api/patient/invoices?patientId=${patId}`);
+      if (!response.ok) throw new Error('Failed to fetch invoices');
+      
+      const data = await response.json();
+      // Map invoices to expected format
+      const mappedInvoices = (data.invoices || []).map((inv: any) => ({
+        id: inv.id,
+        number: inv.number,
+        description: inv.items?.[0]?.description || 'Dental Services',
+        date: inv.date,
+        dueDate: inv.dueDate,
+        amount: inv.amount,
+        total: inv.amount,
+        status: inv.status === 'Paid' ? 'Paid' : 'Pending',
+        paidDate: inv.status === 'Paid' ? inv.updatedAt : null,
+        items: inv.items || [],
+        notes: inv.notes,
+      }));
+      setInvoices(mappedInvoices);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load invoices',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  }, [toast]);
 
-  const fetchPatientProfile = async () => {
+  const fetchPatientProfile = React.useCallback(async () => {
     if (!user?.email) return;
     
     try {
@@ -44,31 +71,18 @@ export default function PatientBillingPage() {
       console.error('Error fetching patient profile:', error);
       setLoading(false);
     }
-  };
+  }, [user, fetchInvoices]);
 
-  const fetchInvoices = async (patId: string) => {
-    try {
-      const response = await fetch(`/api/patient/invoices?patientId=${patId}`);
-      if (!response.ok) throw new Error('Failed to fetch invoices');
-      
-      const data = await response.json();
-      setInvoices(data.invoices || []);
-    } catch (error) {
-      console.error('Error fetching invoices:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load invoices',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+  React.useEffect(() => {
+    if (user?.email) {
+      fetchPatientProfile();
     }
-  };
-  
+  }, [user, fetchPatientProfile]);
+
   const handlePayment = (invoiceId: string, amount: number) => {
     toast({
       title: 'Payment Processing',
-      description: `Processing payment of ${formatEGP(amount)} for ${invoiceId}. Payment gateway integration coming soon.`,
+      description: `Processing payment of ${formatEGP(amount, true, language)} for ${invoiceId}. Payment gateway integration coming soon.`,
     });
   };
 
@@ -123,7 +137,7 @@ export default function PatientBillingPage() {
               <CardHeader className="pb-3">
                 <CardDescription>{t('patient_pages.billing.outstanding_balance')}</CardDescription>
                 <CardTitle className="text-3xl text-red-600">
-                  {formatEGP(totalPending)}
+                  {formatEGP(totalPending, true, language)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -141,7 +155,7 @@ export default function PatientBillingPage() {
               <CardHeader className="pb-3">
                 <CardDescription>{t('patient_pages.billing.total_paid')}</CardDescription>
                 <CardTitle className="text-3xl text-green-600">
-                  {formatEGP(totalPaid)}
+                  {formatEGP(totalPaid, true, language)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -165,8 +179,17 @@ export default function PatientBillingPage() {
           {/* Invoices */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">{t('patient_pages.billing.invoices')}</h2>
-            <div className="space-y-4">
-              {displayInvoices.map((invoice) => (
+            {displayInvoices.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg font-semibold mb-2">لا توجد فواتير</p>
+                  <p className="text-sm">لم يتم إنشاء أي فواتير لحسابك بعد</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {displayInvoices.map((invoice) => (
                 <Card key={invoice.id}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -230,6 +253,7 @@ export default function PatientBillingPage() {
                 </Card>
               ))}
             </div>
+            )}
           </section>
 
           {/* Payment History - Show Paid Invoices */}
@@ -250,7 +274,7 @@ export default function PatientBillingPage() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-green-600">{formatEGP(Number(invoice.total || invoice.amount))}</p>
+                            <p className="font-bold text-green-600">{formatEGP(Number(invoice.total || invoice.amount), true, language)}</p>
                             <Button 
                               variant="ghost" 
                               size="sm"

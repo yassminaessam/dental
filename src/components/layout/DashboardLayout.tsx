@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut, HelpCircle } from 'lucide-react'
+import { Bell, Search, ChevronDown, Package, Clock, User, Settings, LogOut, HelpCircle, MessageSquare } from 'lucide-react'
 import { DentalProLogo } from '../icons'
 import { SidebarNav } from '../dashboard/sidebar-nav'
 import Link from 'next/link'
@@ -37,6 +37,7 @@ import { usePathname } from 'next/navigation'
 type AppointmentLite = { id: string; status: string; patient: string; type: string }
 type InventoryItemLite = { id: string; status: string; name: string; stock: number }
 type PatientMessageLite = { id: string; patientName: string; patientEmail: string; subject: string; from: string; createdAt: string }
+type ChatMessageLite = { id: string; message: string; senderName: string; createdAt: string; conversation: { id: string; patientName: string; patientEmail: string } }
 
 export default function DashboardLayout({
   children,
@@ -53,13 +54,15 @@ export default function DashboardLayout({
   const [pendingAppointments, setPendingAppointments] = React.useState<AppointmentLite[]>([])
   const [lowStockItems, setLowStockItems] = React.useState<InventoryItemLite[]>([])
   const [unreadPatientMessages, setUnreadPatientMessages] = React.useState<PatientMessageLite[]>([])
+  const [unreadChatMessages, setUnreadChatMessages] = React.useState<ChatMessageLite[]>([])
 
   React.useEffect(() => {
     async function fetchNotifications() {
-      const [appointments, inventory, messages] = await Promise.all([
+      const [appointments, inventory, messages, chatMessages] = await Promise.all([
         listDocuments<AppointmentLite>('appointments'),
         listDocuments<InventoryItemLite>('inventory'),
         listDocuments<PatientMessageLite>('patient-messages'),
+        fetch('/api/chat/unread?userType=admin&limit=5').then(res => res.ok ? res.json() : { unreadMessages: [] }),
       ])
       setPendingAppointments(appointments.filter((a) => a.status === 'Pending'))
       setLowStockItems(
@@ -69,6 +72,8 @@ export default function DashboardLayout({
       setUnreadPatientMessages(
         messages.filter((m) => m.from !== 'فريق الدعم' && m.from !== 'Staff').slice(0, 5)
       )
+      // Set unread chat messages
+      setUnreadChatMessages(chatMessages.unreadMessages || [])
     }
     fetchNotifications()
     // Refresh notifications every 30 seconds
@@ -76,7 +81,7 @@ export default function DashboardLayout({
     return () => clearInterval(interval)
   }, [])
 
-  const notificationCount = pendingAppointments.length + lowStockItems.length + unreadPatientMessages.length
+  const notificationCount = pendingAppointments.length + lowStockItems.length + unreadPatientMessages.length + unreadChatMessages.length
 
   const getUserInitials = () => {
     if (!user) return 'U'
@@ -223,6 +228,29 @@ export default function DashboardLayout({
                             <p className="font-semibold text-sm">{t('notification.pending_appointment')}</p>
                             <p className="text-xs text-muted-foreground truncate">
                               {appt.patient} - {appt.type}
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                {unreadChatMessages.length > 0 && (
+                  <>
+                    {unreadChatMessages.map((msg) => (
+                      <DropdownMenuItem key={msg.id} asChild>
+                        <Link href="/admin/chats" className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40">
+                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 محادثة جديدة</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {msg.conversation.patientName}: {msg.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleTimeString('ar-EG', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </p>
                           </div>
                         </Link>

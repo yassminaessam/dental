@@ -6,7 +6,8 @@ import PatientLayout from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Eye, Image as ImageIcon, Calendar, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileText, Download, Eye, Image as ImageIcon, Calendar, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +19,8 @@ function PatientRecordsContent() {
   const [records, setRecords] = React.useState<any[]>([]);
   const [images, setImages] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [selectedRecord, setSelectedRecord] = React.useState<any | null>(null);
+  const [selectedImage, setSelectedImage] = React.useState<any | null>(null);
 
   React.useEffect(() => {
     if (user?.email) {
@@ -112,7 +115,7 @@ function PatientRecordsContent() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => alert(`Viewing record: ${record.title}`)}
+                        onClick={() => setSelectedRecord(record)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         {t('patient_pages.records.view')}
@@ -164,7 +167,7 @@ function PatientRecordsContent() {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => alert(`Viewing image: ${image.title}`)}
+                    onClick={() => setSelectedImage(image)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     {t('patient_pages.records.view_image')}
@@ -175,6 +178,113 @@ function PatientRecordsContent() {
           </div>
         )}
       </section>
+
+      {/* Medical Record Details Dialog */}
+      <Dialog open={!!selectedRecord} onOpenChange={() => setSelectedRecord(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              {selectedRecord?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedRecord?.type} • {selectedRecord?.doctor}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-between pb-4 border-b">
+              <div className="flex items-center text-sm text-gray-600">
+                <Calendar className="h-4 w-4 mr-2" />
+                {selectedRecord && new Date(selectedRecord.date).toLocaleDateString()}
+              </div>
+              <Badge variant={selectedRecord?.status === 'Active' ? 'default' : 'secondary'}>
+                {selectedRecord?.status}
+              </Badge>
+            </div>
+            
+            {selectedRecord?.diagnosis && (
+              <div>
+                <h4 className="font-semibold mb-2">Diagnosis</h4>
+                <p className="text-sm text-gray-700">{selectedRecord.diagnosis}</p>
+              </div>
+            )}
+            
+            {selectedRecord?.treatment && (
+              <div>
+                <h4 className="font-semibold mb-2">Treatment</h4>
+                <p className="text-sm text-gray-700">{selectedRecord.treatment}</p>
+              </div>
+            )}
+            
+            {selectedRecord?.notes && (
+              <div>
+                <h4 className="font-semibold mb-2">Notes</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedRecord.notes}</p>
+              </div>
+            )}
+            
+            {selectedRecord?.medications && selectedRecord.medications.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Medications</h4>
+                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                  {selectedRecord.medications.map((med: string, idx: number) => (
+                    <li key={idx}>{med}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-4 border-t flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => alert(`Downloading: ${selectedRecord?.title}`)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('patient_pages.records.download')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Medical Image Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <ImageIcon className="h-5 w-5 mr-2" />
+              {selectedImage?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedImage?.type} • {selectedImage && new Date(selectedImage.date).toLocaleDateString()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+              <ImageIcon className="h-24 w-24 text-gray-400" />
+            </div>
+            
+            {selectedImage?.description && (
+              <div>
+                <h4 className="font-semibold mb-2">Description</h4>
+                <p className="text-sm text-gray-700">{selectedImage.description}</p>
+              </div>
+            )}
+
+            <div className="pt-4 border-t flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => alert(`Downloading: ${selectedImage?.title}`)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Image
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

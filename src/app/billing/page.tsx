@@ -38,7 +38,7 @@ import { NewInvoiceDialog } from '@/components/billing/new-invoice-dialog';
 import { RecordPaymentDialog } from '@/components/billing/record-payment-dialog';
 import { ViewInvoiceDialog } from '@/components/billing/view-invoice-dialog';
 import { InsuranceIntegrationDialog } from '@/components/billing/insurance-integration-dialog';
-import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
+import { listDocuments } from '@/lib/data-client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -161,45 +161,75 @@ export default function BillingPage() {
       return acc + amount;
     }, 0);
     
-  const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
   return [
-    { title: t('billing.stats.total_billed'), value: currency.format(totalBilled), description: t('billing.stats.desc.total_billed'), valueClassName: "" },
-    { title: t('billing.stats.outstanding'), value: currency.format(outstanding), description: t('billing.stats.desc.outstanding'), valueClassName: "text-orange-500" },
-    { title: t('billing.stats.overdue'), value: currency.format(overdue), description: t('billing.stats.desc.overdue'), valueClassName: "text-red-600" },
-    { title: t('billing.stats.paid_all_time'), value: currency.format(totalPaid), description: t('billing.stats.desc.paid_all_time'), valueClassName: "text-green-600" },
+    { title: t('billing.stats.total_billed'), value: formatEGP(totalBilled, true, language), description: t('billing.stats.desc.total_billed'), valueClassName: "" },
+    { title: t('billing.stats.outstanding'), value: formatEGP(outstanding, true, language), description: t('billing.stats.desc.outstanding'), valueClassName: "text-orange-500" },
+    { title: t('billing.stats.overdue'), value: formatEGP(overdue, true, language), description: t('billing.stats.desc.overdue'), valueClassName: "text-red-600" },
+    { title: t('billing.stats.paid_all_time'), value: formatEGP(totalPaid, true, language), description: t('billing.stats.desc.paid_all_time'), valueClassName: "text-green-600" },
     { title: t('billing.stats.unbilled_treatments'), value: unbilledTreatments, description: t('billing.stats.desc.unbilled_treatments'), valueClassName: "text-blue-600" },
-    { title: t('billing.stats.pending_insurance'), value: currency.format(pendingInsurance), description: t('billing.stats.desc.pending_insurance'), valueClassName: "text-purple-600" },
+    { title: t('billing.stats.pending_insurance'), value: formatEGP(pendingInsurance, true, language), description: t('billing.stats.desc.pending_insurance'), valueClassName: "text-purple-600" },
   ];
   }, [invoices, treatments, insuranceClaims, language, t]);
 
 
   const handleSaveInvoice = async (data: Omit<Invoice, 'id' | 'status' | 'amountPaid'>) => {
     try {
-        const currentTime = new Date().toLocaleString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
+        // Create invoice via Neon API
+        const response = await fetch('/api/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            number: `INV-${Date.now()}`,
+            patientId: data.patientId,
+            treatmentId: data.treatmentId,
+            date: new Date(data.issueDate),
+            dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+            status: 'Draft',
+            notes: data.notes,
+            items: data.items.map(item => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })),
+          }),
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to create invoice');
+        }
+
+        const { invoice } = await response.json();
         
+        // Map API response to UI format
         const newInvoice: Invoice = {
-          id: `INV-${Date.now()}`,
-          ...data,
-          status: 'Unpaid',
+          id: invoice.id,
+          patient: data.patient,
+          patientId: invoice.patientId || data.patientId,
+          issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+          dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+          totalAmount: invoice.amount,
           amountPaid: 0,
+          status: 'Unpaid',
+          items: invoice.items.map((item: any) => ({
+            id: item.id,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+          treatmentId: invoice.treatmentId,
+          appointmentId: data.appointmentId,
+          insuranceClaimId: data.insuranceClaimId,
+          paymentPlan: data.paymentPlan,
+          notes: invoice.notes,
           createdBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
-          createdAt: currentTime,
-          lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
-          lastModifiedAt: currentTime,
+          createdAt: new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
         };
-        await setDocument('invoices', newInvoice.id, newInvoice);
+
         setInvoices(prev => [newInvoice, ...prev]);
-  toast({ title: t('billing.toast.invoice_created'), description: t('billing.toast.invoice_created_for_patient_desc', { patient: newInvoice.patient }) });
+        toast({ title: t('billing.toast.invoice_created'), description: t('billing.toast.invoice_created_for_patient_desc', { patient: newInvoice.patient }) });
     } catch(e) {
-  toast({ title: t('billing.toast.error_creating'), variant: 'destructive' });
+        console.error('Error creating invoice:', e);
+        toast({ title: t('billing.toast.error_creating'), variant: 'destructive' });
     }
   };
 
@@ -237,30 +267,53 @@ export default function BillingPage() {
         hour12: false
       });
 
+      // Create invoice via Neon API
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number: `INV-${Date.now()}`,
+          patientId: patient.id,
+          treatmentId: treatmentId,
+          date: new Date(),
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          status: 'Draft',
+          notes: `Generated from treatment: ${treatment.procedure} on ${treatment.date}`,
+          items: [{
+            description: treatment.procedure,
+            quantity: 1,
+            unitPrice: amount,
+          }],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create invoice');
+      }
+
+      const { invoice } = await response.json();
+
       const newInvoice: Invoice = {
-        id: `INV-${Date.now()}`,
+        id: invoice.id,
         patient: treatment.patient,
         patientId: patient.id,
-  issueDate: new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
-  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'), // 30 days from now
-        totalAmount: amount,
+        issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+        totalAmount: invoice.amount,
         amountPaid: 0,
         status: 'Unpaid',
         treatmentId: treatmentId,
-        items: [{
-          id: '1',
-          description: treatment.procedure,
-          quantity: 1,
-          unitPrice: amount
-        }],
-        notes: `Generated from treatment: ${treatment.procedure} on ${treatment.date}`,
+        items: invoice.items.map((item: any) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        notes: invoice.notes,
         createdBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
-        createdAt: currentTime,
-        lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
-        lastModifiedAt: currentTime,
+        createdAt: new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
       };
 
-      await setDocument('invoices', newInvoice.id, newInvoice);
       setInvoices(prev => [newInvoice, ...prev]);
       toast({ 
         title: t('billing.toast.invoice_from_treatment'), 
@@ -325,11 +378,19 @@ export default function BillingPage() {
       const newAmountPaid = oldestInvoice.amountPaid + creditToApply;
       const newStatus: Invoice['status'] = newAmountPaid >= oldestInvoice.totalAmount ? 'Paid' : 'Partially Paid';
 
-      await updateDocument('invoices', oldestInvoice.id, {
-        amountPaid: newAmountPaid,
-        status: newStatus,
-        insuranceClaimId: claimId
+      // Update via Neon API
+      const response = await fetch(`/api/invoices/${oldestInvoice.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          notes: `Insurance credit applied: ${claimId}`,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to update invoice');
+      }
 
       setInvoices(prev => 
         prev.map(invoice => 
@@ -339,10 +400,9 @@ export default function BillingPage() {
         )
       );
 
-      const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
       toast({
         title: t('billing.toast.insurance_applied'),
-        description: `${currency.format(creditToApply)} ${t('billing.amount_paid')} - ${oldestInvoice.id}`,
+        description: `${formatEGP(creditToApply, true, language)} ${t('billing.amount_paid')} - ${oldestInvoice.id}`,
       });
     } catch (error) {
       toast({
@@ -360,32 +420,36 @@ export default function BillingPage() {
       const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
       const newStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
       
-  const currentTime = new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+      // Update via Neon API
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          notes: invoiceToUpdate.notes 
+            ? `${invoiceToUpdate.notes}\nPayment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`
+            : `Payment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to record payment');
+      }
       
       const updatedData = { 
         amountPaid: newAmountPaid, 
         status: newStatus,
         lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
-        lastModifiedAt: currentTime,
+        lastModifiedAt: new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
       };
-
-      await updateDocument('invoices', invoiceId, updatedData);
       
       setInvoices(prev => 
         prev.map(invoice => invoice.id === invoiceId ? { ...invoice, ...updatedData } : invoice)
       );
       setInvoiceToPay(null);
-      const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
-      toast({ title: t('billing.toast.payment_recorded'), description: `${currency.format(paymentAmount)} - ${invoiceId}` });
+      toast({ title: t('billing.toast.payment_recorded'), description: `${formatEGP(paymentAmount, true, language)} - ${invoiceId}` });
     } catch (e) {
+        console.error('Error recording payment:', e);
         toast({ title: t('billing.toast.error_recording_payment'), variant: 'destructive' });
     }
   };
@@ -393,7 +457,15 @@ export default function BillingPage() {
   const handleDeleteInvoice = async () => {
     if (!invoiceToDelete) return;
     try {
-      await deleteDocument('invoices', invoiceToDelete.id);
+      // Delete via Neon API
+      const response = await fetch(`/api/invoices/${invoiceToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete invoice');
+      }
+
       setInvoices(prev => prev.filter(invoice => invoice.id !== invoiceToDelete.id));
       setInvoiceToDelete(null);
       toast({
@@ -402,6 +474,7 @@ export default function BillingPage() {
         variant: "destructive",
       });
     } catch (e) {
+      console.error('Error deleting invoice:', e);
       toast({ title: t('billing.toast.error_deleting'), variant: "destructive" });
     }
   };

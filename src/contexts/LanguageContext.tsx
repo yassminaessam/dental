@@ -1451,6 +1451,9 @@ const translations: Translations = {
   'patient_pages.records.lab_result': 'Lab Result',
   'patient_pages.records.radiograph': 'Radiograph',
   'patient_pages.records.photo': 'Photo',
+  'patient_pages.dental_chart.title': 'Dental Chart',
+  'patient_pages.dental_chart.subtitle': 'View your interactive dental chart and treatment history',
+  'patient_pages.dental_chart.read_only_note': 'This is a read-only view. Please contact your dentist for any questions.',
   
   'patient_pages.billing.title': 'Billing',
   'patient_pages.billing.subtitle': 'View invoices and payment history',
@@ -3607,6 +3610,9 @@ const translations: Translations = {
   'patient_pages.records.lab_result': 'نتيجة المختبر',
   'patient_pages.records.radiograph': 'صورة إشعاعية',
   'patient_pages.records.photo': 'صورة',
+  'patient_pages.dental_chart.title': 'مخطط الأسنان',
+  'patient_pages.dental_chart.subtitle': 'عرض مخطط الأسنان التفاعلي وتاريخ العلاج',
+  'patient_pages.dental_chart.read_only_note': 'هذا عرض للقراءة فقط. يرجى الاتصال بطبيب الأسنان لأي استفسارات.',
   
   'patient_pages.billing.title': 'الفواتير',
   'patient_pages.billing.subtitle': 'عرض الفواتير وسجل الدفع',

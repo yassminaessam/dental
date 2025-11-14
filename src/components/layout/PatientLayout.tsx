@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home, Activity } from 'lucide-react';
 import { DentalProLogo } from '../icons';
 import Link from 'next/link';
 import { Button } from '../ui/button';
@@ -45,6 +45,12 @@ const patientNavItems = [
     href: '/patient-appointments',
     icon: Calendar,
     descriptionKey: 'patient_pages.appointments.subtitle'
+  },
+  {
+    titleKey: 'patient_pages.dental_chart.title',
+    href: '/patient-dental-chart',
+    icon: Activity,
+    descriptionKey: 'patient_pages.dental_chart.subtitle'
   },
   {
     titleKey: 'patient_pages.messages.title',
@@ -83,6 +89,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL, direction } = useLanguage();
   const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
+  const [chatReplies, setChatReplies] = React.useState<any[]>([]);
   const [notificationCount, setNotificationCount] = React.useState(0);
 
   React.useEffect(() => {
@@ -90,15 +97,29 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
       if (!user?.email) return;
       
       try {
-        const response = await fetch(`/api/patient-messages?patientEmail=${user.email}`);
-        if (response.ok) {
-          const data = await response.json();
-          const replies = (data.messages || []).filter((m: any) => 
+        const [messagesResponse, chatResponse] = await Promise.all([
+          fetch(`/api/patient-messages?patientEmail=${user.email}`),
+          fetch(`/api/chat/unread?userType=patient&patientEmail=${encodeURIComponent(user.email)}&limit=5`)
+        ]);
+        
+        let replies: any[] = [];
+        let chatMessages: any[] = [];
+        
+        if (messagesResponse.ok) {
+          const data = await messagesResponse.json();
+          replies = (data.messages || []).filter((m: any) => 
             m.from === 'فريق الدعم' || m.from === 'Staff'
           );
-          setStaffReplies(replies.slice(0, 5));
-          setNotificationCount(replies.length);
         }
+        
+        if (chatResponse.ok) {
+          const data = await chatResponse.json();
+          chatMessages = data.unreadMessages || [];
+        }
+        
+        setStaffReplies(replies.slice(0, 5));
+        setChatReplies(chatMessages);
+        setNotificationCount(replies.length + chatMessages.length);
       } catch (error) {
         console.error('Error fetching notifications:', error);
       }
@@ -313,7 +334,30 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               <DropdownMenuContent align="end" className="w-72 sm:w-80">
                 <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {staffReplies.length > 0 ? (
+                {chatReplies.length > 0 && (
+                  <>
+                    {chatReplies.map((msg: any) => (
+                      <DropdownMenuItem key={msg.id} asChild>
+                        <Link href="/patient-messages" className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40">
+                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 رد من الفريق</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {msg.conversation?.staffName || 'فريق الدعم'}: {msg.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                {staffReplies.length > 0 && (
                   <>
                     {staffReplies.map((reply) => (
                       <DropdownMenuItem key={reply.id} asChild>
@@ -335,7 +379,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                       </DropdownMenuItem>
                     ))}
                   </>
-                ) : (
+                )}
+                {notificationCount === 0 && (
                   <DropdownMenuItem disabled className="p-3">
                     {t('header.no_notifications')}
                   </DropdownMenuItem>
