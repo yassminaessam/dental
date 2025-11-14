@@ -6,7 +6,7 @@ import PatientLayout from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Download, DollarSign, FileText, Calendar } from 'lucide-react';
+import { Download, FileText, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,13 +79,6 @@ export default function PatientBillingPage() {
     }
   }, [user, fetchPatientProfile]);
 
-  const handlePayment = (invoiceId: string, amount: number) => {
-    toast({
-      title: 'Payment Processing',
-      description: `Processing payment of ${formatEGP(amount, true, language)} for ${invoiceId}. Payment gateway integration coming soon.`,
-    });
-  };
-
   const handleDownload = (invoiceId: string) => {
     toast({
       title: 'Downloading',
@@ -141,13 +134,9 @@ export default function PatientBillingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button 
-                  className="w-full"
-                  onClick={() => handlePayment('ALL', totalPending)}
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {t('patient_pages.billing.pay_now')}
-                </Button>
+                <p className="text-sm text-gray-600">
+                  {displayInvoices.filter(inv => inv.status === 'Pending').length} {t('patient_pages.billing.pending')} {t('patient_pages.billing.invoices')}
+                </p>
               </CardContent>
             </Card>
 
@@ -225,8 +214,7 @@ export default function PatientBillingPage() {
                           </div>
                         )}
                         <div className="flex items-center text-lg font-bold">
-                          <DollarSign className="h-5 w-5 mr-1" />
-                          {Number(invoice.amount).toFixed(2)}
+                          {formatEGP(Number(invoice.amount), true, language)}
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -238,15 +226,6 @@ export default function PatientBillingPage() {
                           <Download className="h-4 w-4 mr-2" />
                           {t('patient_pages.records.download')}
                         </Button>
-                        {invoice.status === 'Pending' && (
-                          <Button 
-                            size="sm"
-                            onClick={() => handlePayment(invoice.id, invoice.amount)}
-                          >
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            {t('patient_pages.billing.pay')}
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </CardContent>
