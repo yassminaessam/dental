@@ -128,13 +128,18 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
     dateTime.setHours(parseInt(hours, 10));
     dateTime.setMinutes(parseInt(minutes, 10));
 
-    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const selectedPatient = patients.find(p => p.id === data.patient);
+    const patientName = selectedPatient?.name;
+    const patientEmail = selectedPatient?.email;
+    const patientPhone = selectedPatient?.phone;
     const doctorName = doctors.find(d => d.id === data.doctor)?.name;
 
     const updatedAppointment: Appointment = {
       ...appointment,
       patient: patientName || appointment.patient,
       patientId: data.patient,
+      patientEmail: patientEmail || appointment.patientEmail,
+      patientPhone: patientPhone || appointment.patientPhone,
       doctor: doctorName || appointment.doctor,
       doctorId: data.doctor,
       dateTime,

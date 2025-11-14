@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, User, Phone, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { listCollection } from '@/lib/collections-client';
 import { AppointmentsClient } from '@/services/appointments.client';
@@ -50,8 +50,10 @@ const appointmentTypes = [
 
 const timeSlots = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '14:00', '14:30', '15:00', '15:30',
-  '16:00', '16:30', '17:00', '17:30'
+  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
+  '21:00', '21:30', '22:00', '22:30'
 ];
 
 export default function PatientAppointmentBooking() {
@@ -98,24 +100,84 @@ export default function PatientAppointmentBooking() {
     }
   };
 
+  const parseDuration = (duration: string): number => {
+    // Parse duration string (e.g., "1 hour", "30 minutes", "1.5 hours")
+    const durationMatch = duration.match(/(\d+(?:\.\d+)?)\s*(hour|minute)/i);
+    let durationMinutes = 60; // Default 1 hour
+    
+    if (durationMatch) {
+      const value = parseFloat(durationMatch[1]);
+      const unit = durationMatch[2].toLowerCase();
+      durationMinutes = unit.startsWith('hour') ? value * 60 : value;
+    }
+    
+    return durationMinutes;
+  };
+
   const isTimeSlotAvailable = (date: string, time: string): boolean => {
     const requestedDateTime = new Date(`${date}T${time}`);
     
-    // Check if slot is already booked
-    const isBooked = existingAppointments.some(apt => {
-      const aptDate = new Date(apt.dateTime);
-      return aptDate.getTime() === requestedDateTime.getTime() && 
-             apt.status !== 'Cancelled';
-    });
-
     // Check if it's in the past
     const isPast = requestedDateTime < new Date();
+    if (isPast) return false;
 
-    // Check if it's within business hours (9 AM - 6 PM, Monday - Friday)
-    const dayOfWeek = requestedDateTime.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    // Check if time slot overlaps with any existing appointment (considering duration)
+    const hasOverlap = existingAppointments.some(apt => {
+      if (apt.status === 'Cancelled') return false;
+      
+      const aptStartTime = new Date(apt.dateTime);
+      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptEndTime = new Date(aptStartTime.getTime() + aptDurationMinutes * 60000);
+      
+      // Default requested appointment duration is 60 minutes
+      const requestedEndTime = new Date(requestedDateTime.getTime() + 60 * 60000);
+      
+      // Check if there's any overlap between requested time and existing appointment
+      // Overlap occurs if:
+      // 1. Requested start is during existing appointment (requestedStart >= aptStart && requestedStart < aptEnd)
+      // 2. Requested end is during existing appointment (requestedEnd > aptStart && requestedEnd <= aptEnd)
+      // 3. Requested appointment completely contains existing appointment (requestedStart <= aptStart && requestedEnd >= aptEnd)
+      return (
+        (requestedDateTime >= aptStartTime && requestedDateTime < aptEndTime) ||
+        (requestedEndTime > aptStartTime && requestedEndTime <= aptEndTime) ||
+        (requestedDateTime <= aptStartTime && requestedEndTime >= aptEndTime)
+      );
+    });
 
-    return !isBooked && !isPast && !isWeekend;
+    return !hasOverlap;
+  };
+
+  const getTimeSlotStatus = (date: string, time: string): { available: boolean; reason?: string } => {
+    const requestedDateTime = new Date(`${date}T${time}`);
+    
+    // Check if it's in the past
+    const isPast = requestedDateTime < new Date();
+    if (isPast) return { available: false, reason: 'Past time' };
+
+    // Check if time slot overlaps with any existing appointment
+    const overlappingAppointment = existingAppointments.find(apt => {
+      if (apt.status === 'Cancelled') return false;
+      
+      const aptStartTime = new Date(apt.dateTime);
+      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptEndTime = new Date(aptStartTime.getTime() + aptDurationMinutes * 60000);
+      
+      // Default requested appointment duration is 60 minutes
+      const requestedEndTime = new Date(requestedDateTime.getTime() + 60 * 60000);
+      
+      // Check for overlap
+      return (
+        (requestedDateTime >= aptStartTime && requestedDateTime < aptEndTime) ||
+        (requestedEndTime > aptStartTime && requestedEndTime <= aptEndTime) ||
+        (requestedDateTime <= aptStartTime && requestedEndTime >= aptEndTime)
+      );
+    });
+
+    if (overlappingAppointment) {
+      return { available: false, reason: 'Already booked' };
+    }
+
+    return { available: true };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,7 +341,7 @@ export default function PatientAppointmentBooking() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
           <Label htmlFor="preferredDate">{t('appointments.pick_date')} *</Label>
                   <Input
@@ -291,30 +353,75 @@ export default function PatientAppointmentBooking() {
                     required
                   />
                 </div>
-                <div>
-          <Label htmlFor="preferredTime">{t('appointments.time')} *</Label>
-                  <Select 
-                    value={formData.preferredTime} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, preferredTime: value }))}
-                    disabled={!formData.preferredDate}
-                  >
-                    <SelectTrigger>
-            <SelectValue placeholder={t('appointments.select_time')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableTimeSlots().map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {formData.preferredDate && getAvailableTimeSlots().length === 0 && (
-                    <p className="text-sm text-red-500 mt-1">
-            {t('appointments.no_available_time_slots')}
-                    </p>
-                  )}
-                </div>
+                
+                {formData.preferredDate && (
+                  <div>
+                    <Label>{t('appointments.time')} *</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                      {timeSlots.map((time) => {
+                        const slotStatus = getTimeSlotStatus(formData.preferredDate, time);
+                        const isSelected = formData.preferredTime === time;
+                        
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            disabled={!slotStatus.available}
+                            onClick={() => {
+                              if (slotStatus.available) {
+                                setFormData(prev => ({ ...prev, preferredTime: time }));
+                              }
+                            }}
+                            className={`
+                              px-3 py-2 rounded-md text-sm font-medium transition-all
+                              ${isSelected 
+                                ? 'bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2' 
+                                : slotStatus.available
+                                  ? 'bg-white hover:bg-blue-50 text-gray-700 border border-gray-300 hover:border-blue-400'
+                                  : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-60'
+                              }
+                            `}
+                            title={slotStatus.available ? 'Available' : slotStatus.reason}
+                          >
+                            <div className="flex items-center justify-center gap-1">
+                              {slotStatus.available ? (
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <X className="h-3 w-3 text-red-500" />
+                              )}
+                              <span>{time}</span>
+                            </div>
+                            {!slotStatus.available && (
+                              <div className="text-xs mt-0.5 opacity-75">
+                                {slotStatus.reason === 'Already booked' && 'Booked'}
+                                {slotStatus.reason === 'Past time' && 'Past'}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {getAvailableTimeSlots().length === 0 && (
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-sm text-red-700 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          {t('appointments.no_available_time_slots')}
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          Please select a different date. All time slots for this day are booked.
+                        </p>
+                      </div>
+                    )}
+                    {formData.preferredTime && (
+                      <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-700 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Selected time: <strong>{formData.preferredTime}</strong>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>

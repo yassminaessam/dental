@@ -18,18 +18,39 @@ export default function PatientAppointmentsPage() {
   const { user } = useAuth();
   const [appointments, setAppointments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [patientId, setPatientId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (user?.email) {
-      fetchAppointments();
+      fetchPatientProfile();
     }
   }, [user]);
 
-  const fetchAppointments = async () => {
+  const fetchPatientProfile = async () => {
     if (!user?.email) return;
     
     try {
-      const response = await fetch(`/api/patient/appointments?email=${encodeURIComponent(user.email)}`);
+      const response = await fetch(`/api/patient/profile?email=${encodeURIComponent(user.email)}`);
+      if (!response.ok) {
+        console.error('Patient profile not found');
+        setLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      setPatientId(data.patient.id);
+      fetchAppointments(data.patient.id);
+    } catch (error) {
+      console.error('Error fetching patient profile:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchAppointments = async (patId: string) => {
+    if (!user?.email) return;
+    
+    try {
+      const response = await fetch(`/api/patient/appointments?email=${encodeURIComponent(user.email)}&patientId=${patId}`);
       if (!response.ok) throw new Error('Failed to fetch appointments');
       
       const data = await response.json();
@@ -61,7 +82,9 @@ export default function PatientAppointmentsPage() {
         description: 'Your appointment has been cancelled',
       });
       
-      fetchAppointments();
+      if (patientId) {
+        fetchAppointments(patientId);
+      }
     } catch (error) {
       toast({
         title: t('appointments.toast.error_status'),

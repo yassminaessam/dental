@@ -12,12 +12,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email or patientId is required.' }, { status: 400 });
     }
 
-    // Get all appointments and filter by patient email or ID
+    // Get patient name if we have email or patientId
+    let patientName: string | null = null;
+    if (patientId || email) {
+      const patient = await prisma.patient.findFirst({
+        where: {
+          OR: [
+            ...(patientId ? [{ id: patientId }] : []),
+            ...(email ? [{ email }] : []),
+          ],
+        },
+      });
+      if (patient) {
+        patientName = `${patient.name} ${patient.lastName}`;
+      }
+    }
+
+    // Get all appointments and filter by patient email, ID, or name
     const allAppointments = await AppointmentsService.list();
     
     const patientAppointments = allAppointments.filter(apt => {
       if (email && apt.patientEmail === email) return true;
       if (patientId && apt.patientId === patientId) return true;
+      // Also match by patient name as fallback
+      if (patientName && apt.patient === patientName) return true;
       return false;
     });
 
