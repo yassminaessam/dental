@@ -109,21 +109,39 @@ export default function BillingPage() {
         listDocuments<any>('insurance-claims'),
       ]);
             
-            // Update overdue invoices
-            const today = new Date();
-            const updatedInvoices = invoiceData.map((invoice: any) => {
-              const dueDate = new Date(invoice.dueDate);
-              if (dueDate < today && invoice.status === 'Unpaid' && invoice.amountPaid < invoice.totalAmount) {
-                return { ...invoice, status: 'Overdue' as const };
-              }
-              return invoice;
-            });
-            
       // Map patient data to ensure proper date format
       const mappedPatients = patientData.map((p: any) => ({
         ...p,
         dob: p.dob ? new Date(p.dob) : new Date()
       }));
+
+            // Update overdue invoices and map patient names
+            const today = new Date();
+            const updatedInvoices = invoiceData.map((invoice: any) => {
+              const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
+              let status = invoice.status;
+              
+              // Update status to Overdue if needed
+              if (dueDate && dueDate < today && invoice.status === 'Unpaid' && invoice.amountPaid < invoice.totalAmount) {
+                status = 'Overdue' as const;
+              }
+              
+              // Find patient name from patients array
+              const patient = mappedPatients.find((p: any) => p.id === invoice.patientId);
+              const patientName = patient ? `${patient.name} ${patient.lastName}` : 'Unknown Patient';
+              
+              return {
+                ...invoice,
+                status,
+                patient: patientName,
+                issueDate: invoice.date ? new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+                dueDate: dueDate ? dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+                totalAmount: Number(invoice.amount) || 0,
+                amountPaid: 0, // Can be updated from payment records if needed
+                items: invoice.items || [],
+                createdAt: invoice.createdAt ? new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+              };
+            });
 
       setInvoices(updatedInvoices);
       setPatients(mappedPatients);
@@ -522,11 +540,14 @@ export default function BillingPage() {
   };
 
   const filteredInvoices = React.useMemo(() => {
-    return invoices
-      .filter(invoice =>
-        invoice.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (!searchTerm) return invoices;
+    
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return invoices.filter(invoice => {
+      const patientName = invoice.patient?.toLowerCase() || '';
+      const invoiceId = invoice.id?.toLowerCase() || '';
+      return patientName.includes(lowerSearchTerm) || invoiceId.includes(lowerSearchTerm);
+    });
   }, [invoices, searchTerm]);
 
   return (
