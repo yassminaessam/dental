@@ -377,3 +377,17 @@ model PatientSettings {
   @@index([userId])
   @@index([patientId])
 }
+
+model PortalContent {
+  id          String   @id @default(uuid())
+  type        String   // health_tips, promotions, welcome_message, etc.
+  title       String?
+  content     Json     // Flexible JSON content for different types
+  active      Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+}

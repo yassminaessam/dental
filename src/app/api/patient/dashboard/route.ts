@@ -93,6 +93,38 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Get recent messages (last 5 messages from staff/doctors)
+    const recentMessages = await prisma.chatMessage.findMany({
+      where: {
+        conversation: {
+          patientEmail: email,
+        },
+        senderType: { not: 'patient' },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 5,
+      include: {
+        conversation: {
+          select: {
+            staffName: true,
+            patientName: true,
+          },
+        },
+      },
+    });
+
+    // Get health tips from portal content (if configured)
+    const healthTips = await prisma.portalContent.findFirst({
+      where: {
+        type: 'health_tips',
+      },
+      select: {
+        content: true,
+      },
+    }).catch(() => null);
+
     return NextResponse.json({
       stats: {
         upcomingAppointments,
@@ -109,6 +141,14 @@ export async function GET(request: NextRequest) {
             }
           : null,
       },
+      recentMessages: recentMessages.map(msg => ({
+        id: msg.id,
+        message: msg.message,
+        senderName: msg.conversation.staffName || 'Staff',
+        createdAt: msg.createdAt,
+        isRead: msg.isRead,
+      })),
+      healthTips: healthTips?.content || null,
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

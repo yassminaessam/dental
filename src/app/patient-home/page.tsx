@@ -6,6 +6,7 @@ import PatientLayout from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Calendar, 
   Clock, 
@@ -155,11 +156,15 @@ const services = [
 
 export default function PatientHomePage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [promotions, setPromotions] = React.useState<Promotion[]>([]);
   const [portalContent, setPortalContent] = React.useState<PatientPortalContent | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [dashboardStats, setDashboardStats] = React.useState<any>(null);
+  const [recentMessages, setRecentMessages] = React.useState<any[]>([]);
+  const [healthTips, setHealthTips] = React.useState<any>(null);
+  const [selectedTip, setSelectedTip] = React.useState<any>(null);
+  const [showTipDialog, setShowTipDialog] = React.useState(false);
 
   React.useEffect(() => {
     if (user?.email) {
@@ -179,18 +184,36 @@ export default function PatientHomePage() {
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           setDashboardStats(statsData.stats);
+          setRecentMessages(statsData.recentMessages || []);
+          setHealthTips(statsData.healthTips || defaultContent.healthTips);
         }
       }
 
-      // Use default promotions and content for now
-      // TODO: Create admin endpoints to manage these
-      setPromotions(defaultPromotions);
+      // Fetch promotions from Neon database
+      try {
+        const promotionsData = await listDocuments<Promotion>('patient-promotions');
+        // Filter for active promotions only
+        const activePromotions = promotionsData.filter(p => p.active);
+        
+        if (activePromotions.length > 0) {
+          setPromotions(activePromotions);
+        } else {
+          // Use default promotions if no active promotions in database
+          setPromotions(defaultPromotions);
+        }
+      } catch (promotionError) {
+        console.error('Error fetching promotions:', promotionError);
+        // Fall back to default promotions if fetch fails
+        setPromotions(defaultPromotions);
+      }
+
       setPortalContent(defaultContent);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       // Still show default content on error
       setPromotions(defaultPromotions);
       setPortalContent(defaultContent);
+      setHealthTips(defaultContent.healthTips);
     } finally {
       setLoading(false);
     }
@@ -233,20 +256,38 @@ export default function PatientHomePage() {
     healthTips: [
       {
         id: '1',
-        title: 'Daily Oral Care',
-        content: 'Brush twice daily with fluoride toothpaste and floss daily to maintain optimal oral health.',
+        title: {
+          en: 'Daily Oral Care',
+          ar: 'العناية اليومية بالفم'
+        },
+        content: {
+          en: 'Brush twice daily with fluoride toothpaste and floss daily to maintain optimal oral health. Use a soft-bristled toothbrush and replace it every 3 months. Brushing removes plaque and prevents cavities, while flossing removes food particles between teeth where your toothbrush cannot reach.\n\nProper brushing technique: Hold your toothbrush at a 45-degree angle to your gums. Gently move the brush back and forth in short strokes. Brush the outer surfaces, inner surfaces, and chewing surfaces of all teeth. Don\'t forget to brush your tongue to remove bacteria and freshen breath.',
+          ar: 'اغسل أسنانك مرتين يومياً بمعجون أسنان يحتوي على الفلورايد واستخدم خيط الأسنان يومياً للحفاظ على صحة الفم المثلى. استخدم فرشاة أسنان ذات شعيرات ناعمة واستبدلها كل 3 أشهر. التنظيف بالفرشاة يزيل البلاك ويمنع التسوس، بينما يزيل خيط الأسنان جزيئات الطعام بين الأسنان حيث لا تستطيع الفرشاة الوصول.\n\nتقنية التنظيف الصحيحة: أمسك فرشاة أسنانك بزاوية 45 درجة على اللثة. حرك الفرشاة بلطف ذهاباً وإياباً بحركات قصيرة. نظف الأسطح الخارجية والداخلية وأسطح المضغ لجميع الأسنان. لا تنسَ تنظيف لسانك لإزالة البكتيريا وإنعاش النفس.'
+        },
         icon: 'Smile'
       },
       {
         id: '2',
-        title: 'Nutrition for Teeth',
-        content: 'Limit sugary snacks and drinks. Choose water over sodas and energy drinks.',
+        title: {
+          en: 'Nutrition for Teeth',
+          ar: 'التغذية للأسنان'
+        },
+        content: {
+          en: 'Limit sugary snacks and drinks. Choose water over sodas and energy drinks. Your diet plays a crucial role in maintaining healthy teeth and gums.\n\nFoods to eat: Dairy products (milk, cheese, yogurt) are rich in calcium and strengthen teeth. Crunchy fruits and vegetables (apples, carrots, celery) help clean teeth naturally. Leafy greens are packed with vitamins and minerals. Nuts provide protein and minerals.\n\nFoods to avoid: Sugary candies and sweets feed harmful bacteria. Acidic foods and drinks can erode tooth enamel. Sticky foods cling to teeth and are hard to clean. Remember to rinse with water after consuming sugary or acidic foods.',
+          ar: 'قلل من الوجبات الخفيفة والمشروبات السكرية. اختر الماء بدلاً من المشروبات الغازية ومشروبات الطاقة. يلعب نظامك الغذائي دوراً حاسماً في الحفاظ على صحة الأسنان واللثة.\n\nالأطعمة المفيدة: منتجات الألبان (الحليب والجبن والزبادي) غنية بالكالسيوم وتقوي الأسنان. الفواكه والخضروات المقرمشة (التفاح والجزر والكرفس) تساعد على تنظيف الأسنان بشكل طبيعي. الخضروات الورقية مليئة بالفيتامينات والمعادن. المكسرات توفر البروتين والمعادن.\n\nالأطعمة التي يجب تجنبها: الحلويات والسكريات تغذي البكتيريا الضارة. الأطعمة والمشروبات الحمضية يمكن أن تآكل مينا الأسنان. الأطعمة اللزجة تلتصق بالأسنان ويصعب تنظيفها. تذكر الشطف بالماء بعد تناول الأطعمة السكرية أو الحمضية.'
+        },
         icon: 'Heart'
       },
       {
         id: '3',
-        title: 'Regular Checkups',
-        content: 'Visit your dentist every 6 months for cleanings and preventive care.',
+        title: {
+          en: 'Regular Checkups',
+          ar: 'الفحوصات المنتظمة'
+        },
+        content: {
+          en: 'Visit your dentist every 6 months for cleanings and preventive care. Regular dental visits are essential for maintaining good oral health and catching problems early.\n\nWhat happens during a checkup: Professional cleaning removes tartar and plaque buildup. Examination of teeth, gums, and mouth for any issues. X-rays may be taken to detect problems not visible to the eye. Early detection of cavities, gum disease, and oral cancer.\n\nBenefits of regular visits: Prevents small problems from becoming major issues. Saves money in the long run by avoiding costly procedures. Maintains your beautiful smile. Professional advice tailored to your specific needs. Don\'t wait for pain – schedule your regular checkup today!',
+          ar: 'قم بزيارة طبيب الأسنان كل 6 أشهر للتنظيف والرعاية الوقائية. الزيارات المنتظمة لطبيب الأسنان ضرورية للحفاظ على صحة الفم الجيدة واكتشاف المشاكل مبكراً.\n\nما يحدث خلال الفحص: التنظيف الاحترافي يزيل الجير وتراكم البلاك. فحص الأسنان واللثة والفم للكشف عن أي مشاكل. قد يتم أخذ أشعة سينية لاكتشاف المشاكل غير المرئية للعين. الكشف المبكر عن التسوس وأمراض اللثة وسرطان الفم.\n\nفوائد الزيارات المنتظمة: تمنع المشاكل الصغيرة من أن تصبح قضايا كبيرة. توفر المال على المدى الطويل عن طريق تجنب الإجراءات المكلفة. تحافظ على ابتسامتك الجميلة. نصائح مهنية مصممة خصيصاً لاحتياجاتك. لا تنتظر الألم - حدد موعد فحصك المنتظم اليوم!'
+        },
         icon: 'CheckCircle'
       }
     ],
@@ -474,28 +515,50 @@ export default function PatientHomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <MessageSquare className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{t('patient_pages.home.appointment_reminder')}</p>
-                    <p className="text-sm text-gray-600">{t('patient_pages.home.reminder_text')}</p>
-                    <p className="text-xs text-gray-500">{t('patient_pages.home.hours_ago')}</p>
-                  </div>
+              {recentMessages.length > 0 ? (
+                <div className="space-y-4">
+                  {recentMessages.slice(0, 3).map((msg, index) => (
+                    <div 
+                      key={msg.id} 
+                      className={`flex items-start space-x-3 p-3 rounded-lg ${
+                        !msg.isRead ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                      }`}
+                    >
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                        !msg.isRead ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                        <MessageSquare className={`h-4 w-4 ${
+                          !msg.isRead ? 'text-blue-600' : 'text-gray-600'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{msg.senderName}</p>
+                          {!msg.isRead && (
+                            <span className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">{msg.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(msg.createdAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-gray-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{t('patient_pages.home.treatment_plan')}</p>
-                    <p className="text-sm text-gray-600">{t('patient_pages.home.treatment_text')}</p>
-                    <p className="text-xs text-gray-500">{t('patient_pages.home.day_ago')}</p>
-                  </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recent messages</p>
                 </div>
-              </div>
+              )}
               <Button 
                 variant="outline" 
                 className="w-full mt-4"
@@ -514,56 +577,121 @@ export default function PatientHomePage() {
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Smile className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">{t('patient_pages.home.daily_care')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('patient_pages.home.daily_care_desc')}
-                  </p>
-                  <Button variant="outline" size="sm">
-                    {t('patient_pages.home.read_more')}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Award className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">{t('patient_pages.home.nutrition')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('patient_pages.home.nutrition_desc')}
-                  </p>
-                  <Button variant="outline" size="sm">
-                    {t('patient_pages.home.learn_more')}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CheckCircle className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">{t('patient_pages.home.preventive_care')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('patient_pages.home.preventive_desc')}
-                  </p>
-                  <Button variant="outline" size="sm">
-                    {t('patient_pages.home.find_out')}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
+              {(healthTips || defaultContent.healthTips).map((tip: any, index: number) => {
+                const icons = [Smile, Award, CheckCircle];
+                const Icon = icons[index % icons.length];
+                const colors = ['text-blue-600', 'text-green-600', 'text-purple-600'];
+                const bgColors = ['bg-blue-50', 'bg-green-50', 'bg-purple-50'];
+                
+                // Get language-specific content
+                const tipTitle = typeof tip.title === 'string' ? tip.title : (tip.title[language] || tip.title.en);
+                const tipContent = typeof tip.content === 'string' ? tip.content : (tip.content[language] || tip.content.en);
+                
+                return (
+                  <Card key={tip.id} className="hover:shadow-lg transition-shadow hover:-translate-y-1 duration-300">
+                    <CardHeader>
+                      <div className={`h-12 w-12 rounded-lg ${bgColors[index % bgColors.length]} flex items-center justify-center mb-3`}>
+                        <Icon className={`h-7 w-7 ${colors[index % colors.length]}`} />
+                      </div>
+                      <CardTitle className="text-lg">{tipTitle}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                        {tipContent}
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="group"
+                        onClick={() => {
+                          setSelectedTip(tip);
+                          setShowTipDialog(true);
+                        }}
+                      >
+                        {t('patient_pages.home.read_more')}
+                        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </section>
         </div>
+
+        {/* Health Tip Detail Dialog */}
+        <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-2xl">
+                {selectedTip && (() => {
+                  const tips = healthTips || defaultContent.healthTips;
+                  const index = tips.findIndex((t: any) => t.id === selectedTip.id);
+                  const icons = [Smile, Award, CheckCircle];
+                  const Icon = icons[index % icons.length];
+                  const colors = ['text-blue-600', 'text-green-600', 'text-purple-600'];
+                  const bgColors = ['bg-blue-50', 'bg-green-50', 'bg-purple-50'];
+                  
+                  // Get language-specific title
+                  const tipTitle = typeof selectedTip.title === 'string' ? selectedTip.title : (selectedTip.title[language] || selectedTip.title.en);
+                  
+                  return (
+                    <>
+                      <div className={`h-12 w-12 rounded-lg ${bgColors[index % bgColors.length]} flex items-center justify-center`}>
+                        <Icon className={`h-6 w-6 ${colors[index % colors.length]}`} />
+                      </div>
+                      <span>{tipTitle}</span>
+                    </>
+                  );
+                })()}
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                {t('patient_pages.home.health_tips')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <div className="prose prose-sm max-w-none">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {selectedTip && (typeof selectedTip.content === 'string' ? selectedTip.content : (selectedTip.content[language] || selectedTip.content.en))}
+                </p>
+              </div>
+              
+              {/* Additional detailed information */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">
+                      {t('patient_pages.home.tip_reminder')}
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      {t('patient_pages.home.tip_reminder_desc')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Call to action */}
+              <div className="mt-6 flex gap-3">
+                <Button 
+                  className="flex-1"
+                  onClick={() => window.location.href = '/patient-appointments'}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {t('patient_pages.home.book_appointment')}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowTipDialog(false)}
+                >
+                  {t('common.close')}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </PatientLayout>
     </PatientOnly>
   );
