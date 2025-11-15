@@ -31,6 +31,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { useNotifications } from '@/hooks/use-notifications';
 
 // Patient navigation items
 const patientNavItems = [
@@ -90,7 +91,9 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const { t, language, setLanguage, isRTL, direction } = useLanguage();
   const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
   const [chatReplies, setChatReplies] = React.useState<any[]>([]);
-  const [notificationCount, setNotificationCount] = React.useState(0);
+
+  // Use notification hook to track read status
+  const { markAsRead, filterUnread } = useNotifications(user?.id);
 
   React.useEffect(() => {
     async function fetchNotifications() {
@@ -119,7 +122,6 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
         
         setStaffReplies(replies.slice(0, 5));
         setChatReplies(chatMessages);
-        setNotificationCount(replies.length + chatMessages.length);
       } catch (error) {
         console.error('Error fetching notifications:', error);
       }
@@ -129,6 +131,23 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user?.email]);
+
+  // Filter out read notifications and calculate count
+  const unreadStaffReplies = React.useMemo(
+    () => filterUnread(staffReplies.map(r => ({ ...r, type: 'message' as const }))),
+    [staffReplies, filterUnread]
+  );
+  const unreadChatReplies = React.useMemo(
+    () => filterUnread(chatReplies.map(c => ({ ...c, type: 'chat' as const }))),
+    [chatReplies, filterUnread]
+  );
+
+  const notificationCount = unreadStaffReplies.length + unreadChatReplies.length;
+
+  // Handler to mark notification as read when clicked
+  const handleNotificationClick = (notificationId: string) => {
+    markAsRead(notificationId);
+  };
 
   const getUserInitials = () => {
     if (!user) return 'P';
@@ -334,11 +353,15 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               <DropdownMenuContent align="end" className="w-72 sm:w-80">
                 <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {chatReplies.length > 0 && (
+                {unreadChatReplies.length > 0 && (
                   <>
-                    {chatReplies.map((msg: any) => (
+                    {unreadChatReplies.map((msg: any) => (
                       <DropdownMenuItem key={msg.id} asChild>
-                        <Link href="/patient-messages" className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40">
+                        <Link 
+                          href="/patient-messages" 
+                          className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40"
+                          onClick={() => handleNotificationClick(msg.id)}
+                        >
                           <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 رد من الفريق</p>
@@ -357,11 +380,15 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     ))}
                   </>
                 )}
-                {staffReplies.length > 0 && (
+                {unreadStaffReplies.length > 0 && (
                   <>
-                    {staffReplies.map((reply) => (
+                    {unreadStaffReplies.map((reply) => (
                       <DropdownMenuItem key={reply.id} asChild>
-                        <Link href="/patient-messages" className="flex items-start gap-2 p-3">
+                        <Link 
+                          href="/patient-messages" 
+                          className="flex items-start gap-2 p-3"
+                          onClick={() => handleNotificationClick(reply.id)}
+                        >
                           <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm">{t('patient_pages.messages.new_reply')}</p>

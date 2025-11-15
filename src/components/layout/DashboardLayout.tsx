@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '../../hooks/use-toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { usePathname } from 'next/navigation'
+import { useNotifications } from '../../hooks/use-notifications'
 
 type AppointmentLite = { id: string; status: string; patient: string; type: string }
 type InventoryItemLite = { id: string; status: string; name: string; stock: number }
@@ -55,6 +56,9 @@ export default function DashboardLayout({
   const [lowStockItems, setLowStockItems] = React.useState<InventoryItemLite[]>([])
   const [unreadPatientMessages, setUnreadPatientMessages] = React.useState<PatientMessageLite[]>([])
   const [unreadChatMessages, setUnreadChatMessages] = React.useState<ChatMessageLite[]>([])
+
+  // Use notification hook to track read status
+  const { markAsRead, filterUnread } = useNotifications(user?.id)
 
   React.useEffect(() => {
     async function fetchNotifications() {
@@ -81,7 +85,30 @@ export default function DashboardLayout({
     return () => clearInterval(interval)
   }, [])
 
-  const notificationCount = pendingAppointments.length + lowStockItems.length + unreadPatientMessages.length + unreadChatMessages.length
+  // Filter out read notifications and calculate count
+  const unreadPendingAppointments = React.useMemo(
+    () => filterUnread(pendingAppointments.map(a => ({ ...a, type: 'appointment' as const }))),
+    [pendingAppointments, filterUnread]
+  )
+  const unreadLowStockItems = React.useMemo(
+    () => filterUnread(lowStockItems.map(i => ({ ...i, type: 'inventory' as const }))),
+    [lowStockItems, filterUnread]
+  )
+  const unreadMessages = React.useMemo(
+    () => filterUnread(unreadPatientMessages.map(m => ({ ...m, type: 'message' as const }))),
+    [unreadPatientMessages, filterUnread]
+  )
+  const unreadChats = React.useMemo(
+    () => filterUnread(unreadChatMessages.map(c => ({ ...c, type: 'chat' as const }))),
+    [unreadChatMessages, filterUnread]
+  )
+
+  const notificationCount = unreadPendingAppointments.length + unreadLowStockItems.length + unreadMessages.length + unreadChats.length
+
+  // Handler to mark notification as read when clicked
+  const handleNotificationClick = (notificationId: string) => {
+    markAsRead(notificationId)
+  }
 
   const getUserInitials = () => {
     if (!user) return 'U'
@@ -218,11 +245,15 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end" className="w-72 sm:w-80">
                 <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {pendingAppointments.length > 0 && (
+                {unreadPendingAppointments.length > 0 && (
                   <>
-                    {pendingAppointments.map((appt) => (
+                    {unreadPendingAppointments.map((appt) => (
                       <DropdownMenuItem key={appt.id} asChild>
-                        <Link href="/appointments" className="flex items-start gap-2 p-3">
+                        <Link 
+                          href="/appointments" 
+                          className="flex items-start gap-2 p-3"
+                          onClick={() => handleNotificationClick(appt.id)}
+                        >
                           <Clock className="mt-1 h-4 w-4 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm">{t('notification.pending_appointment')}</p>
@@ -235,11 +266,15 @@ export default function DashboardLayout({
                     ))}
                   </>
                 )}
-                {unreadChatMessages.length > 0 && (
+                {unreadChats.length > 0 && (
                   <>
-                    {unreadChatMessages.map((msg) => (
+                    {unreadChats.map((msg) => (
                       <DropdownMenuItem key={msg.id} asChild>
-                        <Link href="/admin/chats" className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40">
+                        <Link 
+                          href="/admin/chats" 
+                          className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40"
+                          onClick={() => handleNotificationClick(msg.id)}
+                        >
                           <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 محادثة جديدة</p>
@@ -258,11 +293,15 @@ export default function DashboardLayout({
                     ))}
                   </>
                 )}
-                {unreadPatientMessages.length > 0 && (
+                {unreadMessages.length > 0 && (
                   <>
-                    {unreadPatientMessages.map((msg) => (
+                    {unreadMessages.map((msg) => (
                       <DropdownMenuItem key={msg.id} asChild>
-                        <Link href="/admin/chats" className="flex items-start gap-2 p-3">
+                        <Link 
+                          href="/admin/chats" 
+                          className="flex items-start gap-2 p-3"
+                          onClick={() => handleNotificationClick(msg.id)}
+                        >
                           <Bell className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm">رسالة جديدة من مريض</p>
@@ -281,11 +320,15 @@ export default function DashboardLayout({
                     ))}
                   </>
                 )}
-                {lowStockItems.length > 0 && (
+                {unreadLowStockItems.length > 0 && (
                   <>
-                    {lowStockItems.map((item) => (
+                    {unreadLowStockItems.map((item) => (
                       <DropdownMenuItem key={item.id} asChild>
-                        <Link href="/inventory" className="flex items-start gap-2 p-3">
+                        <Link 
+                          href="/inventory" 
+                          className="flex items-start gap-2 p-3"
+                          onClick={() => handleNotificationClick(item.id)}
+                        >
                           <Package className="mt-1 h-4 w-4 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm">{t('notification.low_stock_alert')}</p>
