@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/lib/auth';
 import { AdminOnly } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -43,14 +44,23 @@ const ALL_PERMISSIONS: UserPermission[] = [
   'view_billing', 'edit_billing', 'delete_billing',
   'view_reports', 'edit_reports',
   'view_staff', 'edit_staff', 'delete_staff',
-  'view_inventory', 'edit_inventory',
+  'view_inventory', 'edit_inventory', 'delete_inventory',
   'view_settings', 'edit_settings',
   'view_medical_records', 'edit_medical_records',
   'view_dental_chart', 'edit_dental_chart',
   'view_communications', 'send_communications',
   'view_insurance', 'edit_insurance',
   'view_analytics', 'view_own_data',
-  'view_patient_portal', 'edit_patient_portal'
+  'view_patient_portal', 'edit_patient_portal',
+  'view_pharmacy', 'edit_pharmacy', 'delete_pharmacy',
+  'view_prescriptions', 'edit_prescriptions', 'delete_prescriptions',
+  'view_purchase_orders', 'edit_purchase_orders', 'delete_purchase_orders',
+  'view_referrals', 'edit_referrals', 'delete_referrals',
+  'view_financial', 'edit_financial', 'delete_financial',
+  'view_suppliers', 'edit_suppliers', 'delete_suppliers',
+  'view_chats', 'send_chats', 'delete_chats',
+  'view_users', 'edit_users', 'delete_users',
+  'view_help', 'edit_help'
 ];
 
 export default function UserManagementPage() {
@@ -66,6 +76,7 @@ export default function UserManagementPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { toast } = useToast();
   const { t } = useLanguage();
+  const auth = useAuth();
 
   useEffect(() => {
     loadUsers();
@@ -181,6 +192,10 @@ export default function UserManagementPage() {
       // Update selected user if it's the same user
       if (selectedUser && selectedUser.id === userId) {
         setSelectedUser({ ...selectedUser, permissions });
+      }
+      // Refresh current user context if editing own permissions
+      if (userId === auth.user?.id) {
+        await auth.refreshUser();
       }
     } catch (error: any) {
       toast({
@@ -524,9 +539,12 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
 
   const formatPermissionLabel = (permission: UserPermission) => {
     // permission pattern: action_subject e.g. view_patients, edit_billing, delete_staff, send_communications, view_own_data
-    const [action, ...subjectParts] = permission.split('_');
+    const permLower = permission.toLowerCase();
+    const [action, ...subjectParts] = permLower.split('_');
     const subject = subjectParts.join('_');
-    return `${t(`permissions.action.${action}`) || action} ${t(`permissions.subject.${subject}`) || subject}`;
+    const actionLabel = t(`permissions.action.${action}`);
+    const subjectLabel = t(`permissions.subject.${subject}`);
+    return `${actionLabel || action} ${subjectLabel || subject}`;
   };
 
   const groupPermissions = (permissions: UserPermission[]) => {
@@ -535,16 +553,25 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
       'appointments': [],
       'treatments': [],
       'billing': [],
+      'financial': [],
       'reports': [],
       'staff': [],
       'inventory': [],
+      'pharmacy': [],
+      'prescriptions': [],
+      'purchase_orders': [],
+      'suppliers': [],
+      'referrals': [],
       'settings': [],
       'medical_records': [],
       'dental_chart': [],
       'communications': [],
+      'chats': [],
       'insurance': [],
       'analytics': [],
       'patient_portal': [],
+      'users': [],
+      'help': [],
       'other': []
     };
 
@@ -554,15 +581,24 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
       else if (permission.includes('appointment')) groups['appointments'].push(permission);
       else if (permission.includes('treatment')) groups['treatments'].push(permission);
       else if (permission.includes('billing')) groups['billing'].push(permission);
+      else if (permission.includes('financial')) groups['financial'].push(permission);
       else if (permission.includes('report')) groups['reports'].push(permission);
       else if (permission.includes('staff')) groups['staff'].push(permission);
       else if (permission.includes('inventory')) groups['inventory'].push(permission);
+      else if (permission.includes('pharmacy')) groups['pharmacy'].push(permission);
+      else if (permission.includes('prescription')) groups['prescriptions'].push(permission);
+      else if (permission.includes('purchase_order')) groups['purchase_orders'].push(permission);
+      else if (permission.includes('supplier')) groups['suppliers'].push(permission);
+      else if (permission.includes('referral')) groups['referrals'].push(permission);
       else if (permission.includes('settings')) groups['settings'].push(permission);
       else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
       else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
       else if (permission.includes('communication')) groups['communications'].push(permission);
+      else if (permission.includes('chat')) groups['chats'].push(permission);
       else if (permission.includes('insurance')) groups['insurance'].push(permission);
       else if (permission.includes('analytics')) groups['analytics'].push(permission);
+      else if (permission.includes('user')) groups['users'].push(permission);
+      else if (permission.includes('help')) groups['help'].push(permission);
       else groups['other'].push(permission);
     });
 
@@ -694,11 +730,11 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
             </p>
             <div className="max-h-48 overflow-y-auto border rounded-md p-3">
               {Object.entries(groupPermissions(ALL_PERMISSIONS)).map(([group, permissions]) => (
-                <div key={group} className="mb-3">
-                  <h4 className="font-medium text-xs text-muted-foreground mb-2">{t(`permissions.group.${group}`)}</h4>
-                  <div className="space-y-1">
+                <div key={group} className="mb-4 last:mb-0">
+                  <h4 className="font-semibold text-sm text-foreground mb-2 pb-1 border-b">{t(`permissions.group.${group}`)}</h4>
+                  <div className="space-y-1.5 mt-2">
                     {permissions.map(permission => (
-                      <div key={permission} className="flex items-center space-x-2">
+                      <div key={permission} className="flex items-center gap-2">
                         <Checkbox
                           id={`create-${permission}`}
                           checked={selectedPermissions.includes(permission)}
@@ -706,7 +742,7 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
                             handlePermissionChange(permission, checked as boolean)
                           }
                         />
-                        <Label htmlFor={`create-${permission}`} className="text-xs font-normal">
+                        <Label htmlFor={`create-${permission}`} className="text-sm font-normal cursor-pointer">
                           {formatPermissionLabel(permission)}
                         </Label>
                       </div>
@@ -761,9 +797,12 @@ function UserDetailsView({
   };
 
   const formatPermissionLabel = (permission: UserPermission) => {
-    const [action, ...subjectParts] = permission.split('_');
+    const permLower = permission.toLowerCase();
+    const [action, ...subjectParts] = permLower.split('_');
     const subject = subjectParts.join('_');
-    return `${t(`permissions.action.${action}`) || action} ${t(`permissions.subject.${subject}`) || subject}`;
+    const actionLabel = t(`permissions.action.${action}`);
+    const subjectLabel = t(`permissions.subject.${subject}`);
+    return `${actionLabel || action} ${subjectLabel || subject}`;
   };
 
   const groupPermissions = (permissions: UserPermission[]) => {
@@ -772,16 +811,25 @@ function UserDetailsView({
       'appointments': [],
       'treatments': [],
       'billing': [],
+      'financial': [],
       'reports': [],
       'staff': [],
       'inventory': [],
+      'pharmacy': [],
+      'prescriptions': [],
+      'purchase_orders': [],
+      'suppliers': [],
+      'referrals': [],
       'settings': [],
       'medical_records': [],
       'dental_chart': [],
       'communications': [],
+      'chats': [],
       'insurance': [],
       'analytics': [],
       'patient_portal': [],
+      'users': [],
+      'help': [],
       'other': []
     };
 
@@ -791,15 +839,24 @@ function UserDetailsView({
       else if (permission.includes('appointment')) groups['appointments'].push(permission);
       else if (permission.includes('treatment')) groups['treatments'].push(permission);
       else if (permission.includes('billing')) groups['billing'].push(permission);
+      else if (permission.includes('financial')) groups['financial'].push(permission);
       else if (permission.includes('report')) groups['reports'].push(permission);
       else if (permission.includes('staff')) groups['staff'].push(permission);
       else if (permission.includes('inventory')) groups['inventory'].push(permission);
+      else if (permission.includes('pharmacy')) groups['pharmacy'].push(permission);
+      else if (permission.includes('prescription')) groups['prescriptions'].push(permission);
+      else if (permission.includes('purchase_order')) groups['purchase_orders'].push(permission);
+      else if (permission.includes('supplier')) groups['suppliers'].push(permission);
+      else if (permission.includes('referral')) groups['referrals'].push(permission);
       else if (permission.includes('settings')) groups['settings'].push(permission);
       else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
       else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
       else if (permission.includes('communication')) groups['communications'].push(permission);
+      else if (permission.includes('chat')) groups['chats'].push(permission);
       else if (permission.includes('insurance')) groups['insurance'].push(permission);
       else if (permission.includes('analytics')) groups['analytics'].push(permission);
+      else if (permission.includes('user')) groups['users'].push(permission);
+      else if (permission.includes('help')) groups['help'].push(permission);
       else groups['other'].push(permission);
     });
 
@@ -886,11 +943,11 @@ function UserDetailsView({
             <div className="mt-2 space-y-4">
               <div className="max-h-60 overflow-y-auto border rounded-md p-3">
                 {Object.entries(groupPermissions(ALL_PERMISSIONS)).map(([group, permissions]) => (
-                  <div key={group} className="mb-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">{t(`permissions.group.${group}`)}</h4>
-                    <div className="space-y-2">
+                  <div key={group} className="mb-4 last:mb-0">
+                    <h4 className="font-semibold text-sm text-foreground mb-2 pb-1 border-b">{t(`permissions.group.${group}`)}</h4>
+                    <div className="space-y-1.5 mt-2">
                       {permissions.map(permission => (
-                        <div key={permission} className="flex items-center space-x-2">
+                        <div key={permission} className="flex items-center gap-2">
                           <Checkbox
                             id={permission}
                             checked={selectedPermissions.includes(permission)}
@@ -898,7 +955,7 @@ function UserDetailsView({
                               handlePermissionChange(permission, checked as boolean)
                             }
                           />
-                          <Label htmlFor={permission} className="text-xs font-normal">
+                          <Label htmlFor={permission} className="text-sm font-normal cursor-pointer">
                             {formatPermissionLabel(permission)}
                           </Label>
                         </div>

@@ -72,14 +72,8 @@ const systemRoles = [
   },
 ];
 
-// Additional staff roles for non-system users
+// Additional staff roles for non-system users (removed dentist as it duplicates doctor role)
 const staffRoles = [
-  { 
-    value: "dentist", 
-    labelKey: "roles.dentist",
-    descriptionKey: "roles.dentist_desc",
-    permissions: ["Dental procedures", "Patient care", "Treatment plans"]
-  },
   { 
     value: "hygienist", 
     labelKey: "roles.hygienist", 
@@ -98,10 +92,13 @@ const staffRoles = [
     descriptionKey: "roles.manager_desc",
     permissions: ["Staff management", "Operations", "Scheduling"]
   },
+  { 
+    value: "nurse", 
+    labelKey: "roles.nurse",
+    descriptionKey: "roles.nurse_desc",
+    permissions: ["Patient care", "Medical assistance", "Record keeping"]
+  },
 ];
-
-// Combine all roles
-const allRoles = [...systemRoles, ...staffRoles];
 
 interface AddEmployeeDialogProps {
   onSave: (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => void;
@@ -171,17 +168,9 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
-      // Save the staff member
-      onSave({
-        name: `${data.firstName} ${data.lastName}`,
-        role: data.role,
-        email: data.email || '',
-        phone: data.phone || '',
-        salary: data.salary,
-        hireDate: data.hireDate.toISOString(),
-      });
+      let createdUserId: string | undefined = undefined;
 
-      // If user account creation is requested, create it
+      // If user account creation is requested, create it FIRST
       if (data.createUserAccount && data.userPassword) {
         const userRole = ['admin', 'doctor', 'receptionist'].includes(data.role.toLowerCase()) 
           ? data.role.toLowerCase() 
@@ -220,16 +209,32 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
             }
             
             console.error('Failed to create user account:', { status: response.status, error: errorMessage });
-            // Don't throw error - staff was created, just notify
             alert(`${t('staff.user_account_creation_failed')}\n\nError: ${errorMessage}`);
+            // Stop here - don't create staff if user creation failed
+            return;
           } else {
-            console.log('User account created successfully');
+            const userData = await response.json();
+            createdUserId = userData.user.id;
+            console.log('User account created successfully with ID:', createdUserId);
           }
         } catch (error) {
           console.error('Error creating user account:', error);
           alert(`${t('staff.user_account_creation_failed')}\n\nError: ${error instanceof Error ? error.message : 'Network error'}`);
+          // Stop here - don't create staff if user creation failed
+          return;
         }
       }
+
+      // Now save the staff member with the userId (if user was created)
+      onSave({
+        name: `${data.firstName} ${data.lastName}`,
+        role: data.role,
+        email: data.email || '',
+        phone: data.phone || '',
+        salary: data.salary,
+        hireDate: data.hireDate.toISOString(),
+        userId: createdUserId, // Link to the created user
+      });
 
       form.reset();
       setOpen(false);

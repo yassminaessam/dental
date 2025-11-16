@@ -118,6 +118,7 @@ export default function StaffPage() {
           salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
           hireDate: new Date(data.hireDate).toISOString(),
           status: 'Active',
+          userId: data.userId, // Link to user account if created
         }),
       });
       

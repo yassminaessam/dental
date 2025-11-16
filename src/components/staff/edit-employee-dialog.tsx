@@ -51,12 +51,47 @@ type EmployeeFormData = {
   userDepartment?: string;
 };
 
+// System roles that match UserRole type from types.ts
+const systemRoles = [
+  { 
+    value: "admin", 
+    labelKey: "roles.admin",
+    descriptionKey: "roles.admin_desc",
+  },
+  { 
+    value: "doctor", 
+    labelKey: "roles.doctor",
+    descriptionKey: "roles.doctor_desc", 
+  },
+  { 
+    value: "receptionist", 
+    labelKey: "roles.receptionist",
+    descriptionKey: "roles.receptionist_desc",
+  },
+];
+
+// Additional staff roles for non-system users (removed dentist as it duplicates doctor role)
 const staffRoles = [
-  { name: "Dentist" },
-  { name: "Hygienist" },
-  { name: "Assistant" },
-  { name: "Receptionist" },
-  { name: "Manager" },
+  { 
+    value: "hygienist", 
+    labelKey: "roles.hygienist", 
+    descriptionKey: "roles.hygienist_desc",
+  },
+  { 
+    value: "assistant", 
+    labelKey: "roles.assistant",
+    descriptionKey: "roles.assistant_desc",
+  },
+  { 
+    value: "manager", 
+    labelKey: "roles.manager",
+    descriptionKey: "roles.manager_desc",
+  },
+  { 
+    value: "nurse", 
+    labelKey: "roles.nurse",
+    descriptionKey: "roles.nurse_desc",
+  },
 ];
 
 interface EditEmployeeDialogProps {
@@ -373,10 +408,46 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                           <SelectValue placeholder={t('staff.select_role')} />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent 
+                        className="max-h-[300px] overflow-y-auto" 
+                        style={{ zIndex: 20000 }}
+                        position="popper"
+                        side="bottom"
+                        align="start"
+                      >
+                        {/* System Roles Section */}
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 rounded-md mb-1">
+                          {t('staff.system_roles')}
+                        </div>
+                        {systemRoles.map((role) => (
+                          <SelectItem key={role.value} value={role.value} className="py-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                <span className="font-medium">{t(role.labelKey)}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {t(role.descriptionKey)}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                        
+                        {/* Staff Roles Section */}
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 rounded-md mb-1 mt-2">
+                          {t('staff.staff_roles')}
+                        </div>
                         {staffRoles.map((role) => (
-                          <SelectItem key={role.name} value={role.name}>
-                            {t(`roles.${role.name.toLowerCase()}`)}
+                          <SelectItem key={role.value} value={role.value} className="py-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-accent" />
+                                <span className="font-medium">{t(role.labelKey)}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {t(role.descriptionKey)}
+                              </span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>

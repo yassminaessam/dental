@@ -132,7 +132,7 @@ export function SidebarNav() {
       icon: Landmark,
   label: t('nav.financial'),
       subLabel: t('nav.financial_desc'),
-      permission: "view_billing",
+      permission: "view_financial",
     },
     {
       href: "/inventory",
@@ -146,14 +146,14 @@ export function SidebarNav() {
       icon: Pill,
   label: t('nav.pharmacy'),
       subLabel: t('nav.pharmacy_desc'),
-      permission: "view_inventory",
+      permission: "view_pharmacy",
     },
     {
       href: "/suppliers",
       icon: Truck,
   label: t('nav.suppliers'),
       subLabel: t('nav.suppliers_desc'),
-      permission: "view_inventory",
+      permission: "view_suppliers",
     },
     {
       href: "/communications",
@@ -165,10 +165,9 @@ export function SidebarNav() {
     {
       href: "/admin/chats",
       icon: MessageCircle,
-      label: "المحادثات المباشرة",
-      subLabel: "إدارة دعم العملاء",
-      permission: null,
-      roleRequired: "admin",
+      label: t('nav.chats'),
+      subLabel: t('nav.chats_desc'),
+      permission: "view_chats",
     },
     {
       href: "/patient-portal?tab=content-admin",
@@ -176,13 +175,6 @@ export function SidebarNav() {
   label: t('patient_portal.management_title'),
       subLabel: t('nav.patient_portal_admin_desc'),
       permission: "edit_patient_portal",
-    },
-    {
-      href: "/patient-portal",
-      icon: Globe,
-  label: t('nav.patient_portal'),
-      subLabel: t('nav.patient_portal_desc'),
-      permission: user?.role === 'patient' ? "view_own_data" : "view_patients",
     },
     {
       href: "/referrals",

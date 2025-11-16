@@ -25,14 +25,23 @@ export type UserPermission =
   | 'view_billing' | 'edit_billing' | 'delete_billing'
   | 'view_reports' | 'edit_reports'
   | 'view_staff' | 'edit_staff' | 'delete_staff'
-  | 'view_inventory' | 'edit_inventory'
+  | 'view_inventory' | 'edit_inventory' | 'delete_inventory'
   | 'view_settings' | 'edit_settings'
   | 'view_medical_records' | 'edit_medical_records'
   | 'view_dental_chart' | 'edit_dental_chart'
   | 'view_communications' | 'send_communications'
   | 'view_insurance' | 'edit_insurance'
   | 'view_analytics' | 'view_own_data'
-  | 'view_patient_portal' | 'edit_patient_portal';
+  | 'view_patient_portal' | 'edit_patient_portal'
+  | 'view_pharmacy' | 'edit_pharmacy' | 'delete_pharmacy'
+  | 'view_prescriptions' | 'edit_prescriptions' | 'delete_prescriptions'
+  | 'view_purchase_orders' | 'edit_purchase_orders' | 'delete_purchase_orders'
+  | 'view_referrals' | 'edit_referrals' | 'delete_referrals'
+  | 'view_financial' | 'edit_financial' | 'delete_financial'
+  | 'view_suppliers' | 'edit_suppliers' | 'delete_suppliers'
+  | 'view_chats' | 'send_chats' | 'delete_chats'
+  | 'view_users' | 'edit_users' | 'delete_users'
+  | 'view_help' | 'edit_help';
 
 export interface User {
   id: string;
@@ -92,14 +101,23 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
     'view_billing', 'edit_billing', 'delete_billing',
     'view_reports', 'edit_reports',
     'view_staff', 'edit_staff', 'delete_staff',
-    'view_inventory', 'edit_inventory',
+    'view_inventory', 'edit_inventory', 'delete_inventory',
     'view_settings', 'edit_settings',
     'view_medical_records', 'edit_medical_records',
     'view_dental_chart', 'edit_dental_chart',
     'view_communications', 'send_communications',
     'view_insurance', 'edit_insurance',
     'view_analytics',
-    'view_patient_portal', 'edit_patient_portal'
+    'view_patient_portal', 'edit_patient_portal',
+    'view_pharmacy', 'edit_pharmacy', 'delete_pharmacy',
+    'view_prescriptions', 'edit_prescriptions', 'delete_prescriptions',
+    'view_purchase_orders', 'edit_purchase_orders', 'delete_purchase_orders',
+    'view_referrals', 'edit_referrals', 'delete_referrals',
+    'view_financial', 'edit_financial', 'delete_financial',
+    'view_suppliers', 'edit_suppliers', 'delete_suppliers',
+    'view_chats', 'send_chats', 'delete_chats',
+    'view_users', 'edit_users', 'delete_users',
+    'view_help', 'edit_help'
   ],
   doctor: [
     'view_patients', 'edit_patients',
@@ -110,7 +128,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
     'view_dental_chart', 'edit_dental_chart',
     'view_communications', 'send_communications',
     'view_insurance',
-    'view_analytics'
+    'view_analytics',
+    'view_pharmacy', 'edit_pharmacy',
+    'view_prescriptions', 'edit_prescriptions',
+    'view_referrals', 'edit_referrals',
+    'view_chats', 'send_chats',
+    'view_help'
   ],
   receptionist: [
     'view_patients', 'edit_patients',
@@ -118,7 +141,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
     'view_billing', 'edit_billing',
     'view_communications', 'send_communications',
     'view_insurance', 'edit_insurance',
-    'view_inventory'
+    'view_inventory',
+    'view_pharmacy',
+    'view_prescriptions',
+    'view_suppliers',
+    'view_referrals',
+    'view_chats', 'send_chats',
+    'view_help'
   ],
   patient: [
     'view_own_data'
@@ -196,6 +225,7 @@ export interface StaffMember {
   hireDate: string;
   status: StaffStatus;
   notes?: string;
+  userId?: string;
 }
 
 export type TreatmentStatus = 'Pending' | 'In Progress' | 'Completed';
