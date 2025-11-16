@@ -4,11 +4,11 @@ import { prisma } from '@/lib/db';
 // PATCH /api/notifications/[id]/read - Mark notification as read
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const db = prisma as unknown as { notification: any };
-    const notificationId = params.id;
+    const { id: notificationId } = await context.params;
 
     // Find the notification
     const notification = await db.notification.findUnique({
@@ -44,11 +44,11 @@ export async function PATCH(
 // DELETE /api/notifications/[id] - Delete a specific notification
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const db = prisma as unknown as { notification: any };
-    const notificationId = params.id;
+    const { id: notificationId } = await context.params;
 
     // Find the notification
     const notification = await db.notification.findUnique({

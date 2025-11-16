@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+type UnreadMessage = {
+  id: string;
+  isRead: boolean;
+  createdAt: Date | string;
+  senderType: 'patient' | 'staff' | string;
+  message?: string;
+  conversation?: {
+    id: string;
+    patientName?: string | null;
+    patientEmail?: string | null;
+    staffName?: string | null;
+  } | null;
+  [key: string]: any;
+};
+
 // GET unread chat messages for notifications
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +31,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let unreadMessages = [];
+    let unreadMessages: UnreadMessage[] = [];
 
     if (userType === 'admin') {
       // Get unread messages from patients for admin
@@ -36,7 +51,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
-      });
+      }) as UnreadMessage[];
     } else if (userType === 'patient') {
       // Get unread messages from staff for a specific patient
       const conversations = await prisma.chatConversation.findMany({
@@ -67,7 +82,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
-      });
+      }) as UnreadMessage[];
     }
 
     return NextResponse.json({ 

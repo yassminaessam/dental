@@ -46,6 +46,8 @@ interface Promotion {
   image?: string;
 }
 
+type LocalizedString = string | { en: string; ar: string };
+
 interface PatientPortalContent {
   id: string;
   welcomeMessage: string;
@@ -58,9 +60,9 @@ interface PatientPortalContent {
   };
   healthTips: Array<{
     id: string;
-    title: string;
-    content: string;
-    icon: string;
+    title: LocalizedString;
+    content: LocalizedString;
+    icon: 'Smile' | 'Heart' | 'CheckCircle' | string;
   }>;
   updatedAt: string;
   updatedBy: string;

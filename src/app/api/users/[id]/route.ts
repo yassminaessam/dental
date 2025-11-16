@@ -3,10 +3,11 @@ import { UsersService } from '@/services/users';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
-    const user = await UsersService.getById(params.id);
+    const user = await UsersService.getById(id);
     
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -21,12 +22,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const body = await request.json();
     
-    const user = await UsersService.update(params.id, body);
+    const user = await UsersService.update(id, body);
     
     return NextResponse.json({ user });
   } catch (error: any) {
@@ -40,8 +42,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     // Note: We should add a delete method to UsersService
     // For now, just return not implemented

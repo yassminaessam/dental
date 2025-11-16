@@ -4,11 +4,12 @@ import prisma from '@/lib/db';
 // GET /api/clinical-images/[id] - Get a specific clinical image
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const image = await prisma.clinicalImage.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!image) {
@@ -31,14 +32,15 @@ export async function GET(
 // PUT /api/clinical-images/[id] - Update a clinical image
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const body = await request.json();
     const { patient, patientId, type, imageUrl, caption, date } = body;
 
     const image = await prisma.clinicalImage.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         patient,
         patientId,
@@ -62,11 +64,12 @@ export async function PUT(
 // DELETE /api/clinical-images/[id] - Delete a clinical image
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     await prisma.clinicalImage.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

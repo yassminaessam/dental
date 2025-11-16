@@ -4,11 +4,12 @@ import prisma from '@/lib/db';
 // GET /api/medical-records/[id] - Get a specific medical record
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const record = await prisma.medicalRecord.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!record) {
@@ -31,14 +32,15 @@ export async function GET(
 // PUT /api/medical-records/[id] - Update a medical record
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const body = await request.json();
     const { patient, patientId, type, complaint, provider, providerId, date, status, notes } = body;
 
     const record = await prisma.medicalRecord.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         patient,
         patientId,
@@ -65,11 +67,12 @@ export async function PUT(
 // DELETE /api/medical-records/[id] - Delete a medical record
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     await prisma.medicalRecord.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
