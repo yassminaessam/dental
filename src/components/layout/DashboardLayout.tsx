@@ -52,63 +52,50 @@ export default function DashboardLayout({
   const { t, language, setLanguage, isRTL } = useLanguage()
   const pathname = usePathname()
 
-  const [pendingAppointments, setPendingAppointments] = React.useState<AppointmentLite[]>([])
-  const [lowStockItems, setLowStockItems] = React.useState<InventoryItemLite[]>([])
-  const [unreadPatientMessages, setUnreadPatientMessages] = React.useState<PatientMessageLite[]>([])
-  const [unreadChatMessages, setUnreadChatMessages] = React.useState<ChatMessageLite[]>([])
+  // Use database-backed notification hook
+  const {
+    notifications,
+    unreadNotifications,
+    unreadCount,
+    markAsRead,
+    refetch: refetchNotifications,
+  } = useNotifications(user?.id)
 
-  // Use notification hook to track read status
-  const { markAsRead, filterUnread } = useNotifications(user?.id)
-
+  // Refresh notifications every 30 seconds
   React.useEffect(() => {
-    async function fetchNotifications() {
-      const [appointments, inventory, messages, chatMessages] = await Promise.all([
-        listDocuments<AppointmentLite>('appointments'),
-        listDocuments<InventoryItemLite>('inventory'),
-        listDocuments<PatientMessageLite>('patient-messages'),
-        fetch('/api/chat/unread?userType=admin&limit=5').then(res => res.ok ? res.json() : { unreadMessages: [] }),
-      ])
-      setPendingAppointments(appointments.filter((a) => a.status === 'Pending'))
-      setLowStockItems(
-        inventory.filter((i) => i.status === 'Low Stock' || i.status === 'Out of Stock')
-      )
-      // Filter patient messages (exclude staff replies)
-      setUnreadPatientMessages(
-        messages.filter((m) => m.from !== 'فريق الدعم' && m.from !== 'Staff').slice(0, 5)
-      )
-      // Set unread chat messages
-      setUnreadChatMessages(chatMessages.unreadMessages || [])
-    }
-    fetchNotifications()
-    // Refresh notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000)
+    if (!user?.id) return
+    
+    const interval = setInterval(() => {
+      refetchNotifications()
+    }, 30000)
+    
     return () => clearInterval(interval)
-  }, [])
-
-  // Filter out read notifications and calculate count
-  const unreadPendingAppointments = React.useMemo(
-    () => filterUnread(pendingAppointments.map(a => ({ ...a, type: 'appointment' as const }))),
-    [pendingAppointments, filterUnread]
-  )
-  const unreadLowStockItems = React.useMemo(
-    () => filterUnread(lowStockItems.map(i => ({ ...i, type: 'inventory' as const }))),
-    [lowStockItems, filterUnread]
-  )
-  const unreadMessages = React.useMemo(
-    () => filterUnread(unreadPatientMessages.map(m => ({ ...m, type: 'message' as const }))),
-    [unreadPatientMessages, filterUnread]
-  )
-  const unreadChats = React.useMemo(
-    () => filterUnread(unreadChatMessages.map(c => ({ ...c, type: 'chat' as const }))),
-    [unreadChatMessages, filterUnread]
-  )
-
-  const notificationCount = unreadPendingAppointments.length + unreadLowStockItems.length + unreadMessages.length + unreadChats.length
+  }, [user?.id, refetchNotifications])
 
   // Handler to mark notification as read when clicked
-  const handleNotificationClick = (notificationId: string) => {
-    markAsRead(notificationId)
+  const handleNotificationClick = async (notificationId: string, link?: string | null) => {
+    await markAsRead(notificationId)
+    if (link) {
+      router.push(link)
+    }
   }
+
+  // Group notifications by type for display
+  const groupedNotifications = React.useMemo(() => {
+    const groups = {
+      appointments: unreadNotifications.filter(n => n.type.includes('APPOINTMENT')),
+      inventory: unreadNotifications.filter(n => n.type.includes('INVENTORY')),
+      messages: unreadNotifications.filter(n => n.type === 'MESSAGE_RECEIVED'),
+      chats: unreadNotifications.filter(n => n.type === 'CHAT_MESSAGE'),
+      other: unreadNotifications.filter(n => 
+        !n.type.includes('APPOINTMENT') && 
+        !n.type.includes('INVENTORY') && 
+        n.type !== 'MESSAGE_RECEIVED' && 
+        n.type !== 'CHAT_MESSAGE'
+      ),
+    }
+    return groups
+  }, [unreadNotifications])
 
   const getUserInitials = () => {
     if (!user) return 'U'
@@ -235,113 +222,135 @@ export default function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl hover:bg-accent/10 transition-all duration-300">
                   <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-xs text-white font-bold shadow-lg animate-pulse">
-                      {notificationCount}
+                      {unreadCount}
                     </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 sm:w-80">
+              <DropdownMenuContent align="end" className="w-72 sm:w-80 max-h-[500px] overflow-y-auto">
                 <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {unreadPendingAppointments.length > 0 && (
-                  <>
-                    {unreadPendingAppointments.map((appt) => (
-                      <DropdownMenuItem key={appt.id} asChild>
-                        <Link 
-                          href="/appointments" 
-                          className="flex items-start gap-2 p-3"
-                          onClick={() => handleNotificationClick(appt.id)}
-                        >
-                          <Clock className="mt-1 h-4 w-4 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm">{t('notification.pending_appointment')}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {appt.patient} - {appt.type}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {unreadChats.length > 0 && (
-                  <>
-                    {unreadChats.map((msg) => (
-                      <DropdownMenuItem key={msg.id} asChild>
-                        <Link 
-                          href="/admin/chats" 
-                          className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40"
-                          onClick={() => handleNotificationClick(msg.id)}
-                        >
-                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 محادثة جديدة</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {msg.conversation.patientName}: {msg.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(msg.createdAt).toLocaleTimeString('ar-EG', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {unreadMessages.length > 0 && (
-                  <>
-                    {unreadMessages.map((msg) => (
-                      <DropdownMenuItem key={msg.id} asChild>
-                        <Link 
-                          href="/admin/chats" 
-                          className="flex items-start gap-2 p-3"
-                          onClick={() => handleNotificationClick(msg.id)}
-                        >
-                          <Bell className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm">رسالة جديدة من مريض</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {msg.patientName}: {msg.subject}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(msg.createdAt).toLocaleTimeString('ar-EG', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {unreadLowStockItems.length > 0 && (
-                  <>
-                    {unreadLowStockItems.map((item) => (
-                      <DropdownMenuItem key={item.id} asChild>
-                        <Link 
-                          href="/inventory" 
-                          className="flex items-start gap-2 p-3"
-                          onClick={() => handleNotificationClick(item.id)}
-                        >
-                          <Package className="mt-1 h-4 w-4 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm">{t('notification.low_stock_alert')}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {item.name} - {t('inventory.stock')}: {item.stock}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {notificationCount === 0 && (
+                
+                {/* Appointment Notifications */}
+                {groupedNotifications.appointments.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Clock className="mt-1 h-4 w-4 flex-shrink-0 text-orange-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {/* Chat Notifications */}
+                {groupedNotifications.chats.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40 cursor-pointer"
+                  >
+                    <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {/* Message Notifications */}
+                {groupedNotifications.messages.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Bell className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {/* Inventory Notifications */}
+                {groupedNotifications.inventory.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Package className="mt-1 h-4 w-4 flex-shrink-0 text-red-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {/* Other Notifications */}
+                {groupedNotifications.other.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Bell className="mt-1 h-4 w-4 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {unreadCount === 0 && (
                   <DropdownMenuItem disabled className="p-3">
                     {t('header.no_notifications')}
                   </DropdownMenuItem>

@@ -58,6 +58,9 @@ model User {
 
   // Optional staff linkage for employees
   staff           Staff?
+  
+  // User notifications
+  notifications   Notification[]
 }
 
 model CollectionDoc {
@@ -406,4 +409,47 @@ model ClinicSettings {
   allowOnlineBooking   Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model Notification {
+  id              String              @id @default(uuid())
+  userId          String
+  type            NotificationType
+  title           String
+  message         String
+  relatedId       String?             // ID of related entity (appointment, inventory, message, chat)
+  relatedType     String?             // Type of related entity
+  link            String?             // Navigation link when clicked
+  isRead          Boolean             @default(false)
+  readAt          DateTime?
+  priority        NotificationPriority @default(NORMAL)
+  metadata        Json?               // Additional data (patient name, stock level, etc.)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([type])
+}
+
+enum NotificationType {
+  APPOINTMENT_PENDING
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_CANCELLED
+  INVENTORY_LOW_STOCK
+  INVENTORY_OUT_OF_STOCK
+  MESSAGE_RECEIVED
+  CHAT_MESSAGE
+  SYSTEM
+  REMINDER
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
