@@ -91,9 +91,16 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const { t, language, setLanguage, isRTL, direction } = useLanguage();
   const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
   const [chatReplies, setChatReplies] = React.useState<any[]>([]);
+  const [readNotificationIds, setReadNotificationIds] = React.useState<Set<string>>(new Set());
 
-  // Use notification hook to track read status
-  const { markAsRead, filterUnread } = useNotifications(user?.id);
+  // Mark notification as read (simple local state for patient)
+  const markAsRead = React.useCallback((id: string) => {
+    setReadNotificationIds(prev => new Set([...prev, id]));
+  }, []);
+
+  const filterUnread = React.useCallback((items: any[]) => {
+    return items.filter(item => !readNotificationIds.has(item.id));
+  }, [readNotificationIds]);
 
   React.useEffect(() => {
     async function fetchNotifications() {
@@ -382,7 +389,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                 )}
                 {unreadStaffReplies.length > 0 && (
                   <>
-                    {unreadStaffReplies.map((reply) => (
+                    {unreadStaffReplies.map((reply: any) => (
                       <DropdownMenuItem key={reply.id} asChild>
                         <Link 
                           href="/patient-messages" 

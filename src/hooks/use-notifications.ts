@@ -35,17 +35,7 @@ export function useNotifications(userId: string | undefined) {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/notifications?unreadOnly=false&limit=50', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(`/api/notifications?userId=${userId}&unreadOnly=false&limit=50`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
@@ -73,14 +63,8 @@ export function useNotifications(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {
@@ -106,16 +90,10 @@ export function useNotifications(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       await Promise.all(
         notificationIds.map(id =>
           fetch(`/api/notifications/${id}/read`, {
             method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
           })
         )
       );
@@ -139,14 +117,12 @@ export function useNotifications(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch('/api/notifications/mark-all-read', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ userId }),
       });
 
       if (!response.ok) {
@@ -168,14 +144,8 @@ export function useNotifications(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {

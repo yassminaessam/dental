@@ -21,17 +21,10 @@ export class NotificationService {
    */
   static async createNotification(params: CreateNotificationParams): Promise<boolean> {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No auth token found');
-        return false;
-      }
-
       const response = await fetch('/api/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(params),
       });

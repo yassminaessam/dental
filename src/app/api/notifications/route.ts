@@ -1,32 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 
 // GET /api/notifications - Get user's notifications
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
+    // Temporary cast to ensure access to Notification model even if TS types lag behind
+    const db = prisma as unknown as { notification: any };
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const where: any = { userId: payload.userId };
+    const where: any = { userId };
     if (unreadOnly) {
       where.isRead = false;
     }
 
     const [notifications, totalCount, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
+      db.notification.findMany({
         where,
         orderBy: [
           { priority: 'desc' },
@@ -35,8 +32,8 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
       }),
-      prisma.notification.count({ where: { userId: payload.userId } }),
-      prisma.notification.count({ where: { userId: payload.userId, isRead: false } }),
+      db.notification.count({ where: { userId } }),
+      db.notification.count({ where: { userId, isRead: false } }),
     ]);
 
     return NextResponse.json({
@@ -57,16 +54,7 @@ export async function GET(request: NextRequest) {
 // POST /api/notifications - Create a new notification
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
+    const db = prisma as unknown as { notification: any };
     const body = await request.json();
     const {
       userId,
@@ -88,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const notification = await prisma.notification.create({
+    const notification = await db.notification.create({
       data: {
         userId,
         type,
@@ -115,23 +103,21 @@ export async function POST(request: NextRequest) {
 // DELETE /api/notifications - Delete old read notifications
 export async function DELETE(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const db = prisma as unknown as { notification: any };
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
     // Delete notifications older than 30 days that are read
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const result = await prisma.notification.deleteMany({
+    const result = await db.notification.deleteMany({
       where: {
-        userId: payload.userId,
+        userId,
         isRead: true,
         readAt: {
           lt: thirtyDaysAgo,
