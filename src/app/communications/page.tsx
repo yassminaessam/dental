@@ -97,11 +97,37 @@ export default function CommunicationsPage() {
   
   const handleSendMessage = async (data: any) => {
     try {
+      // Show loading toast
+      toast({
+        title: t('communications.sending_email'),
+        description: t('common.please_wait'),
+      });
+
+      // Send actual email via API
+      const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: data.patientEmail,
+          subject: data.subject,
+          message: data.message,
+          patientName: data.patient,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.error || 'Failed to send email');
+      }
+
+      const emailResult = await emailResponse.json();
+
+      // Save message record to database
       const newMessage: Message = {
         id: `MSG-${Date.now()}`,
         patient: data.patient,
-        type: data.type,
-        status: 'Sent',
+        type: 'Email',
+        status: 'Delivered',
         sent: new Date().toISOString(),
         date: new Date().toLocaleDateString(),
         subject: data.subject,
@@ -109,17 +135,24 @@ export default function CommunicationsPage() {
         subContent: data.message,
         snippet: data.message.substring(0, 50) + '...',
         fullMessage: data.message,
-        category: 'other', // Default category for staff-initiated messages
+        category: 'other',
         priority: 'normal',
       };
+      
       await setDocument('messages', newMessage.id, newMessage);
       setMessages(prev => [newMessage, ...prev]);
+      
       toast({
         title: t('communications.toast.message_sent'),
-        description: t('communications.toast.message_sent_desc'),
+        description: `${t('communications.toast.message_sent_desc')} (${emailResult.messageId})`,
       });
-    } catch (error) {
-      toast({ title: t('communications.toast.error_sending_message'), variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      toast({ 
+        title: t('communications.toast.error_sending_message'), 
+        description: error.message || 'Unknown error',
+        variant: 'destructive' 
+      });
     }
   };
 

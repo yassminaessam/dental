@@ -188,7 +188,7 @@ export default function LoginPage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col gap-4">
                 <Button type="submit" className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" disabled={isLoading}>
                   {isLoading ? (
                     <>
@@ -199,6 +199,11 @@ export default function LoginPage() {
                     'Sign In'
                   )}
                 </Button>
+                <Link href="/forgot-password" className="w-full">
+                  <Button type="button" variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary">
+                    Forgot your password?
+                  </Button>
+                </Link>
               </CardFooter>
             </form>
           </Card>

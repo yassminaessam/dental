@@ -61,6 +61,22 @@ model User {
   
   // User notifications
   notifications   Notification[]
+  
+  // Password reset tokens
+  passwordResets  PasswordReset[]
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+
+  @@index([token])
+  @@index([userId])
 }
 
 model CollectionDoc {

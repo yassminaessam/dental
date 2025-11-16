@@ -33,6 +33,19 @@ Copy these environment variables from your `.env.local` file to your Vercel dash
 16. **NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY**
 17. **STACK_SECRET_SERVER_KEY**
 
+### 📧 SMTP Email Variables (Required for email sending & password reset)
+
+18. **SMTP_HOST** - Your SMTP server (e.g., dental.englizyedu.com)
+19. **SMTP_PORT** - SMTP port (usually 465 for SSL)
+20. **SMTP_USER** - Your SMTP username/email
+21. **SMTP_PASSWORD** - Your SMTP password
+22. **SMTP_FROM_EMAIL** - Sender email address
+23. **SMTP_FROM_NAME** - Sender name (e.g., Cairo Dental Clinic)
+
+### 🌐 Application URL Variables (Required for password reset links)
+
+24. **NEXT_PUBLIC_BASE_URL** - Your production URL (e.g., https://dental-blush.vercel.app)
+
 ---
 
 ## 🎯 How to Add Variables in Vercel:

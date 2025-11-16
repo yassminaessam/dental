@@ -23,9 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown, Phone, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare as MessageSquareIcon } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { GenerateMessageAi } from './generate-message-ai';
 import { Patient } from '@/app/patients/page';
@@ -34,7 +36,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const messageSchema = z.object({
   patient: z.string({ required_error: 'communications.select_patient' }),
-  type: z.enum(['Email', 'SMS'], { required_error: 'communications.message_type' }),
   subject: z.string().min(1, 'communications.subject'),
   message: z.string().min(1, 'communications.message'),
 });
@@ -65,6 +66,7 @@ export function NewMessageDialog({
   const { t, isRTL } = useLanguage();
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
+  const [comboOpen, setComboOpen] = React.useState(false);
   
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen || setInternalOpen;
@@ -73,7 +75,6 @@ export function NewMessageDialog({
     resolver: zodResolver(messageSchema),
     defaultValues: {
       patient: '',
-      type: 'Email',
       subject: '',
       message: '',
     }
@@ -107,12 +108,10 @@ export function NewMessageDialog({
         message: initialData.originalMessage 
             ? `\n\n--- Original Message ---\n${initialData.originalMessage}`
             : '',
-        type: 'Email',
       });
     } else if (!isReply) {
       form.reset({
         patient: '',
-        type: 'Email',
         subject: '',
         message: '',
       });
@@ -125,9 +124,14 @@ export function NewMessageDialog({
     return patients.find(p => p.id === patientId)?.name || '';
   }, [patientId, patients]);
 
-  const onSubmit = (data: MessageFormData) => {
+  const onSubmit = async (data: MessageFormData) => {
     const patientDetails = patients.find(p => p.id === data.patient);
-    onSend({ ...data, patient: patientDetails?.name || 'Unknown Patient' });
+    onSend({ 
+      ...data, 
+      patient: patientDetails?.name || 'Unknown Patient',
+      patientEmail: patientDetails?.email || '',
+      type: 'Email' 
+    });
     form.reset();
     setOpen(false);
   };
@@ -167,61 +171,83 @@ export function NewMessageDialog({
               control={form.control}
               name="patient"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>{t('communications.patient')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isReply}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('communications.select_patient')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={comboOpen} onOpenChange={setComboOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          disabled={isReply}
+                          className={`w-full justify-between ${!field.value && 'text-muted-foreground'}`}
+                        >
+                          {field.value
+                            ? (() => {
+                                const selectedPatient = patients.find(p => p.id === field.value);
+                                return selectedPatient ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-semibold">
+                                      {selectedPatient.name.charAt(0)}
+                                    </div>
+                                    <div className={`flex flex-col items-start ${isRTL ? 'text-right' : 'text-left'}`}>
+                                      <span className="font-medium">{selectedPatient.name}</span>
+                                      {selectedPatient.phone && (
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                          <Phone className="h-3 w-3" />
+                                          {selectedPatient.phone}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : t('communications.select_patient');
+                              })()
+                            : t('communications.select_patient')}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[500px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder={t('communications.search_patient')} />
+                        <CommandList>
+                          <CommandEmpty>{t('communications.no_patient_found')}</CommandEmpty>
+                          <CommandGroup>
+                            {patients.map((patient) => (
+                              <CommandItem
+                                key={patient.id}
+                                value={`${patient.name} ${patient.phone || ''}`}
+                                onSelect={() => {
+                                  form.setValue('patient', patient.id);
+                                  setComboOpen(false);
+                                }}
+                                className="flex items-center gap-3 py-3"
+                              >
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                  {patient.name.charAt(0)}
+                                </div>
+                                <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                                  <div className="font-medium">{patient.name}</div>
+                                  {patient.phone && (
+                                    <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                      <Phone className="h-3 w-3" />
+                                      {patient.phone}
+                                    </div>
+                                  )}
+                                </div>
+                                <Check
+                                  className={`h-4 w-4 ${field.value === patient.id ? 'opacity-100' : 'opacity-0'}`}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage>
                     {(() => {
                       const err = form.formState.errors.patient;
-                      if (!err) return null;
-                      return t(String(err.message));
-                    })()}
-                  </FormMessage>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('communications.type')}</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="Email" id="r-email" />
-                        </FormControl>
-                        <FormLabel htmlFor="r-email">{t('communications.email')}</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="SMS" id="r-sms" />
-                        </FormControl>
-                        <FormLabel htmlFor="r-sms">{t('communications.sms')}</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage>
-                    {(() => {
-                      const err = form.formState.errors.type;
                       if (!err) return null;
                       return t(String(err.message));
                     })()}
