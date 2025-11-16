@@ -38,9 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, RotateCcw, Search, CheckCircle2, AlertCircle } from "lucide-react";
-import { setDocument } from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc, db } from '@/services/firestore';
 
 type ClinicSettings = {
   id: string;
@@ -86,48 +84,26 @@ export default function SettingsPage() {
   React.useEffect(() => {
     async function fetchSettings() {
       try {
-        const docRef = doc(db, "clinic-settings", "main");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const raw = (docSnap.data() as any) || {};
+        const response = await fetch('/api/admin/settings');
+        const data = await response.json();
+        
+        if (response.ok && data.settings) {
+          const raw = data.settings;
           const normalized: ClinicSettings = {
             ...initialSettings,
             ...raw,
-            phoneNumber: raw.phoneNumber ?? raw.phone ?? initialSettings.phoneNumber,
             appointmentDuration: String(raw.appointmentDuration ?? initialSettings.appointmentDuration),
             bookingLimit: String(raw.bookingLimit ?? initialSettings.bookingLimit),
           };
           setSettings(normalized);
           setOriginalSettings(normalized);
         } else {
-          // Auto-create defaults then refetch so UI reflects persisted values
-          await setDocument('clinic-settings', 'main', initialSettings);
-          try {
-            const again = await getDoc(docRef);
-            if (again.exists()) {
-              const raw = (again.data() as any) || {};
-              const normalized: ClinicSettings = {
-                ...initialSettings,
-                ...raw,
-                phoneNumber: raw.phoneNumber ?? raw.phone ?? initialSettings.phoneNumber,
-                appointmentDuration: String(raw.appointmentDuration ?? initialSettings.appointmentDuration),
-                bookingLimit: String(raw.bookingLimit ?? initialSettings.bookingLimit),
-              };
-              setSettings(normalized);
-              setOriginalSettings(normalized);
-            } else {
-              setSettings(initialSettings);
-              setOriginalSettings(initialSettings);
-            }
-          } catch (refetchErr) {
-            console.warn('Refetch after create failed:', refetchErr);
-            setSettings(initialSettings);
-            setOriginalSettings(initialSettings);
-          }
+          setSettings(initialSettings);
+          setOriginalSettings(initialSettings);
         }
-  } catch (error) {
-    console.warn('Failed to fetch settings:', error);
-    toast({ title: t('settings.toast.error_fetching'), variant: "destructive" });
+      } catch (error) {
+        console.warn('Failed to fetch settings:', error);
+        toast({ title: t('settings.toast.error_fetching'), variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -196,13 +172,20 @@ export default function SettingsPage() {
     if (!validateSettings()) return;
 
     try {
-      await setDocument('clinic-settings', 'main', settings);
-      setOriginalSettings(settings);
-      toast({
-        title: "Auto-saved",
-        description: "Your changes have been automatically saved",
-        duration: 2000,
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
       });
+
+      if (response.ok) {
+        setOriginalSettings(settings);
+        toast({
+          title: "Auto-saved",
+          description: "Your changes have been automatically saved",
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.warn('Auto-save failed:', error);
     }
@@ -233,12 +216,23 @@ export default function SettingsPage() {
 
     setSaving(true);
     try {
-      await setDocument('clinic-settings', 'main', settings);
-      setOriginalSettings(settings);
-      toast({
-        title: t('settings.toast.settings_saved'),
-        description: t('settings.toast.settings_saved_desc'),
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setOriginalSettings(settings);
+        toast({
+          title: t('settings.toast.settings_saved'),
+          description: t('settings.toast.settings_saved_desc'),
+        });
+      } else {
+        toast({ title: data.error || t('settings.toast.error_saving'), variant: "destructive" });
+      }
     } catch (error) {
       toast({ title: t('settings.toast.error_saving'), variant: "destructive" });
     } finally {
@@ -258,14 +252,23 @@ export default function SettingsPage() {
   const handleResetToDefaults = async () => {
     setSaving(true);
     try {
-      await setDocument('clinic-settings', 'main', initialSettings);
-      setSettings(initialSettings);
-      setOriginalSettings(initialSettings);
-      setShowResetDialog(false);
-      toast({
-        title: "Reset to Defaults",
-        description: "All settings have been restored to default values",
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialSettings),
       });
+
+      if (response.ok) {
+        setSettings(initialSettings);
+        setOriginalSettings(initialSettings);
+        setShowResetDialog(false);
+        toast({
+          title: "Reset to Defaults",
+          description: "All settings have been restored to default values",
+        });
+      } else {
+        toast({ title: "Error resetting settings", variant: "destructive" });
+      }
     } catch (error) {
       toast({ title: "Error resetting settings", variant: "destructive" });
     } finally {
@@ -307,13 +310,13 @@ export default function SettingsPage() {
                 {hasUnsavedChanges && (
                   <span className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50 px-4 py-2 rounded-full border-2 border-amber-300 dark:border-amber-700 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30 animate-bounce">
                     <AlertCircle className="h-4 w-4 animate-pulse" />
-                    <span className="font-semibold">Unsaved changes</span>
+                    <span className="font-semibold">{t('settings.unsaved_changes')}</span>
                   </span>
                 )}
               </div>
               <p className="text-base text-muted-foreground font-medium flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></span>
-                Manage your clinic settings and preferences
+                {t('settings.subtitle')}
               </p>
             </div>
             <div className="flex gap-3 flex-wrap items-center">
@@ -325,7 +328,7 @@ export default function SettingsPage() {
                 className="gap-2 border-2 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-300 hover:scale-105 hover:shadow-lg group"
               >
                 <RotateCcw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
-                <span className="font-semibold">Reset</span>
+                <span className="font-semibold">{t('settings.reset')}</span>
               </Button>
               <Button 
                 onClick={() => setShowResetDialog(true)}
@@ -335,7 +338,7 @@ export default function SettingsPage() {
                 className="gap-2 border-2 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-300 hover:scale-105 hover:shadow-lg group"
               >
                 <Database className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <span className="font-semibold">Reset to Defaults</span>
+                <span className="font-semibold">{t('settings.reset_to_defaults')}</span>
               </Button>
               <Button 
                 onClick={handleSaveChanges} 
@@ -347,7 +350,7 @@ export default function SettingsPage() {
                 {saving ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="font-bold">Saving...</span>
+                    <span className="font-bold">{t('settings.saving')}</span>
                   </>
                 ) : (
                   <>
@@ -366,7 +369,7 @@ export default function SettingsPage() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover:text-blue-500 transition-colors duration-300" />
               <Input
                 type="text"
-                placeholder="Search settings..."
+                placeholder={t('settings.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-6 text-base border-2 border-muted hover:border-blue-300 dark:hover:border-blue-700 focus:border-blue-500 dark:focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-background/80 backdrop-blur-sm"
@@ -386,7 +389,7 @@ export default function SettingsPage() {
               >
                 <Building className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.clinic')}</span>
-                <span className="sm:hidden">Clinic</span>
+                <span className="sm:hidden">{t('settings.tabs.clinic')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="users" 
@@ -394,7 +397,7 @@ export default function SettingsPage() {
               >
                 <Users className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.users')}</span>
-                <span className="sm:hidden">Users</span>
+                <span className="sm:hidden">{t('settings.tabs.users')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="notifications" 
@@ -402,7 +405,7 @@ export default function SettingsPage() {
               >
                 <Bell className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.notifications')}</span>
-                <span className="sm:hidden">Notify</span>
+                <span className="sm:hidden">{t('settings.tabs.notifications')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="security" 
@@ -410,7 +413,7 @@ export default function SettingsPage() {
               >
                 <Shield className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.security')}</span>
-                <span className="sm:hidden">Security</span>
+                <span className="sm:hidden">{t('settings.tabs.security')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="backup" 
@@ -418,7 +421,7 @@ export default function SettingsPage() {
               >
                 <Database className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.backup')}</span>
-                <span className="sm:hidden">Backup</span>
+                <span className="sm:hidden">{t('settings.tabs.backup')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="appearance" 
@@ -426,7 +429,7 @@ export default function SettingsPage() {
               >
                 <Palette className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:inline">{t('settings.tabs.appearance')}</span>
-                <span className="sm:hidden">Theme</span>
+                <span className="sm:hidden">{t('settings.tabs.appearance')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -448,7 +451,7 @@ export default function SettingsPage() {
                 </CardTitle>
                 <p className="text-sm text-muted-foreground font-medium pl-16 flex items-center gap-2">
                   <span className="inline-block w-1 h-1 rounded-full bg-blue-500"></span>
-                  Basic information about your dental clinic
+                  {t('settings.clinic.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
@@ -541,7 +544,7 @@ export default function SettingsPage() {
                   {t('settings.clinic.appointment_settings')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground font-medium pl-5">
-                  Configure appointment scheduling preferences
+                  {t('settings.clinic.appointment_subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
@@ -600,7 +603,7 @@ export default function SettingsPage() {
                   {t('settings.users.title')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Manage user access and authentication settings
+                  {t('settings.users.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -672,7 +675,7 @@ export default function SettingsPage() {
                   {t('settings.notifications.title')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Configure notification preferences and reminders
+                  {t('settings.notifications.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -753,7 +756,7 @@ export default function SettingsPage() {
                   {t('settings.security.title')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Manage security and compliance settings
+                  {t('settings.security.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -812,7 +815,7 @@ export default function SettingsPage() {
                   {t('settings.backup.title')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Configure backup and data recovery options
+                  {t('settings.backup.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-6">
@@ -879,7 +882,7 @@ export default function SettingsPage() {
                   {t('settings.appearance.title')}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Customize the look and feel of your dashboard
+                  {t('settings.appearance.subtitle')}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">

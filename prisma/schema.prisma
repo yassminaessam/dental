@@ -391,3 +391,19 @@ model PortalContent {
   @@index([type])
   @@index([active])
 }
+
+model ClinicSettings {
+  id                   String   @id @default("main")
+  clinicName           String   @default("")
+  phoneNumber          String   @default("")
+  email                String   @default("")
+  website              String   @default("")
+  address              String   @default("")
+  businessHours        String   @default("mon-fri-8-6")
+  timezone             String   @default("eastern")
+  appointmentDuration  String   @default("60")
+  bookingLimit         String   @default("90")
+  allowOnlineBooking   Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
