@@ -12,9 +12,13 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
+interface ExpensesByCategoryChartProps {
+    data: { name: string; value: number; color: string }[];
+}
+
+export default function ExpensesByCategoryChart({ data }: ExpensesByCategoryChartProps) {
   const { t } = useLanguage();
-  return {
+  const chartConfig: ChartConfig = {
     Salaries: { label: t('financial.category.salary'), color: "hsl(var(--chart-1))" },
     Supplies: { label: t('financial.category.supplies'), color: "hsl(var(--chart-2))" },
     Rent: { label: t('financial.category.rent'), color: "hsl(var(--chart-3))" },
@@ -22,15 +26,6 @@ function useChartConfig(): ChartConfig {
     Utilities: { label: t('financial.category.utilities'), color: "hsl(var(--chart-5))" },
     Other: { label: t('financial.category.other'), color: "hsl(var(--muted))" },
   } satisfies ChartConfig;
-}
-
-interface ExpensesByCategoryChartProps {
-    data: { name: string; value: number; color: string }[];
-}
-
-export default function ExpensesByCategoryChart({ data }: ExpensesByCategoryChartProps) {
-  const { t } = useLanguage();
-  const chartConfig = useChartConfig();
   const chartData = data.length > 0 ? data : [{ name: t('common.no_data'), value: 1, color: "hsl(var(--muted))" }];
   
   return (

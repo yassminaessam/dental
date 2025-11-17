@@ -234,11 +234,12 @@ export default function AdminContent() {
           promotion={editingPromotion}
           onSave={savePromotion}
           onCancel={() => { setShowPromotionForm(false); setEditingPromotion(null); }}
+          t={t}
         />
       )}
 
       {content && (
-        <PortalContentForm content={content} onSave={savePortalContent} canEdit={canEdit} />
+        <PortalContentForm content={content} onSave={savePortalContent} canEdit={canEdit} t={t} language={language} />
       )}
 
       <Card>
@@ -269,13 +270,14 @@ export default function AdminContent() {
 function PromotionForm({ 
   promotion, 
   onSave, 
-  onCancel 
+  onCancel,
+  t
 }: { 
   promotion: Promotion | null;
   onSave: (promotion: Omit<Promotion, 'id'> | Promotion) => void;
   onCancel: () => void;
+  t: (key: string) => string;
 }) {
-  const { t } = useLanguage();
   const [formData, setFormData] = React.useState({
     title: promotion?.title || '',
     description: promotion?.description || '',
@@ -352,13 +354,16 @@ function PromotionForm({
 function PortalContentForm({ 
   content, 
   onSave, 
-  canEdit 
+  canEdit,
+  t,
+  language
 }: { 
   content: PatientPortalContent;
   onSave: (content: PatientPortalContent) => void;
   canEdit: boolean;
+  t: (key: string) => string;
+  language: string;
 }) {
-  const { t } = useLanguage();
   const [formData, setFormData] = React.useState(content);
 
   const handleSubmit = (e: React.FormEvent) => {

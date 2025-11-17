@@ -32,7 +32,7 @@ export default function PendingAppointmentsManager({
   refreshTrigger, 
   onAppointmentUpdate 
 }: PendingAppointmentsManagerProps) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
@@ -264,6 +264,8 @@ export default function PendingAppointmentsManager({
                 onConfirm={handleConfirmAppointment}
                 onReject={handleRejectAppointment}
                 getUrgencyColor={getUrgencyColor}
+                t={t}
+                isRTL={isRTL}
               />
             );
           })}
@@ -281,7 +283,9 @@ function AppointmentCard({
   isLoading,
   onConfirm,
   onReject,
-  getUrgencyColor
+  getUrgencyColor,
+  t,
+  isRTL
 }: {
   appointment: Appointment;
   date: string;
@@ -290,8 +294,9 @@ function AppointmentCard({
   onConfirm: (id: string, doctor: string) => void;
   onReject: (id: string, reason: string) => void;
   getUrgencyColor: (urgency: string) => "default" | "destructive" | "outline" | "secondary";
+  t: (key: string) => string;
+  isRTL: boolean;
 }) {
-  const { t, isRTL } = useLanguage();
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);

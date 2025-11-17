@@ -24,9 +24,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const initialState: KpiSuggestionsState = {};
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: (key: string) => string }) {
   const { pending } = useFormStatus();
-  const { t } = useLanguage();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? (
@@ -138,7 +137,7 @@ export default function KpiSuggestions() {
           </div>
         </CardContent>
         <CardFooter className="flex-col items-start gap-4">
-          <SubmitButton />
+          <SubmitButton t={t} />
           {state?.error && !state.fieldErrors && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
           {state?.suggestions && (
             <div className="mt-4 w-full rounded-lg border bg-secondary/50 p-4" role="alert">

@@ -10,23 +10,18 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
-  const { t } = useLanguage();
-  return {
-    score: {
-      label: t('analytics.patient_satisfaction'),
-      color: "hsl(var(--chart-2))",
-    },
-  } satisfies ChartConfig;
-}
-
 interface PatientSatisfactionChartProps {
     data: { month: string; score: number; }[]
 }
 
 export default function PatientSatisfactionChart({ data }: PatientSatisfactionChartProps) {
   const { t } = useLanguage();
-  const chartConfig = useChartConfig();
+  const chartConfig: ChartConfig = {
+    score: {
+      label: t('analytics.patient_satisfaction'),
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig;
   if (!data || data.length === 0) {
     return (
       <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">
