@@ -28,7 +28,7 @@ interface ChatConversation {
 }
 
 export default function AdminChatsPage() {
-  const { isRTL } = useLanguage();
+  const { isRTL, t } = useLanguage();
   const [conversations, setConversations] = React.useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
