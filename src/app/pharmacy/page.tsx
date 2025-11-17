@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -272,7 +273,7 @@ export default function PharmacyPage() {
           supplier: 'PharmaPlus', // Default pharmaceutical supplier
           orderDate: new Date().toISOString().split('T')[0],
           deliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days
-          total: `EGP ${total.toLocaleString()}`,
+          total: formatEGP(total, true, language),
           status: 'Pending',
           items: [{
             itemId: medication.id,

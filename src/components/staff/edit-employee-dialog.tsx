@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { StaffMember } from '@/app/staff/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 
 type EmployeeFormData = {
   firstName: string;
@@ -102,7 +103,7 @@ interface EditEmployeeDialogProps {
 }
 
 export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: EditEmployeeDialogProps) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [hasExistingUser, setHasExistingUser] = React.useState(false);
@@ -246,7 +247,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
         phone: data.phone || '',
         role: data.role,
         hireDate: new Date(data.hireDate).toLocaleDateString(),
-        salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
+        salary: formatEGP(parseInt(data.salary), true, language),
         status: data.status,
         notes: data.notes || '',
       };

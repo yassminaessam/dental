@@ -72,7 +72,7 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
       
       toast({
         title: t('insurance.credit_applied'),
-        description: t('insurance.credit_applied_desc', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(approvedAmount), patient: claim.patient }),
+        description: t('insurance.credit_applied_desc', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(approvedAmount), patient: claim.patient }),
       });
     } catch (error) {
       toast({

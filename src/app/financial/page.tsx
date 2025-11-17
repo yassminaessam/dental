@@ -55,6 +55,7 @@ import ExpensesByCategoryChart from "@/components/financial/expenses-by-category
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
+import { formatEGP } from '@/lib/currency';
 import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -83,7 +84,7 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 export default function FinancialPage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -144,30 +145,30 @@ export default function FinancialPage() {
     return [
       {
         titleKey: 'financial.total_revenue',
-        value: `EGP ${revenue.toLocaleString()}`,
+        value: formatEGP(revenue, true, language),
         descriptionKey: 'financial.total_revenue_desc',
         icon: "TrendingUp",
       },
       {
         titleKey: 'financial.total_expenses',
-        value: `EGP ${expenses.toLocaleString()}`,
+        value: formatEGP(expenses, true, language),
         descriptionKey: 'financial.total_expenses_desc',
         icon: "TrendingDown",
       },
       {
         titleKey: 'financial.net_profit',
-        value: `EGP ${netProfit.toLocaleString()}`,
+        value: formatEGP(netProfit, true, language),
         descriptionKey: 'financial.net_profit_desc',
         icon: "DollarSign",
       },
       {
         titleKey: 'financial.pending_payments',
-        value: `EGP ${pending.toLocaleString()}`,
+        value: formatEGP(pending, true, language),
         descriptionKey: 'financial.pending_payments_desc',
         icon: "Wallet",
       },
     ];
-  }, [transactions]);
+  }, [transactions, language]);
   
   const expensesByCategory = React.useMemo(() => {
     const categoryTotals: Record<string, number> = {};

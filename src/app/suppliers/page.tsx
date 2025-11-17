@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -218,7 +219,7 @@ export default function SuppliersPage() {
         supplier: supplier.name,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        total: `EGP ${total.toLocaleString()}`,
+        total: formatEGP(total, true, language),
         status: 'Pending',
         items: orderItems
       };

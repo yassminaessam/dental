@@ -71,7 +71,7 @@ function TabSync({ onTab }: { onTab: (value: string) => void }) {
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
   const router = useRouter();
@@ -518,7 +518,7 @@ export default function PatientPortalPage() {
                           <TableRow key={request.id}>
                             <TableCell className="font-medium">{request.patient}</TableCell>
                             <TableCell>{request.doctor}</TableCell>
-                            <TableCell>{request.dateTime.toLocaleString()}</TableCell>
+                            <TableCell>{request.dateTime.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</TableCell>
                             <TableCell>{request.type}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatEGP } from '@/lib/currency';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -197,7 +198,7 @@ export default function PurchaseOrdersPage() {
         supplier: item.supplier,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        total: `EGP ${total.toLocaleString()}`,
+        total: formatEGP(total, true, language),
         status: 'Pending' as const,
         items: [{
           itemId: item.id,

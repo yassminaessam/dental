@@ -51,7 +51,7 @@ interface PatientPortalContent {
 export default function AdminContent() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [promotions, setPromotions] = React.useState<Promotion[]>([]);
   const [content, setPortalContent] = React.useState<PatientPortalContent | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -416,7 +416,7 @@ function PortalContentForm({
 
           {content.updatedAt && (
             <div className="text-sm text-gray-500 mt-4">
-              {t('patient_portal_admin.last_updated_prefix')}: {new Date(content.updatedAt).toLocaleString()} {t('patient_portal_admin.by')} {content.updatedBy}
+              {t('patient_portal_admin.last_updated_prefix')}: {new Date(content.updatedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')} {t('patient_portal_admin.by')} {content.updatedBy}
             </div>
           )}
         </form>

@@ -771,8 +771,8 @@ export default function BillingPage() {
                       <TableCell>{patient?.phone || t('common.na')}</TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
-                      <TableCell>{formatEGP(invoice.totalAmount)}</TableCell>
-                      <TableCell>{formatEGP(invoice.amountPaid)}</TableCell>
+                      <TableCell>{formatEGP(invoice.totalAmount, true, language)}</TableCell>
+                      <TableCell>{formatEGP(invoice.amountPaid, true, language)}</TableCell>
                       <TableCell>
                         <Badge
                           variant={

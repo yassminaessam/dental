@@ -21,6 +21,7 @@ import type { Invoice } from '@/app/billing/page';
 import type { Treatment } from '@/app/treatments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { formatEGP } from '@/lib/currency';
 
 const iconMap = {
   Users,
@@ -46,7 +47,7 @@ interface OverviewStatsProps {
 }
 
 export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = React.useState<StatItem[]>([
     { title: t('dashboard.total_patients'), value: "0", description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue", href: "/patients" },
@@ -102,7 +103,7 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
         setStats([
           { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue", href: "/patients" },
           { title: t('dashboard.todays_appointments'), value: `${todaysAppointments}`, description: t('dashboard.scheduled_today'), icon: "CalendarCheck", cardStyle: "metric-card-green", href: "/appointments" },
-          { title: t('dashboard.total_revenue'), value: `EGP ${totalRevenue.toLocaleString()}`, description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange", href: "/financial" },
+          { title: t('dashboard.total_revenue'), value: formatEGP(totalRevenue, true, language), description: t('dashboard.all_time_revenue'), icon: "DollarSign", cardStyle: "metric-card-orange", href: "/financial" },
           { title: t('dashboard.active_staff'), value: `${activeStaff}`, description: t('dashboard.currently_on_duty'), icon: "UserCheck", cardStyle: "metric-card-purple", href: "/staff" },
           { title: t('dashboard.pending_appointments'), value: `${pendingAppointments}`, description: t('dashboard.awaiting_confirmation'), icon: "Clock", cardStyle: "metric-card-orange", href: "/appointments" },
           { title: t('dashboard.completed_treatments'), value: `${completedTreatments}`, description: t('dashboard.finished_treatment_plans'), icon: "CheckCircle", cardStyle: "metric-card-green", href: "/treatments" },

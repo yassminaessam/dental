@@ -4,6 +4,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { formatEGP } from '@/lib/currency';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,7 +67,7 @@ export default function StaffPage() {
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   React.useEffect(() => {
     async function fetchStaff() {
@@ -115,7 +116,7 @@ export default function StaffPage() {
           email: data.email,
           phone: data.phone,
           schedule: 'Mon-Fri, 9-5',
-          salary: `EGP ${parseInt(data.salary).toLocaleString()}`,
+          salary: formatEGP(parseInt(data.salary), true, language),
           hireDate: new Date(data.hireDate).toISOString(),
           status: 'Active',
           userId: data.userId, // Link to user account if created

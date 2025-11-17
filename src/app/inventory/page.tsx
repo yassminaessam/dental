@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { formatEGP } from '@/lib/currency';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -210,7 +211,7 @@ export default function InventoryPage() {
         supplier: item.supplier,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        total: `EGP ${total.toLocaleString()}`,
+        total: formatEGP(total, true, language),
         status: 'Pending',
         items: [{
           itemId: item.id,

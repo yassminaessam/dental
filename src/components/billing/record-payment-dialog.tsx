@@ -64,7 +64,7 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
     if (data.amount > amountDue) {
         form.setError("amount", {
             type: "manual",
-            message: t('billing.payment_exceeds_due', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(amountDue) })
+            message: t('billing.payment_exceeds_due', { amount: new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(amountDue) })
         });
         return;
     }
@@ -77,7 +77,7 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
         <DialogHeader>
           <DialogTitle>{t('billing.record_payment_for_invoice')} {invoice.id}</DialogTitle>
           <DialogDescription>
-            {t('common.patient')}: {invoice.patient} | {t('billing.amount_due')}: {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' }).format(amountDue)}
+            {t('common.patient')}: {invoice.patient} | {t('billing.amount_due')}: {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(amountDue)}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

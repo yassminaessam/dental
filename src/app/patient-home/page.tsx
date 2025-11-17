@@ -486,7 +486,7 @@ export default function PatientHomePage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">{t('patient_pages.home.outstanding_balance')}</span>
                     <span className={`font-medium ${dashboardStats?.pendingAmount > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                      {formatEGP(dashboardStats?.pendingAmount || 0)}
+                      {formatEGP(dashboardStats?.pendingAmount || 0, true, language)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -544,7 +544,7 @@ export default function PatientHomePage() {
                         </div>
                         <p className="text-sm text-gray-600 truncate">{msg.message}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {new Date(msg.createdAt).toLocaleString('en-US', {
+                          {new Date(msg.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',

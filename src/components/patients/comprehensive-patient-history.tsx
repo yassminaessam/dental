@@ -38,6 +38,7 @@ import { listCollection } from '@/lib/collections-client';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 
 // Add custom styles for visible scrollbars
 const scrollAreaStyles = `
@@ -84,7 +85,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
   const [historyData, setHistoryData] = React.useState<PatientHistoryData | null>(null);
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isRTL = false; // Force LTR layout as requested
   // Local date helpers
   const toValidDate = React.useCallback((value: any): Date | null => {
@@ -432,7 +433,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                 <Card className="p-2 sm:p-3 min-w-[120px] snap-start">
                   <div className="text-center">
                     <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-red-600 mx-auto mb-1" />
-                    <div className="text-sm sm:text-xl font-bold">EGP {stats.totalSpent.toLocaleString()}</div>
+                    <div className="text-sm sm:text-xl font-bold">{formatEGP(stats.totalSpent, true, language)}</div>
           <div className="text-xs text-muted-foreground">{t('patients.total_paid_label')}</div>
                   </div>
                 </Card>

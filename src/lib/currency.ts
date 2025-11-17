@@ -13,16 +13,19 @@ export function formatEGP(amount: number | string, showSymbol: boolean = true, l
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   
   if (isNaN(numAmount)) {
-    return showSymbol ? '0.00 جم' : '0.00';
+    const symbol = language === 'ar' ? 'جم' : 'EGP';
+    return showSymbol ? `0.00 ${symbol}` : '0.00';
   }
   
-  // Use Arabic numerals for Arabic language
-  const formatted = numAmount.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
+  // Use proper locale for number formatting
+  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
+  const formatted = numAmount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
   
-  return showSymbol ? `${formatted} جم` : formatted;
+  const symbol = language === 'ar' ? 'جم' : 'EGP';
+  return showSymbol ? `${formatted} ${symbol}` : formatted;
 }
 
 /**

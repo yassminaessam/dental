@@ -58,7 +58,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
   const patient = patients.find(p => p.name === invoice.patient);
-  const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
+  const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' });
 
   const InvoiceContent = () => (
      <div id={`printable-invoice-${invoice.id}`}>

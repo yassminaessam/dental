@@ -3,6 +3,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { formatEGP } from '@/lib/currency';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +77,7 @@ export type InsuranceProvider = {
 }
 
 export default function InsurancePage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [claims, setClaims] = React.useState<Claim[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -118,11 +119,11 @@ export default function InsurancePage() {
 
     return [
       { title: t('insurance.total_claims'), value: totalClaims, description: t('insurance.all_insurance_claims'), valueClassName: "" },
-      { title: t('insurance.approved_amount'), value: `EGP ${approvedAmount.toLocaleString()}`, description: t('insurance.approved_claims'), valueClassName: "text-green-600" },
+      { title: t('insurance.approved_amount'), value: formatEGP(approvedAmount, true, language), description: t('insurance.approved_claims'), valueClassName: "text-green-600" },
       { title: t('common.pending'), value: pendingClaims, description: t('insurance.pending_credit'), valueClassName: "text-orange-500" },
       { title: t('insurance.status.denied'), value: deniedClaims, description: t('insurance.action.denied'), valueClassName: "text-red-600" },
     ];
-  }, [claims, t]);
+  }, [claims, t, language]);
 
   const handleSaveClaim = async (data: any) => {
     try {

@@ -45,7 +45,7 @@ export default function CommunicationsPage() {
   const [loading, setLoading] = React.useState(true);
   const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const getStatusLabel = React.useCallback((status: string) => {
     switch (status) {
       case 'Sent':
@@ -453,7 +453,7 @@ export default function CommunicationsPage() {
                                 {getStatusLabel(message.status as unknown as string)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap font-medium text-muted-foreground">{new Date(message.sent).toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap font-medium text-muted-foreground">{new Date(message.sent).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</TableCell>
                           </TableRow>
                         ))
                       ) : (

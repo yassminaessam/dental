@@ -80,7 +80,7 @@ export default function AppointmentsPage() {
   const [appointmentToView, setAppointmentToView] = React.useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   const fetchAppointments = React.useCallback(async () => {
     setLoading(true);
@@ -419,7 +419,7 @@ export default function AppointmentsPage() {
                         ) : filteredAppointments.length > 0 ? (
                           filteredAppointments.map(appt => (
                             <TableRow key={appt.id}>
-                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.dateTime.toLocaleString()}</TableCell>
+                              <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.dateTime.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.patient}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.doctor}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.type}</TableCell>
