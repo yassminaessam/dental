@@ -14,14 +14,25 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { allHealthyDentalChart } from '@/lib/data/dental-chart-data';
 import type { Tooth, ToothCondition } from '@/app/dental-chart/page';
+import { cn } from '@/lib/utils';
 
-const dentalChartStats: { condition: ToothCondition; labelKey: string; color: string }[] = [
-  { condition: 'healthy', labelKey: 'dental_chart.healthy', color: 'bg-green-200' },
-  { condition: 'cavity', labelKey: 'dental_chart.cavity', color: 'bg-red-500' },
-  { condition: 'filling', labelKey: 'dental_chart.filling', color: 'bg-blue-500' },
-  { condition: 'crown', labelKey: 'dental_chart.crown', color: 'bg-purple-500' },
-  { condition: 'missing', labelKey: 'dental_chart.missing', color: 'bg-gray-400' },
-  { condition: 'root-canal', labelKey: 'dental_chart.root_canal', color: 'bg-yellow-500' },
+// Import category definitions from admin page for consistency
+const dentalChartCategories = [
+  'basic', 'bleaching', 'bridges', 'crowns', 'fillings', 'inlays', 'onlays', 
+  'extractions', 'root_canal', 'pulpotomy', 'posts_cores', 'implants', 
+  'veneers', 'scaling', 'gingivectomy', 'imaging', 'other'
+];
+
+const dentalChartStats: { condition: ToothCondition; labelKey: string; color: string; category: string }[] = [
+  // Basic
+  { condition: 'healthy', labelKey: 'dental_chart.healthy', color: 'bg-green-500', category: 'basic' },
+  { condition: 'cavity', labelKey: 'dental_chart.cavity', color: 'bg-red-500', category: 'basic' },
+  { condition: 'missing', labelKey: 'dental_chart.missing', color: 'bg-gray-500', category: 'basic' },
+  
+  // Other categories (abbreviated for brevity but include all conditions)
+  { condition: 'filling', labelKey: 'dental_chart.filling', color: 'bg-blue-500', category: 'fillings' },
+  { condition: 'crown', labelKey: 'dental_chart.crown', color: 'bg-purple-500', category: 'crowns' },
+  { condition: 'root-canal', labelKey: 'dental_chart.root_canal', color: 'bg-yellow-500', category: 'root_canal' },
 ];
 
 function PatientDentalChartContent() {
@@ -90,7 +101,16 @@ function PatientDentalChartContent() {
   };
 
   const handleToothSelect = (toothId: number) => {
-    setSelectedTooth(chartData[toothId] || null);
+    const tooth = chartData[toothId] || null;
+    setSelectedTooth(tooth);
+    
+    // Sync with category cards - highlight the category of the selected tooth
+    // But don't highlight healthy teeth (سليم) to avoid highlighting all healthy teeth
+    if (tooth && tooth.condition && tooth.condition !== 'healthy') {
+      setHighlightedCondition(tooth.condition);
+    } else {
+      setHighlightedCondition('all');
+    }
   };
 
   const teethCountByCondition = React.useMemo(() => {
@@ -132,33 +152,96 @@ function PatientDentalChartContent() {
         </div>
       ) : (
         <>
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 lg:grid-cols-6 mb-6">
-            {dentalChartStats.map((stat) => {
-const gradientClasses: Partial<Record<ToothCondition, string>> = {
-              'healthy': 'metric-card-green',
-                'cavity': 'metric-card-red',
-                'filling': 'metric-card-blue',
-                'crown': 'metric-card-purple',
-                'missing': 'metric-card-gray',
-                'root-canal': 'metric-card-orange'
+          {/* Category Cards Overview */}
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 mb-6">
+            {dentalChartCategories.map((categoryKey) => {
+              const categoryStats = dentalChartStats.filter(stat => stat.category === categoryKey);
+              
+              // Calculate category totals
+              const categoryTotal = categoryStats.reduce((sum, stat) => sum + (teethCountByCondition[stat.condition] || 0), 0);
+              const hasData = categoryTotal > 0;
+              
+              // Get the first condition from this category
+              const firstCondition = categoryStats.length > 0 ? categoryStats[0].condition : null;
+              const isHighlighted = firstCondition && highlightedCondition !== 'all' && categoryStats.some(s => s.condition === highlightedCondition);
+              
+              // Check if this category contains the selected tooth's condition
+              const isSelectedToothCategory = selectedTooth && categoryStats.some(s => s.condition === selectedTooth.condition);
+              
+              // Category color schemes
+              const categoryColors: Record<string, {bg: string, text: string, badge: string, glow: string, dot: string}> = {
+                'basic': {bg: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30', text: 'text-green-700 dark:text-green-300', badge: 'bg-gradient-to-r from-green-600 to-emerald-600', glow: 'from-green-500/20 to-emerald-500/20', dot: 'bg-green-500'},
+                'bleaching': {bg: 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30', text: 'text-sky-700 dark:text-sky-300', badge: 'bg-gradient-to-r from-sky-500 to-blue-600', glow: 'from-sky-500/20 to-blue-500/20', dot: 'bg-sky-400'},
+                'bridges': {bg: 'from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30', text: 'text-indigo-700 dark:text-indigo-300', badge: 'bg-gradient-to-r from-indigo-600 to-violet-600', glow: 'from-indigo-500/20 to-violet-500/20', dot: 'bg-indigo-500'},
+                'crowns': {bg: 'from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30', text: 'text-purple-700 dark:text-purple-300', badge: 'bg-gradient-to-r from-purple-600 to-fuchsia-600', glow: 'from-purple-500/20 to-fuchsia-500/20', dot: 'bg-purple-500'},
+                'fillings': {bg: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30', text: 'text-blue-700 dark:text-blue-300', badge: 'bg-gradient-to-r from-blue-600 to-cyan-600', glow: 'from-blue-500/20 to-cyan-500/20', dot: 'bg-blue-500'},
+                'inlays': {bg: 'from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30', text: 'text-teal-700 dark:text-teal-300', badge: 'bg-gradient-to-r from-teal-600 to-emerald-600', glow: 'from-teal-500/20 to-emerald-500/20', dot: 'bg-teal-500'},
+                'onlays': {bg: 'from-lime-50 to-green-50 dark:from-lime-950/30 dark:to-green-950/30', text: 'text-lime-700 dark:text-lime-300', badge: 'bg-gradient-to-r from-lime-600 to-green-600', glow: 'from-lime-500/20 to-green-500/20', dot: 'bg-lime-500'},
+                'extractions': {bg: 'from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30', text: 'text-orange-700 dark:text-orange-300', badge: 'bg-gradient-to-r from-orange-600 to-red-600', glow: 'from-orange-500/20 to-red-500/20', dot: 'bg-orange-500'},
+                'root_canal': {bg: 'from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30', text: 'text-yellow-700 dark:text-yellow-300', badge: 'bg-gradient-to-r from-yellow-600 to-amber-600', glow: 'from-yellow-500/20 to-amber-500/20', dot: 'bg-yellow-500'},
+                'pulpotomy': {bg: 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30', text: 'text-rose-700 dark:text-rose-300', badge: 'bg-gradient-to-r from-rose-600 to-pink-600', glow: 'from-rose-500/20 to-pink-500/20', dot: 'bg-rose-500'},
+                'posts_cores': {bg: 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30', text: 'text-amber-700 dark:text-amber-300', badge: 'bg-gradient-to-r from-amber-600 to-orange-600', glow: 'from-amber-500/20 to-orange-500/20', dot: 'bg-amber-500'},
+                'implants': {bg: 'from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/30', text: 'text-cyan-700 dark:text-cyan-300', badge: 'bg-gradient-to-r from-cyan-600 to-teal-600', glow: 'from-cyan-500/20 to-teal-500/20', dot: 'bg-cyan-500'},
+                'veneers': {bg: 'from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30', text: 'text-pink-700 dark:text-pink-300', badge: 'bg-gradient-to-r from-pink-600 to-rose-600', glow: 'from-pink-500/20 to-rose-500/20', dot: 'bg-pink-500'},
+                'scaling': {bg: 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30', text: 'text-emerald-700 dark:text-emerald-300', badge: 'bg-gradient-to-r from-emerald-600 to-teal-600', glow: 'from-emerald-500/20 to-teal-500/20', dot: 'bg-emerald-500'},
+                'gingivectomy': {bg: 'from-fuchsia-50 to-purple-50 dark:from-fuchsia-950/30 dark:to-purple-950/30', text: 'text-fuchsia-700 dark:text-fuchsia-300', badge: 'bg-gradient-to-r from-fuchsia-600 to-purple-600', glow: 'from-fuchsia-500/20 to-purple-500/20', dot: 'bg-fuchsia-500'},
+                'imaging': {bg: 'from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30', text: 'text-violet-700 dark:text-violet-300', badge: 'bg-gradient-to-r from-violet-600 to-indigo-600', glow: 'from-violet-500/20 to-indigo-500/20', dot: 'bg-violet-500'},
+                'other': {bg: 'from-stone-50 to-gray-50 dark:from-stone-950/30 dark:to-gray-950/30', text: 'text-stone-700 dark:text-stone-300', badge: 'bg-gradient-to-r from-stone-600 to-gray-600', glow: 'from-stone-500/20 to-gray-500/20', dot: 'bg-stone-500'},
+              };
+              
+              const colors = categoryColors[categoryKey] || categoryColors['other'];
+              
+              const handleCategoryClick = () => {
+                if (firstCondition) {
+                  const currentIndex = categoryStats.findIndex(s => s.condition === highlightedCondition);
+                  const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % categoryStats.length;
+                  setHighlightedCondition(categoryStats[nextIndex].condition);
+                }
               };
               
               return (
                 <Card 
-                  key={stat.condition}
-                  className={`relative overflow-hidden border-0 shadow-xl transition-all duration-500 cursor-pointer hover:scale-105 ${gradientClasses[stat.condition] || 'metric-card-blue'}`}
-                  onClick={() => setHighlightedCondition(stat.condition)}
+                  key={categoryKey}
+                  className={cn(
+                    "group/category relative overflow-hidden transition-all duration-500 cursor-pointer",
+                    "bg-gradient-to-br", colors.bg,
+                    "border-2 hover:border-4",
+                    hasData ? "shadow-lg hover:shadow-2xl border-transparent hover:scale-110" : "shadow-sm hover:shadow-lg opacity-50 hover:opacity-100 border-muted",
+                    isHighlighted && "ring-4 ring-offset-2 ring-indigo-500 scale-110 animate-pulse",
+                    isSelectedToothCategory && "ring-4 ring-offset-2 ring-yellow-400 scale-110 shadow-2xl animate-pulse"
+                  )}
+                  onClick={handleCategoryClick}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {/* Animated gradient overlay */}
+                  <div className={cn(
+                    "absolute inset-0 bg-gradient-to-br opacity-0 group-hover/category:opacity-100 transition-opacity duration-500",
+                    colors.glow
+                  )} />
                   
-                  <CardContent className="flex flex-col gap-2 p-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`h-3 w-3 rounded-full ${stat.color} flex-shrink-0 shadow-lg`}></span>
-                      <div className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{t(stat.labelKey)}</div>
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {teethCountByCondition[stat.condition] || 0}
+                  {/* Pulsing glow for active categories */}
+                  {hasData && (
+                    <div className={cn("absolute -inset-1 bg-gradient-to-br blur-xl opacity-30 group-hover/category:opacity-60 transition-opacity duration-500", colors.glow)} />
+                  )}
+                  
+                  <CardContent className="p-2 relative">
+                    {/* Category indicator dot */}
+                    <div className={cn("absolute top-1 right-1 w-2 h-2 rounded-full shadow-sm animate-pulse", colors.dot)} />
+                    
+                    <div className="flex flex-col items-center justify-center text-center min-h-[50px]">
+                      <h3 className={cn("text-xs font-bold mb-1 group-hover/category:scale-110 transition-transform duration-300 leading-tight", colors.text)}>
+                        {t(`dental_chart.category_${categoryKey}`)}
+                      </h3>
+                      {hasData ? (
+                        <span className={cn(
+                          "inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 text-sm font-bold text-white rounded-full shadow-md",
+                          "group-hover/category:scale-125 transition-transform duration-300",
+                          colors.badge
+                        )}>
+                          {categoryTotal}
+                        </span>
+                      ) : (
+                        <span className="text-lg font-bold text-muted-foreground">0</span>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
