@@ -28,7 +28,7 @@ interface ChatConversation {
 }
 
 export default function AdminChatsPage() {
-  const { isRTL, t } = useLanguage();
+  const { isRTL, t, language } = useLanguage();
   const [conversations, setConversations] = React.useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -132,7 +132,7 @@ export default function AdminChatsPage() {
               patientName: selectedConv.patientName,
               subject: `Re: ${((selectedConv.messages[0] as any)?.subject as string) || 'Reply'}`,
               message: messageText,
-              from: 'فريق الدعم',
+              from: t('page.admin_chats.support_team'),
             }),
           });
 
@@ -141,7 +141,7 @@ export default function AdminChatsPage() {
             setMessages((prev) => [...prev, {
               id: data.messageId,
               senderType: 'staff',
-              senderName: 'فريق الدعم',
+              senderName: t('page.admin_chats.support_team'),
               message: messageText,
               createdAt: new Date().toISOString(),
             }]);
@@ -157,7 +157,7 @@ export default function AdminChatsPage() {
             conversationId: selectedConversation,
             message: messageText,
             senderType: 'staff',
-            senderName: 'فريق الدعم',
+            senderName: t('page.admin_chats.support_team'),
             senderId: 'admin',
           }),
         });
@@ -248,7 +248,7 @@ export default function AdminChatsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{'< 2 دقيقة'}</div>
+              <div className="text-2xl font-bold">{t('page.admin_chats.avg_response_value')}</div>
               <p className="text-xs text-muted-foreground mt-1">{t('page.admin_chats.avg_response_desc')}</p>
             </CardContent>
           </Card>
@@ -263,7 +263,7 @@ export default function AdminChatsPage() {
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10">
                   <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
-                <CardTitle className="text-lg">المحادثات</CardTitle>
+                <CardTitle className="text-lg">{t('page.admin_chats.conversations')}</CardTitle>
                 {conversations.length > 0 && (
                   <Badge variant="secondary" className="ml-auto">
                     {conversations.length}
@@ -275,7 +275,7 @@ export default function AdminChatsPage() {
               {conversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6 text-center">
                   <MessageCircle className="h-12 w-12 mb-4 opacity-30" />
-                  <p className="text-sm">لا توجد محادثات بعد</p>
+                  <p className="text-sm">{t('page.admin_chats.no_conversations')}</p>
                 </div>
               ) : (
                 <div className="space-y-1 p-2">
@@ -300,7 +300,7 @@ export default function AdminChatsPage() {
                               <p className="font-bold text-sm truncate">{conv.patientName}</p>
                               {(conv as any).type === 'patient-message' && (
                                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                  رسالة
+                                  {t('page.admin_chats.message_label')}
                                 </Badge>
                               )}
                             </div>
@@ -313,22 +313,22 @@ export default function AdminChatsPage() {
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <Badge variant={conv.status === 'Active' ? 'default' : 'secondary'} className="text-xs">
-                              {conv.status === 'Active' ? 'نشط' : 'مغلق'}
+                              {conv.status === 'Active' ? t('page.admin_chats.active_status') : t('page.admin_chats.closed_status')}
                             </Badge>
                             <div className="text-xs text-muted-foreground text-left">
                               <div className="font-medium">
                                 {isToday 
-                                  ? 'اليوم'
+                                  ? t('page.admin_chats.today')
                                   : isYesterday 
-                                  ? 'أمس'
-                                  : messageDate.toLocaleDateString('ar-EG', {
+                                  ? t('page.admin_chats.yesterday')
+                                  : messageDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
                                       day: 'numeric',
                                       month: 'short'
                                     })
                                 }
                               </div>
                               <div className="text-xs opacity-70">
-                                {messageDate.toLocaleTimeString('ar-EG', {
+                                {messageDate.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
@@ -366,7 +366,7 @@ export default function AdminChatsPage() {
                       variant={selectedConv.status === 'Active' ? 'default' : 'secondary'}
                       className="shadow-sm"
                     >
-                      {selectedConv.status === 'Active' ? '🟢 نشط' : '⚫ مغلق'}
+                      {selectedConv.status === 'Active' ? `🟢 ${t('page.admin_chats.active_status')}` : `⚫ ${t('page.admin_chats.closed_status')}`}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -386,10 +386,10 @@ export default function AdminChatsPage() {
                           <div className="flex items-center justify-center my-4">
                             <div className="bg-white dark:bg-gray-800 px-4 py-1.5 rounded-full shadow-sm border text-xs font-medium text-muted-foreground">
                               {msgDate.toDateString() === new Date().toDateString() 
-                                ? 'اليوم'
+                                ? t('page.admin_chats.today')
                                 : msgDate.toDateString() === new Date(new Date().setDate(new Date().getDate() - 1)).toDateString()
-                                ? 'أمس'
-                                : msgDate.toLocaleDateString('ar-EG', {
+                                ? t('page.admin_chats.yesterday')
+                                : msgDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
@@ -424,7 +424,7 @@ export default function AdminChatsPage() {
                               msg.senderType === 'staff' ? "justify-end" : "justify-start"
                             )}>
                               <Clock className="h-3 w-3" />
-                              {msgDate.toLocaleTimeString('ar-EG', {
+                              {msgDate.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
@@ -441,7 +441,7 @@ export default function AdminChatsPage() {
                 <div className="border-t p-4 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
                   <div className="flex gap-2">
                     <Input
-                      placeholder="اكتب رسالتك..."
+                      placeholder={t('page.admin_chats.type_message')}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={handleKeyPress}
@@ -471,9 +471,9 @@ export default function AdminChatsPage() {
                   <MessageCircle className="h-20 w-20 relative opacity-30" />
                 </div>
                 <p className="text-xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                  اختر محادثة
+                  {t('page.admin_chats.select_conversation')}
                 </p>
-                <p className="text-sm max-w-xs">حدد محادثة من القائمة على اليمين للبدء في الرد على الرسائل</p>
+                <p className="text-sm max-w-xs">{t('page.admin_chats.select_conversation_desc')}</p>
               </div>
             )}
           </Card>
