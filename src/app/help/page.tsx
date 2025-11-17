@@ -64,44 +64,53 @@ export default function HelpPage() {
     keywords?: string[];
   };
 
-  const sections: SectionData[] = [
-    {
-      id: 'quickstart',
-      title: 'البدء السريع',
-      type: 'ordered',
-      items: [
-        'سجّل الدخول بحساب الأدمن أو أنشئ حساب أدمن من صفحة إنشاء الأدمن.',
-        'اختر اللغة المفضلة (عربي/إنجليزي) من شريط التطبيق.',
-        'ابدأ بإضافة الموظفين والموردين، ثم أضف المرضى والمواعيد.'
-      ],
-      screenshot: '/help/screenshot-login.svg',
-      caption: 'شكل توضيحي: شاشة تسجيل الدخول (صورة نموذجية).',
-      keywords: ['تسجيل', 'لغة', 'أدمن']
-    },
-    {
-      id: 'patients', title: 'المرضى', type: 'list',
-      items: [
-        'إضافة مريض: الاسم الأول، اسم العائلة، الهاتف، تاريخ الميلاد (البريد الإلكتروني اختياري).',
-        'تحرير بيانات المريض وعرض الملف والتاريخ المرضي والتأمين.'
-      ], screenshot: '/help/screenshot-patients.svg', caption: 'قائمة المرضى وإضافة مريض جديد.'
-    },
-    { id: 'appointments', title: 'المواعيد', type: 'list', items: ['إنشاء موعد للمريض وتخصيص الطبيب والوقت.', 'تعديل/إلغاء الموعد وإرسال تذكيرات.'], screenshot: '/help/screenshot-appointments.svg', caption: 'الجدول الزمني للمواعيد.' },
-    { id: 'treatments', title: 'العلاجات', type: 'list', items: ['بدء خطة علاج وإضافة إجراءات لكل سن.', 'تحديث حالة العلاج وربط الفاتورة.'], screenshot: '/help/screenshot-treatments.svg', caption: 'إدارة الإجراءات العلاجية.' },
-    { id: 'billing', title: 'الفوترة والمالية', type: 'list', items: ['إنشاء فاتورة من العلاجات أو من شاشة الفوترة.', 'تسجيل المدفوعات (كامل/جزئي) وطريقة الدفع.'], screenshot: '/help/screenshot-billing.svg', caption: 'إنشاء فاتورة وتحصيل المدفوعات.' },
-    { id: 'dental-chart', title: 'مخطط الأسنان', type: 'list', items: ['اختيار المريض لعرض حالة أسنانه التفصيلية.', 'النقر على أي سن لعرض التفاصيل وتحديث الحالة (سليم، تسوس، حشوة، تاج، مفقود، علاج جذور).', 'التصفية حسب الحالة لإبراز الأسنان ذات المشاكل.', 'عرض إحصائيات الأسنان حسب الحالة وتاريخ التحديثات.'], screenshot: '/help/screenshot-dental-chart.png', caption: 'مخطط الأسنان التفاعلي وإدارة الحالات.' },
-    { id: 'insurance', title: 'التأمين', type: 'list', items: ['إضافة مزوّد وربط المريض بالوثيقة.', 'إنشاء مطالبات ومتابعة حالتها.'], screenshot: '/help/screenshot-insurance.svg', caption: 'إدارة مزوّدي التأمين والمطالبات.' },
-    { id: 'inventory', title: 'المخزون', type: 'list', items: ['إضافة الأصناف وتحديد الحد الأدنى.', 'تسجّل الحركات واستلم تنبيهات النقص.'], screenshot: '/help/screenshot-inventory.svg', caption: 'مراقبة المخزون وطلبات الشراء.' },
-    { id: 'pharmacy', title: 'الصيدلية', type: 'list', items: ['إصدار وصفة بمعلومات الجرعة والمدة.', 'صرف الدواء وتسجيل الكميات المصروفة.'], screenshot: '/help/screenshot-pharmacy.svg', caption: 'الوصفات وصرف الأدوية.' },
-    { id: 'referrals', title: 'التحويلات', type: 'list', items: ['إضافة أخصائيين واستصدار تحويل من ملف المريض.', 'إرفاق مستندات/صور إن لزم.'], screenshot: '/help/screenshot-referrals.svg', caption: 'إدارة التحويلات للأخصائيين.' },
-    { id: 'communications', title: 'الاتصالات', type: 'list', items: ['إرسال تذكيرات وتعليمات ما بعد العلاج.', 'استخدام القوالب الجاهزة لتسريع العمل.'], screenshot: '/help/screenshot-communications.svg', caption: 'التواصل مع المرضى.' },
-    { id: 'staff', title: 'الموظفون', type: 'list', items: ['إضافة موظف (البريد الإلكتروني اختياري)، تحديد الدور وتاريخ التعيين.', 'تعديل الحالة والملاحظات.'], screenshot: '/help/screenshot-staff.svg', caption: 'إدارة الموظفين والأدوار.' },
-    { id: 'suppliers', title: 'الموردون', type: 'list', items: ['إضافة/تحرير مورد، وربط الأصناف لسهولة إعادة الطلب.'], screenshot: '/help/screenshot-suppliers.svg', caption: 'الموردون وربطهم بالمخزون.' },
-    { id: 'analytics', title: 'التقارير والتحليلات', type: 'list', items: ['عرض الإيرادات والزيارات والأداء بحسب الطبيب والفترة.', 'التصفية والتصدير عند الحاجة.'], screenshot: '/help/screenshot-analytics.svg', caption: 'لوحة التحليلات ونظرة الأداء.' },
-    { id: 'settings', title: 'الإعدادات', type: 'list', items: ['الهوية البصرية، اللغة/الاتجاه، والتكاملات.'], screenshot: '/help/screenshot-settings.svg', caption: 'إعدادات النظام واللغة.' },
-    { id: 'permissions', title: 'الصلاحيات', type: 'list', items: ['تحديث صلاحيات الأدمن والأدوار (طبيب/استقبال/مدير...).'], screenshot: '/help/screenshot-permissions.svg', caption: 'التحكم في الأذونات حسب الدور.' },
-    { id: 'portal', title: 'بوابة المريض', type: 'list', items: ['اطلاع المريض على مواعيده وفواتيره وربما حجز المواعيد.'], screenshot: '/help/screenshot-portal.svg', caption: 'تجربة بوابة المريض.' },
-    { id: 'notes', title: 'ملاحظات عملية', type: 'list', items: ['الحقول المطلوبة مميزة بنجمة. البريد الإلكتروني اختياري في أغلب النماذج (لا يشمل تسجيل الدخول).', 'استخدم البحث والتصفية للجداول الكبيرة.', 'عند ظهور رسالة خطأ، راجع الحقل المظلل أو المحتوى المفقود.'] }
-  ];
+  const getSectionData = React.useCallback((sectionId: string): SectionData => {
+    const sectionMap: Record<string, Omit<SectionData, 'title' | 'items' | 'caption'>> = {
+      'quickstart': { id: 'quickstart', type: 'ordered' as const, screenshot: '/help/screenshot-login.svg', keywords: ['login', 'language', 'admin', 'تسجيل', 'لغة', 'أدمن'] },
+      'patients': { id: 'patients', type: 'list' as const, screenshot: '/help/screenshot-patients.svg' },
+      'appointments': { id: 'appointments', type: 'list' as const, screenshot: '/help/screenshot-appointments.svg' },
+      'treatments': { id: 'treatments', type: 'list' as const, screenshot: '/help/screenshot-treatments.svg' },
+      'billing': { id: 'billing', type: 'list' as const, screenshot: '/help/screenshot-billing.svg' },
+      'dental_chart': { id: 'dental_chart', type: 'list' as const, screenshot: '/help/screenshot-dental-chart.png' },
+      'insurance': { id: 'insurance', type: 'list' as const, screenshot: '/help/screenshot-insurance.svg' },
+      'inventory': { id: 'inventory', type: 'list' as const, screenshot: '/help/screenshot-inventory.svg' },
+      'pharmacy': { id: 'pharmacy', type: 'list' as const, screenshot: '/help/screenshot-pharmacy.svg' },
+      'referrals': { id: 'referrals', type: 'list' as const, screenshot: '/help/screenshot-referrals.svg' },
+      'communications': { id: 'communications', type: 'list' as const, screenshot: '/help/screenshot-communications.svg' },
+      'staff': { id: 'staff', type: 'list' as const, screenshot: '/help/screenshot-staff.svg' },
+      'suppliers': { id: 'suppliers', type: 'list' as const, screenshot: '/help/screenshot-suppliers.svg' },
+      'analytics': { id: 'analytics', type: 'list' as const, screenshot: '/help/screenshot-analytics.svg' },
+      'settings': { id: 'settings', type: 'list' as const, screenshot: '/help/screenshot-settings.svg' },
+      'permissions': { id: 'permissions', type: 'list' as const, screenshot: '/help/screenshot-permissions.svg' },
+      'portal': { id: 'portal', type: 'list' as const, screenshot: '/help/screenshot-portal.svg' },
+      'notes': { id: 'notes', type: 'list' as const }
+    };
+
+    const getItems = (section: string): string[] => {
+      const itemCounts: Record<string, number> = {
+        quickstart: 3, patients: 2, appointments: 2, treatments: 2, billing: 2,
+        dental_chart: 4, insurance: 2, inventory: 2, pharmacy: 2, referrals: 2,
+        communications: 2, staff: 2, suppliers: 1, analytics: 2, settings: 1,
+        permissions: 1, portal: 1, notes: 3
+      };
+      const count = itemCounts[section] || 1;
+      return Array.from({ length: count }, (_, i) => t(`help.section.${section}.item${i + 1}`));
+    };
+
+    const base = sectionMap[sectionId] || { id: sectionId, type: 'list' as const };
+    return {
+      ...base,
+      title: t(`help.section.${sectionId}`),
+      items: getItems(sectionId),
+      caption: t(`help.section.${sectionId}.caption`)
+    };
+  }, [t]);
+
+  const sections: SectionData[] = React.useMemo(() => [
+    'quickstart', 'patients', 'appointments', 'treatments', 'billing', 'dental_chart',
+    'insurance', 'inventory', 'pharmacy', 'referrals', 'communications', 'staff',
+    'suppliers', 'analytics', 'settings', 'permissions', 'portal', 'notes'
+  ].map(getSectionData), [getSectionData]);
 
   const filtered = query.trim()
     ? sections.filter(s =>
@@ -155,31 +164,31 @@ export default function HelpPage() {
   const helpStats = React.useMemo(() => {
     return [
       { 
-        title: 'الأقسام الشاملة', 
+        title: t('page.help.sections'), 
         value: sections.length, 
-        description: 'أدلة تفصيلية لكل ميزة',
+        description: t('page.help.sections_desc'),
         icon: 'BookOpen'
       },
       { 
-        title: 'دعم فوري', 
+        title: t('page.help.instant_support'), 
         value: '24/7', 
-        description: 'متاح طوال الأسبوع',
+        description: t('page.help.instant_support_desc'),
         icon: 'HeadphonesIcon'
       },
       { 
-        title: 'وقت الاستجابة', 
-        value: '< 1h', 
-        description: 'رد سريع على استفساراتك',
+        title: t('page.help.response_time'), 
+        value: t('page.help.response_time_value'), 
+        description: t('page.help.response_time_desc'),
         icon: 'Clock'
       },
       { 
-        title: 'معدل الحل', 
-        value: '98%', 
-        description: 'حل المشكلات من أول مرة',
+        title: t('page.help.resolution_rate'), 
+        value: t('page.help.resolution_rate_value'), 
+        description: t('page.help.resolution_rate_desc'),
         icon: 'CheckCircle2'
       },
     ];
-  }, [sections.length]);
+  }, [sections.length, t]);
 
   return (
     <DashboardShell>
@@ -222,7 +231,7 @@ export default function HelpPage() {
                   className="gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 print:hidden"
                 >
                   <Printer className="h-4 w-4" />
-                  <span>طباعة</span>
+                  <span>{t('page.help.print')}</span>
                 </Button>
                 <Button 
                   onClick={() => router.push('/')}
@@ -230,7 +239,7 @@ export default function HelpPage() {
                   className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <LifeBuoy className="h-4 w-4" />
-                  <span>التطبيق</span>
+                  <span>{t('page.help.app')}</span>
                 </Button>
               </div>
             </div>
@@ -291,7 +300,7 @@ export default function HelpPage() {
               <div className="relative flex items-center bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-blue-300 dark:hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                 <Search className="absolute right-4 h-5 w-5 text-muted-foreground group-hover/search:text-blue-500 transition-colors duration-300" />
                 <input
-                  placeholder="ابحث في الأدلة والأسئلة..."
+                  placeholder={t('page.help.search_placeholder')}
                   className="w-full rounded-xl bg-transparent px-12 py-4 text-sm md:text-base focus:outline-none"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -321,14 +330,14 @@ export default function HelpPage() {
                 <div className="inline-block p-4 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 text-white shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
                   <Zap className="h-7 w-7" />
                 </div>
-                <span className="text-xs font-bold text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">مجاني</span>
+                <span className="text-xs font-bold text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">{t('page.help.free')}</span>
               </div>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">البدء السريع</CardTitle>
-              <CardDescription className="text-sm md:text-base font-medium">تعلم الأساسيات في 5 دقائق فقط</CardDescription>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{t('page.help.quickstart')}</CardTitle>
+              <CardDescription className="text-sm md:text-base font-medium">{t('page.help.quickstart_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
               <a href="#quickstart" className="inline-flex items-center gap-2 text-sm md:text-base text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold group-hover:gap-3 transition-all duration-300">
-                <span>ابدأ الآن</span>
+                <span>{t('page.help.quickstart_cta')}</span>
                 <span className="text-xl">→</span>
               </a>
             </CardContent>
@@ -344,14 +353,14 @@ export default function HelpPage() {
                 <div className="inline-block p-4 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 text-white shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
                   <FileText className="h-7 w-7" />
                 </div>
-                <span className="text-xs font-bold text-purple-500 bg-purple-100 dark:bg-purple-900/30 px-3 py-1 rounded-full">16 قسم</span>
+                <span className="text-xs font-bold text-purple-500 bg-purple-100 dark:bg-purple-900/30 px-3 py-1 rounded-full">{t('page.help.sections_count')}</span>
               </div>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">الأدلة التفصيلية</CardTitle>
-              <CardDescription className="text-sm md:text-base font-medium">شروحات مصورة لكل ميزة</CardDescription>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">{t('page.help.guides')}</CardTitle>
+              <CardDescription className="text-sm md:text-base font-medium">{t('page.help.guides_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
               <a href="#patients" className="inline-flex items-center gap-2 text-sm md:text-base text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-bold group-hover:gap-3 transition-all duration-300">
-                <span>استكشف الأدلة</span>
+                <span>{t('page.help.guides_cta')}</span>
                 <span className="text-xl">→</span>
               </a>
             </CardContent>
@@ -367,19 +376,19 @@ export default function HelpPage() {
                 <div className="inline-block p-4 rounded-2xl bg-gradient-to-br from-green-500 via-green-600 to-teal-600 text-white shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
                   <MessageCircle className="h-7 w-7" />
                 </div>
-                <span className="text-xs font-bold text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full animate-pulse">متاح</span>
+                <span className="text-xs font-bold text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full animate-pulse">{t('page.help.available')}</span>
               </div>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 bg-clip-text text-transparent">الدعم الفني</CardTitle>
-              <CardDescription className="text-sm md:text-base font-medium">فريق الدعم جاهز لمساعدتك</CardDescription>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 bg-clip-text text-transparent">{t('page.help.support')}</CardTitle>
+              <CardDescription className="text-sm md:text-base font-medium">{t('page.help.support_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10 space-y-3">
               <a href="mailto:support@cairodental.com" className="flex items-center gap-3 text-sm md:text-base text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-bold transition-all duration-300 hover:gap-4 group/link">
                 <Mail className="h-5 w-5 group-hover/link:scale-110 transition-transform" />
-                <span>البريد الإلكتروني</span>
+                <span>{t('page.help.support_email')}</span>
               </a>
               <a href="tel:+20123456789" className="flex items-center gap-3 text-sm md:text-base text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-bold transition-all duration-300 hover:gap-4 group/link">
                 <Phone className="h-5 w-5 group-hover/link:scale-110 transition-transform" />
-                <span>اتصل بنا مباشرة</span>
+                <span>{t('page.help.support_call')}</span>
               </a>
             </CardContent>
           </Card>
@@ -394,9 +403,9 @@ export default function HelpPage() {
               </div>
               <div>
                 <CardTitle className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
-                  الأسئلة الشائعة
+                  {t('page.help.faq_title')}
                 </CardTitle>
-                <CardDescription className="text-sm">إجابات سريعة لأكثر الأسئلة تكرارًا</CardDescription>
+                <CardDescription className="text-sm">{t('page.help.faq_desc')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -404,55 +413,55 @@ export default function HelpPage() {
             <Accordion type="single" collapsible className="w-full space-y-3">
               <AccordionItem value="faq-1" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  كيف أبدأ استخدام النظام؟
+                  {t('page.help.faq_q1')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  ابدأ بتسجيل الدخول كأدمن، ثم أضف الموظفين والموردين الأساسيين. بعدها يمكنك البدء بإضافة المرضى وحجز المواعيد.
+                  {t('page.help.faq_a1')}
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="faq-2" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  هل البريد الإلكتروني مطلوب لإضافة مريض؟
+                  {t('page.help.faq_q2')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  لا، البريد الإلكتروني اختياري في معظم النماذج. يمكنك إضافة مريض فقط بالاسم ورقم الهاتف وتاريخ الميلاد.
+                  {t('page.help.faq_a2')}
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="faq-3" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  كيف أدير المخزون والمشتريات؟
+                  {t('page.help.faq_q3')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  من صفحة المخزون يمكنك إضافة الأصناف وتحديد الحد الأدنى. سيرسل النظام تنبيهات تلقائية عند نفاد الكمية. يمكنك إنشاء طلبات شراء وربطها بالموردين.
+                  {t('page.help.faq_a3')}
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="faq-4" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  هل يمكن تغيير اللغة؟
+                  {t('page.help.faq_q4')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  نعم، يمكنك التبديل بين العربية والإنجليزية من شريط التطبيق العلوي أو من صفحة الإعدادات.
+                  {t('page.help.faq_a4')}
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="faq-5" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  كيف أتواصل مع الدعم الفني؟
+                  {t('page.help.faq_q5')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  يمكنك التواصل عبر البريد الإلكتروني: support@cairodental.com أو الاتصال المباشر على +20123456789. فريق الدعم متاح 24/7.
+                  {t('page.help.faq_a5')}
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="faq-6" className="border-2 border-muted rounded-xl px-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
                 <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                  هل يمكن للمريض الوصول لحسابه؟
+                  {t('page.help.faq_q6')}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-4">
-                  نعم، من خلال بوابة المريض يمكنه عرض مواعيده، فواتيره، وربما حجز مواعيد جديدة حسب الإعدادات.
+                  {t('page.help.faq_a6')}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -468,7 +477,7 @@ export default function HelpPage() {
                 <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h2 className="font-bold text-lg">جدول المحتويات</h2>
+                <h2 className="font-bold text-lg">{t('page.help.toc')}</h2>
               </div>
               <ol className="space-y-2 text-sm">
                 {filtered.map(s => (
@@ -517,10 +526,10 @@ export default function HelpPage() {
               </div>
             </div>
             <CardTitle className="text-3xl md:text-4xl font-black mb-3 bg-gradient-to-r from-green-600 via-teal-600 to-cyan-600 dark:from-green-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text text-transparent">
-              لم تجد ما تبحث عنه؟
+              {t('page.help.not_found')}
             </CardTitle>
             <CardDescription className="text-base md:text-lg font-medium">
-              فريق الدعم الفني جاهز لمساعدتك على مدار الساعة
+              {t('page.help.not_found_desc')}
             </CardDescription>
           </CardHeader>
           
@@ -535,8 +544,8 @@ export default function HelpPage() {
                       <Mail className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg mb-2">البريد الإلكتروني</h3>
-                      <p className="text-sm text-muted-foreground mb-4">نرد خلال ساعة واحدة</p>
+                      <h3 className="font-bold text-lg mb-2">{t('page.help.email_support')}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{t('page.help.email_desc')}</p>
                       <a 
                         href="mailto:support@cairodental.com" 
                         className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold text-sm transition-all duration-300 hover:gap-3"
@@ -558,8 +567,8 @@ export default function HelpPage() {
                       <Phone className="h-8 w-8 text-green-600 dark:text-green-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg mb-2">اتصل بنا</h3>
-                      <p className="text-sm text-muted-foreground mb-4">دعم فوري 24/7</p>
+                      <h3 className="font-bold text-lg mb-2">{t('page.help.phone_support')}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{t('page.help.phone_desc')}</p>
                       <a 
                         href="tel:+20123456789" 
                         className="inline-flex items-center gap-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-bold text-sm transition-all duration-300 hover:gap-3"
@@ -581,15 +590,15 @@ export default function HelpPage() {
                       <HeadphonesIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg mb-2">المحادثة المباشرة</h3>
-                      <p className="text-sm text-muted-foreground mb-4">تحدث مع خبير الآن</p>
+                      <h3 className="font-bold text-lg mb-2">{t('page.help.live_chat')}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{t('page.help.live_chat_desc')}</p>
                       <Button 
                         variant="outline"
                         onClick={() => setChatOpen(true)}
                         className="gap-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-300 group-hover:scale-105"
                       >
                         <MessageCircle className="h-4 w-4" />
-                        <span>ابدأ المحادثة</span>
+                        <span>{t('page.help.live_chat_cta')}</span>
                       </Button>
                     </div>
                   </CardContent>
@@ -600,19 +609,19 @@ export default function HelpPage() {
             {/* Additional Help Resources */}
             <div className="mt-8 pt-8 border-t-2 border-muted">
               <div className="text-center space-y-4">
-                <h4 className="font-bold text-xl">موارد إضافية</h4>
+                <h4 className="font-bold text-xl">{t('page.help.additional_resources')}</h4>
                 <div className="flex flex-wrap justify-center gap-4">
                   <Button variant="outline" className="gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
                     <FileText className="h-4 w-4" />
-                    <span>دليل المستخدم PDF</span>
+                    <span>{t('page.help.user_guide_pdf')}</span>
                   </Button>
                   <Button variant="outline" className="gap-2 hover:bg-purple-50 dark:hover:bg-purple-950/30">
                     <BookOpen className="h-4 w-4" />
-                    <span>فيديوهات تعليمية</span>
+                    <span>{t('page.help.video_tutorials')}</span>
                   </Button>
                   <Button variant="outline" className="gap-2 hover:bg-green-50 dark:hover:bg-green-950/30">
                     <Users className="h-4 w-4" />
-                    <span>مجتمع المستخدمين</span>
+                    <span>{t('page.help.user_community')}</span>
                   </Button>
                 </div>
               </div>
