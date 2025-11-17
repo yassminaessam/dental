@@ -135,8 +135,8 @@ function PatientDentalChartContent() {
           {/* Stats Overview */}
           <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 lg:grid-cols-6 mb-6">
             {dentalChartStats.map((stat) => {
-              const gradientClasses = {
-                'healthy': 'metric-card-green',
+const gradientClasses: Partial<Record<ToothCondition, string>> = {
+              'healthy': 'metric-card-green',
                 'cavity': 'metric-card-red',
                 'filling': 'metric-card-blue',
                 'crown': 'metric-card-purple',
@@ -147,7 +147,7 @@ function PatientDentalChartContent() {
               return (
                 <Card 
                   key={stat.condition}
-                  className={`relative overflow-hidden border-0 shadow-xl transition-all duration-500 cursor-pointer hover:scale-105 ${gradientClasses[stat.condition]}`}
+                  className={`relative overflow-hidden border-0 shadow-xl transition-all duration-500 cursor-pointer hover:scale-105 ${gradientClasses[stat.condition] || 'metric-card-blue'}`}
                   onClick={() => setHighlightedCondition(stat.condition)}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

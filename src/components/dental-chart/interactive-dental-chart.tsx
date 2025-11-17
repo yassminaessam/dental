@@ -17,14 +17,71 @@ const lowerJawTeeth = [
   { id: 31, x: 290, y: 150 }, { id: 32, x: 320, y: 155 }, { id: 33, x: 350, y: 158 }, { id: 34, x: 380, y: 160 }, { id: 35, x: 410, y: 160 }, { id: 36, x: 440, y: 158 }, { id: 37, x: 470, y: 155 }, { id: 38, x: 500, y: 150 },
 ];
 
+// Helper function to get color for any tooth condition
+const getConditionColor = (condition: ToothCondition): string => {
+    // Basic conditions
+    if (condition === 'healthy') return 'fill-green-200';
+    if (condition === 'cavity') return 'fill-red-500';
+    if (condition === 'missing') return 'fill-gray-400';
+    
+    // Bleaching - light yellow/white
+    if (condition.includes('bleach')) return 'fill-yellow-200';
+    
+    // Bridges - purple/violet
+    if (condition.includes('bridge') || condition.includes('pontic') || condition.includes('fpd')) return 'fill-purple-500';
+    
+    // Crowns - purple shades
+    if (condition.includes('crown') && !condition.includes('extraction')) return 'fill-purple-500';
+    
+    // Fillings & Composites - blue shades
+    if (condition.includes('filling') || condition.includes('composite')) return 'fill-blue-500';
+    
+    // Inlays & Onlays - teal/cyan
+    if (condition.includes('inlay') || condition.includes('onlay')) return 'fill-cyan-500';
+    
+    // Extractions - orange/red
+    if (condition.includes('extraction') || condition.includes('impaction') || condition.includes('removal')) return 'fill-orange-500';
+    
+    // RCT - yellow
+    if (condition.includes('root-canal') || condition.includes('rct') || condition.includes('rc-')) return 'fill-yellow-500';
+    
+    // Pulpotomy - amber
+    if (condition.includes('pulpotomy')) return 'fill-amber-500';
+    
+    // Posts & Cores - slate
+    if (condition.includes('post') || condition.includes('core')) return 'fill-slate-500';
+    
+    // Implants - cyan
+    if (condition.includes('implant')) return 'fill-cyan-600';
+    
+    // Veneers - pink
+    if (condition.includes('veneer')) return 'fill-pink-400';
+    
+    // Scaling - light green
+    if (condition.includes('scaling')) return 'fill-green-300';
+    
+    // Gingivectomy - rose
+    if (condition.includes('gingivectomy') || condition.includes('gingivoplasty')) return 'fill-rose-400';
+    
+    // Imaging - indigo
+    if (condition.includes('xray') || condition.includes('opg') || condition.includes('cephalometric') || condition.includes('radiograph')) return 'fill-indigo-400';
+    
+    // Other - gray
+    return 'fill-gray-500';
+};
+
 const conditionColors: Record<ToothCondition, string> = {
     healthy: 'fill-green-200',
     cavity: 'fill-red-500',
     filling: 'fill-blue-500',
     crown: 'fill-purple-500',
     missing: 'fill-gray-400',
-    'root-canal': 'fill-yellow-500'
-};
+    'root-canal': 'fill-yellow-500',
+    implant: 'fill-cyan-600',
+    veneer: 'fill-pink-400',
+    extraction: 'fill-orange-500',
+    // All other conditions will use the getConditionColor function
+} as any;
 
 interface ToothProps {
   id: number;
@@ -37,7 +94,7 @@ interface ToothProps {
 }
 
 const ToothComponent = ({ id, x, y, condition, isSelected, isHighlighted, onSelect }: ToothProps) => {
-    const colorClass = conditionColors[condition] || 'fill-card';
+    const colorClass = conditionColors[condition] || getConditionColor(condition);
     return (
         <g className="cursor-pointer group" onClick={() => onSelect(id)}>
             {/* Glow effect for selected tooth */}

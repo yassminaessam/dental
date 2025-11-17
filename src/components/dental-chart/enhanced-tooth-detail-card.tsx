@@ -19,7 +19,138 @@ import { ToothImagesDialog } from './tooth-images-dialog';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const conditionOptionsValues: ToothCondition[] = ['healthy','cavity','filling','crown','missing','root-canal'];
+// Organized procedure categories for dropdown with translation keys
+const procedureCategories = {
+  'basic': ['healthy', 'cavity', 'missing'] as ToothCondition[],
+  'bleaching': ['ext-bleach-arch', 'ext-bleach-tooth', 'int-bleach-tooth'] as ToothCondition[],
+  'bridges': ['bridge-ceramic', 'bridge-ceramic-implant', 'fpd-repair', 'metal-crown-bridge', 'pfm-crown-bridge', 'pontic-ceramic', 'pontic-pfm'] as ToothCondition[],
+  'crowns': ['crown', 'crown-ceramic', 'crown-composite', 'crown-implant', 'crown-metal', 'crown-pfm', 'crown-porcelain', 'crown-prov'] as ToothCondition[],
+  'fillings': ['filling', 'composite-filling', 'composite-filling-1-3', 'composite-filling-ant-simple', 'composite-filling-ant-compound', 'composite-filling-ant-complex', 'composite-filling-ant-incisal', 'composite-filling-4-8', 'composite-filling-post-simple', 'composite-filling-post-compound', 'composite-filling-post-complex'] as ToothCondition[],
+  'inlays': ['ceramic-inlay', 'inlay-ceramic-i', 'inlay-ceramic-ii', 'inlay-ceramic-iii', 'composite-inlay', 'inlay-composite-i', 'inlay-composite-ii', 'inlay-composite-iii'] as ToothCondition[],
+  'onlays': ['ceramic-onlay', 'onlay-ceramic-ii', 'onlay-ceramic-iii', 'onlay-ceramic-iv', 'composite-onlay', 'onlay-composite-ii'] as ToothCondition[],
+  'extractions': ['extraction', 'bone-impaction', 'complicated-impaction', 'extraction-crown-pri', 'extraction-tooth', 'part-impaction', 'remaining-roots-removal', 'soft-impaction', 'surgical-extraction'] as ToothCondition[],
+  'root_canal': ['root-canal', 'rc-obstruction', 'rct-ant-1st', 'rct-molar-1st', 'rct-premolar-1st', 'rct-retreat-ant', 'rct-retreat-molar', 'rct-retreat-premolar', 'root-perforation'] as ToothCondition[],
+  'pulpotomy': ['pulpotomy', 'pulpotomy-1st-visit', 'pulpotomy-ant-pri-1st', 'pulpotomy-post-pri-1st', 'pulpotomy-pri-per'] as ToothCondition[],
+  'posts_cores': ['post', 'additional-titanium-post', 'core', 'titanium-post-core-bridge', 'titanium-post-crown'] as ToothCondition[],
+  'implants': ['implant'] as ToothCondition[],
+  'veneers': ['veneer', 'ceramic-veneer-lab', 'composite-veneer-lab', 'composite-veneer-office'] as ToothCondition[],
+  'scaling': ['scaling-polishing', 'scaling-adults', 'scaling-child'] as ToothCondition[],
+  'gingivectomy': ['gingivectomy', 'gingivectomy-gingivoplasty'] as ToothCondition[],
+  'imaging': ['opg', 'cephalometric-xray', 'opg-xray', 'periapical-radiograph'] as ToothCondition[],
+  'other': ['waxup', 'composite-crown'] as ToothCondition[],
+};
+
+// Helper function to get display label for condition
+const getConditionLabel = (condition: ToothCondition, t: any): string => {
+  const labels: Record<ToothCondition, string> = {
+    'healthy': t('dental_chart.healthy'),
+    'cavity': t('dental_chart.cavity'),
+    'missing': t('dental_chart.missing'),
+    'filling': t('dental_chart.filling'),
+    'crown': t('dental_chart.crown'),
+    'root-canal': t('dental_chart.root_canal'),
+    'implant': t('dental_chart.implant'),
+    'veneer': t('dental_chart.veneer'),
+    'extraction': t('dental_chart.extraction'),
+    // Bleaching
+    'ext-bleach-arch': t('dental_chart.ext_bleach_arch'),
+    'ext-bleach-tooth': t('dental_chart.ext_bleach_tooth'),
+    'int-bleach-tooth': t('dental_chart.int_bleach_tooth'),
+    // Bridges
+    'bridge-ceramic': t('dental_chart.bridge_ceramic'),
+    'bridge-ceramic-implant': t('dental_chart.bridge_ceramic_implant'),
+    'fpd-repair': t('dental_chart.fpd_repair'),
+    'metal-crown-bridge': t('dental_chart.metal_crown_bridge'),
+    'pfm-crown-bridge': t('dental_chart.pfm_crown_bridge'),
+    'pontic-ceramic': t('dental_chart.pontic_ceramic'),
+    'pontic-pfm': t('dental_chart.pontic_pfm'),
+    // Crowns
+    'crown-ceramic': t('dental_chart.crown_ceramic'),
+    'crown-composite': t('dental_chart.crown_composite'),
+    'crown-implant': t('dental_chart.crown_implant'),
+    'crown-metal': t('dental_chart.crown_metal'),
+    'crown-pfm': t('dental_chart.crown_pfm'),
+    'crown-porcelain': t('dental_chart.crown_porcelain'),
+    'crown-prov': t('dental_chart.crown_prov'),
+    'titanium-post-core-bridge': t('dental_chart.titanium_post_core_bridge'),
+    // Fillings
+    'composite-filling': t('dental_chart.composite_filling'),
+    'composite-crown': t('dental_chart.composite_crown'),
+    'composite-filling-1-3': t('dental_chart.composite_filling_1_3'),
+    'composite-filling-ant-complex': t('dental_chart.composite_filling_ant_complex'),
+    'composite-filling-ant-compound': t('dental_chart.composite_filling_ant_compound'),
+    'composite-filling-ant-incisal': t('dental_chart.composite_filling_ant_incisal'),
+    'composite-filling-ant-simple': t('dental_chart.composite_filling_ant_simple'),
+    'composite-filling-4-8': t('dental_chart.composite_filling_4_8'),
+    'composite-filling-post-complex': t('dental_chart.composite_filling_post_complex'),
+    'composite-filling-post-compound': t('dental_chart.composite_filling_post_compound'),
+    'composite-filling-post-simple': t('dental_chart.composite_filling_post_simple'),
+    // Inlays
+    'ceramic-inlay': t('dental_chart.ceramic_inlay'),
+    'inlay-ceramic-i': t('dental_chart.inlay_ceramic_i'),
+    'inlay-ceramic-ii': t('dental_chart.inlay_ceramic_ii'),
+    'inlay-ceramic-iii': t('dental_chart.inlay_ceramic_iii'),
+    'composite-inlay': t('dental_chart.composite_inlay'),
+    'inlay-composite-i': t('dental_chart.inlay_composite_i'),
+    'inlay-composite-ii': t('dental_chart.inlay_composite_ii'),
+    'inlay-composite-iii': t('dental_chart.inlay_composite_iii'),
+    // Onlays
+    'ceramic-onlay': t('dental_chart.ceramic_onlay'),
+    'onlay-ceramic-ii': t('dental_chart.onlay_ceramic_ii'),
+    'onlay-ceramic-iii': t('dental_chart.onlay_ceramic_iii'),
+    'onlay-ceramic-iv': t('dental_chart.onlay_ceramic_iv'),
+    'composite-onlay': t('dental_chart.composite_onlay'),
+    'onlay-composite-ii': t('dental_chart.onlay_composite_ii'),
+    // Extractions
+    'bone-impaction': t('dental_chart.bone_impaction'),
+    'complicated-impaction': t('dental_chart.complicated_impaction'),
+    'extraction-crown-pri': t('dental_chart.extraction_crown_pri'),
+    'extraction-tooth': t('dental_chart.extraction_tooth'),
+    'part-impaction': t('dental_chart.part_impaction'),
+    'remaining-roots-removal': t('dental_chart.remaining_roots_removal'),
+    'soft-impaction': t('dental_chart.soft_impaction'),
+    'surgical-extraction': t('dental_chart.surgical_extraction'),
+    // Gingivectomy
+    'gingivectomy': t('dental_chart.gingivectomy'),
+    'gingivectomy-gingivoplasty': t('dental_chart.gingivectomy_gingivoplasty'),
+    // Imaging
+    'opg': t('dental_chart.opg'),
+    'cephalometric-xray': t('dental_chart.cephalometric_xray'),
+    'opg-xray': t('dental_chart.opg_xray'),
+    // Posts & Cores
+    'post': t('dental_chart.post'),
+    'additional-titanium-post': t('dental_chart.additional_titanium_post'),
+    'core': t('dental_chart.core'),
+    'titanium-post-crown': t('dental_chart.titanium_post_crown'),
+    // Pulpotomy
+    'pulpotomy': t('dental_chart.pulpotomy'),
+    'pulpotomy-1st-visit': t('dental_chart.pulpotomy_1st_visit'),
+    'pulpotomy-ant-pri-1st': t('dental_chart.pulpotomy_ant_pri_1st'),
+    'pulpotomy-post-pri-1st': t('dental_chart.pulpotomy_post_pri_1st'),
+    'pulpotomy-pri-per': t('dental_chart.pulpotomy_pri_per'),
+    // RCT
+    'rc-obstruction': t('dental_chart.rc_obstruction'),
+    'rct-ant-1st': t('dental_chart.rct_ant_1st'),
+    'rct-molar-1st': t('dental_chart.rct_molar_1st'),
+    'rct-premolar-1st': t('dental_chart.rct_premolar_1st'),
+    'rct-retreat-ant': t('dental_chart.rct_retreat_ant'),
+    'rct-retreat-molar': t('dental_chart.rct_retreat_molar'),
+    'rct-retreat-premolar': t('dental_chart.rct_retreat_premolar'),
+    'root-perforation': t('dental_chart.root_perforation'),
+    // Scaling
+    'scaling-polishing': t('dental_chart.scaling_polishing'),
+    'scaling-adults': t('dental_chart.scaling_adults'),
+    'scaling-child': t('dental_chart.scaling_child'),
+    // Veneers
+    'ceramic-veneer-lab': t('dental_chart.ceramic_veneer_lab'),
+    'composite-veneer-lab': t('dental_chart.composite_veneer_lab'),
+    'composite-veneer-office': t('dental_chart.composite_veneer_office'),
+    // Other
+    'waxup': t('dental_chart.waxup'),
+    'periapical-radiograph': t('dental_chart.periapical_radiograph'),
+  };
+  return labels[condition] || condition;
+};
 
 interface EnhancedToothDetailCardProps {
     tooth: Tooth | null;
@@ -169,16 +300,7 @@ export function EnhancedToothDetailCard({
                 <CardTitle className="flex items-center gap-2">
                     {t('dental_chart.tooth_number_display', { id: tooth.id })}
                     <Badge variant={tooth.condition === 'healthy' ? 'default' : 'secondary'}>
-                        {(() => {
-                            switch (tooth.condition) {
-                                case 'healthy': return t('dental_chart.healthy');
-                                case 'cavity': return t('dental_chart.cavity');
-                                case 'filling': return t('dental_chart.filled');
-                                case 'crown': return t('dental_chart.crowned');
-                                case 'missing': return t('dental_chart.missing');
-                                case 'root-canal': return t('dental_chart.root_canal');
-                            }
-                        })()}
+                        {getConditionLabel(tooth.condition, t)}
                     </Badge>
                 </CardTitle>
                 <CardDescription>{toothNames[tooth.id] || t('dental_chart.unknown_tooth')}</CardDescription>
@@ -210,17 +332,8 @@ export function EnhancedToothDetailCard({
                     <TabsContent value="condition" className="space-y-4">
                         <div>
                             <h4 className="font-medium mb-2">{t('dental_chart.current_condition')}</h4>
-                            <p className="capitalize text-muted-foreground mb-3">
-                                {(() => {
-                                    switch (tooth.condition) {
-                                        case 'healthy': return t('dental_chart.healthy');
-                                        case 'cavity': return t('dental_chart.cavity');
-                                        case 'filling': return t('dental_chart.filled');
-                                        case 'crown': return t('dental_chart.crowned');
-                                        case 'missing': return t('dental_chart.missing');
-                                        case 'root-canal': return t('dental_chart.root_canal');
-                                    }
-                                })()}
+                            <p className="text-muted-foreground mb-3">
+                                {getConditionLabel(tooth.condition, t)}
                             </p>
                         </div>
                         
@@ -233,20 +346,18 @@ export function EnhancedToothDetailCard({
                                 <SelectTrigger>
                                     <SelectValue placeholder={t('dental_chart.select_condition')} />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {conditionOptionsValues.map(opt => (
-                                        <SelectItem key={opt} value={opt}>
-                                            {(() => {
-                                                switch (opt) {
-                                                    case 'healthy': return t('dental_chart.healthy');
-                                                    case 'cavity': return t('dental_chart.cavity');
-                                                    case 'filling': return t('dental_chart.filling');
-                                                    case 'crown': return t('dental_chart.crown');
-                                                    case 'missing': return t('dental_chart.missing');
-                                                    case 'root-canal': return t('dental_chart.root_canal');
-                                                }
-                                            })()}
-                                        </SelectItem>
+                                <SelectContent className="max-h-96 overflow-y-auto">
+                                    {Object.entries(procedureCategories).map(([category, procedures]) => (
+                                        <React.Fragment key={category}>
+                                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                                                {t(`dental_chart.category_${category}`)}
+                                            </div>
+                                            {procedures.map((procedure) => (
+                                                <SelectItem key={procedure} value={procedure} className="pl-4">
+                                                    {getConditionLabel(procedure, t)}
+                                                </SelectItem>
+                                            ))}
+                                        </React.Fragment>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -371,17 +482,8 @@ export function EnhancedToothDetailCard({
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="h-3 w-3" />
                                                 <span className="text-sm font-medium">{entry.date}</span>
-                                                <Badge variant="outline" className="text-xs capitalize">
-                                                    {(() => {
-                                                        switch (entry.condition) {
-                                                            case 'healthy': return t('dental_chart.healthy');
-                                                            case 'cavity': return t('dental_chart.cavity');
-                                                            case 'filling': return t('dental_chart.filled');
-                                                            case 'crown': return t('dental_chart.crowned');
-                                                            case 'missing': return t('dental_chart.missing');
-                                                            case 'root-canal': return t('dental_chart.root_canal');
-                                                        }
-                                                    })()}
+                                                <Badge variant="outline" className="text-xs">
+                                                    {getConditionLabel(entry.condition, t)}
                                                 </Badge>
                                             </div>
                                             <p className="text-xs text-muted-foreground mt-1">
