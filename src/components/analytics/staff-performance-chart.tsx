@@ -10,23 +10,18 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
-  const { t } = useLanguage();
-  return {
-    appointments: {
-      label: t('appointments.title'),
-      color: "hsl(var(--chart-4))",
-    },
-  } satisfies ChartConfig;
-}
-
 interface StaffPerformanceChartProps {
     data: { name: string; appointments: number; }[]
 }
 
 export default function StaffPerformanceChart({ data }: StaffPerformanceChartProps) {
   const { t, language } = useLanguage();
-  const chartConfig = useChartConfig();
+  const chartConfig: ChartConfig = {
+    appointments: {
+      label: t('appointments.title'),
+      color: "hsl(var(--chart-4))",
+    },
+  };
   if (!data || data.length === 0) {
     return (
       <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">

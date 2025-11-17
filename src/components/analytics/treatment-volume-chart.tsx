@@ -10,23 +10,18 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
-  const { t } = useLanguage();
-  return {
-    count: {
-      label: t('treatments.title'),
-      color: "hsl(var(--chart-3))",
-    },
-  } satisfies ChartConfig;
-}
-
 interface TreatmentVolumeChartProps {
     data: { month: string; count: number }[];
 }
 
 export default function TreatmentVolumeChart({ data }: TreatmentVolumeChartProps) {
-  const { language } = useLanguage();
-  const chartConfig = useChartConfig();
+  const { language, t } = useLanguage();
+  const chartConfig: ChartConfig = {
+    count: {
+      label: t('treatments.title'),
+      color: "hsl(var(--chart-3))",
+    },
+  };
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <LineChart

@@ -10,22 +10,17 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
-  const { t } = useLanguage();
-  return {
-    appointments: { label: t('appointments.title'), color: "hsl(var(--chart-1))" },
-    noShows: { label: t('reports.appointment_show_rate'), color: "hsl(var(--chart-5))" },
-    cancellations: { label: t('appointments.filter.cancelled'), color: "hsl(var(--chart-3))" },
-  } satisfies ChartConfig;
-}
-
 interface AppointmentAnalyticsChartProps {
     data: { time: string; appointments: number; noShows: number; cancellations: number; }[]
 }
 
 export default function AppointmentAnalyticsChart({ data }: AppointmentAnalyticsChartProps) {
-  const { language } = useLanguage();
-  const chartConfig = useChartConfig();
+  const { language, t } = useLanguage();
+  const chartConfig: ChartConfig = {
+    appointments: { label: t('appointments.title'), color: "hsl(var(--chart-1))" },
+    noShows: { label: t('reports.appointment_show_rate'), color: "hsl(var(--chart-5))" },
+    cancellations: { label: t('appointments.filter.cancelled'), color: "hsl(var(--chart-3))" },
+  };
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart

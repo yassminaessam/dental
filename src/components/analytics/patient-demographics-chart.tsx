@@ -10,23 +10,18 @@ import {
 } from "@/components/ui/chart";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-function useChartConfig(): ChartConfig {
-  const { t } = useLanguage();
-  return {
-    count: {
-      label: t('patients.title'),
-      color: "hsl(var(--chart-1))",
-    },
-  } satisfies ChartConfig;
-}
-
 interface PatientDemographicsChartProps {
   data: { ageGroup: string; count: number }[];
 }
 
 export default function PatientDemographicsChart({ data }: PatientDemographicsChartProps) {
-  const { language } = useLanguage();
-  const chartConfig = useChartConfig();
+  const { language, t } = useLanguage();
+  const chartConfig: ChartConfig = {
+    count: {
+      label: t('patients.title'),
+      color: "hsl(var(--chart-1))",
+    },
+  };
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <BarChart
