@@ -46,7 +46,7 @@ import { LiveChatWidget } from '@/components/chat/LiveChatWidget';
 
 export default function HelpPage() {
   const router = useRouter();
-  const { isRTL } = useLanguage();
+  const { isRTL, t } = useLanguage();
   const [activeId, setActiveId] = React.useState<string>('quickstart');
   const [query, setQuery] = React.useState('');
   const [showTop, setShowTop] = React.useState(false);
