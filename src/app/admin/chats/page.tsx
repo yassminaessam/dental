@@ -201,11 +201,11 @@ export default function AdminChatsPage() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 dark:from-purple-400 dark:via-pink-400 dark:to-rose-400 bg-clip-text text-transparent animate-gradient">
-                  إدارة المحادثات المباشرة
+                  {t('page.admin_chats.title')}
                 </h1>
                 <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  تواصل مع المرضى والزوار في الوقت الفعلي
+                  {t('page.admin_chats.subtitle')}
                 </p>
               </div>
             </div>
@@ -216,40 +216,40 @@ export default function AdminChatsPage() {
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
           <Card className="metric-card-blue group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">المحادثات النشطة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('page.admin_chats.active_chats')}</CardTitle>
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
                 <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeConversations.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">محادثات جارية الآن</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('page.admin_chats.active_chats_desc')}</p>
             </CardContent>
           </Card>
 
           <Card className="metric-card-green group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي المحادثات</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('page.admin_chats.total_chats')}</CardTitle>
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
                 <MessageCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{conversations.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">محادثة كاملة</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('page.admin_chats.total_chats_desc')}</p>
             </CardContent>
           </Card>
 
           <Card className="metric-card-purple group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">متوسط الاستجابة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('page.admin_chats.avg_response')}</CardTitle>
               <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
                 <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{'< 2 دقيقة'}</div>
-              <p className="text-xs text-muted-foreground mt-1">وقت استجابة سريع</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('page.admin_chats.avg_response_desc')}</p>
             </CardContent>
           </Card>
         </div>

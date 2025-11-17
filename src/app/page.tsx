@@ -41,7 +41,7 @@ export default function DashboardPage() {
     const { user, isLoading, isAuthenticated } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
     const [revenueData, setRevenueData] = React.useState<{ month: string; revenue: number; expenses: number; }[]>([]);
     const [appointmentTypes, setAppointmentTypes] = React.useState<{ name: string; value: number; color: string }[]>([]);
     const [statsRefreshKey, setStatsRefreshKey] = React.useState(0);
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                     </h1>
                     <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                 </div>

@@ -275,7 +275,7 @@ export default function InventoryPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة متقدمة للمخزون والإمدادات
+                    {t('page.inventory.subtitle')}
                   </p>
                 </div>
               </div>

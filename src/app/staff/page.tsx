@@ -235,7 +235,7 @@ export default function StaffPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة متكاملة لفريق العمل
+                    {t('page.staff.subtitle')}
                   </p>
                 </div>
               </div>

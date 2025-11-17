@@ -577,7 +577,7 @@ export default function BillingPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة الفواتير والمدفوعات
+                    {t('page.billing.subtitle')}
                   </p>
                 </div>
               </div>

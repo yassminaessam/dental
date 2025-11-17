@@ -440,7 +440,7 @@ export default function SuppliersPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة متقدمة للموردين وأوامر الشراء
+                    {t('page.suppliers.subtitle')}
                   </p>
                 </div>
               </div>

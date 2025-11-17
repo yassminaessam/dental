@@ -407,7 +407,7 @@ export default function PharmacyPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة صيدلانية شاملة ومتطورة
+                    {t('page.pharmacy.subtitle')}
                   </p>
                 </div>
               </div>

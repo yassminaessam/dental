@@ -359,7 +359,7 @@ export default function TreatmentsPage() {
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    إدارة شاملة لخطط العلاج والإجراءات
+                    {t('page.treatments.subtitle')}
                   </p>
                 </div>
               </div>
