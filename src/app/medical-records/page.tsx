@@ -45,8 +45,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal, Replace, Link as LinkIcon, Sparkles, FileText, Images } from "lucide-react";
+import { Search, User, Download, Image as ImageIcon, Eye, Pencil, Loader2, Trash2, MoreHorizontal, Replace, Link as LinkIcon, Sparkles, FileText, Images, X, Filter } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { UploadImageDialog } from "@/components/medical-records/upload-image-dialog";
 import { ReplaceImageDialog } from "@/components/medical-records/replace-image-dialog";
 import { NewRecordDialog } from "@/components/medical-records/new-record-dialog";
@@ -60,9 +61,9 @@ import type { ClinicalImage, MedicalRecord, MedicalRecordTemplate } from '@/lib/
 import {
   listMedicalRecordTemplates,
 } from '@/services/medical-records';
-import { clinicalImagesStorage } from '@/services/storage';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 export type { MedicalRecord, MedicalRecordTemplate, ClinicalImage } from '@/lib/types';
 
@@ -76,6 +77,7 @@ export default function MedicalRecordsPage() {
   const [patients, setPatients] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  const [selectedPatientId, setSelectedPatientId] = React.useState<string>('');
   const [recordSearchTerm, setRecordSearchTerm] = React.useState('');
   const [recordTypeFilter, setRecordTypeFilter] = React.useState('all');
   
@@ -151,15 +153,79 @@ export default function MedicalRecordsPage() {
     });
   }, [toast, t]);
 
+  // Filtered data computations
+  const filteredRecords = React.useMemo(() => {
+    let filtered = records;
+    
+    // Apply patient filter if selected
+    if (selectedPatientId) {
+      const selectedPatient = patients.find(p => p.id === selectedPatientId);
+      filtered = filtered.filter(r => {
+        // Match by patientId OR by patient name (fallback for old records)
+        const matchById = r.patientId === selectedPatientId;
+        const matchByName = selectedPatient && r.patient === selectedPatient.name;
+        return matchById || matchByName;
+      });
+    }
+    
+    // Apply search filter
+    filtered = filtered.filter(record => 
+      record.patient.toLowerCase().includes(recordSearchTerm.toLowerCase()) ||
+      record.complaint.toLowerCase().includes(recordSearchTerm.toLowerCase())
+    );
+    
+    // Apply type filter
+    if (recordTypeFilter !== 'all') {
+      filtered = filtered.filter(record => record.type === recordTypeFilter);
+    }
+    
+    return filtered;
+  }, [records, selectedPatientId, recordSearchTerm, recordTypeFilter, patients]);
+
+  const filteredImages = React.useMemo(() => {
+    let filtered = images;
+    
+    // Apply patient filter if selected
+    if (selectedPatientId) {
+      const selectedPatient = patients.find(p => p.id === selectedPatientId);
+      filtered = filtered.filter(img => {
+        // Match by patientId OR by patient name (fallback for old records)
+        const matchById = img.patientId === selectedPatientId;
+        const matchByName = selectedPatient && img.patient === selectedPatient.name;
+        return matchById || matchByName;
+      });
+    }
+    
+    // Apply search filter
+    filtered = filtered.filter(image => {
+      const searchLower = imageSearchTerm.toLowerCase().trim();
+      const patientMatch = image.patient?.toLowerCase().includes(searchLower) || false;
+      const captionMatch = image.caption?.toLowerCase().includes(searchLower) || false;
+      return patientMatch || captionMatch;
+    });
+    
+    return filtered;
+  }, [images, selectedPatientId, imageSearchTerm, patients]);
+  
+  const filteredTemplates = React.useMemo(() => {
+    return templates.filter(template =>
+      template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+      template.content.toLowerCase().includes(templateSearchTerm.toLowerCase())
+    );
+  }, [templates, templateSearchTerm]);
+
   const medicalRecordsPageStats = React.useMemo(() => {
-    const draftRecords = records.filter(r => r.status === 'Draft').length;
+    const draftRecords = filteredRecords.filter(r => r.status === 'Draft').length;
+    const recordsTitle = selectedPatientId ? t('medical_records.patient_records') : t('medical_records.total_records');
+    const imagesTitle = selectedPatientId ? t('medical_records.patient_images') : t('medical_records.clinical_images');
+    
     return [
-      { title: t('medical_records.total_records'), value: records.length, description: t('medical_records.all_patient_records'), cardStyle: 'metric-card-blue' },
-      { title: t('medical_records.clinical_images'), value: images.length, description: t('medical_records.all_uploaded_images'), cardStyle: 'metric-card-green' },
+      { title: recordsTitle, value: filteredRecords.length, description: t('medical_records.all_patient_records'), cardStyle: 'metric-card-blue' },
+      { title: imagesTitle, value: filteredImages.length, description: t('medical_records.all_uploaded_images'), cardStyle: 'metric-card-green' },
       { title: t('medical_records.templates'), value: templates.length, description: t('medical_records.for_faster_documentation'), cardStyle: 'metric-card-purple' },
       { title: t('medical_records.draft_records'), value: draftRecords, description: t('medical_records.awaiting_finalization'), cardStyle: 'metric-card-orange' },
     ];
-  }, [records, images, templates]);
+  }, [filteredRecords, filteredImages, templates, selectedPatientId, t]);
 
   const handleSaveRecord = async (data: any) => {
     try {
@@ -253,6 +319,7 @@ export default function MedicalRecordsPage() {
           imageUrl: data.imageUrl,
           caption: data.caption || '',
           date: new Date().toISOString(),
+          toothNumber: data.toothNumber || null,
         }),
       });
       
@@ -305,8 +372,16 @@ export default function MedicalRecordsPage() {
     if (!imageToDelete) return;
     
     try {
-      // Delete underlying file (local or previous Firebase) always
-      await clinicalImagesStorage.deleteClinicalImage(imageToDelete.imageUrl);
+      // Delete file from local storage
+      if (imageToDelete.imageUrl) {
+        try {
+          await fetch(`/api/uploads?url=${encodeURIComponent(imageToDelete.imageUrl)}`, {
+            method: 'DELETE',
+          });
+        } catch (e) {
+          console.warn('Failed to delete image file:', e);
+        }
+      }
       
       // Delete record from Neon database
       const response = await fetch(`/api/clinical-images/${imageToDelete.id}`, {
@@ -341,30 +416,12 @@ export default function MedicalRecordsPage() {
     return patient?.phone || '-';
   }, [patients]);
 
-  const filteredRecords = React.useMemo(() => {
-    return records
-      .filter(record => 
-        record.patient.toLowerCase().includes(recordSearchTerm.toLowerCase()) ||
-        record.complaint.toLowerCase().includes(recordSearchTerm.toLowerCase())
-      )
-      .filter(record => 
-        recordTypeFilter === 'all' || record.type === recordTypeFilter
-      );
-  }, [records, recordSearchTerm, recordTypeFilter]);
-
-  const filteredImages = React.useMemo(() => {
-    return images.filter(image => 
-      image.patient.toLowerCase().includes(imageSearchTerm.toLowerCase()) ||
-      image.caption?.toLowerCase().includes(imageSearchTerm.toLowerCase())
-    );
-  }, [images, imageSearchTerm]);
-  
-  const filteredTemplates = React.useMemo(() => {
-    return templates.filter(template =>
-      template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
-      template.content.toLowerCase().includes(templateSearchTerm.toLowerCase())
-    );
-  }, [templates, templateSearchTerm]);
+  // Helper function to get selected patient name
+  const selectedPatientName = React.useMemo(() => {
+    if (!selectedPatientId) return null;
+    const patient = patients.find(p => p.id === selectedPatientId);
+    return patient?.name || null;
+  }, [selectedPatientId, patients]);
 
   return (
     <ErrorBoundary>
@@ -399,8 +456,41 @@ export default function MedicalRecordsPage() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <UploadImageDialog onUpload={handleImageUpload} />
+                <UploadImageDialog onUpload={handleImageUpload} defaultPatient={selectedPatientId} />
                 <NewRecordDialog onSave={handleSaveRecord} />
+              </div>
+            </div>
+            
+            {/* Patient Filter Section */}
+            <div className="flex flex-col gap-3 mt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-1">
+                <div className="w-full sm:w-auto sm:min-w-[300px]">
+                  <PatientCombobox
+                    patients={patients}
+                    value={selectedPatientId}
+                    onValueChange={setSelectedPatientId}
+                    placeholder={t('medical_records.filter_by_patient')}
+                    searchPlaceholder={t('medical_records.search_patient_placeholder')}
+                    emptyMessage={t('medical_records.no_patient_found')}
+                  />
+                </div>
+                {selectedPatientId && selectedPatientName && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="px-3 py-1.5 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                      <Filter className={cn("h-3.5 w-3.5", isRTL ? "ml-1.5" : "mr-1.5")} />
+                      {t('medical_records.viewing')}: {selectedPatientName}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedPatientId('')}
+                      className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className={cn("h-4 w-4", isRTL ? "ml-1" : "mr-1")} />
+                      {t('medical_records.clear_filter')}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -620,13 +710,23 @@ export default function MedicalRecordsPage() {
                         {filteredImages.map((image) => (
                         <Card key={image.id} className="overflow-hidden group">
                             <CardHeader className="p-0">
-                            <div className="relative aspect-video">
+                            <div className="relative aspect-video bg-muted">
                                 <Image
-                                src={image.imageUrl}
+                                src={getClientFtpProxyUrl(image.imageUrl)}
                                 alt={image.caption || `Clinical image for ${image.patient}`}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover"
+                                onError={(e) => {
+                                  console.error('Image failed to load:', image.imageUrl);
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="absolute inset-0 flex items-center justify-center bg-muted"><div class="text-center"><svg class="mx-auto h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><p class="mt-2 text-sm text-muted-foreground">Image not found</p></div></div>';
+                                  }
+                                }}
+                                unoptimized={true}
                                 />
                                 {/* Quick view button overlay */}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">

@@ -15,6 +15,7 @@ import { ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import type { ClinicalImage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 interface ViewImageDialogProps {
   image: ClinicalImage | null;
@@ -135,7 +136,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
             className="relative transition-transform duration-200 ease-in-out origin-center"
           >
             <Image
-              src={image.imageUrl}
+              src={getClientFtpProxyUrl(image.imageUrl)}
               alt={image.caption || t('medical_records.clinical_image_for', { patient: image.patient })}
               width={800}
               height={600}

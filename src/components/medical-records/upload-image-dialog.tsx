@@ -16,20 +16,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Upload, Loader2 } from 'lucide-react';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { listCollection } from '@/lib/collections-client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Patient } from '@/lib/types';
-import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toothNames } from '@/lib/data/dental-chart-data';
 
 const imageSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -42,6 +36,7 @@ const imageSchema = z.object({
       return file && ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
     }, 'File must be a valid image (JPEG, PNG, GIF, or WebP).'),
   caption: z.string().optional(),
+  toothNumber: z.string().optional(),
 });
 
 type ImageFormData = z.infer<typeof imageSchema>;
@@ -80,6 +75,7 @@ export function UploadImageDialog({
       type: '',
       file: undefined,
       caption: '',
+      toothNumber: '',
     },
   });
   
@@ -115,15 +111,26 @@ export function UploadImageDialog({
       }
 
       console.log('Patient found:', selectedPatient.name);
-      console.log('Attempting to upload to Firebase Storage...');
+      console.log('Uploading to local storage...');
 
-      // Upload image to Firebase Storage
-      const imageUrl = await clinicalImagesStorage.uploadClinicalImage(
-        data.file[0],
-        data.patient,
-        data.type
-      );
+      // Upload image to local storage (public/clinical-images folder)
+      const formData = new FormData();
+      formData.append('file', data.file[0]);
+      formData.append('category', 'clinical-images');
+      formData.append('patientId', data.patient);
+      formData.append('imageType', data.type.toLowerCase().replace(/\s+/g, '-'));
 
+      const uploadResponse = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const { url: imageUrl } = await uploadResponse.json();
       console.log('Upload successful, URL:', imageUrl);
 
       // Pass the data with the uploaded image URL to parent component
@@ -131,7 +138,8 @@ export function UploadImageDialog({
         ...data,
         file: data.file[0],
         patientName: selectedPatient.name,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        toothNumber: data.toothNumber ? parseInt(data.toothNumber) : undefined
       });
 
       form.reset();
@@ -148,15 +156,7 @@ export function UploadImageDialog({
       
       // Provide more specific error messages
       if (error instanceof Error) {
-        if (error.message.includes('storage/unauthorized')) {
-          errorMessage = "Upload failed: Storage permissions denied. Please check Firebase Storage rules.";
-        } else if (error.message.includes('storage/invalid-format')) {
-          errorMessage = "Upload failed: Invalid image format. Please use JPG, PNG, or GIF.";
-        } else if (error.message.includes('storage/object-not-found')) {
-          errorMessage = "Upload failed: Storage configuration error.";
-        } else {
-          errorMessage = `Upload failed: ${error.message}`;
-        }
+        errorMessage = `Upload failed: ${error.message}`;
       }
       
       toast({
@@ -199,20 +199,16 @@ export function UploadImageDialog({
               render={({ field }) => (
                 <FormItem>
       <FormLabel>{t('common.patient')} *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-        <SelectValue placeholder={t('medical_records.select_patient')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <PatientCombobox
+                      patients={patients}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder={t('medical_records.select_patient')}
+                      searchPlaceholder={t('medical_records.search_patient_placeholder')}
+                      emptyMessage={t('medical_records.no_patient_found')}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -238,6 +234,29 @@ export function UploadImageDialog({
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="toothNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('dental_chart.tooth_number')}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('dental_chart.select_tooth_optional')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(toothNames).map(([number, name]) => (
+                        <SelectItem key={number} value={number}>
+                          #{number} - {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />

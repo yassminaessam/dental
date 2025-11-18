@@ -222,8 +222,25 @@ export default function DentalChartPage() {
     // Handle image upload from dental chart context
   const handleImageUpload = async (data: any) => {
         try {
-            // The upload dialog handles the actual upload to Firebase
-            // Here we just show success feedback and optionally refresh data
+            // Save the uploaded image metadata to Neon database
+            const response = await fetch('/api/clinical-images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patient: data.patientName,
+                    patientId: data.patient,
+                    type: data.type,
+                    imageUrl: data.imageUrl,
+                    caption: data.caption || '',
+                    date: new Date().toISOString(),
+                }),
+            });
+            
+            if (!response.ok) throw new Error('Failed to save clinical image to database');
+            
+            const { image } = await response.json();
+            console.log('Image saved to Neon database:', image);
+            
             toast({
         title: t('dental_chart.toast.image_uploaded'),
         description: t('dental_chart.toast.image_uploaded_desc'),

@@ -195,18 +195,20 @@ model MedicalRecord {
 
 // Clinical Images
 model ClinicalImage {
-  id         String   @id @default(uuid())
-  patient    String
-  patientId  String?
-  type       String
-  imageUrl   String
-  caption    String?  @db.Text
-  date       DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  patient     String
+  patientId   String?
+  type        String
+  imageUrl    String
+  caption     String?  @db.Text
+  toothNumber Int?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([patientId])
   @@index([date])
+  @@index([toothNumber])
 }
 
 // Dental Charts

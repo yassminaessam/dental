@@ -257,9 +257,11 @@ export type MedicalRecordStatus = 'Final' | 'Draft';
 export interface MedicalRecord {
   id: string;
   patient: string;
+  patientId?: string;
   type: string;
   complaint: string;
   provider: string;
+  providerId?: string;
   date: string;
   status: MedicalRecordStatus;
   notes?: string;
@@ -275,8 +277,10 @@ export interface MedicalRecordTemplate {
 export interface ClinicalImage {
   id: string;
   patient: string;
+  patientId?: string;
   type: string;
   date: string;
   imageUrl: string;
   caption?: string;
+  toothNumber?: number;
 }

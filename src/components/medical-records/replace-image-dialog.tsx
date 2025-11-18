@@ -16,7 +16,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Upload, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { clinicalImagesStorage } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { ClinicalImage } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -64,14 +63,35 @@ export function ReplaceImageDialog({
     
     setReplacing(true);
     try {
-      // Always replace via our storage API (deletes old then uploads new)
-      const patientId = image.patient.replace(/\s+/g, '_').toLowerCase();
-      const newImageUrl = await clinicalImagesStorage.replaceClinicalImage(
-        image.imageUrl,
-        data.file[0],
-        patientId,
-        image.type
-      );
+      // Delete old image from local storage
+      if (image.imageUrl) {
+        try {
+          await fetch(`/api/uploads?url=${encodeURIComponent(image.imageUrl)}`, {
+            method: 'DELETE',
+          });
+        } catch (e) {
+          console.warn('Failed to delete old image:', e);
+        }
+      }
+
+      // Upload new image to local storage (public/clinical-images folder)
+      const formData = new FormData();
+      formData.append('file', data.file[0]);
+      formData.append('category', 'clinical-images');
+      formData.append('patientId', image.patientId || image.patient.replace(/\s+/g, '_').toLowerCase());
+      formData.append('imageType', image.type.toLowerCase().replace(/\s+/g, '-'));
+
+      const uploadResponse = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Failed to upload new image');
+      }
+
+      const { url: newImageUrl } = await uploadResponse.json();
 
       // Update the image record
       onReplace(image.id, newImageUrl, data.caption);

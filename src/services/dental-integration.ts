@@ -79,18 +79,39 @@ export class DentalIntegrationService {
   }
 
   static async getPatientImages(patient: string): Promise<ClinicalImage[]> {
-    const images = await listCollection<ClinicalImage>('clinical-images');
-    return images.filter(img => img.patient === patient);
+    try {
+      // Fetch clinical images from Neon database API
+      const response = await fetch('/api/clinical-images');
+      if (!response.ok) return [];
+      
+      const { images } = await response.json();
+      return images.filter((img: ClinicalImage) => img.patient === patient);
+    } catch (error) {
+      console.error('Error fetching patient images:', error);
+      return [];
+    }
   }
 
   static async getToothImages(toothNumber: number, patient: string): Promise<ClinicalImage[]> {
-    const links = await listCollection<ToothImageLink>('tooth-image-links');
-    const relevantIds = links
-      .filter(l => l.toothNumber === toothNumber && l.patient === patient)
-      .map(l => l.imageId);
-    if (relevantIds.length === 0) return [];
-    const images = await listCollection<ClinicalImage>('clinical-images');
-    return images.filter(img => relevantIds.includes(img.id));
+    try {
+      // Get tooth-image links from Firebase (tooth-image-links collection)
+      const links = await listCollection<ToothImageLink>('tooth-image-links');
+      const relevantIds = links
+        .filter(l => l.toothNumber === toothNumber && l.patient === patient)
+        .map(l => l.imageId);
+      
+      if (relevantIds.length === 0) return [];
+      
+      // Fetch clinical images from Neon database API
+      const response = await fetch('/api/clinical-images');
+      if (!response.ok) return [];
+      
+      const { images } = await response.json();
+      return images.filter((img: ClinicalImage) => relevantIds.includes(img.id));
+    } catch (error) {
+      console.error('Error fetching tooth images:', error);
+      return [];
+    }
   }
 
   static async getToothMedicalRecords(toothNumber: number, patient: string): Promise<MedicalRecord[]> {
