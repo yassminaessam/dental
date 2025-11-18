@@ -96,8 +96,23 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('❌ FTP Proxy Error:', error);
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Environment check:', {
+      FTP_HOST: process.env.FTP_HOST ? '✅ Set' : '❌ Missing',
+      FTP_USER: process.env.FTP_USER ? '✅ Set' : '❌ Missing',
+      FTP_PASSWORD: process.env.FTP_PASSWORD ? '✅ Set' : '❌ Missing',
+      FTP_BASE_PATH: process.env.FTP_BASE_PATH ? '✅ Set' : '❌ Missing',
+    });
+    
     return NextResponse.json(
-      { error: 'Failed to proxy image from FTP', details: error instanceof Error ? error.message : 'Unknown' },
+      { 
+        error: 'Failed to proxy image from FTP', 
+        details: error instanceof Error ? error.message : 'Unknown',
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
