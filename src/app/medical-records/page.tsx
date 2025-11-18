@@ -711,6 +711,12 @@ export default function MedicalRecordsPage() {
                         <Card key={image.id} className="overflow-hidden group">
                             <CardHeader className="p-0">
                             <div className="relative aspect-video bg-muted">
+                                {(() => {
+                                  const proxiedUrl = getClientFtpProxyUrl(image.imageUrl);
+                                  console.log('🖼️ Original URL:', image.imageUrl);
+                                  console.log('🔄 Proxied URL:', proxiedUrl);
+                                  return null;
+                                })()}
                                 <Image
                                 src={getClientFtpProxyUrl(image.imageUrl)}
                                 alt={image.caption || `Clinical image for ${image.patient}`}
