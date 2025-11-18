@@ -23,29 +23,24 @@ export function getFtpProxyUrl(imageUrl: string): string {
   return imageUrl;
 }
 
-// Client-side version (works in browser)
+// Client-side version (works in browser - both dev and production)
 export function getClientFtpProxyUrl(imageUrl: string): string {
-  // Check if in development (client-side check)
-  const isDevelopment = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || 
-     window.location.hostname === '127.0.0.1' ||
-     window.location.hostname.endsWith('.local'));
+  // ALWAYS use FTP proxy for dental.adsolutions-eg.com URLs
+  // because the web server doesn't serve files from that location
   
-  console.log('🔍 Development Mode?', isDevelopment, 'Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'N/A');
-  
-  if (!isDevelopment) {
-    console.log('⚠️ Not in development mode, returning original URL');
-    return imageUrl;
-  }
-
   // Check if URL is from FTP server
   if (imageUrl.startsWith('https://dental.adsolutions-eg.com/assets/')) {
     const path = imageUrl.replace('https://dental.adsolutions-eg.com/assets/', '');
     const proxyUrl = `/api/ftp-proxy?path=${encodeURIComponent(path)}`;
-    console.log('✅ Converting to proxy URL:', proxyUrl);
+    
+    if (typeof window !== 'undefined') {
+      console.log('🔄 Using FTP Proxy for:', imageUrl);
+      console.log('   Proxy URL:', proxyUrl);
+    }
+    
     return proxyUrl;
   }
 
-  console.log('⚠️ URL not from FTP server, returning as-is');
+  // For local paths or other URLs, return as-is
   return imageUrl;
 }
