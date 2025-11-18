@@ -9,11 +9,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const imagePath = searchParams.get('path');
 
+    console.log('\n🔹 ==================== FTP PROXY REQUEST ====================');
+    console.log('  Full URL:', request.url);
+    console.log('  Image Path Param (from query):', imagePath);
+    console.log('\n  Environment Variables:');
+    console.log('    FTP_HOST:', process.env.FTP_HOST);
+    console.log('    FTP_USER:', process.env.FTP_USER);
+    console.log('    FTP_BASE_PATH:', process.env.FTP_BASE_PATH);
+    console.log('    FTP_PASSWORD set?', !!process.env.FTP_PASSWORD);
+
     if (!imagePath) {
+      console.error('❌ Missing path parameter');
       return NextResponse.json({ error: 'Missing path parameter' }, { status: 400 });
     }
 
-    console.log('🔹 FTP Proxy: Downloading image:', imagePath);
+    if (!process.env.FTP_HOST || !process.env.FTP_USER || !process.env.FTP_PASSWORD) {
+      console.error('❌ FTP credentials not configured in environment');
+      console.error('   Make sure .env.local has FTP_HOST, FTP_USER, FTP_PASSWORD');
+      return NextResponse.json({ error: 'FTP credentials not configured' }, { status: 500 });
+    }
 
     const client = new Client();
     
@@ -42,10 +56,22 @@ export async function GET(request: NextRequest) {
         }
       });
 
+      // Construct remote path
+      // The imagePath should be relative: "clinical-images/patient-id/file.jpg"
+      // Base path should be: "/www/dental.adsolutions-eg.com/assets"
+      // Final path should be: "/www/dental.adsolutions-eg.com/assets/clinical-images/patient-id/file.jpg"
+      
+      console.log('\n  Path Construction:');
+      console.log('    Base Path:', process.env.FTP_BASE_PATH);
+      console.log('    Relative Path:', imagePath);
+      
       const remotePath = `${process.env.FTP_BASE_PATH}/${imagePath}`;
-      console.log('🔹 Downloading from:', remotePath);
+      
+      console.log('    Final FTP Path:', remotePath);
+      console.log('\n🔹 Attempting to download from FTP...');
 
       await client.downloadTo(downloadStream, remotePath);
+      await new Promise((resolve) => downloadStream.end(resolve));
       
       const buffer = Buffer.concat(chunks);
       console.log('✅ Downloaded:', buffer.length, 'bytes');

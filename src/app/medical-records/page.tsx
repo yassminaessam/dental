@@ -63,6 +63,7 @@ import {
 } from '@/services/medical-records';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 export type { MedicalRecord, MedicalRecordTemplate, ClinicalImage } from '@/lib/types';
 
@@ -711,18 +712,19 @@ export default function MedicalRecordsPage() {
                             <CardHeader className="p-0">
                             <div className="relative aspect-video bg-muted">
                                 <Image
-                                src={image.imageUrl}
+                                src={getClientFtpProxyUrl(image.imageUrl)}
                                 alt={image.caption || `Clinical image for ${image.patient}`}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover"
+                                unoptimized={image.imageUrl.includes('dental.adsolutions-eg.com')}
                                 onError={(e) => {
-                                  console.error('❌ Image failed to load:', image.imageUrl);
+                                  console.error('Image failed to load:', image.imageUrl);
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = 'none';
                                   const parent = target.parentElement;
                                   if (parent) {
-                                    parent.innerHTML = '<div class="absolute inset-0 flex items-center justify-center bg-muted"><div class="text-center"><svg class="mx-auto h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><p class="mt-2 text-sm text-muted-foreground">Image not found</p><p class="text-xs text-muted-foreground mt-1">Check FTP server</p></div></div>';
+                                    parent.innerHTML = '<div class="absolute inset-0 flex items-center justify-center bg-muted"><div class="text-center"><svg class="mx-auto h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><p class="mt-2 text-sm text-muted-foreground">Image not found</p></div></div>';
                                   }
                                 }}
                                 />

@@ -141,7 +141,7 @@ export function ViewImageDialog({ image, open, onOpenChange }: ViewImageDialogPr
               width={800}
               height={600}
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-              unoptimized={image.imageUrl.includes('firebasestorage.googleapis.com')}
+              unoptimized
             />
           </div>
         </div>

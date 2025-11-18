@@ -48,3 +48,4 @@ firestore-debug.log
 # Local File Storage Directory
 # This directory will be created automatically by the local storage service
 /uploads/
+/public/uploads/
