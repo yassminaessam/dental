@@ -75,7 +75,7 @@ export interface Tooth {
 
 // Category mapping - only show category names
 const dentalChartCategories = [
-  'basic', 'bleaching', 'bridges', 'crowns', 'fillings', 'inlays', 'onlays', 
+  'basic', 'missing', 'bleaching', 'bridges', 'crowns', 'fillings', 'inlays', 'onlays', 
   'extractions', 'root_canal', 'pulpotomy', 'posts_cores', 'implants', 
   'veneers', 'scaling', 'gingivectomy', 'imaging', 'other'
 ];
@@ -84,7 +84,9 @@ const dentalChartStats: { condition: ToothCondition; labelKey: string; color: st
   // Basic
   { condition: 'healthy', labelKey: 'dental_chart.healthy', color: 'bg-green-500', category: 'basic' },
   { condition: 'cavity', labelKey: 'dental_chart.cavity', color: 'bg-red-500', category: 'basic' },
-  { condition: 'missing', labelKey: 'dental_chart.missing', color: 'bg-gray-500', category: 'basic' },
+  
+  // Missing
+  { condition: 'missing', labelKey: 'dental_chart.missing', color: 'bg-gray-500', category: 'missing' },
   
   // Bleaching
   { condition: 'ext-bleach-arch', labelKey: 'dental_chart.ext_bleach_arch', color: 'bg-sky-400', category: 'bleaching' },
@@ -568,6 +570,7 @@ export default function DentalChartPage() {
             // Category color schemes
             const categoryColors: Record<string, {bg: string, gradient: string, text: string, badge: string, glow: string, dot: string}> = {
               'basic': {bg: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30', gradient: 'from-green-500 to-emerald-500', text: 'text-green-700 dark:text-green-300', badge: 'bg-gradient-to-r from-green-600 to-emerald-600', glow: 'from-green-500/20 to-emerald-500/20', dot: 'bg-green-500'},
+              'missing': {bg: 'from-gray-50 to-slate-50 dark:from-gray-950/30 dark:to-slate-950/30', gradient: 'from-gray-500 to-slate-500', text: 'text-gray-700 dark:text-gray-300', badge: 'bg-gradient-to-r from-gray-600 to-slate-600', glow: 'from-gray-500/20 to-slate-500/20', dot: 'bg-gray-500'},
               'bleaching': {bg: 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30', gradient: 'from-sky-400 to-blue-500', text: 'text-sky-700 dark:text-sky-300', badge: 'bg-gradient-to-r from-sky-500 to-blue-600', glow: 'from-sky-500/20 to-blue-500/20', dot: 'bg-sky-400'},
               'bridges': {bg: 'from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30', gradient: 'from-indigo-500 to-violet-500', text: 'text-indigo-700 dark:text-indigo-300', badge: 'bg-gradient-to-r from-indigo-600 to-violet-600', glow: 'from-indigo-500/20 to-violet-500/20', dot: 'bg-indigo-500'},
               'crowns': {bg: 'from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30', gradient: 'from-purple-500 to-fuchsia-500', text: 'text-purple-700 dark:text-purple-300', badge: 'bg-gradient-to-r from-purple-600 to-fuchsia-600', glow: 'from-purple-500/20 to-fuchsia-500/20', dot: 'bg-purple-500'},
