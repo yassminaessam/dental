@@ -497,30 +497,6 @@ export default function SettingsPage() {
                 <span className="hidden sm:inline">{t('settings.tabs.notifications')}</span>
                 <span className="sm:hidden">{t('settings.tabs.notifications')}</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="security" 
-                className="gap-2 px-4 py-3 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 font-semibold group"
-              >
-                <Shield className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <span className="hidden sm:inline">{t('settings.tabs.security')}</span>
-                <span className="sm:hidden">{t('settings.tabs.security')}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="backup" 
-                className="gap-2 px-4 py-3 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 font-semibold group"
-              >
-                <Database className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <span className="hidden sm:inline">{t('settings.tabs.backup')}</span>
-                <span className="sm:hidden">{t('settings.tabs.backup')}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="appearance" 
-                className="gap-2 px-4 py-3 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 font-semibold group"
-              >
-                <Palette className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <span className="hidden sm:inline">{t('settings.tabs.appearance')}</span>
-                <span className="sm:hidden">{t('settings.tabs.appearance')}</span>
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -959,74 +935,6 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="backup" className="space-y-6">
-            <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="space-y-1 pb-4">
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    <Database className="h-5 w-5" />
-                  </div>
-                  {t('settings.backup.title')}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.backup.subtitle')}
-                </p>
-              </CardHeader>
-              <CardContent className="grid gap-6">
-                <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="automatic-backups" className="text-base font-medium">Automatic Backups</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Daily automatic backups of all data
-                    </p>
-                  </div>
-                  <Switch id="automatic-backups" defaultChecked />
-                </div>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="backup-frequency">Backup Frequency</Label>
-                    <Select defaultValue="daily">
-                      <SelectTrigger id="backup-frequency">
-                        <SelectValue placeholder="Select frequency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="backup-retention">Backup Retention</Label>
-                    <Select defaultValue="30d">
-                      <SelectTrigger id="backup-retention">
-                        <SelectValue placeholder="Select retention" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7d">7 days</SelectItem>
-                        <SelectItem value="30d">30 days</SelectItem>
-                        <SelectItem value="90d">90 days</SelectItem>
-                        <SelectItem value="1y">1 year</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="rounded-lg border-2 bg-gradient-to-br from-muted/30 to-muted/60 p-6 space-y-3">
-                  <Label className="text-lg font-semibold">Manual Backup</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Create an immediate backup of all data
-                  </p>
-                  <div className="pt-2">
-                    <Button variant="outline" size="lg" className="gap-2 shadow-sm hover:shadow-md transition-shadow">
-                      <Database className="h-4 w-4" />
-                      Create Backup Now
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="appearance" className="space-y-6">
             <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="space-y-1 pb-4">
                 <CardTitle className="flex items-center gap-3 text-2xl">
