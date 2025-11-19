@@ -22,7 +22,7 @@ import {
 import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { cn } from "@/lib/utils";
 import { allHealthyDentalChart } from "@/lib/data/dental-chart-data";
-import { Download, Printer, RotateCw, Search, User, Loader2, Sparkles, Activity } from "lucide-react";
+import { Download, Printer, Search, User, Loader2, Sparkles, Activity } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
 import { EnhancedToothDetailCard } from '@/components/dental-chart/enhanced-tooth-detail-card';
@@ -369,32 +369,6 @@ export default function DentalChartPage() {
         }
     };
     
-    const handleResetChart = async () => {
-        if (!selectedPatientId) return;
-        try {
-            const response = await fetch('/api/dental-charts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    patientId: selectedPatientId,
-                    chartData: allHealthyDentalChart,
-                }),
-            });
-            
-            if (!response.ok) throw new Error('Failed to reset dental chart');
-            
-            setChartData({ ...allHealthyDentalChart });
-            setSelectedTooth(null);
-            setHighlightedCondition('all');
-      toast({
-        title: t('dental_chart.toast.chart_reset'),
-        description: t('dental_chart.toast.chart_reset_desc'),
-      });
-        } catch (error) {
-      toast({ title: t('dental_chart.toast.error_resetting_chart'), variant: 'destructive' });
-        }
-    };
-
     const handlePrint = () => {
         window.print();
     };
@@ -466,10 +440,6 @@ export default function DentalChartPage() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button variant="outline" onClick={handleResetChart} disabled={!selectedPatientId} className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                  <RotateCw className={isRTL ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
-                  {t('dental_chart.reset')}
-                </Button>
                 <Button variant="outline" onClick={handlePrint} className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                   <Printer className={isRTL ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
                   {t('common.print')}
