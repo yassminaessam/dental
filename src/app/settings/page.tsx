@@ -256,6 +256,9 @@ export default function SettingsPage() {
       const data = await response.json();
       setSettings(prev => ({ ...prev, logoUrl: data.url }));
       
+      // Cache logo in localStorage for instant load on other pages
+      localStorage.setItem('clinicLogo', data.url);
+      
       toast({
         title: t('settings.toast.logo_uploaded'),
         description: t('settings.toast.logo_uploaded_desc'),
@@ -313,8 +316,9 @@ export default function SettingsPage() {
       const data = await response.json();
       setSettings(prev => ({ ...prev, faviconUrl: data.url }));
       
-      // Update favicon dynamically
+      // Update favicon dynamically and cache it
       updateFavicon(data.url);
+      localStorage.setItem('clinicFavicon', data.url);
       
       toast({
         title: t('settings.toast.favicon_uploaded'),
@@ -333,15 +337,23 @@ export default function SettingsPage() {
   };
 
   const updateFavicon = (url: string) => {
-    // Update all favicon link elements
-    const links = document.querySelectorAll("link[rel*='icon']");
-    links.forEach(link => link.remove());
-
-    const newLink = document.createElement('link');
-    newLink.rel = 'icon';
-    newLink.type = 'image/x-icon';
-    newLink.href = getClientFtpProxyUrl(url);
-    document.head.appendChild(newLink);
+    try {
+      // Find existing favicon
+      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      
+      if (!link) {
+        // Create new favicon link if none exists
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/x-icon';
+        document.head.appendChild(link);
+      }
+      
+      // Update href (safe method - no removal)
+      link.href = getClientFtpProxyUrl(url);
+    } catch (error) {
+      console.warn('Failed to update favicon:', error);
+    }
   };
 
   const handleSwitchChange = (id: string, checked: boolean) => {
