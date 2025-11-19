@@ -16,8 +16,10 @@ import { DentalIntegrationService } from '@/services/dental-integration';
 import { useToast } from '@/hooks/use-toast';
 import { ToothRecordsDialog } from './tooth-records-dialog';
 import { ToothImagesDialog } from './tooth-images-dialog';
+import { ImageViewerDialog } from './image-viewer-dialog';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 // Organized procedure categories for dropdown with translation keys
 const procedureCategories = {
@@ -179,6 +181,7 @@ export function EnhancedToothDetailCard({
     const [loading, setLoading] = React.useState(false);
     const [showRecordsDialog, setShowRecordsDialog] = React.useState(false);
     const [showImagesDialog, setShowImagesDialog] = React.useState(false);
+    const [selectedImage, setSelectedImage] = React.useState<ClinicalImage | null>(null);
     const { toast } = useToast();
 
     React.useEffect(() => {
@@ -438,35 +441,74 @@ export function EnhancedToothDetailCard({
                             </div>
                         </div>
                         
-                        <ScrollArea className="h-32">
+                        <ScrollArea className="h-64">
                             {loading ? (
                                 <div className="text-sm text-muted-foreground">{t('common.loading')}</div>
                             ) : relatedImages.length > 0 ? (
-                                <div className="space-y-2">
-                                    {relatedImages.slice(0, 2).map((image, index) => (
-                                        <div key={index} className="p-2 border rounded-sm">
-                                            <div className="flex items-center gap-2">
-                                                <Camera className="h-3 w-3" />
-                                                <span className="text-sm font-medium">{image.type}</span>
-                                                <Badge variant="outline" className="text-xs">
-                                                    {image.date}
-                                                </Badge>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {relatedImages.slice(0, 4).map((image, index) => (
+                                        <div 
+                                            key={index} 
+                                            className="group relative border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-all"
+                                            onClick={() => setSelectedImage(image)}
+                                        >
+                                            {/* Image thumbnail */}
+                                            <div className="aspect-video bg-muted relative">
+                                                {image.imageUrl ? (
+                                                    <Image
+                                                        src={getClientFtpProxyUrl(image.imageUrl)}
+                                                        alt={image.caption || image.type}
+                                                        fill
+                                                        sizes="(max-width: 768px) 50vw, 200px"
+                                                        className="object-cover group-hover:scale-105 transition-transform"
+                                                    />
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Camera className="h-8 w-8 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                                {/* Overlay on hover */}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Camera className="h-6 w-6 text-white" />
+                                                </div>
                                             </div>
-                                            {image.caption && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {image.caption}
+                                            
+                                            {/* Image info */}
+                                            <div className="p-2 bg-background">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {image.type}
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground truncate">
+                                                    {image.date}
                                                 </p>
-                                            )}
+                                                {image.caption && (
+                                                    <p className="text-xs text-muted-foreground truncate mt-1">
+                                                        {image.caption}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
-                                    {relatedImages.length > 2 && (
-                                        <p className="text-xs text-muted-foreground text-center">
-                                            +{relatedImages.length - 2} {t('dental_chart.more_images')}
-                                        </p>
-                                    )}
                                 </div>
                             ) : (
-                                <div className="text-sm text-muted-foreground">{t('dental_chart.no_clinical_images')}</div>
+                                <div className="text-sm text-muted-foreground text-center py-8">
+                                    <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    {t('dental_chart.no_clinical_images')}
+                                </div>
+                            )}
+                            {relatedImages.length > 4 && (
+                                <div className="text-center mt-3">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => setShowImagesDialog(true)}
+                                        className="w-full"
+                                    >
+                                        {t('dental_chart.view_all')} ({relatedImages.length})
+                                    </Button>
+                                </div>
                             )}
                         </ScrollArea>
                     </TabsContent>
@@ -523,6 +565,14 @@ export function EnhancedToothDetailCard({
             toothNumber={tooth.id}
             patientName={patientName}
             images={relatedImages}
+        />
+
+        {/* Image Viewer Dialog */}
+        <ImageViewerDialog
+            open={!!selectedImage}
+            onOpenChange={(open) => !open && setSelectedImage(null)}
+            image={selectedImage}
+            toothNumber={tooth.id}
         />
         </>
     );

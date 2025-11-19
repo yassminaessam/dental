@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Download, Calendar, Camera, Maximize2, X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { ClinicalImage } from '@/app/medical-records/page';
 import { toothNames } from '@/lib/data/dental-chart-data';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 interface ImageViewerDialogProps {
   open: boolean;
@@ -160,7 +161,7 @@ export function ImageViewerDialog({
                     {/* Actual Image Display */}
                     {image.imageUrl ? (
                       <img 
-                        src={image.imageUrl} 
+                        src={getClientFtpProxyUrl(image.imageUrl)} 
                         alt={`${image.type} for ${image.patient}`}
                         className={`max-w-none max-h-none object-contain ${getTransformClasses} ${styles.fullSizeImage}`}
                       />
