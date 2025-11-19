@@ -513,7 +513,7 @@ export default function DentalChartPage() {
         {selectedPatientId && (
           <Card className="border-2 border-indigo-200 dark:border-indigo-900 shadow-lg bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/30 dark:to-purple-950/30">
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                     {Object.keys(chartData).length}
@@ -527,8 +527,14 @@ export default function DentalChartPage() {
                   <div className="text-sm text-muted-foreground mt-1">{t('dental_chart.healthy')}</div>
                 </div>
                 <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-600 dark:text-gray-400">
+                    {teethCountByCondition['missing'] || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">{t('dental_chart.missing')}</div>
+                </div>
+                <div className="text-center">
                   <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                    {Object.keys(chartData).length - (teethCountByCondition['healthy'] || 0)}
+                    {Object.keys(chartData).length - (teethCountByCondition['healthy'] || 0) - (teethCountByCondition['missing'] || 0)}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">{t('dental_chart.needs_treatment')}</div>
                 </div>
