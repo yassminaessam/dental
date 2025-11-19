@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthService } from "@/lib/auth";
 import {
@@ -42,6 +42,7 @@ import { HelpCircle } from "lucide-react";
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { t, direction } = useLanguage();
@@ -278,13 +279,15 @@ export function SidebarNav() {
           return (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
-                asChild
                 isActive={isActive}
                 className={`group relative w-full p-0 bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(item.href as string);
+                }}
               >
-                <Link
-                  href={item.href as any}
-                  className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-2xl px-4 py-4 min-h-24 border border-sidebar-border/20 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 transition-all duration-300 relative overflow-hidden`}
+                <div
+                  className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-2xl px-4 py-4 min-h-24 border border-sidebar-border/20 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 transition-all duration-300 relative overflow-hidden cursor-pointer`}
                 >
                   {/* Active bar */}
                   <span
@@ -317,7 +320,7 @@ export function SidebarNav() {
                   {isActive && (
                     <div className={`absolute ${direction === 'rtl' ? 'left-2' : 'right-2'} top-2 w-2.5 h-2.5 rounded-full bg-sidebar-primary shadow-[0_0_0_3px_rgba(var(--sidebar-primary-rgb),0.25)] animate-pulse`} />
                   )}
-                </Link>
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           );
