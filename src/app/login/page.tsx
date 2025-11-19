@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, User, Lock, Activity, Shield, Stethoscope, Users, UserCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 // Test credentials for quick login
 const testUsers = [
@@ -62,10 +64,75 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [clinicName, setClinicName] = useState('Cairo Dental Clinic');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
 
   const { signIn } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+
+  // Load clinic branding from cache immediately, then fetch from API
+  useEffect(() => {
+    // Load from cache first for instant display
+    const cachedName = localStorage.getItem('clinicName');
+    const cachedLogo = localStorage.getItem('clinicLogo');
+    const cachedFavicon = localStorage.getItem('clinicFavicon');
+    
+    if (cachedName) setClinicName(cachedName);
+    if (cachedLogo) setLogoUrl(cachedLogo);
+    if (cachedFavicon) {
+      setFaviconUrl(cachedFavicon);
+      updateFavicon(cachedFavicon);
+    }
+
+    // Fetch from API in background
+    async function fetchClinicSettings() {
+      try {
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          const name = data.settings?.clinicName || 'Cairo Dental Clinic';
+          const logo = data.settings?.logoUrl;
+          const favicon = data.settings?.faviconUrl;
+          
+          setClinicName(name);
+          if (logo) {
+            setLogoUrl(logo);
+            localStorage.setItem('clinicLogo', logo);
+          }
+          if (favicon) {
+            setFaviconUrl(favicon);
+            localStorage.setItem('clinicFavicon', favicon);
+            updateFavicon(favicon);
+          }
+          if (name) {
+            localStorage.setItem('clinicName', name);
+            document.title = name;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch clinic settings:', error);
+      }
+    }
+
+    fetchClinicSettings();
+  }, []);
+
+  const updateFavicon = (url: string) => {
+    try {
+      let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/x-icon';
+        document.head.appendChild(link);
+      }
+      link.href = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
+    } catch (error) {
+      console.warn('Failed to update favicon:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,10 +190,23 @@ export default function LoginPage() {
         <div className="space-y-6">
           {/* Header */}
           <div className="text-center lg:text-left">
-            <div className="inline-flex h-16 w-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl items-center justify-center mb-4 shadow-lg shadow-blue-500/50">
-              <Activity className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Cairo Dental Clinic</h1>
+            {logoUrl ? (
+              <div className="inline-flex h-16 w-16 bg-white/10 backdrop-blur rounded-2xl items-center justify-center mb-4 shadow-lg shadow-blue-500/50 overflow-hidden">
+                <Image
+                  src={getClientFtpProxyUrl(logoUrl)}
+                  alt={clinicName}
+                  width={64}
+                  height={64}
+                  className="object-contain p-2"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="inline-flex h-16 w-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl items-center justify-center mb-4 shadow-lg shadow-blue-500/50">
+                <Activity className="h-8 w-8 text-white" />
+              </div>
+            )}
+            <h1 className="text-3xl font-bold text-white mb-2">{clinicName}</h1>
             <p className="text-blue-200">Sign in to access your account</p>
           </div>
 
@@ -226,7 +306,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="text-center text-sm text-blue-200">
-            <p>© 2025 Cairo Dental Clinic. All rights reserved.</p>
+            <p>© 2025 {clinicName}. All rights reserved.</p>
           </div>
         </div>
 
