@@ -41,6 +41,22 @@ import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, Rotate
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
+import { WeeklySchedule } from '@/components/settings/WeeklySchedule';
+
+type TimeSlot = {
+  start: string;
+  end: string;
+};
+
+type WeeklyScheduleData = {
+  sunday?: TimeSlot[];
+  monday?: TimeSlot[];
+  tuesday?: TimeSlot[];
+  wednesday?: TimeSlot[];
+  thursday?: TimeSlot[];
+  friday?: TimeSlot[];
+  saturday?: TimeSlot[];
+};
 
 type ClinicSettings = {
   id: string;
@@ -52,6 +68,7 @@ type ClinicSettings = {
   logoUrl?: string | null;
   faviconUrl?: string | null;
   businessHours: string;
+  weeklySchedule?: WeeklyScheduleData | null;
   timezone: string;
   appointmentDuration: string;
   bookingLimit: string;
@@ -68,6 +85,7 @@ const initialSettings: ClinicSettings = {
   logoUrl: null,
   faviconUrl: null,
   businessHours: 'mon-fri-8-6',
+  weeklySchedule: null,
   timezone: 'eastern',
   appointmentDuration: '60',
   bookingLimit: '90',
@@ -738,17 +756,12 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="businessHours">{t('settings.clinic.business_hours')}</Label>
-                    <Select value={settings.businessHours} onValueChange={(value) => handleSelectChange('businessHours', value)}>
-                      <SelectTrigger id="businessHours">
-                        <SelectValue placeholder={t('settings.clinic.select_hours')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mon-fri-8-6">{t('settings.clinic.sun_thu_9_7')}</SelectItem>
-                        <SelectItem value="mon-fri-9-5">{t('settings.clinic.sun_thu_10_6')}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="col-span-2">
+                    <Label className="text-base font-semibold mb-2 block">{t('settings.clinic.business_hours')}</Label>
+                    <WeeklySchedule 
+                      value={settings.weeklySchedule || null}
+                      onChange={(schedule) => setSettings({ ...settings, weeklySchedule: schedule })}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="timezone">{t('settings.clinic.timezone')}</Label>

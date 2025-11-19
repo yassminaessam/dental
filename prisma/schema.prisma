@@ -423,6 +423,7 @@ model ClinicSettings {
   logoUrl              String?
   faviconUrl           String?
   businessHours        String   @default("mon-fri-8-6")
+  weeklySchedule       Json?
   timezone             String   @default("eastern")
   appointmentDuration  String   @default("60")
   bookingLimit         String   @default("90")
