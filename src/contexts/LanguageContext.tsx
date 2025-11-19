@@ -1293,6 +1293,7 @@ const translations: Translations = {
   'dental_chart.waxup': 'Waxup',
   // Dental chart categories
   'dental_chart.category_basic': 'Basic',
+  'dental_chart.category_missing': 'Missing',
   'dental_chart.category_bleaching': 'Bleaching',
   'dental_chart.category_bridges': 'Bridges',
   'dental_chart.category_crowns': 'Crowns',
@@ -3727,6 +3728,7 @@ const translations: Translations = {
   'dental_chart.waxup': 'نموذج شمعي',
   // فئات مخطط الأسنان
   'dental_chart.category_basic': 'أساسي',
+  'dental_chart.category_missing': 'مفقود',
   'dental_chart.category_bleaching': 'تبييض',
   'dental_chart.category_bridges': 'جسور',
   'dental_chart.category_crowns': 'تيجان',
