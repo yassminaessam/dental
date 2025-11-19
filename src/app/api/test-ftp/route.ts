@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Client } from 'basic-ftp';
+import * as ftp from 'basic-ftp';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +40,7 @@ export async function GET() {
     return NextResponse.json(results, { status: 500 });
   }
   
-  const client = new Client();
+  const client = new ftp.Client();
   client.ftp.verbose = true;
   
   try {

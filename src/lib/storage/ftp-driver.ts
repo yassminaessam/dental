@@ -1,6 +1,6 @@
 import type { StorageDriver, UploadParams, UploadResult } from './index';
 import { safeSegment, getExtension } from './index';
-import { Client } from 'basic-ftp';
+import * as ftp from 'basic-ftp';
 import path from 'path';
 
 export interface FTPConfig {
@@ -62,7 +62,7 @@ export class FTPStorageDriver implements StorageDriver {
     console.log('  File name:', fileName);
     console.log('  File size:', params.buffer.length, 'bytes');
     
-    const client = new Client();
+    const client = new ftp.Client();
     client.ftp.verbose = true; // Always enable verbose logging
 
     try {
@@ -139,7 +139,7 @@ export class FTPStorageDriver implements StorageDriver {
   }
 
   async delete(pathOrUrl: string): Promise<void> {
-    const client = new Client();
+    const client = new ftp.Client();
     client.ftp.verbose = process.env.NODE_ENV === 'development';
 
     try {

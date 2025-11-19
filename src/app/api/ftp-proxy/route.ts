@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client } from 'basic-ftp';
+import * as ftp from 'basic-ftp';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'FTP credentials not configured' }, { status: 500 });
     }
 
-    const client = new Client();
+    const client = new ftp.Client();
     
     try {
       // Connect to FTP
