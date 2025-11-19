@@ -73,9 +73,6 @@ export function ToothImagesDialog({
             <Camera className="h-5 w-5" />
             {t('dental_chart.clinical_images')} {t('common.for') ? t('common.for') : ''} {toothName}
           </DialogTitle>
-          <DialogDescription>
-            {t('dental_chart.image_linked_success_desc')}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -221,7 +218,6 @@ export function ToothImagesDialog({
                                 )}
 
                                 <div className="flex items-center justify-between pt-2">
-                  <div className="text-xs text-muted-foreground">{t('dental_chart.image_linked_success')}</div>
                                   <div className="flex gap-1">
                                     {onViewFullImage && (
                                       <Button
