@@ -63,9 +63,19 @@ export default function DashboardLayout({
     refetch: refetchNotifications,
   } = useNotifications(user?.id)
 
-  // Clinic settings for logo and favicon
-  const [clinicLogo, setClinicLogo] = React.useState<string | null>(null)
-  const [clinicName, setClinicName] = React.useState<string>('')
+  // Clinic settings for logo and name - Initialize from localStorage for instant load
+  const [clinicLogo, setClinicLogo] = React.useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('clinicLogo') || null
+    }
+    return null
+  })
+  const [clinicName, setClinicName] = React.useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('clinicName') || ''
+    }
+    return ''
+  })
 
   // Fetch clinic settings for logo and name
   React.useEffect(() => {
@@ -76,8 +86,21 @@ export default function DashboardLayout({
           const data = await response.json()
           if (data.settings) {
             const name = data.settings.clinicName || t('dashboard.clinic_name')
-            setClinicLogo(data.settings.logoUrl)
+            const logo = data.settings.logoUrl
+            
+            // Update state
+            setClinicLogo(logo)
             setClinicName(name)
+            
+            // Cache in localStorage for instant load next time
+            if (logo) {
+              localStorage.setItem('clinicLogo', logo)
+            } else {
+              localStorage.removeItem('clinicLogo')
+            }
+            if (name) {
+              localStorage.setItem('clinicName', name)
+            }
             
             // Update browser tab title
             document.title = name
