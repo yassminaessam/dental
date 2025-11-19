@@ -106,7 +106,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     return items.filter(item => !readNotificationIds.has(item.id));
   }, [readNotificationIds]);
 
-  // Fetch clinic settings for logo and favicon
+  // Fetch clinic settings for logo and name
   React.useEffect(() => {
     async function fetchClinicSettings() {
       try {
@@ -120,18 +120,6 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             
             // Update browser tab title
             document.title = `${name} - ${t('roles.patient')} Portal`;
-            
-            // Update favicon if set
-            if (data.settings.faviconUrl) {
-              const links = document.querySelectorAll("link[rel*='icon']");
-              links.forEach(link => link.remove());
-              
-              const newLink = document.createElement('link');
-              newLink.rel = 'icon';
-              newLink.type = 'image/x-icon';
-              newLink.href = getClientFtpProxyUrl(data.settings.faviconUrl);
-              document.head.appendChild(newLink);
-            }
           }
         }
       } catch (error) {

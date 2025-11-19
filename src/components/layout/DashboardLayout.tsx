@@ -67,7 +67,7 @@ export default function DashboardLayout({
   const [clinicLogo, setClinicLogo] = React.useState<string | null>(null)
   const [clinicName, setClinicName] = React.useState<string>('')
 
-  // Fetch clinic settings for logo and favicon
+  // Fetch clinic settings for logo and name
   React.useEffect(() => {
     async function fetchClinicSettings() {
       try {
@@ -81,11 +81,6 @@ export default function DashboardLayout({
             
             // Update browser tab title
             document.title = name
-            
-            // Update favicon if set
-            if (data.settings.faviconUrl) {
-              updateFavicon(data.settings.faviconUrl)
-            }
           }
         }
       } catch (error) {
@@ -95,18 +90,6 @@ export default function DashboardLayout({
     
     fetchClinicSettings()
   }, [t])
-
-  const updateFavicon = (url: string) => {
-    // Update all favicon link elements
-    const links = document.querySelectorAll("link[rel*='icon']")
-    links.forEach(link => link.remove())
-
-    const newLink = document.createElement('link')
-    newLink.rel = 'icon'
-    newLink.type = 'image/x-icon'
-    newLink.href = getClientFtpProxyUrl(url)
-    document.head.appendChild(newLink)
-  }
 
   // Refresh notifications every 30 seconds
   React.useEffect(() => {
