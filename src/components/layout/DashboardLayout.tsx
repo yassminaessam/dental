@@ -237,7 +237,6 @@ export default function DashboardLayout({
             )}
             <div className="flex flex-col">
               <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{clinicName || t('dashboard.clinic_name')}</h1>
-              <p className="text-xs text-sidebar-foreground/70 font-medium">Elite Operations Dashboard</p>
             </div>
           </div>
         </SidebarHeader>
