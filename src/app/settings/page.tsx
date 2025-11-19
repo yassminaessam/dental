@@ -762,43 +762,43 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="autolock-switch" className="text-base font-medium">
-                      Auto-lock Inactive Sessions
+                      {t('settings.users.autolock')}
                     </Label>
                     <span className="text-sm text-muted-foreground">
-                      Lock sessions after 30 minutes of inactivity
+                      {t('settings.users.autolock_desc')}
                     </span>
                   </div>
                   <Switch id="autolock-switch" defaultChecked />
                 </div>
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <Label htmlFor="session-timeout">Session Timeout</Label>
+                      <Label htmlFor="session-timeout">{t('settings.users.session_timeout')}</Label>
                       <Select defaultValue="30">
                         <SelectTrigger id="session-timeout">
-                          <SelectValue placeholder="Select timeout" />
+                          <SelectValue placeholder={t('settings.users.select_timeout')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="15">15 minutes</SelectItem>
-                          <SelectItem value="30">30 minutes</SelectItem>
-                          <SelectItem value="60">60 minutes</SelectItem>
-                          <SelectItem value="never">Never</SelectItem>
+                          <SelectItem value="15">{t('settings.users.15_minutes')}</SelectItem>
+                          <SelectItem value="30">{t('settings.users.30_minutes')}</SelectItem>
+                          <SelectItem value="60">{t('settings.users.60_minutes')}</SelectItem>
+                          <SelectItem value="never">{t('settings.users.never')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="password-policy">Password Policy</Label>
+                      <Label htmlFor="password-policy">{t('settings.users.password_policy')}</Label>
                       <Select defaultValue="strong">
                         <SelectTrigger id="password-policy">
-                          <SelectValue placeholder="Select policy" />
+                          <SelectValue placeholder={t('settings.users.select_policy')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="simple">
-                            Simple (8+ chars)
+                            {t('settings.users.policy_simple')}
                           </SelectItem>
                           <SelectItem value="strong">
-                            Strong (8+ chars, mixed case, numbers, symbols)
+                            {t('settings.users.policy_strong')}
                           </SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
+                          <SelectItem value="custom">{t('settings.users.policy_custom')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -822,53 +822,53 @@ export default function SettingsPage() {
               <CardContent className="grid gap-4">
                 <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
                   <div className="flex flex-col gap-1">
-                    <Label className="text-base font-medium">Appointment Reminders</Label>
+                    <Label className="text-base font-medium">{t('settings.notifications.appointment_reminders')}</Label>
                     <span className="text-sm text-muted-foreground">
-                      Send reminders to patients
+                      {t('settings.notifications.appointment_reminders_desc')}
                     </span>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
                   <div className="flex flex-col gap-1">
-                    <Label className="text-base font-medium">Payment Notifications</Label>
+                    <Label className="text-base font-medium">{t('settings.notifications.payment_notifications')}</Label>
                     <span className="text-sm text-muted-foreground">
-                      Notify when payments are received
+                      {t('settings.notifications.payment_notifications_desc')}
                     </span>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
                   <div className="flex flex-col gap-1">
-                    <Label className="text-base font-medium">Staff Schedule Changes</Label>
+                    <Label className="text-base font-medium">{t('settings.notifications.staff_schedule')}</Label>
                     <span className="text-sm text-muted-foreground">
-                      Alert when staff schedules change
+                      {t('settings.notifications.staff_schedule_desc')}
                     </span>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="reminder-timing">Reminder Timing</Label>
+                    <Label htmlFor="reminder-timing">{t('settings.notifications.reminder_timing')}</Label>
                     <Select defaultValue="24h">
                       <SelectTrigger id="reminder-timing">
-                        <SelectValue placeholder="Select timing" />
+                        <SelectValue placeholder={t('settings.notifications.select_timing')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1h">1 hour before</SelectItem>
-                        <SelectItem value="24h">24 hours before</SelectItem>
-                        <SelectItem value="48h">2 days before</SelectItem>
+                        <SelectItem value="1h">{t('settings.notifications.1_hour_before')}</SelectItem>
+                        <SelectItem value="24h">{t('settings.notifications.24_hours_before')}</SelectItem>
+                        <SelectItem value="48h">{t('settings.notifications.2_days_before')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="notification-method">Notification Method</Label>
+                    <Label htmlFor="notification-method">{t('settings.notifications.notification_method')}</Label>
                     <Select defaultValue="email">
                       <SelectTrigger id="notification-method">
-                        <SelectValue placeholder="Select method" />
+                        <SelectValue placeholder={t('settings.notifications.select_method')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="email">{t('settings.notifications.email')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
