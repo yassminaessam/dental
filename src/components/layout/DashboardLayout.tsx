@@ -88,35 +88,28 @@ export default function DashboardLayout({
       }
       
       if (cachedFavicon) {
-        updateFavicon(cachedFavicon)
+        // Safe update from cache - no removal, just update href
+        updateFaviconSafe(cachedFavicon)
       }
     }
   }, [])
 
-  const updateFavicon = (url: string) => {
+  const updateFaviconSafe = (url: string) => {
     if (typeof window === 'undefined') return
     
     try {
-      // Remove all existing favicon links
-      const existingLinks = document.querySelectorAll("link[rel*='icon']")
-      existingLinks.forEach(link => link.remove())
+      // Find existing favicon and update it (SAFE - no removal)
+      let link = document.querySelector("link[rel='icon']") as HTMLLinkElement
       
-      // Add cache-busting timestamp
-      const faviconUrl = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'icon'
+        link.type = 'image/x-icon'
+        document.head.appendChild(link)
+      }
       
-      // Create new favicon link
-      const link = document.createElement('link')
-      link.rel = 'icon'
-      link.type = 'image/x-icon'
-      link.href = faviconUrl
-      document.head.appendChild(link)
-      
-      // Also add as shortcut icon
-      const shortcutLink = document.createElement('link')
-      shortcutLink.rel = 'shortcut icon'
-      shortcutLink.type = 'image/x-icon'
-      shortcutLink.href = faviconUrl
-      document.head.appendChild(shortcutLink)
+      // Update href with cache-busting timestamp
+      link.href = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`
     } catch (error) {
       console.warn('Failed to update favicon:', error)
     }
@@ -150,7 +143,7 @@ export default function DashboardLayout({
             }
             if (favicon) {
               localStorage.setItem('clinicFavicon', favicon)
-              updateFavicon(favicon)
+              updateFaviconSafe(favicon)
             } else {
               localStorage.removeItem('clinicFavicon')
             }
