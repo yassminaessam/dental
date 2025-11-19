@@ -871,15 +871,6 @@ export default function SettingsPage() {
                   </div>
                   <Switch defaultChecked />
                 </div>
-                <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
-                  <div className="flex flex-col gap-1">
-                    <Label className="text-base font-medium">System Maintenance</Label>
-                    <span className="text-sm text-muted-foreground">
-                      Notify about system updates
-                    </span>
-                  </div>
-                  <Switch />
-                </div>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <Label htmlFor="reminder-timing">Reminder Timing</Label>
@@ -896,14 +887,12 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <Label htmlFor="notification-method">Notification Method</Label>
-                    <Select defaultValue="both">
+                    <Select defaultValue="email">
                       <SelectTrigger id="notification-method">
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="email">Email only</SelectItem>
-                        <SelectItem value="sms">SMS only</SelectItem>
-                        <SelectItem value="both">Both email and SMS</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
