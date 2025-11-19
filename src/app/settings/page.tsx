@@ -338,26 +338,20 @@ export default function SettingsPage() {
 
   const updateFavicon = (url: string) => {
     try {
-      // Remove all existing favicon links to avoid conflicts
-      const existingLinks = document.querySelectorAll("link[rel*='icon']");
-      existingLinks.forEach(link => link.remove());
+      // Find existing favicon and update it (SAFE - no removal)
+      let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
       
-      // Add cache-busting timestamp to force browser reload
+      if (!link) {
+        // Create new favicon link if none exists
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/x-icon';
+        document.head.appendChild(link);
+      }
+      
+      // Update href with cache-busting timestamp to force browser reload
       const faviconUrl = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
-      
-      // Create new favicon link
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/x-icon';
       link.href = faviconUrl;
-      document.head.appendChild(link);
-      
-      // Also add as shortcut icon for better browser support
-      const shortcutLink = document.createElement('link');
-      shortcutLink.rel = 'shortcut icon';
-      shortcutLink.type = 'image/x-icon';
-      shortcutLink.href = faviconUrl;
-      document.head.appendChild(shortcutLink);
       
       console.log('Favicon updated:', faviconUrl);
     } catch (error) {
