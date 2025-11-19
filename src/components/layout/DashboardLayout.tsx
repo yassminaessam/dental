@@ -77,6 +77,44 @@ export default function DashboardLayout({
     return ''
   })
 
+  // Set browser title and favicon immediately from cache
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cachedName = localStorage.getItem('clinicName')
+      const cachedFavicon = localStorage.getItem('clinicFavicon')
+      
+      if (cachedName) {
+        document.title = cachedName
+      }
+      
+      if (cachedFavicon) {
+        updateFavicon(cachedFavicon)
+      }
+    }
+  }, [])
+
+  const updateFavicon = (url: string) => {
+    if (typeof window === 'undefined') return
+    
+    try {
+      // Find existing favicon
+      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+      
+      if (!link) {
+        // Create new favicon link if none exists
+        link = document.createElement('link')
+        link.rel = 'icon'
+        link.type = 'image/x-icon'
+        document.head.appendChild(link)
+      }
+      
+      // Update href
+      link.href = getClientFtpProxyUrl(url)
+    } catch (error) {
+      console.warn('Failed to update favicon:', error)
+    }
+  }
+
   // Fetch clinic settings for logo and name
   React.useEffect(() => {
     async function fetchClinicSettings() {
@@ -87,6 +125,7 @@ export default function DashboardLayout({
           if (data.settings) {
             const name = data.settings.clinicName || t('dashboard.clinic_name')
             const logo = data.settings.logoUrl
+            const favicon = data.settings.faviconUrl
             
             // Update state
             setClinicLogo(logo)
@@ -100,10 +139,14 @@ export default function DashboardLayout({
             }
             if (name) {
               localStorage.setItem('clinicName', name)
+              document.title = name
             }
-            
-            // Update browser tab title
-            document.title = name
+            if (favicon) {
+              localStorage.setItem('clinicFavicon', favicon)
+              updateFavicon(favicon)
+            } else {
+              localStorage.removeItem('clinicFavicon')
+            }
           }
         }
       } catch (error) {
