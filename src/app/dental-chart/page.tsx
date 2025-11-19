@@ -762,6 +762,7 @@ export default function DentalChartPage() {
         onOpenChange={setShowUploadDialog}
         onUpload={handleImageUpload}
         defaultPatient={selectedPatientId || undefined}
+        defaultToothNumber={selectedTooth?.id}
       />
     </DashboardLayout>
   );

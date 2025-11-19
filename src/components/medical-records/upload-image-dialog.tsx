@@ -48,6 +48,7 @@ interface UploadImageDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaultPatient?: string;
+  defaultToothNumber?: number;
   triggerElement?: React.ReactNode;
 }
 
@@ -56,6 +57,7 @@ export function UploadImageDialog({
   open: externalOpen, 
   onOpenChange: externalOnOpenChange,
   defaultPatient,
+  defaultToothNumber,
   triggerElement 
 }: UploadImageDialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
@@ -75,7 +77,7 @@ export function UploadImageDialog({
       type: '',
       file: undefined,
       caption: '',
-      toothNumber: '',
+      toothNumber: defaultToothNumber ? defaultToothNumber.toString() : '',
     },
   });
   

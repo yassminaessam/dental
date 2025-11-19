@@ -1,27 +1,9 @@
 "use client";
 
-// Client-safe DentalIntegrationService. Replaces legacy Prisma-coupled implementation.
-import { listCollection, createDocument, generateDocumentId } from '@/lib/collections-client';
+// Client-safe DentalIntegrationService using Neon database
 import type { ClinicalImage, MedicalRecord } from '@/lib/types';
 
-export type ToothCondition = string; // Simplified placeholder
-
-// Extend base MedicalRecord with tooth-specific metadata without redefining core fields.
-export interface DentalTreatmentRecord extends MedicalRecord {
-  toothNumber?: number;
-  toothCondition?: ToothCondition;
-  previousCondition?: ToothCondition;
-  treatmentType: 'condition_change' | 'treatment_plan' | 'follow_up' | 'clinical_image';
-  relatedImageIds?: string[];
-}
-
-export interface ToothImageLink {
-  imageId: string;
-  toothNumber: number;
-  patient: string;
-  linkDate: string;
-  imageType: string;
-}
+export type ToothCondition = string;
 
 export class DentalIntegrationService {
   static async createTreatmentRecord(
@@ -64,18 +46,23 @@ export class DentalIntegrationService {
 
   static async linkImageToTooth(
     imageId: string,
-    toothNumber: number,
-    patient: string,
-    imageType: string
-  ): Promise<string> {
-    const link: ToothImageLink = {
-      imageId,
-      toothNumber,
-      patient,
-      linkDate: new Date().toISOString(),
-      imageType
-    };
-    return createDocument('tooth-image-links', link as unknown as Record<string, unknown>);
+    toothNumber: number
+  ): Promise<void> {
+    try {
+      // Update the clinical image in Neon database to link it to a tooth
+      const response = await fetch(`/api/clinical-images/${imageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toothNumber }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to link image to tooth');
+      }
+    } catch (error) {
+      console.error('Error linking image to tooth:', error);
+      throw error;
+    }
   }
 
   static async getPatientImages(patient: string): Promise<ClinicalImage[]> {
@@ -94,20 +81,16 @@ export class DentalIntegrationService {
 
   static async getToothImages(toothNumber: number, patient: string): Promise<ClinicalImage[]> {
     try {
-      // Get tooth-image links from Firebase (tooth-image-links collection)
-      const links = await listCollection<ToothImageLink>('tooth-image-links');
-      const relevantIds = links
-        .filter(l => l.toothNumber === toothNumber && l.patient === patient)
-        .map(l => l.imageId);
-      
-      if (relevantIds.length === 0) return [];
-      
-      // Fetch clinical images from Neon database API
+      // Fetch clinical images from Neon database API filtered by tooth number
       const response = await fetch('/api/clinical-images');
       if (!response.ok) return [];
       
       const { images } = await response.json();
-      return images.filter((img: ClinicalImage) => relevantIds.includes(img.id));
+      
+      // Filter images by tooth number and patient
+      return images.filter((img: ClinicalImage) => 
+        img.toothNumber === toothNumber && img.patient === patient
+      );
     } catch (error) {
       console.error('Error fetching tooth images:', error);
       return [];
@@ -171,24 +154,39 @@ export class DentalIntegrationService {
   }
 
   static async createImageRecord(
+    patientId: string,
     patientName: string,
     imageData: ClinicalImage,
     linkedToothNumber?: number
   ): Promise<string> {
-    const record: DentalTreatmentRecord = {
-      id: generateDocumentId('mr'),
-      patient: patientName,
-      type: 'Clinical Note',
-      complaint: `Clinical imaging documentation${linkedToothNumber ? ` for Tooth #${linkedToothNumber}` : ''}`,
-      provider: 'Dental System',
-      date: new Date().toISOString(),
-      status: 'Final',
-      notes: this.generateImageRecordContent(imageData, linkedToothNumber),
-      toothNumber: linkedToothNumber,
-      treatmentType: 'clinical_image',
-      relatedImageIds: [imageData.id]
-    };
-    return createDocument('medical-records', record as unknown as Record<string, unknown>);
+    try {
+      // Create medical record in Neon database for the image
+      const response = await fetch('/api/medical-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient: patientName,
+          patientId: patientId,
+          type: 'Clinical Note',
+          complaint: `Clinical imaging documentation${linkedToothNumber ? ` for Tooth #${linkedToothNumber}` : ''}`,
+          provider: 'Dental System',
+          providerId: null,
+          date: new Date().toISOString(),
+          status: 'Final',
+          notes: this.generateImageRecordContent(imageData, linkedToothNumber),
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create image record');
+      }
+      
+      const { record } = await response.json();
+      return record.id;
+    } catch (error) {
+      console.error('Error creating image record:', error);
+      throw error;
+    }
   }
 
   private static generateTreatmentContent(
