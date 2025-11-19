@@ -48,8 +48,8 @@ export class FTPStorageDriver implements StorageDriver {
     // Relative path for URL
     const rel = [category, sub, fileName].filter(Boolean).join('/');
     
-    // Remote FTP path
-    const remote = path.posix.join(this.config.basePath, rel);
+    // Remote FTP path - if basePath is empty, use relative path directly
+    const remote = this.config.basePath ? path.posix.join(this.config.basePath, rel) : rel;
     
     return { rel, remote, fileName };
   }
@@ -82,6 +82,14 @@ export class FTPStorageDriver implements StorageDriver {
       });
       
       console.log('✅ FTP connection established');
+      
+      // Check current working directory
+      const cwd = await client.pwd();
+      console.log('🔹 Current working directory (FTP home):', cwd);
+      
+      // Ensure we're working from FTP home directory
+      await client.cd('/');
+      console.log('✅ Set to FTP home directory');
 
       // Create directory structure
       const remoteDir = path.posix.dirname(remote);
@@ -92,6 +100,10 @@ export class FTPStorageDriver implements StorageDriver {
       } catch (error) {
         console.warn('⚠️ Could not create directory, it may already exist:', error);
       }
+      
+      // Change back to FTP home directory before upload
+      await client.cd('/');
+      console.log('✅ Changed back to FTP home for upload');
 
       // Upload file
       console.log('🔹 Starting file upload to:', remote);
@@ -100,7 +112,7 @@ export class FTPStorageDriver implements StorageDriver {
       bufferStream.end(params.buffer);
       
       await client.uploadFrom(bufferStream, remote);
-      console.log('✅ File uploaded successfully');
+      console.log('✅ File uploaded successfully to:', remote);
 
       const contentType = params.contentType || 'application/octet-stream';
       const url = this.getPublicUrl(rel);
@@ -142,7 +154,7 @@ export class FTPStorageDriver implements StorageDriver {
         rel = rel.slice(1);
       }
 
-      const remote = path.posix.join(this.config.basePath, rel);
+      const remote = this.config.basePath ? path.posix.join(this.config.basePath, rel) : rel;
 
       // Connect to FTP server
       await client.access({

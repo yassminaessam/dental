@@ -45,6 +45,29 @@ export async function GET(request: NextRequest) {
 
       console.log('✅ Connected to FTP');
 
+      // Construct remote path
+      // The imagePath should be relative: "clinical-images/patient-id/file.jpg"
+      // If FTP_BASE_PATH is empty, user's home directory is already the assets folder
+      // So we use relative path directly
+      
+      console.log('\n  Path Construction:');
+      console.log('    Base Path:', process.env.FTP_BASE_PATH || '(empty - using FTP home directory)');
+      console.log('    Relative Path:', imagePath);
+      
+      const remotePath = process.env.FTP_BASE_PATH 
+        ? `${process.env.FTP_BASE_PATH}/${imagePath}`
+        : imagePath;
+      
+      console.log('    Final FTP Path:', remotePath);
+      
+      // Check current working directory (FTP home) and ensure we're there
+      const cwd = await client.pwd();
+      console.log('    Current working directory (FTP home):', cwd);
+      
+      await client.cd('/');
+      console.log('    Set to FTP home directory');
+      console.log('\n🔹 Attempting to download from FTP...');
+
       // Download file to buffer
       const chunks: Buffer[] = [];
       const { Writable } = await import('stream');
@@ -55,20 +78,6 @@ export async function GET(request: NextRequest) {
           callback();
         }
       });
-
-      // Construct remote path
-      // The imagePath should be relative: "clinical-images/patient-id/file.jpg"
-      // Base path should be: "/www/dental.adsolutions-eg.com/assets"
-      // Final path should be: "/www/dental.adsolutions-eg.com/assets/clinical-images/patient-id/file.jpg"
-      
-      console.log('\n  Path Construction:');
-      console.log('    Base Path:', process.env.FTP_BASE_PATH);
-      console.log('    Relative Path:', imagePath);
-      
-      const remotePath = `${process.env.FTP_BASE_PATH}/${imagePath}`;
-      
-      console.log('    Final FTP Path:', remotePath);
-      console.log('\n🔹 Attempting to download from FTP...');
 
       await client.downloadTo(downloadStream, remotePath);
       await new Promise((resolve) => downloadStream.end(resolve));
