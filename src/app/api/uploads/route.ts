@@ -13,7 +13,7 @@ function getDriver(): StorageDriver {
       user: process.env.FTP_USER || '',
       password: process.env.FTP_PASSWORD || '',
       secure: process.env.FTP_SECURE === 'true', // FTPS
-      basePath: process.env.FTP_BASE_PATH || '/www',
+      basePath: process.env.FTP_BASE_PATH || '', // Respect empty string - don't default to '/www'
       publicUrl: process.env.FTP_PUBLIC_URL || '',
     };
     

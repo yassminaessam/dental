@@ -25,8 +25,8 @@ export class FTPStorageDriver implements StorageDriver {
       this.config.host &&
       this.config.user &&
       this.config.password &&
-      this.config.basePath &&
       this.config.publicUrl
+      // basePath can be empty string if FTP home is already the target directory
     );
   }
 
