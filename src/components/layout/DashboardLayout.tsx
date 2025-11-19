@@ -75,8 +75,12 @@ export default function DashboardLayout({
         if (response.ok) {
           const data = await response.json()
           if (data.settings) {
+            const name = data.settings.clinicName || t('dashboard.clinic_name')
             setClinicLogo(data.settings.logoUrl)
-            setClinicName(data.settings.clinicName || t('dashboard.clinic_name'))
+            setClinicName(name)
+            
+            // Update browser tab title
+            document.title = name
             
             // Update favicon if set
             if (data.settings.faviconUrl) {
