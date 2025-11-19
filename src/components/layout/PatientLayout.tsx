@@ -32,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/use-notifications';
+import Image from 'next/image';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 // Patient navigation items
 const patientNavItems = [
@@ -92,6 +94,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
   const [chatReplies, setChatReplies] = React.useState<any[]>([]);
   const [readNotificationIds, setReadNotificationIds] = React.useState<Set<string>>(new Set());
+  const [clinicLogo, setClinicLogo] = React.useState<string | null>(null);
+  const [clinicName, setClinicName] = React.useState<string>('');
 
   // Mark notification as read (simple local state for patient)
   const markAsRead = React.useCallback((id: string) => {
@@ -101,6 +105,38 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const filterUnread = React.useCallback((items: any[]) => {
     return items.filter(item => !readNotificationIds.has(item.id));
   }, [readNotificationIds]);
+
+  // Fetch clinic settings for logo and favicon
+  React.useEffect(() => {
+    async function fetchClinicSettings() {
+      try {
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings) {
+            setClinicLogo(data.settings.logoUrl);
+            setClinicName(data.settings.clinicName || t('dashboard.clinic_name'));
+            
+            // Update favicon if set
+            if (data.settings.faviconUrl) {
+              const links = document.querySelectorAll("link[rel*='icon']");
+              links.forEach(link => link.remove());
+              
+              const newLink = document.createElement('link');
+              newLink.rel = 'icon';
+              newLink.type = 'image/x-icon';
+              newLink.href = getClientFtpProxyUrl(data.settings.faviconUrl);
+              document.head.appendChild(newLink);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch clinic settings:', error);
+      }
+    }
+    
+    fetchClinicSettings();
+  }, [t]);
 
   React.useEffect(() => {
     async function fetchNotifications() {
@@ -199,11 +235,23 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
       <Sidebar side={isRTL ? 'right' : 'left'} className="elite-sidebar">
         <SidebarHeader className="border-b border-sidebar-border/50 bg-sidebar-background/50 backdrop-blur-sm p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-sidebar-primary/20 backdrop-blur-sm">
-              <DentalProLogo className="size-8 text-sidebar-primary" />
-            </div>
+            {clinicLogo ? (
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-sidebar-primary/10 backdrop-blur-sm flex items-center justify-center">
+                <Image
+                  src={getClientFtpProxyUrl(clinicLogo)}
+                  alt="Clinic Logo"
+                  width={48}
+                  height={48}
+                  className="object-contain p-1"
+                />
+              </div>
+            ) : (
+              <div className="p-2 rounded-xl bg-sidebar-primary/20 backdrop-blur-sm">
+                <DentalProLogo className="size-8 text-sidebar-primary" />
+              </div>
+            )}
             <div className="flex flex-col">
-              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{t('dashboard.clinic_name')}</h1>
+              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{clinicName || t('dashboard.clinic_name')}</h1>
               <p className="text-xs text-sidebar-foreground/70 font-medium">{t('roles.patient')} Portal</p>
             </div>
           </div>
