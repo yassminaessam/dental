@@ -25,22 +25,13 @@ export function getFtpProxyUrl(imageUrl: string): string {
 
 // Client-side version (works in browser - both dev and production)
 export function getClientFtpProxyUrl(imageUrl: string): string {
-  // ALWAYS use FTP proxy for dental.adsolutions-eg.com URLs
-  // because the web server doesn't serve files from that location
+  // ✅ Direct URLs work! Freehostia serves files via HTTP/HTTPS
+  // No need for FTP proxy anymore
   
-  // Check if URL is from FTP server
-  if (imageUrl.startsWith('https://dental.adsolutions-eg.com/assets/')) {
-    const path = imageUrl.replace('https://dental.adsolutions-eg.com/assets/', '');
-    const proxyUrl = `/api/ftp-proxy?path=${encodeURIComponent(path)}`;
-    
-    if (typeof window !== 'undefined') {
-      console.log('🔄 Using FTP Proxy for:', imageUrl);
-      console.log('   Proxy URL:', proxyUrl);
-    }
-    
-    return proxyUrl;
+  if (typeof window !== 'undefined') {
+    console.log('✅ Using direct URL (no proxy needed):', imageUrl);
   }
-
-  // For local paths or other URLs, return as-is
+  
+  // Return URL as-is - Freehostia web server serves the files
   return imageUrl;
 }
