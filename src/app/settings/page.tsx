@@ -254,7 +254,24 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
-      setSettings(prev => ({ ...prev, logoUrl: data.url }));
+      
+      // Update settings state and database immediately
+      const updatedSettings = { ...settings, logoUrl: data.url };
+      setSettings(updatedSettings);
+      
+      // Save to database immediately
+      const saveResponse = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings),
+      });
+      
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save logo to database');
+      }
+      
+      // Update original settings to prevent unsaved changes warning
+      setOriginalSettings(updatedSettings);
       
       // Cache logo in localStorage for instant load on other pages
       localStorage.setItem('clinicLogo', data.url);
@@ -314,7 +331,24 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
-      setSettings(prev => ({ ...prev, faviconUrl: data.url }));
+      
+      // Update settings state and database immediately
+      const updatedSettings = { ...settings, faviconUrl: data.url };
+      setSettings(updatedSettings);
+      
+      // Save to database immediately
+      const saveResponse = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings),
+      });
+      
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save favicon to database');
+      }
+      
+      // Update original settings to prevent unsaved changes warning
+      setOriginalSettings(updatedSettings);
       
       // Update favicon dynamically and cache it
       updateFavicon(data.url);
