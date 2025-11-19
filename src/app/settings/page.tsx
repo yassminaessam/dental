@@ -37,8 +37,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, RotateCcw, Search, CheckCircle2, AlertCircle } from "lucide-react";
+import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, RotateCcw, Search, CheckCircle2, AlertCircle, Image as ImageIcon, Upload } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
 type ClinicSettings = {
   id: string;
@@ -47,6 +49,8 @@ type ClinicSettings = {
   email: string;
   website: string;
   address: string;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
   businessHours: string;
   timezone: string;
   appointmentDuration: string;
@@ -61,6 +65,8 @@ const initialSettings: ClinicSettings = {
   email: '',
   website: '',
   address: '',
+  logoUrl: null,
+  faviconUrl: null,
   businessHours: 'mon-fri-8-6',
   timezone: 'eastern',
   appointmentDuration: '60',
@@ -78,6 +84,8 @@ export default function SettingsPage() {
   const [showResetDialog, setShowResetDialog] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+  const [uploadingLogo, setUploadingLogo] = React.useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = React.useState(false);
   const { toast } = useToast();
   const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -198,6 +206,135 @@ export default function SettingsPage() {
   
   const handleSelectChange = (id: string, value: string) => {
     setSettings(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('settings.toast.invalid_file_type'),
+        description: t('settings.toast.image_only'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: t('settings.toast.file_too_large'),
+        description: t('settings.toast.max_2mb'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'clinic-branding');
+      formData.append('imageType', 'logo');
+
+      const response = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      setSettings(prev => ({ ...prev, logoUrl: data.url }));
+      
+      toast({
+        title: t('settings.toast.logo_uploaded'),
+        description: t('settings.toast.logo_uploaded_desc'),
+      });
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      toast({
+        title: t('settings.toast.upload_failed'),
+        description: t('settings.toast.upload_failed_desc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('settings.toast.invalid_file_type'),
+        description: t('settings.toast.image_only'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 1MB for favicon)
+    if (file.size > 1 * 1024 * 1024) {
+      toast({
+        title: t('settings.toast.file_too_large'),
+        description: t('settings.toast.max_1mb'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingFavicon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'clinic-branding');
+      formData.append('imageType', 'favicon');
+
+      const response = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      setSettings(prev => ({ ...prev, faviconUrl: data.url }));
+      
+      // Update favicon dynamically
+      updateFavicon(data.url);
+      
+      toast({
+        title: t('settings.toast.favicon_uploaded'),
+        description: t('settings.toast.favicon_uploaded_desc'),
+      });
+    } catch (error) {
+      console.error('Favicon upload error:', error);
+      toast({
+        title: t('settings.toast.upload_failed'),
+        description: t('settings.toast.upload_failed_desc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
+  const updateFavicon = (url: string) => {
+    // Update all favicon link elements
+    const links = document.querySelectorAll("link[rel*='icon']");
+    links.forEach(link => link.remove());
+
+    const newLink = document.createElement('link');
+    newLink.rel = 'icon';
+    newLink.type = 'image/x-icon';
+    newLink.href = getClientFtpProxyUrl(url);
+    document.head.appendChild(newLink);
   };
 
   const handleSwitchChange = (id: string, checked: boolean) => {
@@ -510,6 +647,97 @@ export default function SettingsPage() {
                     <Label htmlFor="address">{t('settings.clinic.address')}</Label>
                     <Input id="address" value={settings.address} onChange={handleInputChange} />
                   </div>
+                  
+                  {/* Logo Upload */}
+                  <div className="md:col-span-2 space-y-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        {t('settings.clinic.logo')}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t('settings.clinic.logo_description')}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {settings.logoUrl && (
+                        <div className="relative w-32 h-32 rounded-lg border-2 border-muted overflow-hidden bg-muted/20">
+                          <Image
+                            src={getClientFtpProxyUrl(settings.logoUrl)}
+                            alt="Clinic Logo"
+                            fill
+                            className="object-contain p-2"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          disabled={uploadingLogo}
+                          className="cursor-pointer"
+                        />
+                        {uploadingLogo && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {t('settings.clinic.uploading')}
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings.clinic.logo_size_hint')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Favicon Upload */}
+                  <div className="md:col-span-2 space-y-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        {t('settings.clinic.favicon')}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t('settings.clinic.favicon_description')}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {settings.faviconUrl && (
+                        <div className="relative w-16 h-16 rounded-lg border-2 border-muted overflow-hidden bg-muted/20">
+                          <Image
+                            src={getClientFtpProxyUrl(settings.faviconUrl)}
+                            alt="Favicon"
+                            fill
+                            className="object-contain p-1"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFaviconUpload}
+                          disabled={uploadingFavicon}
+                          className="cursor-pointer"
+                        />
+                        {uploadingFavicon && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {t('settings.clinic.uploading')}
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings.clinic.favicon_size_hint')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div>
                     <Label htmlFor="businessHours">{t('settings.clinic.business_hours')}</Label>
                     <Select value={settings.businessHours} onValueChange={(value) => handleSelectChange('businessHours', value)}>

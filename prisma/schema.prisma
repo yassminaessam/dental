@@ -420,6 +420,8 @@ model ClinicSettings {
   email                String   @default("")
   website              String   @default("")
   address              String   @default("")
+  logoUrl              String?
+  faviconUrl           String?
   businessHours        String   @default("mon-fri-8-6")
   timezone             String   @default("eastern")
   appointmentDuration  String   @default("60")
