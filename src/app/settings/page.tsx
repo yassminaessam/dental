@@ -382,6 +382,20 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setOriginalSettings(settings);
+        
+        // Update localStorage cache so changes persist across navigation
+        if (settings.clinicName) {
+          localStorage.setItem('clinicName', settings.clinicName);
+          document.title = settings.clinicName;
+        }
+        if (settings.logoUrl) {
+          localStorage.setItem('clinicLogo', settings.logoUrl);
+        }
+        if (settings.faviconUrl) {
+          localStorage.setItem('clinicFavicon', settings.faviconUrl);
+          updateFavicon(settings.faviconUrl);
+        }
+        
         toast({
           title: t('settings.toast.settings_saved'),
           description: t('settings.toast.settings_saved_desc'),
