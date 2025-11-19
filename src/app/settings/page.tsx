@@ -27,17 +27,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, RotateCcw, Search, CheckCircle2, AlertCircle, Image as ImageIcon, Upload } from "lucide-react";
+import { Building, Users, Bell, Shield, Database, Palette, Loader2, Save, Search, CheckCircle2, AlertCircle, Image as ImageIcon, Upload } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
@@ -99,7 +89,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
-  const [showResetDialog, setShowResetDialog] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
   const [uploadingLogo, setUploadingLogo] = React.useState(false);
@@ -395,41 +384,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
-    setSettings(originalSettings);
-    setValidationErrors({});
-    toast({
-      title: "Settings Reset",
-      description: "All changes have been reverted to last saved state",
-    });
-  };
 
-  const handleResetToDefaults = async () => {
-    setSaving(true);
-    try {
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initialSettings),
-      });
-
-      if (response.ok) {
-        setSettings(initialSettings);
-        setOriginalSettings(initialSettings);
-        setShowResetDialog(false);
-        toast({
-          title: "Reset to Defaults",
-          description: "All settings have been restored to default values",
-        });
-      } else {
-        toast({ title: "Error resetting settings", variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Error resetting settings", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -475,26 +430,6 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex gap-3 flex-wrap items-center">
-              <Button 
-                onClick={handleReset}
-                variant="outline"
-                size="lg"
-                disabled={!hasUnsavedChanges || saving}
-                className="gap-2 border-2 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-300 hover:scale-105 hover:shadow-lg group"
-              >
-                <RotateCcw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
-                <span className="font-semibold">{t('settings.reset')}</span>
-              </Button>
-              <Button 
-                onClick={() => setShowResetDialog(true)}
-                variant="outline"
-                size="lg"
-                disabled={saving}
-                className="gap-2 border-2 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-300 hover:scale-105 hover:shadow-lg group"
-              >
-                <Database className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <span className="font-semibold">{t('settings.reset_to_defaults')}</span>
-              </Button>
               <Button 
                 onClick={handleSaveChanges} 
                 size="lg"
@@ -1173,38 +1108,6 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Reset to Defaults Confirmation Dialog */}
-        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-500" />
-                Reset to Default Settings?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                This action will restore all settings to their default values. Any custom configurations will be lost. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleResetToDefaults}
-                disabled={saving}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset to Defaults'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </main>
     </DashboardLayout>
   );
