@@ -9,18 +9,8 @@ export const metadata: Metadata = {
   title: 'Cairo Dental Clinic',
   description: 'Dental Practice Management Dashboard.',
   manifest: '/manifest.json',
-  icons: {
-    icon: [
-      { url: '/tooth-favicon.svg', type: 'image/svg+xml' },
-      { url: '/tooth-favicon.svg', sizes: '16x16', type: 'image/svg+xml' },
-      { url: '/tooth-favicon.svg', sizes: '32x32', type: 'image/svg+xml' },
-      { url: '/favicon.svg', type: 'image/svg+xml' } // fallback
-    ],
-    shortcut: '/tooth-favicon.svg',
-    apple: [
-      { url: '/tooth-favicon.svg', sizes: '180x180', type: 'image/svg+xml' }
-    ],
-  },
+  // Icons are now managed dynamically by clinic settings
+  // See DashboardLayout and PatientLayout for dynamic favicon loading
 };
 
 export default function RootLayout({
@@ -34,6 +24,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+        {/* Default favicon as fallback - will be replaced by clinic settings */}
+        <link rel="icon" href="/tooth-favicon.svg" type="image/svg+xml" />
       </head>
       <body className="font-body antialiased">
         <LanguageProvider>
