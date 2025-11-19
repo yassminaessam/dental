@@ -129,19 +129,26 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     if (typeof window === 'undefined') return;
     
     try {
-      // Find existing favicon
-      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      // Remove all existing favicon links
+      const existingLinks = document.querySelectorAll("link[rel*='icon']");
+      existingLinks.forEach(link => link.remove());
       
-      if (!link) {
-        // Create new favicon link if none exists
-        link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/x-icon';
-        document.head.appendChild(link);
-      }
+      // Add cache-busting timestamp
+      const faviconUrl = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
       
-      // Update href
-      link.href = getClientFtpProxyUrl(url);
+      // Create new favicon link
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/x-icon';
+      link.href = faviconUrl;
+      document.head.appendChild(link);
+      
+      // Also add as shortcut icon
+      const shortcutLink = document.createElement('link');
+      shortcutLink.rel = 'shortcut icon';
+      shortcutLink.type = 'image/x-icon';
+      shortcutLink.href = faviconUrl;
+      document.head.appendChild(shortcutLink);
     } catch (error) {
       console.warn('Failed to update favicon:', error);
     }
