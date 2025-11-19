@@ -785,17 +785,6 @@ export default function SettingsPage() {
               <CardContent className="grid gap-4">
                 <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
                   <div className="flex flex-col gap-1">
-                    <Label htmlFor="2fa-switch" className="text-base font-medium">
-                      Require Two-Factor Authentication
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      All users must enable 2FA
-                    </span>
-                  </div>
-                  <Switch id="2fa-switch" />
-                </div>
-                <div className="flex items-center justify-between space-x-4 rounded-lg border-2 bg-muted/50 p-4 hover:bg-muted/70 transition-colors">
-                  <div className="flex flex-col gap-1">
                     <Label htmlFor="autolock-switch" className="text-base font-medium">
                       Auto-lock Inactive Sessions
                     </Label>
