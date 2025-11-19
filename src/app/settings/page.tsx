@@ -331,9 +331,12 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
+      console.log('📤 Favicon upload response:', data);
+      console.log('📁 Favicon URL:', data.url);
       
       // Update settings state and database immediately
       const updatedSettings = { ...settings, faviconUrl: data.url };
+      console.log('💾 Updated settings:', updatedSettings);
       setSettings(updatedSettings);
       
       // Save to database immediately
@@ -347,12 +350,16 @@ export default function SettingsPage() {
         throw new Error('Failed to save favicon to database');
       }
       
+      const savedData = await saveResponse.json();
+      console.log('✅ Saved to database:', savedData);
+      
       // Update original settings to prevent unsaved changes warning
       setOriginalSettings(updatedSettings);
       
       // Update favicon dynamically and cache it
       updateFavicon(data.url);
       localStorage.setItem('clinicFavicon', data.url);
+      console.log('🎯 Favicon updated in browser and cache');
       
       toast({
         title: t('settings.toast.favicon_uploaded'),
@@ -372,24 +379,33 @@ export default function SettingsPage() {
 
   const updateFavicon = (url: string) => {
     try {
+      console.log('🔄 Updating favicon with URL:', url);
+      
+      // Build the full URL with cache-busting
+      const fullUrl = getClientFtpProxyUrl(url);
+      const faviconUrl = `${fullUrl}?v=${Date.now()}`;
+      console.log('🌐 Full favicon URL:', faviconUrl);
+      
       // Find existing favicon and update it (SAFE - no removal)
       let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
       
       if (!link) {
+        console.log('➕ Creating new favicon link');
         // Create new favicon link if none exists
         link = document.createElement('link');
         link.rel = 'icon';
         link.type = 'image/x-icon';
         document.head.appendChild(link);
+      } else {
+        console.log('♻️ Updating existing favicon link');
       }
       
       // Update href with cache-busting timestamp to force browser reload
-      const faviconUrl = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
       link.href = faviconUrl;
       
-      console.log('Favicon updated:', faviconUrl);
+      console.log('✅ Favicon updated successfully');
     } catch (error) {
-      console.warn('Failed to update favicon:', error);
+      console.error('❌ Failed to update favicon:', error);
     }
   };
 
@@ -698,14 +714,20 @@ export default function SettingsPage() {
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      {settings.faviconUrl && (
+                      {settings.faviconUrl ? (
                         <div className="relative w-16 h-16 rounded-lg border-2 border-muted overflow-hidden bg-muted/20">
                           <Image
+                            key={settings.faviconUrl}
                             src={getClientFtpProxyUrl(settings.faviconUrl)}
                             alt="Favicon"
                             fill
                             className="object-contain p-1"
+                            unoptimized
                           />
+                        </div>
+                      ) : (
+                        <div className="relative w-16 h-16 rounded-lg border-2 border-dashed border-muted overflow-hidden bg-muted/20 flex items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
                       
