@@ -619,10 +619,6 @@ export default function HelpPage() {
                     <BookOpen className="h-4 w-4" />
                     <span>{t('page.help.video_tutorials')}</span>
                   </Button>
-                  <Button variant="outline" className="gap-2 hover:bg-green-50 dark:hover:bg-green-950/30">
-                    <Users className="h-4 w-4" />
-                    <span>{t('page.help.user_community')}</span>
-                  </Button>
                 </div>
               </div>
             </div>
