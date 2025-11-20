@@ -743,7 +743,13 @@ export default function MedicalRecordsPage() {
                             </CardHeader>
                             <CardContent className="p-4">
                             <CardTitle className="text-base">{image.caption || image.type}</CardTitle>
-                            <CardDescription>{image.patient}</CardDescription>
+                            <CardDescription className="space-y-1">
+                              <div>{image.patient}</div>
+                              <div className="text-xs flex items-center gap-1">
+                                <span className="text-muted-foreground">{t('common.phone')}:</span>
+                                <span>{getPatientPhone(image.patient)}</span>
+                              </div>
+                            </CardDescription>
                             </CardContent>
                             <CardFooter className="flex justify-between items-center p-4 pt-0">
                                 <div className="flex items-center gap-2">
