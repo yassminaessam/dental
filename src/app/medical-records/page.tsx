@@ -168,11 +168,27 @@ export default function MedicalRecordsPage() {
       });
     }
     
-    // Apply search filter
-    filtered = filtered.filter(record => 
-      record.patient.toLowerCase().includes(recordSearchTerm.toLowerCase()) ||
-      record.complaint.toLowerCase().includes(recordSearchTerm.toLowerCase())
-    );
+    // Apply smart search filter (searches patient name, complaint, and phone)
+    if (recordSearchTerm.trim()) {
+      filtered = filtered.filter(record => {
+        const searchLower = recordSearchTerm.toLowerCase().trim();
+        
+        // Search by patient name
+        const patientMatch = record.patient.toLowerCase().includes(searchLower);
+        
+        // Search by complaint
+        const complaintMatch = record.complaint.toLowerCase().includes(searchLower);
+        
+        // Smart search by phone number - normalize both phone and search term
+        const patient = patients.find(p => p.name === record.patient);
+        const patientPhone = patient?.phone || '';
+        const normalizedPhone = patientPhone.replace(/[\s\-\(\)\.]/g, '');
+        const normalizedSearch = searchLower.replace(/[\s\-\(\)\.]/g, '');
+        const phoneMatch = normalizedPhone && normalizedSearch && normalizedPhone.includes(normalizedSearch);
+        
+        return patientMatch || complaintMatch || phoneMatch;
+      });
+    }
     
     // Apply type filter
     if (recordTypeFilter !== 'all') {
@@ -213,10 +229,12 @@ export default function MedicalRecordsPage() {
         // Search by tooth number
         const toothMatch = image.toothNumber?.toString().includes(searchLower) || false;
         
-        // Search by phone number
+        // Smart search by phone number - normalize both phone and search term (remove spaces, dashes, etc.)
         const patient = patients.find(p => p.name === image.patient);
         const patientPhone = patient?.phone || '';
-        const phoneMatch = patientPhone && patientPhone.includes(searchLower);
+        const normalizedPhone = patientPhone.replace(/[\s\-\(\)\.]/g, ''); // Remove spaces, dashes, parentheses, dots
+        const normalizedSearch = searchLower.replace(/[\s\-\(\)\.]/g, '');
+        const phoneMatch = normalizedPhone && normalizedSearch && normalizedPhone.includes(normalizedSearch);
         
         return patientMatch || captionMatch || typeMatch || toothMatch || phoneMatch;
       });
