@@ -196,13 +196,31 @@ export default function MedicalRecordsPage() {
       });
     }
     
-    // Apply search filter
-    filtered = filtered.filter(image => {
-      const searchLower = imageSearchTerm.toLowerCase().trim();
-      const patientMatch = image.patient?.toLowerCase().includes(searchLower) || false;
-      const captionMatch = image.caption?.toLowerCase().includes(searchLower) || false;
-      return patientMatch || captionMatch;
-    });
+    // Apply smart search filter (searches across multiple fields)
+    if (imageSearchTerm.trim()) {
+      filtered = filtered.filter(image => {
+        const searchLower = imageSearchTerm.toLowerCase().trim();
+        
+        // Search by patient name
+        const patientMatch = image.patient?.toLowerCase().includes(searchLower) || false;
+        
+        // Search by caption
+        const captionMatch = image.caption?.toLowerCase().includes(searchLower) || false;
+        
+        // Search by type
+        const typeMatch = image.type?.toLowerCase().includes(searchLower) || false;
+        
+        // Search by tooth number
+        const toothMatch = image.toothNumber?.toString().includes(searchLower) || false;
+        
+        // Search by phone number
+        const patient = patients.find(p => p.name === image.patient);
+        const patientPhone = patient?.phone || '';
+        const phoneMatch = patientPhone && patientPhone.includes(searchLower);
+        
+        return patientMatch || captionMatch || typeMatch || toothMatch || phoneMatch;
+      });
+    }
     
     return filtered;
   }, [images, selectedPatientId, imageSearchTerm, patients]);
