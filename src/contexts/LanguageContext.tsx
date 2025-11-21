@@ -211,6 +211,7 @@ const translations: Translations = {
     'nav.reports': 'Reports',
     'nav.user_management': 'User Management',
     'nav.settings': 'Settings',
+    'nav.website_edit': 'Website Edit',
   'nav.help': 'Help',
     // Navigation descriptions (en)
     'nav.dashboard_desc': 'Clinic overview & key metrics',
@@ -235,6 +236,7 @@ const translations: Translations = {
     'nav.reports_desc': 'Generate detailed reports',
     'nav.user_management_desc': 'Manage system users',
     'nav.settings_desc': 'System configuration',
+    'nav.website_edit_desc': 'Build & customize your website',
     'nav.help_desc': 'Guides & support',
     'nav.sign_out': 'Sign Out',
     
@@ -2761,6 +2763,7 @@ const translations: Translations = {
     'nav.reports': 'التقارير',
     'nav.user_management': 'إدارة المستخدمين',
     'nav.settings': 'الإعدادات',
+    'nav.website_edit': 'تحرير الموقع',
   'nav.help': 'مساعدة',
     // Navigation descriptions (ar)
     'nav.dashboard_desc': 'نظرة عامة على العيادة والمؤشرات الرئيسية',
@@ -2785,6 +2788,7 @@ const translations: Translations = {
     'nav.reports_desc': 'إنشاء تقارير مفصلة',
     'nav.user_management_desc': 'إدارة مستخدمي النظام',
     'nav.settings_desc': 'إعدادات النظام',
+    'nav.website_edit_desc': 'بناء وتخصيص موقعك الإلكتروني',
     'nav.help_desc': 'إرشادات ودعم',
     'nav.sign_out': 'تسجيل الخروج',
     

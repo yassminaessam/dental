@@ -7,6 +7,7 @@
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-require-imports": "warn",
     "react/no-unescaped-entities": "warn",
-    "react-hooks/rules-of-hooks": "warn"
+    "react-hooks/rules-of-hooks": "warn",
+    "no-inline-styles": "off"
   }
 }

@@ -34,6 +34,7 @@ import {
   LogOut,
   User,
   MessageCircle,
+  Layout,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -217,6 +218,13 @@ export function SidebarNav() {
       icon: Settings,
   label: t('nav.settings'),
       subLabel: t('nav.settings_desc'),
+      permission: "view_settings",
+    },
+    {
+      href: "/website-edit",
+      icon: Layout,
+      label: t('nav.website_edit'),
+      subLabel: t('nav.website_edit_desc'),
       permission: "view_settings",
     },
   ];

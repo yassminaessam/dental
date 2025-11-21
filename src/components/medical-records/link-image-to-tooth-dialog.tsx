@@ -84,15 +84,14 @@ export function LinkImageToToothDialog({
       // Link the image to the tooth
       await DentalIntegrationService.linkImageToTooth(
         image.id,
-        selectedTooth,
-        image.patient,
-        image.type
+        selectedTooth
       );
       
       console.log('Image linked successfully');
 
       // Create a medical record for this image link
       await DentalIntegrationService.createImageRecord(
+        image.patient,
         image.patient,
         image,
         selectedTooth

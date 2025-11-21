@@ -93,9 +93,7 @@ export function LinkImageToToothFromChartDialog({
     try {
       await DentalIntegrationService.linkImageToTooth(
         selectedImage.id,
-        toothNumber,
-        patientName,
-        selectedImage.type
+        toothNumber
       );
 
       toast({
