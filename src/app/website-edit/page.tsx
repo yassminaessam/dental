@@ -4463,16 +4463,6 @@ export default function WebsiteEditPage() {
 
           {/* CENTER PANEL - Canvas */}
           <div className="flex-1 overflow-auto bg-gray-100">
-            {/* Show indicator when dragging */}
-            {(draggedWidget || draggedExistingWidget) && (
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-                <div className="animate-pulse">🎯</div>
-                <span className="font-medium">
-                  Dragging: {draggedWidget?.label || draggedExistingWidget?.type}
-                </span>
-                <div className="text-xs opacity-75">Drop in a blue highlighted column</div>
-              </div>
-            )}
             <ScrollArea className="h-full">
               <div
                 className="min-h-full p-8"
