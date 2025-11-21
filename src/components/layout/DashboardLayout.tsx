@@ -63,19 +63,19 @@ export default function DashboardLayout({
     refetch: refetchNotifications,
   } = useNotifications(user?.id)
 
-  // Clinic settings for logo and name - Initialize from localStorage for instant load
-  const [clinicLogo, setClinicLogo] = React.useState<string | null>(() => {
+  // Clinic settings for logo and name - Initialize as null to prevent hydration mismatch
+  const [clinicLogo, setClinicLogo] = React.useState<string | null>(null)
+  const [clinicName, setClinicName] = React.useState<string>('')
+  const [isHydrated, setIsHydrated] = React.useState(false)
+  
+  // Load from localStorage after hydration
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('clinicLogo') || null
+      setClinicLogo(localStorage.getItem('clinicLogo') || null)
+      setClinicName(localStorage.getItem('clinicName') || '')
+      setIsHydrated(true)
     }
-    return null
-  })
-  const [clinicName, setClinicName] = React.useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('clinicName') || ''
-    }
-    return ''
-  })
+  }, [])
 
   // Set browser title and favicon immediately from cache
   React.useEffect(() => {
@@ -269,7 +269,7 @@ export default function DashboardLayout({
       <Sidebar side={isRTL ? 'right' : 'left'} className="elite-sidebar">
         <SidebarHeader className="border-b border-sidebar-border/50 bg-sidebar-background/50 backdrop-blur-sm p-6">
           <div className="flex items-center gap-3">
-            {clinicLogo ? (
+            {isHydrated && clinicLogo ? (
               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-sidebar-primary/10 backdrop-blur-sm flex items-center justify-center">
                 <Image
                   src={getClientFtpProxyUrl(clinicLogo)}
@@ -285,7 +285,7 @@ export default function DashboardLayout({
               </div>
             )}
             <div className="flex flex-col">
-              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{clinicName || t('dashboard.clinic_name')}</h1>
+              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">{isHydrated && clinicName ? clinicName : t('dashboard.clinic_name')}</h1>
             </div>
           </div>
         </SidebarHeader>

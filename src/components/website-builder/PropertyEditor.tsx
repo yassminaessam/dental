@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Trash2, Copy, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline } from "lucide-react";
+import { Settings, Trash2, Copy, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline, Plus, Minus } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
 import { IconPicker } from "./IconPicker";
 import type { Widget, NavLink } from '@/types/website-builder';
@@ -366,30 +366,76 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     
     return (
       <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Background</h3>
         {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor)}
         {renderTextInput('Background Image URL', 'backgroundImage', widget.props.backgroundImage || '', 'https://...')}
-        {renderTextInput('Padding', 'padding', widget.props.padding, '1rem, 2rem, 3rem...')}
+        {renderSelect('Background Size', 'backgroundSize', widget.props.backgroundSize || 'cover', [
+          { value: 'cover', label: 'Cover' },
+          { value: 'contain', label: 'Contain' },
+          { value: 'auto', label: 'Auto' },
+          { value: '100% 100%', label: 'Stretch' }
+        ])}
+        {renderSelect('Background Position', 'backgroundPosition', widget.props.backgroundPosition || 'center', [
+          { value: 'center', label: 'Center' },
+          { value: 'top', label: 'Top' },
+          { value: 'bottom', label: 'Bottom' },
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' },
+          { value: 'top left', label: 'Top Left' },
+          { value: 'top right', label: 'Top Right' },
+          { value: 'bottom left', label: 'Bottom Left' },
+          { value: 'bottom right', label: 'Bottom Right' }
+        ])}
+        {renderSelect('Background Repeat', 'backgroundRepeat', widget.props.backgroundRepeat || 'no-repeat', [
+          { value: 'no-repeat', label: 'No Repeat' },
+          { value: 'repeat', label: 'Repeat' },
+          { value: 'repeat-x', label: 'Repeat X' },
+          { value: 'repeat-y', label: 'Repeat Y' }
+        ])}
         
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout</h3>
         <div className="space-y-2">
           <Label>Number of Columns</Label>
           <div className="flex items-center gap-2">
-            <Select 
-              value={String(currentColumnCount)} 
-              onValueChange={(val) => handleUpdate('columns', val)}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const newValue = Math.max(1, currentColumnCount - 1);
+                handleUpdate('columns', String(newValue));
+              }}
+              disabled={currentColumnCount <= 1}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 Column</SelectItem>
-                <SelectItem value="2">2 Columns</SelectItem>
-                <SelectItem value="3">3 Columns</SelectItem>
-                <SelectItem value="4">4 Columns</SelectItem>
-                <SelectItem value="5">5 Columns</SelectItem>
-                <SelectItem value="6">6 Columns</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-xs text-muted-foreground">
+              -
+            </Button>
+            <Input
+              type="number"
+              min="1"
+              max="100"
+              value={currentColumnCount}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                const clampedValue = Math.max(1, Math.min(100, value));
+                handleUpdate('columns', String(clampedValue));
+              }}
+              className="text-center w-24"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const newValue = Math.min(100, currentColumnCount + 1);
+                handleUpdate('columns', String(newValue));
+              }}
+              disabled={currentColumnCount >= 100}
+            >
+              +
+            </Button>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
               Current: {currentColumnCount}
             </span>
           </div>
@@ -403,10 +449,35 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
           { value: '0.5rem', label: 'Small (0.5rem)' },
           { value: '1rem', label: 'Medium (1rem)' },
           { value: '1.5rem', label: 'Large (1.5rem)' },
-          { value: '2rem', label: 'Extra Large (2rem)' }
+          { value: '2rem', label: 'Extra Large (2rem)' },
+          { value: '3rem', label: 'Huge (3rem)' }
         ])}
+        {renderTextInput('Padding', 'padding', widget.props.padding, '1rem, 2rem, 3rem...')}
+        {renderTextInput('Margin', 'margin', widget.props.margin || '0', '0, 1rem 0, 2rem auto...')}
         {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '100%', '100%, 1200px, 80%...')}
+        {renderTextInput('Min Height', 'minHeight', widget.props.minHeight || '100px', '100px, 200px, 50vh...')}
+        {renderTextInput('Max Height', 'maxHeight', widget.props.maxHeight || 'none', 'none, 500px, 80vh...')}
         {renderSwitch('Center Content', 'centerContent', widget.props.centerContent || false, 'Horizontally center the content')}
+        
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Border</h3>
+        {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0', '0, 1px, 2px, 4px...')}
+        {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'Double' },
+          { value: 'none', label: 'None' }
+        ])}
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e0e0e0')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0', '0, 8px, 16px, 1rem...')}
+        
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Effects</h3>
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'none, 0 2px 4px rgba(0,0,0,0.1)...')}
+        {renderSlider('Opacity', 'opacity', parseFloat(widget.props.opacity) || 1, 0, 1, 0.1)}
+        {renderTextInput('Z-Index', 'zIndex', widget.props.zIndex || 'auto', 'auto, 0, 1, 10, 100...')}
+        
         {renderPositionAndSize()}
       </>
     );

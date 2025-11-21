@@ -749,6 +749,58 @@ export default function WebsiteEditPage() {
   const [activeMainTab, setActiveMainTab] = React.useState<'widgets' | 'templates'>('widgets');
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
+  const isDraggingWidget = Boolean(draggedWidget || draggedExistingWidget);
+  const isDraggingColumn = draggedWidget?.type === 'column' || draggedExistingWidget?.type === 'column';
+
+  const clearDropTargets = React.useCallback(() => {
+    setDropTargetSection(null);
+    setDropTargetIndex(null);
+  }, []);
+
+  const ensureFallbackIndex = React.useCallback((fallbackIndex: number | null) => {
+    if (fallbackIndex !== null && fallbackIndex !== undefined && dropTargetIndex === null) {
+      setDropTargetIndex(fallbackIndex);
+    }
+  }, [dropTargetIndex]);
+
+  const handleContainerDragIntent = React.useCallback((containerId: string, fallbackIndex: number | null, e: React.DragEvent) => {
+    if (!isDraggingWidget) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropTargetSection !== containerId) {
+      setDropTargetSection(containerId);
+    }
+    ensureFallbackIndex(fallbackIndex);
+  }, [isDraggingWidget, dropTargetSection, ensureFallbackIndex]);
+
+  const getNearestColumnId = React.useCallback((section: Widget | null, clientX: number, clientY: number): string | null => {
+    if (!section?.children || typeof document === 'undefined') return null;
+    let closestId: string | null = null;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    for (const child of section.children) {
+      if (child.type !== 'column') continue;
+      const columnEl = document.querySelector<HTMLElement>(`[data-column-id="${child.id}"]`);
+      if (!columnEl) continue;
+      const rect = columnEl.getBoundingClientRect();
+
+      const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+      if (inside) {
+        return child.id;
+      }
+
+      const dx = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0;
+      const dy = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0;
+      const distance = Math.hypot(dx, dy);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestId = child.id;
+      }
+    }
+
+    return closestId;
+  }, []);
+
   type TemplateDefinition = {
     id: string;
     name: string;
@@ -2533,9 +2585,23 @@ export default function WebsiteEditPage() {
   };
 
   // Handle drag start from widget library
-  const handleDragStart = (widget: WidgetDefinition) => {
+  const handleDragStart = (widget: WidgetDefinition, e: React.DragEvent) => {
+    console.log('handleDragStart called for:', widget.type);
     setDraggedWidget(widget);
     setDraggedExistingWidget(null);
+    
+    // Set drag effect
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', widget.type);
+    
+    // Create a minimal drag image (1x1 transparent pixel) to avoid blocking
+    // Use window.Image to avoid conflict with lucide-react Image icon
+    const dragImage = new window.Image();
+    dragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    
+    // Reset drop target when starting a new drag
+    clearDropTargets();
   };
 
   // Handle drag start for existing widget (for rearranging)
@@ -2624,6 +2690,19 @@ export default function WebsiteEditPage() {
   // Handle drop on canvas
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Canvas handleDrop - dropTargetSection:', dropTargetSection);
+    
+    // If dropping into a section/column, don't handle it here - let the section/column handle it
+    if (dropTargetSection) {
+      console.log('Canvas: Skipping drop, letting column handle it');
+      // Clear the states since drop was handled by column
+      setDraggedWidget(null);
+      setDraggedExistingWidget(null);
+      clearDropTargets();
+      return;
+    }
     
     let updatedWidgets: Widget[];
 
@@ -2714,11 +2793,22 @@ export default function WebsiteEditPage() {
     addToHistory(updatedWidgets);
     setDraggedWidget(null);
     setDraggedExistingWidget(null);
-    setDropTargetIndex(null);
+    clearDropTargets();
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    const eventTarget = e.target;
+    if (!(eventTarget instanceof Element)) {
+      if (dropTargetSection || dropTargetIndex !== null) {
+        clearDropTargets();
+      }
+      return;
+    }
+    const droppable = eventTarget.closest('[data-droppable="true"]');
+    if (!droppable && (dropTargetSection || dropTargetIndex !== null)) {
+      clearDropTargets();
+    }
   };
 
   // Add to history for undo/redo
@@ -2795,10 +2885,24 @@ export default function WebsiteEditPage() {
 
   // Remove widget from anywhere in the tree (returns new tree without the widget)
   const removeWidgetById = (widgets: Widget[], id: string): Widget[] => {
-    return widgets.filter(w => w.id !== id).map(w => ({
-      ...w,
-      children: w.children ? removeWidgetById(w.children, id) : undefined
-    }));
+    return widgets
+      .filter(w => w.id !== id)
+      .map(w => {
+        if (!w.children) {
+          return w;
+        }
+
+        const updatedChildren = removeWidgetById(w.children, id);
+        if (w.type === 'section') {
+          const columnCount = updatedChildren.filter(child => child.type === 'column').length;
+          const nextProps = columnCount > 0
+            ? { ...w.props, columns: columnCount }
+            : w.props;
+          return { ...w, props: nextProps, children: updatedChildren };
+        }
+
+        return { ...w, children: updatedChildren };
+      });
   };
 
   // Insert widget at specific position in canvas
@@ -2817,6 +2921,13 @@ export default function WebsiteEditPage() {
           newChildren.splice(index, 0, widget);
         } else {
           newChildren.push(widget);
+        }
+        if (w.type === 'section') {
+          const columnCount = newChildren.filter(child => child.type === 'column').length;
+          const nextProps = columnCount > 0
+            ? { ...w.props, columns: columnCount }
+            : w.props;
+          return { ...w, props: nextProps, children: newChildren };
         }
         return { ...w, children: newChildren };
       }
@@ -2897,9 +3008,77 @@ export default function WebsiteEditPage() {
   // Add widget to a specific section or column
   const handleDropInSection = (containerId: string, e: React.DragEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    
+    console.log('handleDropInSection called:', { 
+      containerId, 
+      dropTargetIndex, 
+      draggedWidget: draggedWidget?.type,
+      draggedExistingWidget: draggedExistingWidget?.type 
+    });
+    
+    // Ensure we have something to drop
+    if (!draggedWidget && !draggedExistingWidget) {
+      console.log('No widget to drop');
+      return;
+    }
     
     let updatedWidgets: Widget[];
     const insertIndex = dropTargetIndex;
+    const incomingType = draggedWidget?.type || draggedExistingWidget?.type;
+    const originalContainer = findWidgetById(canvasWidgets, containerId);
+    let workingWidgets = canvasWidgets;
+    let targetContainerId = containerId;
+    let targetLabel: string = originalContainer?.type === 'section' ? 'section' : 'column';
+    const eventTarget = e.target;
+    const hoveredColumnId = (() => {
+      if (eventTarget instanceof Element) {
+        const columnEl = eventTarget.closest('[data-column-id]');
+        if (columnEl) {
+          return columnEl.getAttribute('data-column-id');
+        }
+      }
+      return null;
+    })();
+
+    const dropStateColumnId = (() => {
+      if (!dropTargetSection || dropTargetSection === containerId) return null;
+      const matchesSectionChild = originalContainer?.children?.some(child => child.id === dropTargetSection && child.type === 'column');
+      return matchesSectionChild ? dropTargetSection : null;
+    })();
+
+    if (originalContainer?.type === 'section') {
+      if (incomingType !== 'column') {
+        const hoveredChildId = hoveredColumnId && originalContainer.children?.some(child => child.id === hoveredColumnId && child.type === 'column')
+          ? hoveredColumnId
+          : null;
+        const resolvedColumnId = hoveredChildId
+          || dropStateColumnId
+          || getNearestColumnId(originalContainer, e.clientX, e.clientY);
+
+        if (resolvedColumnId) {
+          targetContainerId = resolvedColumnId;
+          targetLabel = 'column';
+        } else {
+          const firstColumn = originalContainer.children?.find(child => child.type === 'column');
+          if (firstColumn) {
+            targetContainerId = firstColumn.id;
+            targetLabel = 'column';
+          } else {
+            const [newColumn] = createColumns(1);
+            workingWidgets = insertWidgetInSection(workingWidgets, originalContainer.id, newColumn, null);
+            targetContainerId = newColumn.id;
+            targetLabel = 'column';
+          }
+        }
+      } else {
+        targetLabel = 'section';
+      }
+    }
+
+    const resolvedInsertIndex = dropTargetSection === targetContainerId ? insertIndex : null;
+
+    const containerForToast = targetLabel === 'section' ? 'section' : 'column';
 
     // Handle dropping new widget from library
     if (draggedWidget) {
@@ -2914,24 +3093,24 @@ export default function WebsiteEditPage() {
           : undefined
       };
 
-      updatedWidgets = insertWidgetInSection(canvasWidgets, containerId, newWidget, insertIndex);
+      updatedWidgets = insertWidgetInSection(workingWidgets, targetContainerId, newWidget, resolvedInsertIndex);
       
       toast({
-        title: "Widget Added",
-        description: `${draggedWidget.label} has been added.`
+        title: "✅ Widget Added",
+        description: `${draggedWidget.label} has been added to the ${containerForToast}.`
       });
     }
     // Handle moving existing widget
     else if (draggedExistingWidget) {
       // Remove widget from its current location
-      let widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
+      let widgetsWithoutDragged = removeWidgetById(workingWidgets, draggedExistingWidget.id);
       
       // Add widget to container at specific position
-      updatedWidgets = insertWidgetInSection(widgetsWithoutDragged, containerId, draggedExistingWidget, insertIndex);
+      updatedWidgets = insertWidgetInSection(widgetsWithoutDragged, targetContainerId, draggedExistingWidget, resolvedInsertIndex);
       
       toast({
         title: "Widget Moved",
-        description: "The widget has been repositioned."
+        description: `The widget has been moved inside the ${containerForToast}.`
       });
     } else {
       return;
@@ -2941,8 +3120,7 @@ export default function WebsiteEditPage() {
     addToHistory(updatedWidgets);
     setDraggedWidget(null);
     setDraggedExistingWidget(null);
-    setDropTargetSection(null);
-    setDropTargetIndex(null);
+    clearDropTargets();
   };
 
   // Save page
@@ -3246,17 +3424,46 @@ export default function WebsiteEditPage() {
           })()}
           {widget.type === 'section' && (
             <div
-              className="transition-all"
+              data-droppable="true"
+              onDragEnterCapture={(e: React.DragEvent) => {
+                if (isPreview) return;
+                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDragOverCapture={(e: React.DragEvent) => {
+                if (isPreview) return;
+                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDrop={(e: React.DragEvent) => {
+                if (isPreview) return;
+                e.preventDefault();
+                e.stopPropagation();
+                handleDropInSection(widget.id, e);
+              }}
+              className={`transition-all ${
+                !isPreview && isDraggingColumn && dropTargetSection === widget.id
+                  ? 'ring-4 ring-blue-400 ring-offset-2'
+                  : ''
+              }`}
               style={{
                 backgroundColor: widget.props.backgroundColor,
                 backgroundImage: widget.props.backgroundImage ? `url(${widget.props.backgroundImage})` : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundSize: widget.props.backgroundSize || 'cover',
+                backgroundPosition: widget.props.backgroundPosition || 'center',
+                backgroundRepeat: widget.props.backgroundRepeat || 'no-repeat',
                 padding: widget.props.padding,
-                border: '2px dashed #ccc',
-                minHeight: '100px',
+                margin: widget.props.margin || (widget.props.centerContent ? '0 auto' : '0'),
+                border: (widget.props.borderWidth && widget.props.borderWidth !== '0')
+                  ? `${widget.props.borderWidth} ${widget.props.borderStyle || 'solid'} ${widget.props.borderColor || '#e0e0e0'}` 
+                  : (isPreview ? 'none' : '2px dashed #ccc'),
+                borderRadius: widget.props.borderRadius || '0',
+                minHeight: widget.props.minHeight || '100px',
+                maxHeight: widget.props.maxHeight && widget.props.maxHeight !== 'none' ? widget.props.maxHeight : undefined,
                 maxWidth: widget.props.maxWidth,
-                margin: widget.props.centerContent ? '0 auto' : '0'
+                boxShadow: widget.props.boxShadow || 'none',
+                opacity: widget.props.opacity || 1,
+                zIndex: widget.props.zIndex && widget.props.zIndex !== 'auto' ? widget.props.zIndex : undefined
               }}
             >
               {!isPreview && (
@@ -3285,23 +3492,28 @@ export default function WebsiteEditPage() {
           )}
           {widget.type === 'column' && (
             <div
-              {...(!isPreview
-                ? {
-                    onDragOver: (e: React.DragEvent) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setDropTargetSection(widget.id);
-                    },
-                    onDragLeave: (e: React.DragEvent) => {
-                      e.stopPropagation();
-                      setDropTargetSection(null);
-                    },
-                    onDrop: (e: React.DragEvent) => handleDropInSection(widget.id, e),
-                  }
-                : {})}
+              data-column-id={widget.id}
+              data-testid="droppable-column"
+              data-droppable="true"
+              onDragEnterCapture={(e: React.DragEvent) => {
+                if (isPreview) return;
+                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDragOverCapture={(e: React.DragEvent) => {
+                if (isPreview) return;
+                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDrop={(e: React.DragEvent) => {
+                if (isPreview) return;
+                e.preventDefault();
+                e.stopPropagation();
+                handleDropInSection(widget.id, e);
+              }}
               className={`transition-all rounded-lg ${
                 !isPreview && dropTargetSection === widget.id
-                  ? 'ring-2 ring-blue-400 bg-blue-50/30'
+                  ? 'ring-4 ring-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
                   : !isPreview
                   ? 'hover:ring-1 hover:ring-blue-200'
                   : ''
@@ -3309,10 +3521,13 @@ export default function WebsiteEditPage() {
               style={{
                 width: widget.props.width,
                 padding: widget.props.padding,
-                backgroundColor: widget.props.backgroundColor,
-                border: !isPreview && dropTargetSection === widget.id ? '2px dashed #3b82f6' : '2px dashed #e0e0e0',
+                backgroundColor: widget.props.backgroundColor || 'transparent',
+                border: isPreview 
+                  ? 'none'
+                  : (dropTargetSection === widget.id ? '3px solid #3b82f6' : '1px dashed #e0e0e0'),
                 minHeight: widget.props.minHeight || '100px',
-                borderRadius: widget.props.borderRadius || '0'
+                borderRadius: widget.props.borderRadius || '0',
+                position: 'relative'
               }}
             >
               {widget.children && widget.children.length > 0 ? (
@@ -3320,7 +3535,7 @@ export default function WebsiteEditPage() {
                   {widget.children.map((child, idx) => (
                     <React.Fragment key={child.id}>
                       {/* Drop zone before child */}
-                      {!isPreview && (draggedWidget || draggedExistingWidget) && (
+                      {!isPreview && isDraggingWidget && (
                         <div
                           className={`h-1 transition-all rounded ${
                             dropTargetIndex === idx && dropTargetSection === widget.id
@@ -3343,7 +3558,7 @@ export default function WebsiteEditPage() {
                       {renderWidget(child, true, mode === 'preview' ? false : true, mode)}
                       
                       {/* Drop zone after last child */}
-                      {!isPreview && idx === widget.children!.length - 1 && (draggedWidget || draggedExistingWidget) && (
+                      {!isPreview && idx === widget.children!.length - 1 && isDraggingWidget && (
                         <div
                           className={`h-1 transition-all rounded ${
                             dropTargetIndex === widget.children!.length && dropTargetSection === widget.id
@@ -3366,7 +3581,10 @@ export default function WebsiteEditPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center text-gray-400 text-xs py-8">
+                <div 
+                  className="text-center text-gray-400 text-xs py-8"
+                  style={{ pointerEvents: 'none' }}
+                >
                   <Columns className="inline-block h-8 w-8 mb-2 opacity-50" />
                   <div>Empty Column</div>
                   {!isPreview && <div className="text-[10px] mt-1">Drop widgets here</div>}
@@ -4145,7 +4363,7 @@ export default function WebsiteEditPage() {
                           <div
                             key={widget.type}
                             draggable
-                            onDragStart={() => handleDragStart(widget)}
+                            onDragStart={(e) => handleDragStart(widget, e)}
                             className="flex flex-col items-center justify-center gap-2 p-3 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all aspect-square"
                           >
                             <widget.icon className="h-6 w-6 text-gray-600" />
@@ -4164,7 +4382,7 @@ export default function WebsiteEditPage() {
                               <div
                                 key={widget.type}
                                 draggable
-                                onDragStart={() => handleDragStart(widget)}
+                                onDragStart={(e) => handleDragStart(widget, e)}
                                 className="flex flex-col items-center justify-center gap-2 p-3 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all aspect-square"
                               >
                                 <widget.icon className="h-6 w-6 text-gray-600" />
@@ -4228,7 +4446,7 @@ export default function WebsiteEditPage() {
                     <div
                       key={widget.type}
                       draggable
-                      onDragStart={() => handleDragStart(widget)}
+                      onDragStart={(e) => handleDragStart(widget, e)}
                       title={widget.label}
                       className="flex items-center justify-center p-2 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all"
                     >
@@ -4245,10 +4463,25 @@ export default function WebsiteEditPage() {
 
           {/* CENTER PANEL - Canvas */}
           <div className="flex-1 overflow-auto bg-gray-100">
+            {/* Show indicator when dragging */}
+            {(draggedWidget || draggedExistingWidget) && (
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                <div className="animate-pulse">🎯</div>
+                <span className="font-medium">
+                  Dragging: {draggedWidget?.label || draggedExistingWidget?.type}
+                </span>
+                <div className="text-xs opacity-75">Drop in a blue highlighted column</div>
+              </div>
+            )}
             <ScrollArea className="h-full">
               <div
                 className="min-h-full p-8"
-                onDrop={handleDrop}
+                onDrop={(e) => {
+                  // Only handle drop if it's directly on the canvas, not bubbling from children
+                  if (!dropTargetSection) {
+                    handleDrop(e);
+                  }
+                }}
                 onDragOver={handleDragOver}
                 onClick={() => setSelectedWidget(null)}
               >
