@@ -338,6 +338,8 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     <>
       {renderTextInput('Button Text', 'text', widget.props.text, 'Enter button text...')}
       {renderTextInput('Link URL', 'link', widget.props.link, 'https://...')}
+      {renderSwitch('Open Link in New Tab', 'openInNewTab', widget.props.openInNewTab || false, 'Opens the link in a new browser tab')}
+      {renderTextInput('Rel Attribute', 'linkRel', widget.props.linkRel || 'noopener noreferrer', 'e.g., noopener noreferrer')}
       {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor)}
       {renderColorPicker('Text Color', 'color', widget.props.color)}
       {renderColorPicker('Hover Background Color', 'hoverBackgroundColor', widget.props.hoverBackgroundColor || widget.props.backgroundColor)}
@@ -380,6 +382,7 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
       ])}
       {renderSwitch('Full Width', 'fullWidth', widget.props.fullWidth || false, 'Button spans full container width')}
       {renderTextInput('Transition', 'transition', widget.props.transition || 'all 0.2s ease', 'CSS transition e.g., all 0.2s ease')}
+      {renderSwitch('Disabled', 'disabled', widget.props.disabled || false, 'Disable button interactions')}
       {renderPositionAndSize()}
     </>
   );

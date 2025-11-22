@@ -250,7 +250,10 @@ const widgetLibrary: WidgetDefinition[] = [
       letterSpacing: 'normal',
       textTransform: 'none',
       transition: 'all 0.2s ease',
-      align: 'center'
+      align: 'center',
+      openInNewTab: false,
+      linkRel: 'noopener noreferrer',
+      disabled: false
     }
   },
   {
@@ -3386,6 +3389,7 @@ export default function WebsiteEditPage() {
             const backgroundColor = widget.props.backgroundColor || '#0066cc';
             const textColor = widget.props.color || '#ffffff';
             const borderColor = widget.props.borderColor || backgroundColor;
+            const isDisabled = Boolean(widget.props.disabled);
 
             const buttonClass = registerStyle('button', {
               backgroundColor,
@@ -3404,25 +3408,67 @@ export default function WebsiteEditPage() {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: widget.props.align || 'center',
-              cursor: 'pointer',
+              textDecoration: 'none',
+              cursor: isDisabled ? 'not-allowed' : 'pointer',
+              opacity: isDisabled ? 0.6 : 1,
+              pointerEvents: isDisabled ? 'none' : 'auto',
               transition: widget.props.transition || 'all 0.2s ease'
             });
 
-            const hoverCss = buildCssBlock(`${buttonClass}:hover`, {
-              backgroundColor: widget.props.hoverBackgroundColor || undefined,
-              color: widget.props.hoverColor || undefined,
-              boxShadow: widget.props.hoverBoxShadow || undefined
-            });
-            if (hoverCss) {
-              widgetStyles.push(hoverCss);
+            if (!isDisabled) {
+              const hoverCss = buildCssBlock(`${buttonClass}:hover`, {
+                backgroundColor: widget.props.hoverBackgroundColor || undefined,
+                color: widget.props.hoverColor || undefined,
+                boxShadow: widget.props.hoverBoxShadow || undefined
+              });
+              if (hoverCss) {
+                widgetStyles.push(hoverCss);
+              }
+            }
+
+            const content = (
+              <span className="inline-flex items-center gap-2">
+                {widget.props.text}
+              </span>
+            );
+
+            const commonProps = {
+              className: `${buttonClass} focus:outline-none`,
+              onClick: (e: React.MouseEvent) => {
+                if (!isPreview) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }
+            };
+
+            const hasLink = Boolean(widget.props.link && widget.props.link.trim() !== '');
+
+            if (hasLink) {
+              const target = widget.props.openInNewTab ? '_blank' : '_self';
+              const rel = widget.props.openInNewTab
+                ? widget.props.linkRel || 'noopener noreferrer'
+                : widget.props.linkRel || undefined;
+              return (
+                <a
+                  href={widget.props.link}
+                  target={isPreview ? target : '_self'}
+                  rel={isPreview ? rel : 'noopener noreferrer'}
+                  {...commonProps}
+                  aria-disabled={isDisabled}
+                >
+                  {content}
+                </a>
+              );
             }
 
             return (
               <button
                 type="button"
-                className={`${buttonClass} focus:outline-none`}
+                disabled={isDisabled}
+                {...commonProps}
               >
-                {widget.props.text}
+                {content}
               </button>
             );
           })()}
