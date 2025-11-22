@@ -1,4 +1,3 @@
-/* eslint-disable no-inline-styles */
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -126,6 +125,37 @@ import { useToast } from "@/hooks/use-toast";
 import { PropertyEditor } from "@/components/website-builder/PropertyEditor";
 import type { Widget, WidgetDefinition, NavLink } from "@/types/website-builder";
 import { normalizeNavLinks } from "@/lib/website-builder";
+
+type StyleValue = string | number | null | undefined;
+
+const camelToKebab = (value: string) =>
+  value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+
+const formatStyleValue = (value: StyleValue) => {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  if (typeof value === 'number') {
+    return `${value}px`;
+  }
+  return value;
+};
+
+const buildCssBlock = (className: string, styles: Record<string, StyleValue>) => {
+  const cssBody = Object.entries(styles)
+    .map(([key, value]) => {
+      const formatted = formatStyleValue(value);
+      return formatted ? `${camelToKebab(key)}: ${formatted};` : '';
+    })
+    .filter(Boolean)
+    .join(' ');
+
+  if (!cssBody) {
+    return '';
+  }
+
+  return `.${className} { ${cssBody} }`;
+};
 
 // Available widgets library
 const widgetLibrary: WidgetDefinition[] = [
@@ -282,14 +312,7 @@ const widgetLibrary: WidgetDefinition[] = [
       width: '100%', 
       padding: '1rem',
       backgroundColor: 'transparent',
-      minHeight: '100px',
-      margin: '0',
-      borderWidth: '1px',
-      borderStyle: 'dashed',
-      borderColor: '#e0e0e0',
-      borderRadius: '0.5rem',
-      boxShadow: 'none',
-      opacity: 1
+      minHeight: '100px'
     }
   },
   {
@@ -756,58 +779,6 @@ export default function WebsiteEditPage() {
   const [activeMainTab, setActiveMainTab] = React.useState<'widgets' | 'templates'>('widgets');
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
-  const isDraggingWidget = Boolean(draggedWidget || draggedExistingWidget);
-  const isDraggingColumn = draggedWidget?.type === 'column' || draggedExistingWidget?.type === 'column';
-
-  const clearDropTargets = React.useCallback(() => {
-    setDropTargetSection(null);
-    setDropTargetIndex(null);
-  }, []);
-
-  const ensureFallbackIndex = React.useCallback((fallbackIndex: number | null) => {
-    if (fallbackIndex !== null && fallbackIndex !== undefined && dropTargetIndex === null) {
-      setDropTargetIndex(fallbackIndex);
-    }
-  }, [dropTargetIndex]);
-
-  const handleContainerDragIntent = React.useCallback((containerId: string, fallbackIndex: number | null, e: React.DragEvent) => {
-    if (!isDraggingWidget) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (dropTargetSection !== containerId) {
-      setDropTargetSection(containerId);
-    }
-    ensureFallbackIndex(fallbackIndex);
-  }, [isDraggingWidget, dropTargetSection, ensureFallbackIndex]);
-
-  const getNearestColumnId = React.useCallback((section: Widget | null, clientX: number, clientY: number): string | null => {
-    if (!section?.children || typeof document === 'undefined') return null;
-    let closestId: string | null = null;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    for (const child of section.children) {
-      if (child.type !== 'column') continue;
-      const columnEl = document.querySelector<HTMLElement>(`[data-column-id="${child.id}"]`);
-      if (!columnEl) continue;
-      const rect = columnEl.getBoundingClientRect();
-
-      const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
-      if (inside) {
-        return child.id;
-      }
-
-      const dx = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0;
-      const dy = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0;
-      const distance = Math.hypot(dx, dy);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestId = child.id;
-      }
-    }
-
-    return closestId;
-  }, []);
-
   type TemplateDefinition = {
     id: string;
     name: string;
@@ -817,7 +788,7 @@ export default function WebsiteEditPage() {
   };
 
   // Dental Clinic Landing Page Templates
-  const initialTemplates: TemplateDefinition[] = [
+  const dentalTemplates: TemplateDefinition[] = [
     {
       id: 'template1',
       name: 'Modern Dental Clinic',
@@ -839,11 +810,12 @@ export default function WebsiteEditPage() {
               { label: 'Contact', href: '#contact' }
             ],
             backgroundColor: '#ffffff',
-            color: '#333333',
+            color: '#1f2937',
             x: 0,
             y: 0,
             width: '100%',
-            height: '80px'
+            height: '70px',
+            shadow: true
           },
           children: []
         },
@@ -852,26 +824,28 @@ export default function WebsiteEditPage() {
           id: '',
           type: 'section',
           props: {
-            backgroundColor: '#f0f9ff',
-            padding: '4rem 2rem',
+            backgroundColor: '#0f172a',
+            backgroundImage: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            padding: '5rem 2rem 5rem 2rem',
             x: 0,
-            y: 80,
+            y: 70,
             width: '100%',
-            height: 'auto',
-            margin: '0'
+            height: '450px'
           },
           children: [
             {
               id: '',
               type: 'heading',
               props: {
-                text: 'Welcome to CairoDental Clinic',
+                text: 'Your Smile, Our Passion',
                 level: 'h1',
-                fontSize: '3rem',
-                color: '#1e40af',
+                fontSize: '3.5rem',
+                color: '#ffffff',
                 textAlign: 'center',
-                x: 100,
-                y: 50
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                x: 200,
+                y: 80
               },
               children: []
             },
@@ -879,12 +853,13 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'text',
               props: {
-                text: 'Your smile is our priority. Experience world-class dental care with our expert team.',
+                text: 'Experience world-class dental care with cutting-edge technology and compassionate professionals',
                 fontSize: '1.25rem',
-                color: '#64748b',
+                color: '#cbd5e1',
                 textAlign: 'center',
-                x: 100,
-                y: 150
+                lineHeight: '1.8',
+                x: 250,
+                y: 180
               },
               children: []
             },
@@ -892,26 +867,16 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'button',
               props: {
-                text: 'Book Appointment',
+                text: 'Schedule Consultation',
                 backgroundColor: '#3b82f6',
                 color: '#ffffff',
                 fontSize: '1.125rem',
-                padding: '1rem 2rem',
+                padding: '1rem 2.5rem',
                 borderRadius: '0.5rem',
-                x: 450,
-                y: 250
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'icon',
-              props: {
-                name: 'Phone',
-                size: '1.5rem',
-                color: '#3b82f6',
-                x: 400,
-                y: 350
+                fontWeight: '600',
+                boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)',
+                x: 460,
+                y: 280
               },
               children: []
             },
@@ -919,11 +884,12 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'text',
               props: {
-                text: 'Call: +20 123 456 7890',
-                fontSize: '1.125rem',
-                color: '#1e40af',
-                x: 440,
-                y: 350
+                text: '📞 +20 123 456 7890  |  ⏰ Open 24/7',
+                fontSize: '1rem',
+                color: '#94a3b8',
+                textAlign: 'center',
+                x: 430,
+                y: 370
               },
               children: []
             }
@@ -934,13 +900,12 @@ export default function WebsiteEditPage() {
           id: '',
           type: 'section',
           props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
+            backgroundColor: '#f8fafc',
+            padding: '4rem 2rem 4rem 2rem',
             x: 0,
-            y: 580,
+            y: 520,
             width: '100%',
-            height: 'auto',
-            margin: '0'
+            height: '720px'
           },
           children: [
             {
@@ -949,11 +914,12 @@ export default function WebsiteEditPage() {
               props: {
                 text: 'Our Services',
                 level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
+                fontSize: '2.75rem',
+                color: '#0f172a',
                 textAlign: 'center',
-                x: 400,
-                y: 20
+                fontWeight: 'bold',
+                x: 450,
+                y: 30
               },
               children: []
             },
@@ -961,12 +927,12 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'text',
               props: {
-                text: 'Comprehensive dental care for your whole family',
+                text: 'Comprehensive dental care solutions tailored to your needs',
                 fontSize: '1.125rem',
-                color: '#6b7280',
+                color: '#64748b',
                 textAlign: 'center',
-                x: 300,
-                y: 80
+                x: 350,
+                y: 100
               },
               children: []
             },
@@ -975,15 +941,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'General Dentistry',
-                content: 'Routine checkups, cleanings, and preventive care',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
-                x: 50,
-                y: 150,
-                width: '350px',
-                height: '200px'
+                title: '🦷 General Dentistry',
+                content: 'Routine checkups, cleanings, and comprehensive preventive care to keep your teeth healthy',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
+                x: 60,
+                y: 160,
+                width: '340px',
+                height: '180px'
               },
               children: []
             },
@@ -991,15 +960,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'Cosmetic Dentistry',
-                content: 'Teeth whitening, veneers, and smile makeovers',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
-                x: 425,
-                y: 150,
-                width: '350px',
-                height: '200px'
+                title: '✨ Cosmetic Dentistry',
+                content: 'Professional teeth whitening, porcelain veneers, and complete smile transformations',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
+                x: 430,
+                y: 160,
+                width: '340px',
+                height: '180px'
               },
               children: []
             },
@@ -1007,15 +979,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'Orthodontics',
-                content: 'Braces and Invisalign for straight, beautiful smiles',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
+                title: '🎯 Orthodontics',
+                content: 'Traditional braces and clear Invisalign aligners for perfectly straight smiles',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
                 x: 800,
-                y: 150,
-                width: '350px',
-                height: '200px'
+                y: 160,
+                width: '340px',
+                height: '180px'
               },
               children: []
             },
@@ -1023,15 +998,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'Dental Implants',
-                content: 'Permanent solutions for missing teeth',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
-                x: 50,
-                y: 370,
-                width: '350px',
-                height: '200px'
+                title: '🔧 Dental Implants',
+                content: 'Advanced implant technology for permanent, natural-looking tooth replacement',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
+                x: 60,
+                y: 360,
+                width: '340px',
+                height: '180px'
               },
               children: []
             },
@@ -1039,15 +1017,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'Pediatric Dentistry',
-                content: 'Gentle dental care for children',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
-                x: 425,
-                y: 370,
-                width: '350px',
-                height: '200px'
+                title: '👶 Pediatric Care',
+                content: 'Specialized, gentle dental care designed specifically for children of all ages',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
+                x: 430,
+                y: 360,
+                width: '340px',
+                height: '180px'
               },
               children: []
             },
@@ -1055,15 +1036,18 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'card',
               props: {
-                title: 'Emergency Dental Care',
-                content: '24/7 emergency dental services',
-                backgroundColor: '#f9fafb',
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
+                title: '🚨 Emergency Care',
+                content: 'Immediate 24/7 emergency dental services when you need us most',
+                backgroundColor: '#ffffff',
+                borderRadius: '0.75rem',
+                padding: '2rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderWidth: '1px',
+                borderColor: '#e2e8f0',
                 x: 800,
-                y: 370,
-                width: '350px',
-                height: '200px'
+                y: 360,
+                width: '340px',
+                height: '180px'
               },
               children: []
             }
@@ -1074,13 +1058,12 @@ export default function WebsiteEditPage() {
           id: '',
           type: 'section',
           props: {
-            backgroundColor: '#f9fafb',
-            padding: '4rem 2rem',
+            backgroundColor: '#ffffff',
+            padding: '4rem 2rem 4rem 2rem',
             x: 0,
-            y: 1180,
+            y: 1240,
             width: '100%',
-            height: 'auto',
-            margin: '0'
+            height: '380px'
           },
           children: [
             {
@@ -1089,11 +1072,12 @@ export default function WebsiteEditPage() {
               props: {
                 text: 'Why Choose CairoDental?',
                 level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
+                fontSize: '2.75rem',
+                color: '#0f172a',
                 textAlign: 'center',
-                x: 350,
-                y: 20
+                fontWeight: 'bold',
+                x: 380,
+                y: 30
               },
               children: []
             },
@@ -1104,9 +1088,10 @@ export default function WebsiteEditPage() {
                 value: '20+',
                 label: 'Years Experience',
                 icon: 'award',
-                color: '#3b82f6',
+                backgroundColor: '#eff6ff',
+                iconColor: '#3b82f6',
                 x: 150,
-                y: 120
+                y: 140
               },
               children: []
             },
@@ -1117,9 +1102,10 @@ export default function WebsiteEditPage() {
                 value: '10,000+',
                 label: 'Happy Patients',
                 icon: 'users',
-                color: '#3b82f6',
+                backgroundColor: '#f0fdf4',
+                iconColor: '#10b981',
                 x: 400,
-                y: 120
+                y: 140
               },
               children: []
             },
@@ -1130,9 +1116,10 @@ export default function WebsiteEditPage() {
                 value: '15+',
                 label: 'Expert Dentists',
                 icon: 'star',
-                color: '#3b82f6',
+                backgroundColor: '#fef3c7',
+                iconColor: '#f59e0b',
                 x: 650,
-                y: 120
+                y: 140
               },
               children: []
             },
@@ -1143,9 +1130,10 @@ export default function WebsiteEditPage() {
                 value: '24/7',
                 label: 'Emergency Care',
                 icon: 'clock',
-                color: '#3b82f6',
+                backgroundColor: '#fef2f2',
+                iconColor: '#ef4444',
                 x: 900,
-                y: 120
+                y: 140
               },
               children: []
             },
@@ -1153,13 +1141,14 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'text',
               props: {
-                text: 'State-of-the-art equipment and the latest dental technologies ensure you receive the best possible care in a comfortable, modern environment.',
+                text: 'State-of-the-art equipment and advanced dental technologies ensure you receive the best care in a comfortable, modern environment.',
                 fontSize: '1.125rem',
-                color: '#6b7280',
+                color: '#64748b',
                 textAlign: 'center',
-                x: 100,
-                y: 250,
-                width: '1000px'
+                lineHeight: '1.8',
+                x: 200,
+                y: 270,
+                width: '800px'
               },
               children: []
             }
@@ -1170,26 +1159,39 @@ export default function WebsiteEditPage() {
           id: '',
           type: 'section',
           props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
+            backgroundColor: '#f8fafc',
+            padding: '4rem 2rem 4rem 2rem',
             x: 0,
-            y: 975,
+            y: 1620,
             width: '100%',
-            height: 'auto',
-            margin: '0'
+            height: '420px'
           },
           children: [
             {
               id: '',
               type: 'heading',
               props: {
-                text: 'What Our Patients Say',
+                text: 'Patient Testimonials',
                 level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
+                fontSize: '2.75rem',
+                color: '#0f172a',
                 textAlign: 'center',
-                x: 350,
-                y: 20
+                fontWeight: 'bold',
+                x: 420,
+                y: 30
+              },
+              children: []
+            },
+            {
+              id: '',
+              type: 'text',
+              props: {
+                text: '⭐⭐⭐⭐⭐ Rated 5.0 by 1,000+ patients',
+                fontSize: '1rem',
+                color: '#64748b',
+                textAlign: 'center',
+                x: 430,
+                y: 100
               },
               children: []
             },
@@ -1197,13 +1199,15 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'testimonial',
               props: {
-                quote: 'The best dental experience I have ever had! The staff is professional and caring.',
+                quote: 'The best dental experience I have ever had! Professional staff, modern equipment, and truly caring service.',
                 author: 'Sarah Mohamed',
+                role: 'Patient since 2020',
                 rating: 5,
-                backgroundColor: '#f0f9ff',
-                x: 50,
-                y: 120,
-                width: '350px'
+                backgroundColor: '#ffffff',
+                quoteIcon: true,
+                x: 60,
+                y: 160,
+                width: '340px'
               },
               children: []
             },
@@ -1211,13 +1215,15 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'testimonial',
               props: {
-                quote: 'Dr. Ahmed is amazing with kids. My children actually look forward to their dental visits!',
+                quote: 'Dr. Ahmed is amazing with kids. My children actually look forward to their dental visits now!',
                 author: 'Omar Hassan',
+                role: 'Parent of 3',
                 rating: 5,
-                backgroundColor: '#f0f9ff',
-                x: 425,
-                y: 120,
-                width: '350px'
+                backgroundColor: '#ffffff',
+                quoteIcon: true,
+                x: 430,
+                y: 160,
+                width: '340px'
               },
               children: []
             },
@@ -1225,13 +1231,15 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'testimonial',
               props: {
-                quote: 'Modern facilities and excellent service. Highly recommend CairoDental to everyone.',
+                quote: 'Modern facilities and excellent service. I highly recommend CairoDental to everyone seeking quality care.',
                 author: 'Fatima Ali',
+                role: 'Patient since 2019',
                 rating: 5,
-                backgroundColor: '#f0f9ff',
+                backgroundColor: '#ffffff',
+                quoteIcon: true,
                 x: 800,
-                y: 120,
-                width: '350px'
+                y: 160,
+                width: '340px'
               },
               children: []
             }
@@ -1242,40 +1250,40 @@ export default function WebsiteEditPage() {
           id: '',
           type: 'section',
           props: {
-            backgroundColor: '#1e40af',
-            padding: '4rem 2rem',
+            backgroundColor: '#3b82f6',
+            backgroundImage: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            padding: '4rem 2rem 4rem 2rem',
             x: 0,
-            y: 1390,
+            y: 2040,
             width: '100%',
-            height: 'auto',
-            margin: '0'
+            height: '350px'
           },
           children: [
             {
               id: '',
               type: 'heading',
               props: {
-                text: 'Book Your Appointment Today',
+                text: 'Ready for Your Best Smile?',
                 level: 'h2',
-                fontSize: '2.5rem',
+                fontSize: '2.75rem',
                 color: '#ffffff',
                 textAlign: 'center',
-                x: 300,
-                y: 20
+                fontWeight: 'bold',
+                x: 340,
+                y: 40
               },
               children: []
             },
             {
               id: '',
-              type: 'contactInfo',
+              type: 'text',
               props: {
-                phone: '+20 123 456 7890',
-                email: 'info@cairodental.com',
-                address: '123 Tahrir Square, Cairo, Egypt',
-                backgroundColor: 'transparent',
-                color: '#ffffff',
-                x: 400,
-                y: 100
+                text: 'Schedule your consultation today and experience the difference',
+                fontSize: '1.25rem',
+                color: '#dbeafe',
+                textAlign: 'center',
+                x: 330,
+                y: 120
               },
               children: []
             },
@@ -1283,15 +1291,29 @@ export default function WebsiteEditPage() {
               id: '',
               type: 'button',
               props: {
-                text: 'Schedule Consultation',
+                text: 'Book Appointment Now',
                 backgroundColor: '#ffffff',
-                color: '#1e40af',
-                fontSize: '1.25rem',
-                padding: '1rem 2rem',
+                color: '#3b82f6',
+                fontSize: '1.125rem',
+                padding: '1rem 2.5rem',
                 borderRadius: '0.5rem',
-                fontWeight: 'bold',
-                x: 450,
-                y: 250
+                fontWeight: '600',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                x: 460,
+                y: 190
+              },
+              children: []
+            },
+            {
+              id: '',
+              type: 'text',
+              props: {
+                text: '📞 +20 123 456 7890  |  📧 info@cairodental.com  |  📍 123 Tahrir Square, Cairo',
+                fontSize: '0.95rem',
+                color: '#dbeafe',
+                textAlign: 'center',
+                x: 300,
+                y: 280
               },
               children: []
             }
@@ -1303,13 +1325,14 @@ export default function WebsiteEditPage() {
           type: 'footer',
           props: {
             copyright: '© 2024 CairoDental. All rights reserved.',
-            links: ['Privacy Policy', 'Terms of Service', 'Sitemap'],
-            backgroundColor: '#111827',
-            color: '#9ca3af',
+            links: ['Privacy Policy', 'Terms of Service', 'Careers', 'Contact Us'],
+            backgroundColor: '#0f172a',
+            color: '#94a3b8',
+            padding: '2rem',
             x: 0,
-            y: 1750,
+            y: 2390,
             width: '100%',
-            height: '150px'
+            height: '120px'
           },
           children: []
         }
@@ -2500,109 +2523,71 @@ export default function WebsiteEditPage() {
     }
   ];
 
-  const TEMPLATE_STORAGE_KEY = 'websiteBuilderTemplates';
-  const [templates, setTemplates] = React.useState<TemplateDefinition[]>(initialTemplates);
-  const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
-  const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
+  const getWidgetHeight = (widget: Widget): number => {
+    const rawHeight = widget.props?.height;
+
+    if (typeof rawHeight === 'number') {
+      return rawHeight;
+    }
+
+    if (typeof rawHeight === 'string') {
+      const parsed = parseFloat(rawHeight);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+
+    switch (widget.type) {
+      case 'navbar':
+        return 80;
+      case 'footer':
+        return 150;
+      case 'section':
+        return 400;
+      default:
+        return 200;
+    }
+  };
+
+  const normalizeTemplateSections = (widgets: Widget[]): Widget[] => {
+    let currentY = 0;
+
+    return widgets.map(widget => {
+      const heightValue = getWidgetHeight(widget);
+      const normalizedWidget: Widget = {
+        ...widget,
+        props: {
+          ...widget.props,
+          y: currentY
+        }
+      };
+
+      currentY += heightValue;
+      return normalizedWidget;
+    });
+  };
 
   // Apply template to canvas
-  const applyTemplate = (template: TemplateDefinition) => {
-    const newWidgets = template.widgets.map((widget) => cloneWidgetWithNewIds(widget));
+  const applyTemplate = (template: typeof dentalTemplates[0]) => {
+    const cloneWidgetTree = (widget: Widget): Widget => ({
+      ...widget,
+      id: generateId(),
+      props: { ...widget.props },
+      children: widget.children?.map(child => cloneWidgetTree(child)) || []
+    });
 
-    setCanvasWidgets(newWidgets);
-    setSelectedWidget(null);
-    addToHistory(newWidgets);
+    const clonedWidgets = template.widgets.map(cloneWidgetTree);
+    const arrangedWidgets = template.id === 'template1'
+      ? normalizeTemplateSections(clonedWidgets)
+      : clonedWidgets;
+    
+    setCanvasWidgets(arrangedWidgets);
+    addToHistory(arrangedWidgets);
     toast({
       title: "Template Applied",
       description: `${template.name} has been applied to your canvas`,
     });
   };
-
-  const handleEditTemplate = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) {
-      return;
-    }
-
-    applyTemplate(template);
-    setEditingTemplateId(templateId);
-    toast({
-      title: "Editing Template",
-      description: `You are now editing ${template.name}`,
-    });
-  };
-
-  const handleSaveTemplate = (templateId: string) => {
-    if (editingTemplateId !== templateId) {
-      toast({
-        title: "Cannot Save",
-        description: "Click Edit on this template before saving.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!canvasWidgets.length) {
-      toast({
-        title: "Nothing to Save",
-        description: "Add widgets to the canvas before saving the template.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) {
-      return;
-    }
-
-    const updatedTemplate = {
-      ...template,
-      widgets: cloneWidgetsForStorage(canvasWidgets),
-    };
-
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === templateId ? updatedTemplate : t))
-    );
-    setEditingTemplateId(null);
-
-    toast({
-      title: "Template Saved",
-      description: `${template.name} has been updated`,
-    });
-  };
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const stored = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setTemplates(parsed as TemplateDefinition[]);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load saved templates', error);
-    } finally {
-      setTemplatesHydrated(true);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (!templatesHydrated || typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
-    } catch (error) {
-      console.error('Failed to persist templates', error);
-    }
-  }, [templates, templatesHydrated]);
 
   // Add global style for grab cursor
   React.useEffect(() => {
@@ -2658,19 +2643,6 @@ export default function WebsiteEditPage() {
   // Generate unique ID for widgets
   const generateId = () => `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const cloneWidgetWithNewIds = (widget: Widget): Widget => ({
-    ...widget,
-    id: generateId(),
-    children: widget.children?.map((child) => cloneWidgetWithNewIds(child)) || []
-  });
-
-  const cloneWidgetsForStorage = (widgets: Widget[]): Widget[] =>
-    widgets.map((widget) => ({
-      ...widget,
-      props: { ...widget.props },
-      children: widget.children ? cloneWidgetsForStorage(widget.children) : []
-    }));
-
   // Calculate next widget position (staggered to avoid overlap)
   const getNextPosition = () => {
     const count = canvasWidgets.length;
@@ -2695,23 +2667,9 @@ export default function WebsiteEditPage() {
   };
 
   // Handle drag start from widget library
-  const handleDragStart = (widget: WidgetDefinition, e: React.DragEvent) => {
-    console.log('handleDragStart called for:', widget.type);
+  const handleDragStart = (widget: WidgetDefinition) => {
     setDraggedWidget(widget);
     setDraggedExistingWidget(null);
-    
-    // Set drag effect
-    e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('text/plain', widget.type);
-    
-    // Create a minimal drag image (1x1 transparent pixel) to avoid blocking
-    // Use window.Image to avoid conflict with lucide-react Image icon
-    const dragImage = new window.Image();
-    dragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
-    
-    // Reset drop target when starting a new drag
-    clearDropTargets();
   };
 
   // Handle drag start for existing widget (for rearranging)
@@ -2800,19 +2758,6 @@ export default function WebsiteEditPage() {
   // Handle drop on canvas
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('Canvas handleDrop - dropTargetSection:', dropTargetSection);
-    
-    // If dropping into a section/column, don't handle it here - let the section/column handle it
-    if (dropTargetSection) {
-      console.log('Canvas: Skipping drop, letting column handle it');
-      // Clear the states since drop was handled by column
-      setDraggedWidget(null);
-      setDraggedExistingWidget(null);
-      clearDropTargets();
-      return;
-    }
     
     let updatedWidgets: Widget[];
 
@@ -2903,22 +2848,11 @@ export default function WebsiteEditPage() {
     addToHistory(updatedWidgets);
     setDraggedWidget(null);
     setDraggedExistingWidget(null);
-    clearDropTargets();
+    setDropTargetIndex(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    const eventTarget = e.target;
-    if (!(eventTarget instanceof Element)) {
-      if (dropTargetSection || dropTargetIndex !== null) {
-        clearDropTargets();
-      }
-      return;
-    }
-    const droppable = eventTarget.closest('[data-droppable="true"]');
-    if (!droppable && (dropTargetSection || dropTargetIndex !== null)) {
-      clearDropTargets();
-    }
   };
 
   // Add to history for undo/redo
@@ -2995,24 +2929,10 @@ export default function WebsiteEditPage() {
 
   // Remove widget from anywhere in the tree (returns new tree without the widget)
   const removeWidgetById = (widgets: Widget[], id: string): Widget[] => {
-    return widgets
-      .filter(w => w.id !== id)
-      .map(w => {
-        if (!w.children) {
-          return w;
-        }
-
-        const updatedChildren = removeWidgetById(w.children, id);
-        if (w.type === 'section') {
-          const columnCount = updatedChildren.filter(child => child.type === 'column').length;
-          const nextProps = columnCount > 0
-            ? { ...w.props, columns: columnCount }
-            : w.props;
-          return { ...w, props: nextProps, children: updatedChildren };
-        }
-
-        return { ...w, children: updatedChildren };
-      });
+    return widgets.filter(w => w.id !== id).map(w => ({
+      ...w,
+      children: w.children ? removeWidgetById(w.children, id) : undefined
+    }));
   };
 
   // Insert widget at specific position in canvas
@@ -3031,13 +2951,6 @@ export default function WebsiteEditPage() {
           newChildren.splice(index, 0, widget);
         } else {
           newChildren.push(widget);
-        }
-        if (w.type === 'section') {
-          const columnCount = newChildren.filter(child => child.type === 'column').length;
-          const nextProps = columnCount > 0
-            ? { ...w.props, columns: columnCount }
-            : w.props;
-          return { ...w, props: nextProps, children: newChildren };
         }
         return { ...w, children: newChildren };
       }
@@ -3118,77 +3031,9 @@ export default function WebsiteEditPage() {
   // Add widget to a specific section or column
   const handleDropInSection = (containerId: string, e: React.DragEvent) => {
     e.stopPropagation();
-    e.preventDefault();
-    
-    console.log('handleDropInSection called:', { 
-      containerId, 
-      dropTargetIndex, 
-      draggedWidget: draggedWidget?.type,
-      draggedExistingWidget: draggedExistingWidget?.type 
-    });
-    
-    // Ensure we have something to drop
-    if (!draggedWidget && !draggedExistingWidget) {
-      console.log('No widget to drop');
-      return;
-    }
     
     let updatedWidgets: Widget[];
     const insertIndex = dropTargetIndex;
-    const incomingType = draggedWidget?.type || draggedExistingWidget?.type;
-    const originalContainer = findWidgetById(canvasWidgets, containerId);
-    let workingWidgets = canvasWidgets;
-    let targetContainerId = containerId;
-    let targetLabel: string = originalContainer?.type === 'section' ? 'section' : 'column';
-    const eventTarget = e.target;
-    const hoveredColumnId = (() => {
-      if (eventTarget instanceof Element) {
-        const columnEl = eventTarget.closest('[data-column-id]');
-        if (columnEl) {
-          return columnEl.getAttribute('data-column-id');
-        }
-      }
-      return null;
-    })();
-
-    const dropStateColumnId = (() => {
-      if (!dropTargetSection || dropTargetSection === containerId) return null;
-      const matchesSectionChild = originalContainer?.children?.some(child => child.id === dropTargetSection && child.type === 'column');
-      return matchesSectionChild ? dropTargetSection : null;
-    })();
-
-    if (originalContainer?.type === 'section') {
-      if (incomingType !== 'column') {
-        const hoveredChildId = hoveredColumnId && originalContainer.children?.some(child => child.id === hoveredColumnId && child.type === 'column')
-          ? hoveredColumnId
-          : null;
-        const resolvedColumnId = hoveredChildId
-          || dropStateColumnId
-          || getNearestColumnId(originalContainer, e.clientX, e.clientY);
-
-        if (resolvedColumnId) {
-          targetContainerId = resolvedColumnId;
-          targetLabel = 'column';
-        } else {
-          const firstColumn = originalContainer.children?.find(child => child.type === 'column');
-          if (firstColumn) {
-            targetContainerId = firstColumn.id;
-            targetLabel = 'column';
-          } else {
-            const [newColumn] = createColumns(1);
-            workingWidgets = insertWidgetInSection(workingWidgets, originalContainer.id, newColumn, null);
-            targetContainerId = newColumn.id;
-            targetLabel = 'column';
-          }
-        }
-      } else {
-        targetLabel = 'section';
-      }
-    }
-
-    const resolvedInsertIndex = dropTargetSection === targetContainerId ? insertIndex : null;
-
-    const containerForToast = targetLabel === 'section' ? 'section' : 'column';
 
     // Handle dropping new widget from library
     if (draggedWidget) {
@@ -3203,24 +3048,24 @@ export default function WebsiteEditPage() {
           : undefined
       };
 
-      updatedWidgets = insertWidgetInSection(workingWidgets, targetContainerId, newWidget, resolvedInsertIndex);
+      updatedWidgets = insertWidgetInSection(canvasWidgets, containerId, newWidget, insertIndex);
       
       toast({
-        title: "✅ Widget Added",
-        description: `${draggedWidget.label} has been added to the ${containerForToast}.`
+        title: "Widget Added",
+        description: `${draggedWidget.label} has been added.`
       });
     }
     // Handle moving existing widget
     else if (draggedExistingWidget) {
       // Remove widget from its current location
-      let widgetsWithoutDragged = removeWidgetById(workingWidgets, draggedExistingWidget.id);
+      let widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
       
       // Add widget to container at specific position
-      updatedWidgets = insertWidgetInSection(widgetsWithoutDragged, targetContainerId, draggedExistingWidget, resolvedInsertIndex);
+      updatedWidgets = insertWidgetInSection(widgetsWithoutDragged, containerId, draggedExistingWidget, insertIndex);
       
       toast({
         title: "Widget Moved",
-        description: `The widget has been moved inside the ${containerForToast}.`
+        description: "The widget has been repositioned."
       });
     } else {
       return;
@@ -3230,7 +3075,8 @@ export default function WebsiteEditPage() {
     addToHistory(updatedWidgets);
     setDraggedWidget(null);
     setDraggedExistingWidget(null);
-    clearDropTargets();
+    setDropTargetSection(null);
+    setDropTargetIndex(null);
   };
 
   // Save page
@@ -3260,6 +3106,19 @@ export default function WebsiteEditPage() {
     const isPreview = mode === 'preview';
     const isSelected = !isPreview && selectedWidget?.id === widget.id;
     const isDragging = !isPreview && draggedExistingWidget?.id === widget.id;
+    const widgetStyles: string[] = [];
+
+    const registerStyle = (
+      suffix: string,
+      styles: Record<string, StyleValue>
+    ) => {
+      const className = `widget-${widget.id}-${suffix}`;
+      const cssBlock = buildCssBlock(className, styles);
+      if (cssBlock) {
+        widgetStyles.push(cssBlock);
+      }
+      return className;
+    };
 
     const wrapperClasses = [
       'relative group transition-all',
@@ -3286,16 +3145,13 @@ export default function WebsiteEditPage() {
               }
             : undefined
         }
-        className={wrapperClasses}
+        className={`${wrapperClasses} pointer-events-auto`}
         onClick={!isPreview ? (e) => {
           e.stopPropagation();
           setSelectedWidget(widget);
         } : undefined}
-        style={{ 
-          margin: isNested ? '0' : '0',
-          pointerEvents: 'auto'
-        }}
       >
+        {widgetStyles.length > 0 && <style>{widgetStyles.join('\n')}</style>}
         {/* Widget controls */}
         {!isPreview && (
           <div className="absolute -top-8 left-0 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-2 py-1 rounded-t text-xs z-10">
@@ -3328,79 +3184,96 @@ export default function WebsiteEditPage() {
 
         {/* Widget content preview */}
         <div>
-          {widget.type === 'heading' && (
-            <div 
-              style={{ 
-                color: widget.props.color, 
-                fontSize: widget.props.fontSize,
-                textAlign: widget.props.textAlign,
-                fontWeight: widget.props.fontWeight
-              }}
-            >
+          {widget.type === 'heading' && (() => {
+            const headingClass = registerStyle('heading', {
+              color: widget.props.color,
+              fontSize: widget.props.fontSize,
+              textAlign: widget.props.textAlign,
+              fontWeight: widget.props.fontWeight
+            });
+
+            return (
+              <div className={headingClass}>
               {widget.props.text}
-            </div>
-          )}
-          {widget.type === 'text' && (
-            <div 
-              style={{ 
-                color: widget.props.color, 
-                fontSize: widget.props.fontSize,
-                textAlign: widget.props.textAlign,
-                lineHeight: widget.props.lineHeight
-              }}
-            >
-              {widget.props.text}
-            </div>
-          )}
-          {widget.type === 'image' && (
-            <div 
-              className="bg-gray-100 flex items-center justify-center" 
-              style={{ 
-                height: widget.props.height === 'auto' ? '200px' : widget.props.height,
-                borderRadius: widget.props.borderRadius
-              }}
-            >
-              <ImageIcon className="h-12 w-12 text-gray-400" />
-              <span className="ml-2 text-gray-500">Image: {widget.props.alt}</span>
-            </div>
-          )}
-          {widget.type === 'button' && (
-            <button
-              style={{
-                backgroundColor: widget.props.backgroundColor,
-                color: widget.props.color,
-                padding: widget.props.size === 'small' ? '0.5rem 1rem' : 
-                        widget.props.size === 'large' ? '1rem 2rem' : '0.75rem 1.5rem',
-                borderRadius: widget.props.borderRadius,
-                fontWeight: '600',
-                width: widget.props.fullWidth ? '100%' : 'auto',
-                cursor: 'pointer'
-              }}
-            >
-              {widget.props.text}
-            </button>
-          )}
+              </div>
+            );
+          })()}
+          {widget.type === 'text' && (() => {
+            const textClass = registerStyle('text', {
+              color: widget.props.color,
+              fontSize: widget.props.fontSize,
+              textAlign: widget.props.textAlign,
+              lineHeight: widget.props.lineHeight
+            });
+
+            return (
+              <div className={textClass}>
+                {widget.props.text}
+              </div>
+            );
+          })()}
+          {widget.type === 'image' && (() => {
+            const imageClass = registerStyle('image', {
+              height: widget.props.height === 'auto' ? '200px' : widget.props.height,
+              borderRadius: widget.props.borderRadius
+            });
+
+            return (
+              <div className={`bg-gray-100 flex items-center justify-center ${imageClass}`}>
+                <ImageIcon className="h-12 w-12 text-gray-400" />
+                <span className="ml-2 text-gray-500">Image: {widget.props.alt}</span>
+              </div>
+            );
+          })()}
+          {widget.type === 'button' && (() => {
+            const padding = widget.props.size === 'small'
+              ? '0.5rem 1rem'
+              : widget.props.size === 'large'
+              ? '1rem 2rem'
+              : '0.75rem 1.5rem';
+            const buttonClass = registerStyle('button', {
+              backgroundColor: widget.props.backgroundColor,
+              color: widget.props.color,
+              padding,
+              borderRadius: widget.props.borderRadius,
+              fontWeight: '600',
+              width: widget.props.fullWidth ? '100%' : 'auto',
+              cursor: 'pointer'
+            });
+
+            return (
+              <button className={buttonClass}>
+                {widget.props.text}
+              </button>
+            );
+          })()}
           {widget.type === 'video' && (
             <div 
               className="bg-gray-200 flex items-center justify-center"
               style={{ 
                 width: widget.props.width,
-                height: widget.props.height
+                height: widget.props.height,
+                borderRadius: widget.props.borderRadius
               }}
             >
-              <Video className="h-16 w-16 text-gray-500" />
-              <span className="ml-2 text-gray-600">Video Player</span>
+              <Video className="h-12 w-12 text-gray-400" />
             </div>
           )}
           {widget.type === 'icon' && (() => {
-            // Get the icon component
+            // Function to render the icon
             const renderIcon = () => {
-              if (widget.props.uploadedIcon) {
+              // If it's an uploaded image
+              if (widget.props.useImage && widget.props.imageSrc) {
+                const iconImageClass = registerStyle('icon-image', {
+                  width: widget.props.size,
+                  height: widget.props.size
+                });
+                
                 return (
-                  <img 
-                    src={widget.props.uploadedIcon} 
-                    alt="icon" 
-                    style={{ width: widget.props.size, height: widget.props.size }}
+                  <img
+                    src={widget.props.imageSrc}
+                    alt={widget.props.name || 'Icon'}
+                    className={iconImageClass}
                   />
                 );
               }
@@ -3410,8 +3283,6 @@ export default function WebsiteEditPage() {
               
               // Map of icon names to components - matching exactly what IconPicker sends
               const iconMap: Record<string, any> = {
-                // Popular icons from IconPicker (exact names)
-                'Home': Home,
                 'User': User,
                 'Settings': Settings,
                 'Search': Search,
@@ -3507,73 +3378,55 @@ export default function WebsiteEditPage() {
               
               // Get the icon component (case-sensitive match)
               const IconComponent = iconMap[iconName] || iconMap['Globe'] || Globe;
-              return <IconComponent style={{ width: widget.props.size, height: widget.props.size }} />;
+              return (
+                <IconComponent
+                  size={widget.props.size}
+                  color={widget.props.color}
+                  strokeWidth={1.5}
+                />
+              );
             };
             
+            const rotationValue = widget.props.rotation || 0;
+            const iconContainerClass = registerStyle('icon-container', {
+              color: widget.props.color,
+              fontSize: widget.props.size,
+              backgroundColor: widget.props.backgroundColor || 'transparent',
+              borderRadius: widget.props.borderRadius || '0',
+              padding: widget.props.padding || '0',
+              transform: `rotate(${rotationValue}deg) ${
+                widget.props.flip === 'horizontal' ? 'scaleX(-1)' : 
+                widget.props.flip === 'vertical' ? 'scaleY(-1)' : 
+                widget.props.flip === 'both' ? 'scale(-1)' : 'scale(1)'
+              }`,
+              width: 'fit-content',
+              height: 'fit-content'
+            });
+
             return (
-              <div 
-                className="flex items-center justify-center"
-                style={{ 
-                  color: widget.props.color, 
-                  fontSize: widget.props.size,
-                  backgroundColor: widget.props.backgroundColor || 'transparent',
-                  borderRadius: widget.props.borderRadius || '0',
-                  padding: widget.props.padding || '0',
-                  transform: `rotate(${widget.props.rotation || 0}deg) ${
-                    widget.props.flip === 'horizontal' ? 'scaleX(-1)' : 
-                    widget.props.flip === 'vertical' ? 'scaleY(-1)' : 
-                    widget.props.flip === 'both' ? 'scale(-1)' : 'scale(1)'
-                  }`,
-                  width: 'fit-content',
-                  height: 'fit-content'
-                }}
-              >
+              <div className={`flex items-center justify-center ${iconContainerClass}`}>
                 {renderIcon()}
               </div>
             );
           })()}
           {widget.type === 'section' && (
             <div
-              data-droppable="true"
-              onDragEnterCapture={(e: React.DragEvent) => {
-                if (isPreview) return;
-                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDragOverCapture={(e: React.DragEvent) => {
-                if (isPreview) return;
-                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDrop={(e: React.DragEvent) => {
-                if (isPreview) return;
-                e.preventDefault();
-                e.stopPropagation();
-                handleDropInSection(widget.id, e);
-              }}
-              className={`transition-all ${
-                !isPreview && isDraggingColumn && dropTargetSection === widget.id
-                  ? 'ring-4 ring-blue-400 ring-offset-2'
-                  : ''
-              }`}
+              className="transition-all"
               style={{
                 backgroundColor: widget.props.backgroundColor,
                 backgroundImage: widget.props.backgroundImage ? `url(${widget.props.backgroundImage})` : 'none',
-                backgroundSize: widget.props.backgroundSize || 'cover',
-                backgroundPosition: widget.props.backgroundPosition || 'center',
-                backgroundRepeat: widget.props.backgroundRepeat || 'no-repeat',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 padding: widget.props.padding,
-                margin: widget.props.margin || (widget.props.centerContent ? '0 auto' : '0'),
-                border: (widget.props.borderWidth && widget.props.borderWidth !== '0')
-                  ? `${widget.props.borderWidth} ${widget.props.borderStyle || 'solid'} ${widget.props.borderColor || '#e0e0e0'}` 
-                  : (isPreview ? 'none' : '2px dashed #ccc'),
+                border: !isPreview 
+                  ? '2px dashed #ccc' 
+                  : widget.props.borderWidth && widget.props.borderWidth !== '0'
+                    ? `${widget.props.borderWidth} ${widget.props.borderStyle || 'solid'} ${widget.props.borderColor || '#e0e0e0'}`
+                    : 'none',
                 borderRadius: widget.props.borderRadius || '0',
-                minHeight: widget.props.minHeight || '100px',
-                maxHeight: widget.props.maxHeight && widget.props.maxHeight !== 'none' ? widget.props.maxHeight : undefined,
+                minHeight: '100px',
                 maxWidth: widget.props.maxWidth,
-                boxShadow: widget.props.boxShadow || 'none',
-                opacity: widget.props.opacity || 1,
-                zIndex: widget.props.zIndex && widget.props.zIndex !== 'auto' ? widget.props.zIndex : undefined
+                margin: widget.props.centerContent ? '0 auto' : '0'
               }}
             >
               {!isPreview && (
@@ -3600,67 +3453,52 @@ export default function WebsiteEditPage() {
               )}
             </div>
           )}
-          {widget.type === 'column' && (
-            (() => {
-              const hasCustomBorder = widget.props.borderWidth && widget.props.borderWidth !== '0';
-              const columnBaseBorder = hasCustomBorder
-                ? `${widget.props.borderWidth} ${widget.props.borderStyle || 'solid'} ${widget.props.borderColor || '#e0e0e0'}`
-                : '1px dashed #e0e0e0';
-              const isDropTarget = !isPreview && dropTargetSection === widget.id;
-              const columnBorder = isDropTarget ? '3px solid #3b82f6' : columnBaseBorder;
-              const columnOpacity = widget.props.opacity !== undefined
-                ? (typeof widget.props.opacity === 'number'
-                    ? widget.props.opacity
-                    : parseFloat(widget.props.opacity) || 1)
-                : 1;
+          {widget.type === 'column' && (() => {
+            const columnClass = registerStyle('column', {
+              width: widget.props.width,
+              padding: widget.props.padding,
+              backgroundColor: widget.props.backgroundColor,
+              border: !isPreview && dropTargetSection === widget.id ? '2px dashed #3b82f6' : '2px dashed #e0e0e0',
+              minHeight: widget.props.minHeight || '100px',
+              borderRadius: widget.props.borderRadius || '0'
+            });
 
-              return (
-                <div
-              data-column-id={widget.id}
-              data-testid="droppable-column"
-              data-droppable="true"
-              onDragEnterCapture={(e: React.DragEvent) => {
-                if (isPreview) return;
-                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDragOverCapture={(e: React.DragEvent) => {
-                if (isPreview) return;
-                handleContainerDragIntent(widget.id, widget.children?.length ?? 0, e);
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDrop={(e: React.DragEvent) => {
-                if (isPreview) return;
-                e.preventDefault();
-                e.stopPropagation();
-                handleDropInSection(widget.id, e);
-              }}
-              className={`transition-all rounded-lg ${
-                isDropTarget
-                  ? 'ring-4 ring-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
+            return (
+              <div
+              {...(!isPreview
+                ? {
+                    onClick: (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setSelectedWidget(widget);
+                    },
+                    onDragOver: (e: React.DragEvent) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setDropTargetSection(widget.id);
+                    },
+                    onDragLeave: (e: React.DragEvent) => {
+                      e.stopPropagation();
+                      setDropTargetSection(null);
+                    },
+                    onDrop: (e: React.DragEvent) => handleDropInSection(widget.id, e),
+                  }
+                : {})}
+              className={`transition-all rounded-lg cursor-pointer ${columnClass} ${
+                !isPreview && dropTargetSection === widget.id
+                  ? 'ring-2 ring-blue-400 bg-blue-50/30'
+                  : !isPreview && isSelected
+                  ? 'ring-2 ring-blue-500 ring-offset-2'
                   : !isPreview
-                  ? 'hover:ring-1 hover:ring-blue-200'
+                  ? 'hover:ring-2 hover:ring-blue-400'
                   : ''
               }`}
-              style={{
-                width: widget.props.width,
-                padding: widget.props.padding || '1rem',
-                backgroundColor: widget.props.backgroundColor || 'transparent',
-                border: columnBorder,
-                minHeight: widget.props.minHeight || '100px',
-                borderRadius: widget.props.borderRadius || '0',
-                position: 'relative',
-                margin: widget.props.margin || '0',
-                boxShadow: widget.props.boxShadow || 'none',
-                opacity: columnOpacity
-              }}
             >
               {widget.children && widget.children.length > 0 ? (
                 <div className="space-y-2">
                   {widget.children.map((child, idx) => (
                     <React.Fragment key={child.id}>
                       {/* Drop zone before child */}
-                      {!isPreview && isDraggingWidget && (
+                      {!isPreview && (draggedWidget || draggedExistingWidget) && (
                         <div
                           className={`h-1 transition-all rounded ${
                             dropTargetIndex === idx && dropTargetSection === widget.id
@@ -3683,7 +3521,7 @@ export default function WebsiteEditPage() {
                       {renderWidget(child, true, mode === 'preview' ? false : true, mode)}
                       
                       {/* Drop zone after last child */}
-                      {!isPreview && idx === widget.children!.length - 1 && isDraggingWidget && (
+                      {!isPreview && idx === widget.children!.length - 1 && (draggedWidget || draggedExistingWidget) && (
                         <div
                           className={`h-1 transition-all rounded ${
                             dropTargetIndex === widget.children!.length && dropTargetSection === widget.id
@@ -3706,37 +3544,33 @@ export default function WebsiteEditPage() {
                   ))}
                 </div>
               ) : (
-                <div 
-                  className="text-center text-gray-400 text-xs py-8"
-                  style={{ pointerEvents: 'none' }}
-                >
+                <div className="text-center text-gray-400 text-xs py-8">
                   <Columns className="inline-block h-8 w-8 mb-2 opacity-50" />
                   <div>Empty Column</div>
                   {!isPreview && <div className="text-[10px] mt-1">Drop widgets here</div>}
                 </div>
               )}
-                </div>
-              );
-            })()
-          )}
-          {widget.type === 'divider' && (
-            <hr 
-              style={{ 
-                borderColor: widget.props.color, 
-                borderWidth: widget.props.height, 
-                margin: widget.props.margin,
-                borderStyle: widget.props.style
-              }} 
-            />
-          )}
-          {widget.type === 'card' && (
-            <Card 
-              className="p-4" 
-              style={{ 
-                backgroundColor: widget.props.backgroundColor,
-                borderRadius: widget.props.borderRadius
-              }}
-            >
+            </div>
+          );
+          })()}
+          {widget.type === 'divider' && (() => {
+            const dividerClass = registerStyle('divider', {
+              borderColor: widget.props.color,
+              borderWidth: widget.props.height,
+              margin: widget.props.margin,
+              borderStyle: widget.props.style
+            });
+
+            return <hr className={dividerClass} />;
+          })()}
+          {widget.type === 'card' && (() => {
+            const cardClass = registerStyle('card', {
+              backgroundColor: widget.props.backgroundColor,
+              borderRadius: widget.props.borderRadius
+            });
+
+            return (
+              <Card className={`p-4 ${cardClass}`}>
               {widget.props.image && (
                 <div className="mb-3 bg-gray-100 h-32 flex items-center justify-center">
                   <ImageIcon className="h-8 w-8 text-gray-400" />
@@ -3744,8 +3578,9 @@ export default function WebsiteEditPage() {
               )}
               <h3 className="font-bold mb-2">{widget.props.title}</h3>
               <p className="text-sm text-gray-600">{widget.props.content}</p>
-            </Card>
-          )}
+              </Card>
+            );
+          })()}
           {widget.type === 'alert' && (
             <div className={`p-4 rounded-lg flex items-start gap-2 ${
               widget.props.type === 'info' ? 'bg-blue-50 text-blue-900 border-blue-200' :
@@ -3762,23 +3597,28 @@ export default function WebsiteEditPage() {
               )}
             </div>
           )}
-          {widget.type === 'cta' && (
-            <div 
-              style={{
-                backgroundColor: widget.props.backgroundColor,
-                color: widget.props.color
-              }}
-              className="p-8 rounded-lg text-center"
-            >
-              <h2 className="text-2xl font-bold mb-2">{widget.props.heading}</h2>
-              {widget.props.description && (
-                <p className="mb-4 opacity-90">{widget.props.description}</p>
-              )}
-              <button className="bg-white px-6 py-3 rounded-lg font-bold" style={{ color: widget.props.backgroundColor }}>
-                {widget.props.buttonText}
-              </button>
-            </div>
-          )}
+          {widget.type === 'cta' && (() => {
+            const ctaClass = registerStyle('cta', {
+              backgroundColor: widget.props.backgroundColor,
+              color: widget.props.color
+            });
+
+            const ctaButtonClass = registerStyle('cta-button', {
+              color: widget.props.backgroundColor
+            });
+
+            return (
+              <div className={`p-8 rounded-lg text-center ${ctaClass}`}>
+                <h2 className="text-2xl font-bold mb-2">{widget.props.heading}</h2>
+                {widget.props.description && (
+                  <p className="mb-4 opacity-90">{widget.props.description}</p>
+                )}
+                <button className={`bg-white px-6 py-3 rounded-lg font-bold ${ctaButtonClass}`}>
+                  {widget.props.buttonText}
+                </button>
+              </div>
+            );
+          })()}
           {widget.type === 'form' && (
             <div className="space-y-4 p-4 border rounded-lg">
               {widget.props.title && (
@@ -3806,40 +3646,52 @@ export default function WebsiteEditPage() {
               )}
             </div>
           )}
-          {widget.type === 'social' && (
-            <div className="flex items-center gap-3">
-              {widget.props.platforms.map((platform: string, idx: number) => (
-                <div 
-                  key={idx}
-                  className="rounded-full bg-gray-100 flex items-center justify-center"
-                  style={{
-                    width: widget.props.size === 'small' ? '32px' : 
-                           widget.props.size === 'large' ? '48px' : '40px',
-                    height: widget.props.size === 'small' ? '32px' : 
-                            widget.props.size === 'large' ? '48px' : '40px',
-                    color: widget.props.color
-                  }}
-                >
-                  <Globe className="h-4 w-4" />
-                </div>
-              ))}
-            </div>
-          )}
+          {widget.type === 'social' && (() => {
+            const socialItemClass = registerStyle('social-item', {
+              width:
+                widget.props.size === 'small'
+                  ? '32px'
+                  : widget.props.size === 'large'
+                  ? '48px'
+                  : '40px',
+              height:
+                widget.props.size === 'small'
+                  ? '32px'
+                  : widget.props.size === 'large'
+                  ? '48px'
+                  : '40px',
+              color: widget.props.color
+            });
+
+            return (
+              <div className="flex items-center gap-3">
+                {widget.props.platforms.map((platform: string, idx: number) => (
+                  <div 
+                    key={idx}
+                    className={`rounded-full bg-gray-100 flex items-center justify-center ${socialItemClass}`}
+                  >
+                    <Globe className="h-4 w-4" />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
           
           {/* Navigation widgets */}
           {widget.type === 'navbar' && (() => {
             const navLinks: NavLink[] = normalizeNavLinks(widget.props.links);
             const hasLogoImage = Boolean(widget.props.logo);
 
+            const navbarClass = registerStyle('navbar', {
+              backgroundColor: widget.props.backgroundColor,
+              color: widget.props.color,
+              minHeight: widget.props.height || '60px',
+              boxShadow: widget.props.shadow ? '0 10px 30px rgba(15,23,42,0.12)' : 'none'
+            });
+
             return (
               <div
-                className="flex w-full flex-wrap items-center gap-4 rounded-xl px-4 py-3 transition-all"
-                style={{
-                  backgroundColor: widget.props.backgroundColor,
-                  color: widget.props.color,
-                  minHeight: widget.props.height || '60px',
-                  boxShadow: widget.props.shadow ? '0 10px 30px rgba(15,23,42,0.12)' : 'none'
-                }}
+                className={`flex w-full flex-wrap items-center gap-4 rounded-xl px-4 py-3 transition-all ${navbarClass}`}
               >
                 <div className="flex items-center gap-3 font-semibold text-base">
                   {hasLogoImage ? (
@@ -3877,45 +3729,62 @@ export default function WebsiteEditPage() {
               </div>
             );
           })()}
-          {widget.type === 'footer' && (
-            <div 
-              style={{ 
-                backgroundColor: widget.props.backgroundColor,
-                color: widget.props.color,
-                padding: widget.props.padding
-              }}
-            >
-              <div className="text-sm text-center">
-                {widget.props.copyright}
+          {widget.type === 'footer' && (() => {
+            const footerClass = registerStyle('footer', {
+              backgroundColor: widget.props.backgroundColor,
+              color: widget.props.color,
+              padding: widget.props.padding
+            });
+
+            return (
+              <div className={footerClass}>
+                <div className="text-sm text-center">
+                  {widget.props.copyright}
+                </div>
               </div>
-            </div>
-          )}
-          {widget.type === 'breadcrumb' && (
-            <div className="flex items-center gap-2 text-sm">
-              {widget.props.items?.map((item: string, idx: number) => (
-                <React.Fragment key={idx}>
-                  <span style={{ color: widget.props.color }}>{item}</span>
-                  {idx < widget.props.items.length - 1 && (
-                    <span className="opacity-50">{widget.props.separator}</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
+            );
+          })()}
+          {widget.type === 'breadcrumb' && (() => {
+            const breadcrumbItemClass = registerStyle('breadcrumb-item', {
+              color: widget.props.color
+            });
+
+            return (
+              <div className="flex items-center gap-2 text-sm">
+                {widget.props.items?.map((item: string, idx: number) => (
+                  <React.Fragment key={idx}>
+                    <span className={breadcrumbItemClass}>{item}</span>
+                    {idx < widget.props.items.length - 1 && (
+                      <span className="opacity-50">{widget.props.separator}</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            );
+          })()}
           
           {/* Data Display widgets */}
-          {widget.type === 'table' && (
-            <div className="border rounded overflow-hidden">
-              <table className="w-full text-sm">
-                <thead style={{ backgroundColor: widget.props.headerBackground }}>
-                  <tr>
-                    {widget.props.headers?.map((header: string, idx: number) => (
-                      <th key={idx} className="p-2 text-left" style={{ color: widget.props.headerColor }}>
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
+          {widget.type === 'table' && (() => {
+            const tableHeadClass = registerStyle('table-head', {
+              backgroundColor: widget.props.headerBackground
+            });
+
+            const tableHeaderCellClass = registerStyle('table-header-cell', {
+              color: widget.props.headerColor
+            });
+
+            return (
+              <div className="border rounded overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      {widget.props.headers?.map((header: string, idx: number) => (
+                        <th key={idx} className={`p-2 text-left ${tableHeaderCellClass}`}>
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
                 <tbody>
                   {widget.props.rows?.slice(0, 2).map((row: string[], rowIdx: number) => (
                     <tr key={rowIdx} className={widget.props.striped && rowIdx % 2 ? 'bg-gray-50' : ''}>
@@ -3925,164 +3794,193 @@ export default function WebsiteEditPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          )}
-          {widget.type === 'list' && (
-            <ul style={{ 
+                </table>
+              </div>
+            );
+          })()}
+          {widget.type === 'list' && (() => {
+            const listClass = registerStyle('list', {
               color: widget.props.color,
               fontSize: widget.props.fontSize,
               lineHeight: widget.props.lineHeight,
               padding: widget.props.padding,
               listStyle: widget.props.listStyle
-            }}>
-              {widget.props.items?.map((item: string, idx: number) => (
-                <li key={idx}>{item}</li>
-              ))}
-            </ul>
-          )}
-          {widget.type === 'progressBar' && (
-            <div>
-              {widget.props.label && <div className="text-sm mb-1">{widget.props.label}</div>}
-              <div 
-                className="relative overflow-hidden"
-                style={{ 
-                  backgroundColor: widget.props.backgroundColor,
-                  height: widget.props.height,
-                  borderRadius: widget.props.borderRadius
-                }}
-              >
-                <div 
-                  className="h-full transition-all"
-                  style={{ 
-                    backgroundColor: widget.props.fillColor,
-                    width: `${widget.props.value}%`
-                  }}
-                />
-                {widget.props.showPercentage && (
-                  <div className="absolute inset-0 flex items-center justify-center text-xs font-medium">
-                    {widget.props.value}%
+            });
+
+            return (
+              <ul className={listClass}>
+                {widget.props.items?.map((item: string, idx: number) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            );
+          })()}
+          {widget.type === 'progressBar' && (() => {
+            const progressContainerClass = registerStyle('progress-container', {
+              backgroundColor: widget.props.backgroundColor,
+              height: widget.props.height,
+              borderRadius: widget.props.borderRadius
+            });
+
+            const progressFillClass = registerStyle('progress-fill', {
+              backgroundColor: widget.props.fillColor,
+              width: `${widget.props.value}%`
+            });
+
+            return (
+              <div>
+                {widget.props.label && <div className="text-sm mb-1">{widget.props.label}</div>}
+                <div className={`relative overflow-hidden ${progressContainerClass}`}>
+                  <div className={`h-full transition-all ${progressFillClass}`} />
+                  {widget.props.showPercentage && (
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-medium">
+                      {widget.props.value}%
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          {widget.type === 'stats' && (() => {
+            const statsClass = registerStyle('stats', {
+              backgroundColor: widget.props.backgroundColor
+            });
+
+            return (
+              <div className={`p-4 rounded ${statsClass}`}>
+                <div className="text-2xl font-bold">{widget.props.value}</div>
+                <div className="text-sm text-gray-600">{widget.props.label}</div>
+                {widget.props.change && (
+                  <div className={`text-sm ${widget.props.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                    {widget.props.change}
                   </div>
                 )}
               </div>
-            </div>
-          )}
-          {widget.type === 'stats' && (
-            <div 
-              className="p-4 rounded"
-              style={{ backgroundColor: widget.props.backgroundColor }}
-            >
-              <div className="text-2xl font-bold">{widget.props.value}</div>
-              <div className="text-sm text-gray-600">{widget.props.label}</div>
-              {widget.props.change && (
-                <div className={`text-sm ${widget.props.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                  {widget.props.change}
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
           
           {/* Forms & Inputs widgets */}
-          {widget.type === 'searchBar' && (
-            <div 
-              className="flex items-center gap-2 p-2 border rounded"
-              style={{ 
-                backgroundColor: widget.props.backgroundColor,
-                borderRadius: widget.props.borderRadius
-              }}
-            >
-              {widget.props.showIcon && <Search className="h-4 w-4 text-gray-400" />}
-              <input 
-                type="text" 
-                placeholder={widget.props.placeholder}
-                className="flex-1 outline-none bg-transparent text-sm"
-              />
-              {widget.props.showButton && (
-                <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
-                  {widget.props.buttonText}
-                </button>
-              )}
-            </div>
-          )}
-          {widget.type === 'newsletter' && (
-            <div 
-              className="text-center"
-              style={{ 
-                backgroundColor: widget.props.backgroundColor,
-                padding: widget.props.padding
-              }}
-            >
-              <h3 className="font-bold mb-2">{widget.props.title}</h3>
-              <p className="text-sm mb-4">{widget.props.description}</p>
-              <div className="flex gap-2 max-w-md mx-auto">
+          {widget.type === 'searchBar' && (() => {
+            const searchClass = registerStyle('search-bar', {
+              backgroundColor: widget.props.backgroundColor,
+              borderRadius: widget.props.borderRadius
+            });
+
+            return (
+              <div className={`flex items-center gap-2 p-2 border rounded ${searchClass}`}>
+                {widget.props.showIcon && <Search className="h-4 w-4 text-gray-400" />}
                 <input 
-                  type="email" 
+                  type="text" 
                   placeholder={widget.props.placeholder}
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="flex-1 outline-none bg-transparent text-sm"
                 />
-                <button 
-                  className="px-4 py-2 text-white rounded text-sm"
-                  style={{ backgroundColor: widget.props.buttonColor }}
-                >
-                  {widget.props.buttonText}
-                </button>
+                {widget.props.showButton && (
+                  <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
+                    {widget.props.buttonText}
+                  </button>
+                )}
               </div>
-            </div>
-          )}
-          {widget.type === 'contactInfo' && (
-            <div className="space-y-2">
-              {widget.props.phone && (
-                <div className="flex items-center gap-2">
-                  {widget.props.showIcons && <Phone className="h-4 w-4" style={{ color: widget.props.iconColor }} />}
-                  <span style={{ color: widget.props.textColor, fontSize: widget.props.fontSize }}>
-                    {widget.props.phone}
-                  </span>
+            );
+          })()}
+          {widget.type === 'newsletter' && (() => {
+            const newsletterClass = registerStyle('newsletter', {
+              backgroundColor: widget.props.backgroundColor,
+              padding: widget.props.padding
+            });
+
+            const newsletterButtonClass = registerStyle('newsletter-button', {
+              backgroundColor: widget.props.buttonColor
+            });
+
+            return (
+              <div className={`text-center ${newsletterClass}`}>
+                <h3 className="font-bold mb-2">{widget.props.title}</h3>
+                <p className="text-sm mb-4">{widget.props.description}</p>
+                <div className="flex gap-2 max-w-md mx-auto">
+                  <input 
+                    type="email" 
+                    placeholder={widget.props.placeholder}
+                    className="flex-1 p-2 border rounded text-sm"
+                  />
+                  <button 
+                    className={`px-4 py-2 text-white rounded text-sm ${newsletterButtonClass}`}
+                  >
+                    {widget.props.buttonText}
+                  </button>
                 </div>
-              )}
-              {widget.props.email && (
-                <div className="flex items-center gap-2">
-                  {widget.props.showIcons && <Mail className="h-4 w-4" style={{ color: widget.props.iconColor }} />}
-                  <span style={{ color: widget.props.textColor, fontSize: widget.props.fontSize }}>
-                    {widget.props.email}
-                  </span>
-                </div>
-              )}
-              {widget.props.address && (
-                <div className="flex items-center gap-2">
-                  {widget.props.showIcons && <MapPin className="h-4 w-4" style={{ color: widget.props.iconColor }} />}
-                  <span style={{ color: widget.props.textColor, fontSize: widget.props.fontSize }}>
-                    {widget.props.address}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            );
+          })()}
+          {widget.type === 'contactInfo' && (() => {
+            const contactTextClass = registerStyle('contact-text', {
+              color: widget.props.textColor,
+              fontSize: widget.props.fontSize
+            });
+
+            const contactIconClass = widget.props.showIcons
+              ? registerStyle('contact-icon', {
+                  color: widget.props.iconColor
+                })
+              : '';
+
+            return (
+              <div className="space-y-2">
+                {widget.props.phone && (
+                  <div className="flex items-center gap-2">
+                    {widget.props.showIcons && <Phone className={`h-4 w-4 ${contactIconClass}`} />}
+                    <span className={contactTextClass}>
+                      {widget.props.phone}
+                    </span>
+                  </div>
+                )}
+                {widget.props.email && (
+                  <div className="flex items-center gap-2">
+                    {widget.props.showIcons && <Mail className={`h-4 w-4 ${contactIconClass}`} />}
+                    <span className={contactTextClass}>
+                      {widget.props.email}
+                    </span>
+                  </div>
+                )}
+                {widget.props.address && (
+                  <div className="flex items-center gap-2">
+                    {widget.props.showIcons && <MapPin className={`h-4 w-4 ${contactIconClass}`} />}
+                    <span className={contactTextClass}>
+                      {widget.props.address}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Media widgets */}
-          {widget.type === 'gallery' && (
-            <div 
-              className="grid gap-2"
-              style={{ 
-                gridTemplateColumns: `repeat(${widget.props.columns}, 1fr)`,
-                gap: widget.props.gap
-              }}
-            >
-              {[1, 2, 3, 4].slice(0, widget.props.columns * 2).map((_, idx) => (
-                <div 
-                  key={idx}
-                  className="bg-gray-200"
-                  style={{ 
-                    aspectRatio: widget.props.aspectRatio,
-                    borderRadius: widget.props.borderRadius
-                  }}
-                >
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <ImageIcon className="h-8 w-8" />
+          {widget.type === 'gallery' && (() => {
+            const galleryGridClass = registerStyle('gallery-grid', {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${widget.props.columns}, 1fr)`,
+              gap: widget.props.gap
+            });
+
+            const galleryItemClass = registerStyle('gallery-item', {
+              aspectRatio: widget.props.aspectRatio,
+              borderRadius: widget.props.borderRadius
+            });
+
+            return (
+              <div className={galleryGridClass}>
+                {[1, 2, 3, 4].slice(0, widget.props.columns * 2).map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`bg-gray-200 ${galleryItemClass}`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ImageIcon className="h-8 w-8" />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
           {widget.type === 'carousel' && (
             <div 
               className="relative bg-gray-200 flex items-center justify-center"
@@ -4490,7 +4388,7 @@ export default function WebsiteEditPage() {
                           <div
                             key={widget.type}
                             draggable
-                            onDragStart={(e) => handleDragStart(widget, e)}
+                            onDragStart={() => handleDragStart(widget)}
                             className="flex flex-col items-center justify-center gap-2 p-3 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all aspect-square"
                           >
                             <widget.icon className="h-6 w-6 text-gray-600" />
@@ -4509,7 +4407,7 @@ export default function WebsiteEditPage() {
                               <div
                                 key={widget.type}
                                 draggable
-                                onDragStart={(e) => handleDragStart(widget, e)}
+                                onDragStart={() => handleDragStart(widget)}
                                 className="flex flex-col items-center justify-center gap-2 p-3 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all aspect-square"
                               >
                                 <widget.icon className="h-6 w-6 text-gray-600" />
@@ -4524,10 +4422,11 @@ export default function WebsiteEditPage() {
                     // Templates Section
                     <div className="p-4">
                       <div className="space-y-4">
-                        {templates.map((template) => (
+                        {dentalTemplates.map((template) => (
                           <Card
                             key={template.id}
-                            className="p-4 hover:shadow-lg transition-shadow"
+                            className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                            onClick={() => applyTemplate(template)}
                           >
                             <div className="flex items-start gap-4">
                               <div className="text-4xl">{template.thumbnail}</div>
@@ -4539,28 +4438,17 @@ export default function WebsiteEditPage() {
                                   <span>{template.widgets.length} sections</span>
                                 </div>
                               </div>
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleEditTemplate(template.id)}
-                              >
-                                Edit Template
-                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSaveTemplate(template.id)}
-                                disabled={editingTemplateId !== template.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  applyTemplate(template);
+                                }}
                               >
-                                Save Template
+                                Apply
                               </Button>
                             </div>
-                            {editingTemplateId === template.id && (
-                              <p className="mt-2 text-xs text-blue-600 font-medium">
-                                Editing in progress — make changes on the canvas and save when ready.
-                              </p>
-                            )}
                           </Card>
                         ))}
                       </div>
@@ -4583,7 +4471,7 @@ export default function WebsiteEditPage() {
                     <div
                       key={widget.type}
                       draggable
-                      onDragStart={(e) => handleDragStart(widget, e)}
+                      onDragStart={() => handleDragStart(widget)}
                       title={widget.label}
                       className="flex items-center justify-center p-2 bg-white border-2 border-gray-200 rounded-lg cursor-move hover:border-blue-400 hover:shadow-md transition-all"
                     >
@@ -4603,12 +4491,7 @@ export default function WebsiteEditPage() {
             <ScrollArea className="h-full">
               <div
                 className="min-h-full p-8"
-                onDrop={(e) => {
-                  // Only handle drop if it's directly on the canvas, not bubbling from children
-                  if (!dropTargetSection) {
-                    handleDrop(e);
-                  }
-                }}
+                onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => setSelectedWidget(null)}
               >
@@ -4639,7 +4522,7 @@ export default function WebsiteEditPage() {
                     {canvasWidgets.map((widget) => (
                       <div
                         key={widget.id}
-                        className={`canvas-widget-wrapper absolute transition-shadow ${
+                        className={`canvas-widget-wrapper absolute group transition-shadow ${
                           selectedWidget?.id === widget.id ? 'ring-2 ring-blue-500' : ''
                         } ${
                           repositioningWidget?.id === widget.id ? 'shadow-2xl z-50 widget-dragging' : 'hover:shadow-lg'
@@ -4664,6 +4547,33 @@ export default function WebsiteEditPage() {
                           }
                         }}
                       >
+                        {/* Widget controls */}
+                        <div className="absolute -top-8 left-0 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-2 py-1 rounded-t text-xs z-10">
+                          <GripVertical className="h-3 w-3" />
+                          <span className="flex-1 font-medium">{widget.type}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-5 w-5 p-0 hover:bg-white/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicateWidget(widget);
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-5 w-5 p-0 hover:bg-red-500/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteWidget(widget.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                         {renderWidget(widget, false, false)}
                       </div>
                     ))}
