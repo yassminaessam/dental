@@ -243,12 +243,14 @@ const widgetLibrary: WidgetDefinition[] = [
       boxShadow: 'none',
       hoverBackgroundColor: '#0052a3',
       hoverColor: '#ffffff',
-      fontSize: '1rem',
-      fontWeight: '500',
-      padding: '0.5rem 1rem',
+      hoverBoxShadow: 'none',
+      fontSize: '',
+      fontWeight: '600',
+      padding: '',
+      letterSpacing: 'normal',
       textTransform: 'none',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
+      transition: 'all 0.2s ease',
+      align: 'center'
     }
   },
   {
@@ -3361,23 +3363,65 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'button' && (() => {
-            const padding = widget.props.size === 'small'
-              ? '0.5rem 1rem'
-              : widget.props.size === 'large'
-              ? '1rem 2rem'
-              : '0.75rem 1.5rem';
+            const paddingPresets: Record<string, string> = {
+              small: '0.5rem 1rem',
+              medium: '0.75rem 1.5rem',
+              large: '1rem 2rem'
+            };
+
+            const fontPresets: Record<string, string> = {
+              small: '0.875rem',
+              medium: '1rem',
+              large: '1.125rem'
+            };
+
+            const sizeKey = widget.props.size || 'medium';
+            const resolvedPadding = widget.props.padding?.trim()
+              ? widget.props.padding
+              : paddingPresets[sizeKey] || paddingPresets.medium;
+            const resolvedFontSize = widget.props.fontSize?.trim()
+              ? widget.props.fontSize
+              : fontPresets[sizeKey] || fontPresets.medium;
+
+            const backgroundColor = widget.props.backgroundColor || '#0066cc';
+            const textColor = widget.props.color || '#ffffff';
+            const borderColor = widget.props.borderColor || backgroundColor;
+
             const buttonClass = registerStyle('button', {
-              backgroundColor: widget.props.backgroundColor,
-              color: widget.props.color,
-              padding,
-              borderRadius: widget.props.borderRadius,
-              fontWeight: '600',
+              backgroundColor,
+              color: textColor,
+              padding: resolvedPadding,
+              borderRadius: widget.props.borderRadius || '0.375rem',
+              fontWeight: widget.props.fontWeight || '600',
+              fontSize: resolvedFontSize,
               width: widget.props.fullWidth ? '100%' : 'auto',
-              cursor: 'pointer'
+              borderWidth: widget.props.borderWidth || '0px',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderColor,
+              boxShadow: widget.props.boxShadow || 'none',
+              letterSpacing: widget.props.letterSpacing || 'normal',
+              textTransform: widget.props.textTransform || 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: widget.props.align || 'center',
+              cursor: 'pointer',
+              transition: widget.props.transition || 'all 0.2s ease'
             });
 
+            const hoverCss = buildCssBlock(`${buttonClass}:hover`, {
+              backgroundColor: widget.props.hoverBackgroundColor || undefined,
+              color: widget.props.hoverColor || undefined,
+              boxShadow: widget.props.hoverBoxShadow || undefined
+            });
+            if (hoverCss) {
+              widgetStyles.push(hoverCss);
+            }
+
             return (
-              <button className={buttonClass}>
+              <button
+                type="button"
+                className={`${buttonClass} focus:outline-none`}
+              >
                 {widget.props.text}
               </button>
             );

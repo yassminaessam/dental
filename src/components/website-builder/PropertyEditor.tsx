@@ -340,13 +340,46 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
       {renderTextInput('Link URL', 'link', widget.props.link, 'https://...')}
       {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor)}
       {renderColorPicker('Text Color', 'color', widget.props.color)}
+      {renderColorPicker('Hover Background Color', 'hoverBackgroundColor', widget.props.hoverBackgroundColor || widget.props.backgroundColor)}
+      {renderColorPicker('Hover Text Color', 'hoverColor', widget.props.hoverColor || widget.props.color)}
       {renderSelect('Size', 'size', widget.props.size || 'medium', [
         { value: 'small', label: 'Small' },
         { value: 'medium', label: 'Medium' },
         { value: 'large', label: 'Large' }
       ])}
+      {renderTextInput('Custom Padding', 'padding', widget.props.padding || '', 'e.g., 0.75rem 1.5rem (leave empty for preset)')}
+      {renderTextInput('Font Size', 'fontSize', widget.props.fontSize || '', 'e.g., 1rem (leave empty for preset)')}
+      {renderSelect('Font Weight', 'fontWeight', widget.props.fontWeight || '600', [
+        { value: '400', label: 'Light (400)' },
+        { value: '500', label: 'Medium (500)' },
+        { value: '600', label: 'Semibold (600)' },
+        { value: '700', label: 'Bold (700)' }
+      ])}
+      {renderSelect('Text Transform', 'textTransform', widget.props.textTransform || 'none', [
+        { value: 'none', label: 'None' },
+        { value: 'uppercase', label: 'Uppercase' },
+        { value: 'lowercase', label: 'Lowercase' },
+        { value: 'capitalize', label: 'Capitalize' }
+      ])}
+      {renderTextInput('Letter Spacing', 'letterSpacing', widget.props.letterSpacing || 'normal', 'e.g., normal, 0.05em, 1px')}
       {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.375rem', '8px, 16px, 24px...')}
+      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0px', '0px, 1px, 2px...')}
+      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#0066cc')}
+      {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+        { value: 'solid', label: 'Solid' },
+        { value: 'dashed', label: 'Dashed' },
+        { value: 'dotted', label: 'Dotted' },
+        { value: 'double', label: 'Double' }
+      ])}
+      {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 4px 12px rgba(0,0,0,0.15)')}
+      {renderTextInput('Hover Box Shadow', 'hoverBoxShadow', widget.props.hoverBoxShadow || widget.props.boxShadow || 'none', 'Hover shadow e.g., 0 6px 14px rgba(0,0,0,0.2)')}
+      {renderSelect('Content Alignment', 'align', widget.props.align || 'center', [
+        { value: 'flex-start', label: 'Left' },
+        { value: 'center', label: 'Center' },
+        { value: 'flex-end', label: 'Right' }
+      ])}
       {renderSwitch('Full Width', 'fullWidth', widget.props.fullWidth || false, 'Button spans full container width')}
+      {renderTextInput('Transition', 'transition', widget.props.transition || 'all 0.2s ease', 'CSS transition e.g., all 0.2s ease')}
       {renderPositionAndSize()}
     </>
   );
