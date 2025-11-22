@@ -282,7 +282,14 @@ const widgetLibrary: WidgetDefinition[] = [
       width: '100%', 
       padding: '1rem',
       backgroundColor: 'transparent',
-      minHeight: '100px'
+      minHeight: '100px',
+      margin: '0',
+      borderWidth: '1px',
+      borderStyle: 'dashed',
+      borderColor: '#e0e0e0',
+      borderRadius: '0.5rem',
+      boxShadow: 'none',
+      opacity: 1
     }
   },
   {
@@ -810,7 +817,7 @@ export default function WebsiteEditPage() {
   };
 
   // Dental Clinic Landing Page Templates
-  const dentalTemplates: TemplateDefinition[] = [
+  const initialTemplates: TemplateDefinition[] = [
     {
       id: 'template1',
       name: 'Modern Dental Clinic',
@@ -850,7 +857,8 @@ export default function WebsiteEditPage() {
             x: 0,
             y: 80,
             width: '100%',
-            height: '500px'
+            height: 'auto',
+            margin: '0'
           },
           children: [
             {
@@ -931,7 +939,8 @@ export default function WebsiteEditPage() {
             x: 0,
             y: 580,
             width: '100%',
-            height: '600px'
+            height: 'auto',
+            margin: '0'
           },
           children: [
             {
@@ -1070,7 +1079,8 @@ export default function WebsiteEditPage() {
             x: 0,
             y: 1180,
             width: '100%',
-            height: '400px'
+            height: 'auto',
+            margin: '0'
           },
           children: [
             {
@@ -1163,9 +1173,10 @@ export default function WebsiteEditPage() {
             backgroundColor: '#ffffff',
             padding: '4rem 2rem',
             x: 0,
-            y: 1580,
+            y: 975,
             width: '100%',
-            height: '500px'
+            height: 'auto',
+            margin: '0'
           },
           children: [
             {
@@ -1234,9 +1245,10 @@ export default function WebsiteEditPage() {
             backgroundColor: '#1e40af',
             padding: '4rem 2rem',
             x: 0,
-            y: 2080,
+            y: 1390,
             width: '100%',
-            height: '400px'
+            height: 'auto',
+            margin: '0'
           },
           children: [
             {
@@ -1295,7 +1307,7 @@ export default function WebsiteEditPage() {
             backgroundColor: '#111827',
             color: '#9ca3af',
             x: 0,
-            y: 2480,
+            y: 1750,
             width: '100%',
             height: '150px'
           },
@@ -2488,24 +2500,109 @@ export default function WebsiteEditPage() {
     }
   ];
 
+  const TEMPLATE_STORAGE_KEY = 'websiteBuilderTemplates';
+  const [templates, setTemplates] = React.useState<TemplateDefinition[]>(initialTemplates);
+  const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
+  const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
+
   // Apply template to canvas
-  const applyTemplate = (template: typeof dentalTemplates[0]) => {
-    const newWidgets = template.widgets.map(widget => ({
-      ...widget,
-      id: generateId(), // Generate new IDs for all widgets
-      children: widget.children?.map(child => ({
-        ...child,
-        id: generateId()
-      })) || []
-    }));
-    
+  const applyTemplate = (template: TemplateDefinition) => {
+    const newWidgets = template.widgets.map((widget) => cloneWidgetWithNewIds(widget));
+
     setCanvasWidgets(newWidgets);
+    setSelectedWidget(null);
     addToHistory(newWidgets);
     toast({
       title: "Template Applied",
       description: `${template.name} has been applied to your canvas`,
     });
   };
+
+  const handleEditTemplate = (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) {
+      return;
+    }
+
+    applyTemplate(template);
+    setEditingTemplateId(templateId);
+    toast({
+      title: "Editing Template",
+      description: `You are now editing ${template.name}`,
+    });
+  };
+
+  const handleSaveTemplate = (templateId: string) => {
+    if (editingTemplateId !== templateId) {
+      toast({
+        title: "Cannot Save",
+        description: "Click Edit on this template before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canvasWidgets.length) {
+      toast({
+        title: "Nothing to Save",
+        description: "Add widgets to the canvas before saving the template.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) {
+      return;
+    }
+
+    const updatedTemplate = {
+      ...template,
+      widgets: cloneWidgetsForStorage(canvasWidgets),
+    };
+
+    setTemplates((prev) =>
+      prev.map((t) => (t.id === templateId ? updatedTemplate : t))
+    );
+    setEditingTemplateId(null);
+
+    toast({
+      title: "Template Saved",
+      description: `${template.name} has been updated`,
+    });
+  };
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setTemplates(parsed as TemplateDefinition[]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load saved templates', error);
+    } finally {
+      setTemplatesHydrated(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!templatesHydrated || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+    } catch (error) {
+      console.error('Failed to persist templates', error);
+    }
+  }, [templates, templatesHydrated]);
 
   // Add global style for grab cursor
   React.useEffect(() => {
@@ -2560,6 +2657,19 @@ export default function WebsiteEditPage() {
 
   // Generate unique ID for widgets
   const generateId = () => `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const cloneWidgetWithNewIds = (widget: Widget): Widget => ({
+    ...widget,
+    id: generateId(),
+    children: widget.children?.map((child) => cloneWidgetWithNewIds(child)) || []
+  });
+
+  const cloneWidgetsForStorage = (widgets: Widget[]): Widget[] =>
+    widgets.map((widget) => ({
+      ...widget,
+      props: { ...widget.props },
+      children: widget.children ? cloneWidgetsForStorage(widget.children) : []
+    }));
 
   // Calculate next widget position (staggered to avoid overlap)
   const getNextPosition = () => {
@@ -3491,7 +3601,21 @@ export default function WebsiteEditPage() {
             </div>
           )}
           {widget.type === 'column' && (
-            <div
+            (() => {
+              const hasCustomBorder = widget.props.borderWidth && widget.props.borderWidth !== '0';
+              const columnBaseBorder = hasCustomBorder
+                ? `${widget.props.borderWidth} ${widget.props.borderStyle || 'solid'} ${widget.props.borderColor || '#e0e0e0'}`
+                : '1px dashed #e0e0e0';
+              const isDropTarget = !isPreview && dropTargetSection === widget.id;
+              const columnBorder = isDropTarget ? '3px solid #3b82f6' : columnBaseBorder;
+              const columnOpacity = widget.props.opacity !== undefined
+                ? (typeof widget.props.opacity === 'number'
+                    ? widget.props.opacity
+                    : parseFloat(widget.props.opacity) || 1)
+                : 1;
+
+              return (
+                <div
               data-column-id={widget.id}
               data-testid="droppable-column"
               data-droppable="true"
@@ -3512,7 +3636,7 @@ export default function WebsiteEditPage() {
                 handleDropInSection(widget.id, e);
               }}
               className={`transition-all rounded-lg ${
-                !isPreview && dropTargetSection === widget.id
+                isDropTarget
                   ? 'ring-4 ring-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
                   : !isPreview
                   ? 'hover:ring-1 hover:ring-blue-200'
@@ -3520,14 +3644,15 @@ export default function WebsiteEditPage() {
               }`}
               style={{
                 width: widget.props.width,
-                padding: widget.props.padding,
+                padding: widget.props.padding || '1rem',
                 backgroundColor: widget.props.backgroundColor || 'transparent',
-                border: isPreview 
-                  ? 'none'
-                  : (dropTargetSection === widget.id ? '3px solid #3b82f6' : '1px dashed #e0e0e0'),
+                border: columnBorder,
                 minHeight: widget.props.minHeight || '100px',
                 borderRadius: widget.props.borderRadius || '0',
-                position: 'relative'
+                position: 'relative',
+                margin: widget.props.margin || '0',
+                boxShadow: widget.props.boxShadow || 'none',
+                opacity: columnOpacity
               }}
             >
               {widget.children && widget.children.length > 0 ? (
@@ -3590,7 +3715,9 @@ export default function WebsiteEditPage() {
                   {!isPreview && <div className="text-[10px] mt-1">Drop widgets here</div>}
                 </div>
               )}
-            </div>
+                </div>
+              );
+            })()
           )}
           {widget.type === 'divider' && (
             <hr 
@@ -4397,11 +4524,10 @@ export default function WebsiteEditPage() {
                     // Templates Section
                     <div className="p-4">
                       <div className="space-y-4">
-                        {dentalTemplates.map((template) => (
+                        {templates.map((template) => (
                           <Card
                             key={template.id}
-                            className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
-                            onClick={() => applyTemplate(template)}
+                            className="p-4 hover:shadow-lg transition-shadow"
                           >
                             <div className="flex items-start gap-4">
                               <div className="text-4xl">{template.thumbnail}</div>
@@ -4413,17 +4539,28 @@ export default function WebsiteEditPage() {
                                   <span>{template.widgets.length} sections</span>
                                 </div>
                               </div>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleEditTemplate(template.id)}
+                              >
+                                Edit Template
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  applyTemplate(template);
-                                }}
+                                onClick={() => handleSaveTemplate(template.id)}
+                                disabled={editingTemplateId !== template.id}
                               >
-                                Apply
+                                Save Template
                               </Button>
                             </div>
+                            {editingTemplateId === template.id && (
+                              <p className="mt-2 text-xs text-blue-600 font-medium">
+                                Editing in progress — make changes on the canvas and save when ready.
+                              </p>
+                            )}
                           </Card>
                         ))}
                       </div>

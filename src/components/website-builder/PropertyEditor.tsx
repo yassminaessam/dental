@@ -622,28 +622,45 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     </>
   );
 
-  const renderColumnProperties = () => (
-    <>
-      <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Column Container</p>
-        <p className="text-xs text-blue-700 dark:text-blue-300">
-          This is a column inside a section. Drag widgets here to add content.
-        </p>
-      </div>
-      
-      {renderTextInput('Padding', 'padding', widget.props.padding, '0.5rem, 1rem, 2rem...')}
-      {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
-      {renderTextInput('Min Height', 'minHeight', widget.props.minHeight || '100px', '100px, 200px, 300px...')}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0', '0px, 8px, 16px...')}
-      
-      <div className="space-y-2">
-        <Label>Width</Label>
-        <p className="text-xs text-muted-foreground">
-          Width is automatically managed by the parent section's grid layout.
-        </p>
-      </div>
-    </>
-  );
+  const renderColumnProperties = () => {
+    const columnOpacity = widget.props.opacity !== undefined
+      ? (typeof widget.props.opacity === 'number' ? widget.props.opacity : parseFloat(widget.props.opacity) || 1)
+      : 1;
+
+    return (
+      <>
+        <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Column Container</p>
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            This is a column inside a section. Drag widgets here to add content.
+          </p>
+        </div>
+        
+        {renderTextInput('Padding', 'padding', widget.props.padding || '1rem', '0.5rem, 1rem, 2rem...')}
+        {renderTextInput('Margin', 'margin', widget.props.margin || '0', '0 auto, 1rem, 2rem...')}
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
+        {renderTextInput('Min Height', 'minHeight', widget.props.minHeight || '100px', '100px, 200px, 300px...')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.5rem', '0px, 8px, 16px...')}
+        {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', '0px, 1px, 2px...')}
+        {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'dashed', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'Double' }
+        ])}
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e0e0e0')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 10px 20px rgba(0,0,0,0.08)')}
+        {renderSlider('Opacity', 'opacity', columnOpacity, 0.1, 1, 0.05)}
+        
+        <div className="space-y-2">
+          <Label>Width</Label>
+          <p className="text-xs text-muted-foreground">
+            Width is automatically managed by the parent section's grid layout.
+          </p>
+        </div>
+      </>
+    );
+  };
 
   // Navigation widgets properties
   const renderNavbarProperties = () => {
