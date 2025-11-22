@@ -266,9 +266,19 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
         { value: '0.875rem', label: 'Small' },
         { value: '1rem', label: 'Normal' },
         { value: '1.125rem', label: 'Medium' },
-        { value: '1.25rem', label: 'Large' }
+        { value: '1.25rem', label: 'Large' },
+        { value: '1.5rem', label: 'XL' }
       ])}
+      {renderSelect('Font Weight', 'fontWeight', widget.props.fontWeight || 'normal', [
+        { value: '300', label: 'Light (300)' },
+        { value: '400', label: 'Regular (400)' },
+        { value: '500', label: 'Medium (500)' },
+        { value: '600', label: 'Semibold (600)' },
+        { value: '700', label: 'Bold (700)' }
+      ])}
+      {renderTextInput('Font Family', 'fontFamily', widget.props.fontFamily || 'inherit', 'e.g., Inter, "Open Sans"')}
       {renderColorPicker('Text Color', 'color', widget.props.color)}
+      {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
       {renderAlignment('textAlign', widget.props.textAlign || 'left')}
       {renderSelect('Line Height', 'lineHeight', widget.props.lineHeight || '1.5', [
         { value: '1', label: 'Tight (1)' },
@@ -277,62 +287,128 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
         { value: '1.75', label: 'Relaxed (1.75)' },
         { value: '2', label: 'Loose (2)' }
       ])}
+      {renderTextInput('Letter Spacing', 'letterSpacing', widget.props.letterSpacing || 'normal', 'e.g., normal, 0.05em, 1px')}
+      {renderSelect('Text Transform', 'textTransform', widget.props.textTransform || 'none', [
+        { value: 'none', label: 'None' },
+        { value: 'uppercase', label: 'Uppercase' },
+        { value: 'lowercase', label: 'Lowercase' },
+        { value: 'capitalize', label: 'Capitalize' }
+      ])}
+      {renderSelect('Text Decoration', 'textDecoration', widget.props.textDecoration || 'none', [
+        { value: 'none', label: 'None' },
+        { value: 'underline', label: 'Underline' },
+        { value: 'line-through', label: 'Strikethrough' },
+        { value: 'overline', label: 'Overline' }
+      ])}
+      {renderTextInput('Margin', 'margin', widget.props.margin || '0 0 1rem', 'CSS margin e.g., 0 0 1rem')}
+      {renderTextInput('Padding', 'padding', widget.props.padding || '0', 'CSS padding e.g., 0.5rem 0')}
+      {renderTextInput('Text Shadow', 'textShadow', widget.props.textShadow || 'none', 'e.g., 0 1px 2px rgba(0,0,0,0.1)')}
       {renderPositionAndSize()}
     </>
   );
 
-  const renderImageProperties = () => (
-    <>
-      <ImageUpload
-        value={widget.props.uploadedUrl || widget.props.src}
-        onChange={(url) => {
-          handleUpdate('uploadedUrl', url);
-          handleUpdate('src', url);
-        }}
-        label="Image Source"
-      />
-      {renderTextInput('Alt Text', 'alt', widget.props.alt, 'Image description...')}
-      {renderSelect('Object Fit', 'objectFit', widget.props.objectFit || 'cover', [
-        { value: 'cover', label: 'Cover' },
-        { value: 'contain', label: 'Contain' },
-        { value: 'fill', label: 'Fill' },
-        { value: 'none', label: 'None' },
-        { value: 'scale-down', label: 'Scale Down' }
-      ])}
-      {renderSelect('Aspect Ratio', 'aspectRatio', widget.props.aspectRatio || 'auto', [
-        { value: 'auto', label: 'Auto' },
-        { value: '16/9', label: '16:9' },
-        { value: '4/3', label: '4:3' },
-        { value: '1/1', label: '1:1 (Square)' },
-        { value: '3/4', label: '3:4' },
-        { value: '9/16', label: '9:16' }
-      ])}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0', '0px, 8px, 16px...')}
-      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0', '0px, 1px, 2px...')}
-      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e0e0e0')}
-      {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
-        { value: 'solid', label: 'Solid' },
-        { value: 'dashed', label: 'Dashed' },
-        { value: 'dotted', label: 'Dotted' },
-        { value: 'double', label: 'Double' }
-      ])}
-      {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 2px 4px rgba(0,0,0,0.1)')}
-      {renderSlider('Opacity', 'opacity', parseFloat(widget.props.opacity) || 1, 0, 1, 0.1)}
-      {renderSelect('Filter', 'filter', widget.props.filter || 'none', [
-        { value: 'none', label: 'None' },
-        { value: 'grayscale(100%)', label: 'Grayscale' },
-        { value: 'sepia(100%)', label: 'Sepia' },
-        { value: 'blur(5px)', label: 'Blur' },
-        { value: 'brightness(150%)', label: 'Bright' },
-        { value: 'contrast(200%)', label: 'High Contrast' }
-      ])}
-      {renderSelect('Loading', 'loading', widget.props.loading || 'lazy', [
-        { value: 'lazy', label: 'Lazy' },
-        { value: 'eager', label: 'Eager' }
-      ])}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderImageProperties = () => {
+    const opacityValue = widget.props.opacity !== undefined && widget.props.opacity !== ''
+      ? parseFloat(widget.props.opacity)
+      : 1;
+    const safeOpacity = Number.isNaN(opacityValue) ? 1 : opacityValue;
+
+    return (
+      <>
+        <ImageUpload
+          value={widget.props.uploadedUrl || widget.props.src}
+          onChange={(url) => {
+            handleUpdate('uploadedUrl', url);
+            handleUpdate('src', url);
+          }}
+          label="Image Source"
+        />
+        {renderTextInput('Alt Text', 'alt', widget.props.alt, 'Image description...')}
+        {renderSelect('Image Alignment', 'align', widget.props.align || 'center', [
+          { value: 'left', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'right', label: 'Right' },
+          { value: 'stretch', label: 'Stretch' }
+        ])}
+        {renderTextInput('Margin', 'margin', widget.props.margin || '0 0 1.5rem', 'CSS margin e.g., 0 auto 2rem')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '0', 'Inner padding e.g., 0.5rem')}
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#f8fafc')}
+        {renderSelect('Object Fit', 'objectFit', widget.props.objectFit || 'cover', [
+          { value: 'cover', label: 'Cover' },
+          { value: 'contain', label: 'Contain' },
+          { value: 'fill', label: 'Fill' },
+          { value: 'none', label: 'None' },
+          { value: 'scale-down', label: 'Scale Down' }
+        ])}
+        {renderSelect('Object Position', 'objectPosition', widget.props.objectPosition || 'center', [
+          { value: 'center', label: 'Center' },
+          { value: 'top', label: 'Top' },
+          { value: 'bottom', label: 'Bottom' },
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' },
+          { value: 'left top', label: 'Top Left' },
+          { value: 'right top', label: 'Top Right' },
+          { value: 'left bottom', label: 'Bottom Left' },
+          { value: 'right bottom', label: 'Bottom Right' }
+        ])}
+        {renderSelect('Aspect Ratio', 'aspectRatio', widget.props.aspectRatio || 'auto', [
+          { value: 'auto', label: 'Auto' },
+          { value: '16/9', label: '16:9' },
+          { value: '4/3', label: '4:3' },
+          { value: '1/1', label: '1:1 (Square)' },
+          { value: '3/4', label: '3:4' },
+          { value: '9/16', label: '9:16' }
+        ])}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0', '0px, 8px, 16px...')}
+        {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0', '0px, 1px, 2px...')}
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e0e0e0')}
+        {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'Double' }
+        ])}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 2px 4px rgba(0,0,0,0.1)')}
+        {renderSelect('Hover Effect', 'hoverEffect', widget.props.hoverEffect || 'none', [
+          { value: 'none', label: 'None' },
+          { value: 'zoom', label: 'Zoom' },
+          { value: 'lift', label: 'Lift' },
+          { value: 'fade', label: 'Fade' }
+        ])}
+        {renderTextInput('Transition', 'transition', widget.props.transition || 'transform 0.3s ease, box-shadow 0.3s ease', 'CSS transition e.g., transform 0.3s ease')}
+        {renderSlider('Opacity', 'opacity', safeOpacity, 0, 1, 0.1)}
+        {renderSelect('Filter', 'filter', widget.props.filter || 'none', [
+          { value: 'none', label: 'None' },
+          { value: 'grayscale(100%)', label: 'Grayscale' },
+          { value: 'sepia(100%)', label: 'Sepia' },
+          { value: 'blur(5px)', label: 'Blur' },
+          { value: 'brightness(150%)', label: 'Bright' },
+          { value: 'contrast(200%)', label: 'High Contrast' }
+        ])}
+        {renderTextInput('Link URL', 'link', widget.props.link || '', 'Optional link URL')}
+        {renderSwitch('Open Link in New Tab', 'openInNewTab', widget.props.openInNewTab || false, 'Opens image link in a new tab')}
+        {renderTextInput('Link rel Attribute', 'linkRel', widget.props.linkRel || 'noopener noreferrer', 'rel attribute for SEO/security')}
+        {renderSwitch('Show Caption', 'showCaption', widget.props.showCaption || false, 'Display caption below image')}
+        {widget.props.showCaption && (
+          <div className="space-y-2">
+            {renderTextInput('Caption Text', 'caption', widget.props.caption || '', 'Describe the image...')}
+            {renderColorPicker('Caption Color', 'captionColor', widget.props.captionColor || '#4b5563')}
+            {renderSelect('Caption Align', 'captionAlign', widget.props.captionAlign || 'center', [
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Center' },
+              { value: 'right', label: 'Right' }
+            ])}
+            {renderTextInput('Caption Size', 'captionSize', widget.props.captionSize || '0.875rem', 'e.g., 0.875rem, 14px')}
+          </div>
+        )}
+        {renderSelect('Loading', 'loading', widget.props.loading || 'lazy', [
+          { value: 'lazy', label: 'Lazy' },
+          { value: 'eager', label: 'Eager' }
+        ])}
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderButtonProperties = () => (
     <>
@@ -576,10 +652,23 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     <>
       {renderTextInput('Title', 'title', widget.props.title, 'Card title...')}
       {renderTextInput('Content', 'content', widget.props.content, 'Card content...', true)}
-      {renderTextInput('Image URL', 'image', widget.props.image || '', 'Optional image URL')}
+      <ImageUpload
+        value={widget.props.image || ''}
+        onChange={(url) => handleUpdate('image', url)}
+        label="Card Image"
+      />
       {renderTextInput('Link URL', 'link', widget.props.link || '', 'Optional link')}
       {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
       {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.5rem', '8px, 16px...')}
+      {renderTextInput('Padding', 'padding', widget.props.padding || '1.5rem', 'Card inner spacing e.g., 1.5rem')}
+      {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 1px 3px rgba(0,0,0,0.1)', 'CSS shadow value')}
+      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', 'Border width e.g., 1px')}
+      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e5e7eb')}
+      {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+        { value: 'solid', label: 'Solid' },
+        { value: 'dashed', label: 'Dashed' },
+        { value: 'dotted', label: 'Dotted' }
+      ])}
       {renderPositionAndSize()}
     </>
   );
@@ -619,44 +708,89 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     </>
   );
 
-  const renderIconProperties = () => (
-    <>
-      <IconPicker
-        value={widget.props.name || 'Globe'}
-        uploadedIcon={widget.props.uploadedIcon}
-        onChange={(iconName, uploadedUrl) => {
-          // Batch update both icon properties together to avoid race conditions
-          handleUpdateMultiple({
-            name: iconName,
-            uploadedIcon: uploadedUrl || ''
-          });
-        }}
-        size={widget.props.size || '2rem'}
-        color={widget.props.color || '#0066cc'}
-      />
-      {renderTextInput('Size', 'size', widget.props.size, '1rem, 2rem, 3rem...')}
-      {renderColorPicker('Color', 'color', widget.props.color)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0')}
-      {renderTextInput('Padding', 'padding', widget.props.padding || '0')}
-      {renderSelect('Rotation', 'rotation', widget.props.rotation || '0', [
-        { value: '0', label: 'None' },
-        { value: '45', label: '45°' },
-        { value: '90', label: '90°' },
-        { value: '180', label: '180°' },
-        { value: '270', label: '270°' },
-        { value: '-45', label: '-45°' },
-        { value: '-90', label: '-90°' }
-      ])}
-      {renderSelect('Flip', 'flip', widget.props.flip || 'none', [
-        { value: 'none', label: 'None' },
-        { value: 'horizontal', label: 'Horizontal' },
-        { value: 'vertical', label: 'Vertical' },
-        { value: 'both', label: 'Both' }
-      ])}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderIconProperties = () => {
+    const opacityValue = widget.props.opacity !== undefined
+      ? (typeof widget.props.opacity === 'number' ? widget.props.opacity : parseFloat(widget.props.opacity) || 1)
+      : 1;
+    const strokeValue = widget.props.strokeWidth !== undefined
+      ? (typeof widget.props.strokeWidth === 'number' ? widget.props.strokeWidth : parseFloat(widget.props.strokeWidth) || 1.5)
+      : 1.5;
+    const rotationValue = widget.props.rotation !== undefined
+      ? (typeof widget.props.rotation === 'number' ? widget.props.rotation : parseFloat(widget.props.rotation) || 0)
+      : 0;
+
+    return (
+      <>
+        <IconPicker
+          value={widget.props.name || 'Globe'}
+          uploadedIcon={widget.props.uploadedIcon}
+          onChange={(iconName, uploadedUrl) => {
+            handleUpdateMultiple({
+              name: iconName,
+              uploadedIcon: uploadedUrl || '',
+              imageSrc: uploadedUrl || ''
+            });
+          }}
+          size={widget.props.size || '2rem'}
+          color={widget.props.color || '#0066cc'}
+        />
+        {renderTextInput('Size', 'size', widget.props.size, '1rem, 2rem, 3rem...')}
+        {renderSlider('Stroke Width', 'strokeWidth', strokeValue, 0.5, 4, 0.1, 'px')}
+        {renderColorPicker('Color', 'color', widget.props.color)}
+        {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
+        {renderColorPicker('Hover Color', 'hoverColor', widget.props.hoverColor || widget.props.color || '#0f172a')}
+        {renderColorPicker('Hover Background', 'hoverBackground', widget.props.hoverBackground || widget.props.backgroundColor || 'transparent')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '0.5rem', '0, 0.5rem, 1rem...')}
+        {renderTextInput('Margin', 'margin', widget.props.margin || '0 auto 1rem', 'Margin e.g., 0 auto 1rem')}
+        {renderSelect('Alignment', 'align', widget.props.align || 'center', [
+          { value: 'left', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'right', label: 'Right' }
+        ])}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.5rem', '0px, 8px, 9999px...')}
+        {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0px', '0px, 1px, 2px...')}
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e5e7eb')}
+        {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'Double' }
+        ])}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 6px 18px rgba(0,0,0,0.1)')}
+        {renderTextInput('Hover Box Shadow', 'hoverBoxShadow', widget.props.hoverBoxShadow || widget.props.boxShadow || 'none', 'Shadow when hovering')}
+        {renderTextInput('Hover Scale', 'hoverScale', widget.props.hoverScale || '1', '1, 1.05, 0.95...')}
+        {renderTextInput('Transition', 'transition', widget.props.transition || 'transform 0.2s ease, box-shadow 0.2s ease', 'CSS transition')}
+        {renderSlider('Opacity', 'opacity', opacityValue, 0.1, 1, 0.05)}
+        {renderSlider('Rotation (deg)', 'rotation', rotationValue, -180, 360, 5, '°')}
+        {renderSelect('Flip', 'flip', widget.props.flip || 'none', [
+          { value: 'none', label: 'None' },
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' },
+          { value: 'both', label: 'Both' }
+        ])}
+        {renderTextInput('Tooltip', 'tooltip', widget.props.tooltip || '', 'Optional hover tooltip')}
+        {renderTextInput('Link URL', 'link', widget.props.link || '', 'https://...')}
+        {renderSwitch('Open Link in New Tab', 'openInNewTab', widget.props.openInNewTab || false)}
+        {renderTextInput('Link rel Attribute', 'linkRel', widget.props.linkRel || 'noopener noreferrer', 'rel attribute for the link')}
+        {renderSwitch('Show Label', 'showLabel', widget.props.showLabel || false, 'Display text next to the icon')}
+        {widget.props.showLabel && (
+          <div className="space-y-3">
+            {renderTextInput('Label Text', 'label', widget.props.label || '', 'Add supporting text')}
+            {renderSelect('Label Position', 'labelPosition', widget.props.labelPosition || 'bottom', [
+              { value: 'top', label: 'Top' },
+              { value: 'bottom', label: 'Bottom' },
+              { value: 'left', label: 'Left' },
+              { value: 'right', label: 'Right' }
+            ])}
+            {renderColorPicker('Label Color', 'labelColor', widget.props.labelColor || '#1f2937')}
+            {renderTextInput('Label Size', 'labelSize', widget.props.labelSize || '0.875rem', 'e.g., 0.875rem, 14px')}
+            {renderTextInput('Label Spacing', 'labelSpacing', widget.props.labelSpacing || '0.25rem', 'Gap between icon and label')}
+          </div>
+        )}
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderColumnProperties = () => {
     const columnOpacity = widget.props.opacity !== undefined

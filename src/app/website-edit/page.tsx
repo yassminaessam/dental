@@ -213,6 +213,7 @@ const widgetLibrary: WidgetDefinition[] = [
       width: '100%', 
       height: 'auto',
       objectFit: 'cover',
+      objectPosition: 'center',
       borderRadius: '0',
       borderWidth: '0',
       borderColor: '#e0e0e0',
@@ -221,7 +222,21 @@ const widgetLibrary: WidgetDefinition[] = [
       opacity: '1',
       filter: 'none',
       loading: 'lazy',
-      aspectRatio: 'auto'
+      aspectRatio: 'auto',
+      backgroundColor: '#f8fafc',
+      padding: '0',
+      margin: '0 0 1.5rem',
+      align: 'center',
+      hoverEffect: 'none',
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+      link: '',
+      openInNewTab: false,
+      linkRel: 'noopener noreferrer',
+      caption: '',
+      showCaption: false,
+      captionColor: '#4b5563',
+      captionAlign: 'center',
+      captionSize: '0.875rem'
     }
   },
   {
@@ -283,13 +298,38 @@ const widgetLibrary: WidgetDefinition[] = [
       iconType: 'lucide',
       name: 'Globe',
       uploadedIcon: '',
-      size: '2rem', 
-      color: '#0066cc',
+      size: '2.5rem', 
+      color: '#0f172a',
+      strokeWidth: '1.5',
       backgroundColor: 'transparent',
       borderRadius: '0',
-      padding: '0',
+      padding: '0.5rem',
+      margin: '0 auto 1rem',
+      borderWidth: '0px',
+      borderColor: 'transparent',
+      borderStyle: 'solid',
+      boxShadow: 'none',
+      opacity: '1',
       rotation: '0',
-      flip: 'none'
+      flip: 'none',
+      align: 'center',
+      hoverColor: '#0f172a',
+      hoverBackground: 'transparent',
+      hoverBoxShadow: 'none',
+      hoverScale: '1',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      link: '',
+      openInNewTab: false,
+      linkRel: 'noopener noreferrer',
+      tooltip: '',
+      showLabel: false,
+      label: '',
+      labelPosition: 'bottom',
+      labelColor: '#1f2937',
+      labelSize: '0.875rem',
+      labelSpacing: '0.25rem',
+      useImage: false,
+      imageSrc: ''
     }
   },
   // Layout & Structure
@@ -3289,7 +3329,17 @@ export default function WebsiteEditPage() {
             });
 
             return (
-              <div className={headingClass}>
+              <div
+                className={headingClass}
+                style={{
+                  color: widget.props.color || '#1f2937',
+                  fontSize: widget.props.fontSize || '2rem',
+                  textAlign: widget.props.textAlign || 'left',
+                  fontWeight: widget.props.fontWeight || '600',
+                  lineHeight: widget.props.lineHeight || '1.2',
+                  margin: widget.props.margin || '0 0 1rem'
+                }}
+              >
               {widget.props.text}
               </div>
             );
@@ -3303,7 +3353,24 @@ export default function WebsiteEditPage() {
             });
 
             return (
-              <div className={textClass}>
+              <div
+                className={textClass}
+                style={{
+                  color: widget.props.color || '#374151',
+                  fontSize: widget.props.fontSize || '1rem',
+                  textAlign: widget.props.textAlign || 'left',
+                  lineHeight: widget.props.lineHeight || '1.5',
+                  margin: widget.props.margin || '0 0 1rem',
+                  padding: widget.props.padding || '0',
+                  letterSpacing: widget.props.letterSpacing || 'normal',
+                  fontWeight: widget.props.fontWeight || '400',
+                  fontFamily: widget.props.fontFamily || 'inherit',
+                  backgroundColor: widget.props.backgroundColor || 'transparent',
+                  textTransform: widget.props.textTransform || 'none',
+                  textDecoration: widget.props.textDecoration || 'none',
+                  textShadow: widget.props.textShadow || undefined
+                }}
+              >
                 {widget.props.text}
               </div>
             );
@@ -3314,38 +3381,95 @@ export default function WebsiteEditPage() {
             const resolvedHeight = widget.props.height && widget.props.height !== 'auto'
               ? widget.props.height
               : undefined;
+            const resolvedOpacity = widget.props.opacity ? parseFloat(widget.props.opacity) : 1;
+            const alignment = widget.props.align || 'center';
+            const justifyMap: Record<string, string> = {
+              left: 'flex-start',
+              center: 'center',
+              right: 'flex-end',
+              stretch: 'stretch'
+            };
+            const hoverEffectClassMap: Record<string, string> = {
+              zoom: 'transform-gpu transition-transform duration-200 hover:scale-105',
+              lift: 'transform-gpu transition-all duration-200 hover:-translate-y-1 hover:shadow-xl',
+              fade: 'transition-opacity duration-200 hover:opacity-90',
+              none: ''
+            };
+            const hoverEffectClass = hoverEffectClassMap[widget.props.hoverEffect as keyof typeof hoverEffectClassMap] || '';
 
             const containerClass = registerStyle('image-container', {
               width: widget.props.width || '100%',
               height: resolvedHeight || 'auto',
-              minHeight: resolvedHeight || hasImage ? undefined : '200px',
+              minHeight: (resolvedHeight || hasImage) ? undefined : '200px',
               borderRadius: widget.props.borderRadius || '0',
               borderWidth: widget.props.borderWidth || '0',
               borderColor: widget.props.borderColor || 'transparent',
               borderStyle: widget.props.borderStyle || 'solid',
               overflow: 'hidden',
               boxShadow: widget.props.boxShadow || 'none',
-              backgroundColor: hasImage ? 'transparent' : '#f3f4f6'
+              padding: widget.props.padding || '0',
+              backgroundColor: widget.props.backgroundColor || (hasImage ? 'transparent' : '#f3f4f6'),
+              transition: widget.props.transition || 'transform 0.3s ease, box-shadow 0.3s ease'
             });
 
             const imageClass = registerStyle('image-element', {
               width: '100%',
               height: resolvedHeight ? '100%' : 'auto',
               objectFit: widget.props.objectFit || 'cover',
-              opacity: widget.props.opacity || 1,
+              objectPosition: widget.props.objectPosition || 'center',
+              opacity: resolvedOpacity,
               filter: widget.props.filter || 'none',
               display: 'block'
             });
 
-            return (
-              <div className={`relative ${containerClass}`}>
+            const figureStyle: React.CSSProperties = {
+              margin: widget.props.margin || '0 0 1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: alignment === 'stretch' ? 'stretch' : (justifyMap[alignment] ? justifyMap[alignment as keyof typeof justifyMap] : 'center'),
+              gap: widget.props.showCaption && widget.props.caption ? '0.5rem' : undefined
+            };
+
+            const containerStyle: React.CSSProperties = {
+              width: widget.props.width || '100%',
+              height: resolvedHeight || 'auto',
+              minHeight: (resolvedHeight || hasImage) ? undefined : '200px',
+              borderRadius: widget.props.borderRadius || '0',
+              borderWidth: widget.props.borderWidth || '0',
+              borderColor: widget.props.borderColor || 'transparent',
+              borderStyle: widget.props.borderStyle || 'solid',
+              overflow: 'hidden',
+              boxShadow: widget.props.boxShadow || 'none',
+              padding: widget.props.padding || '0',
+              backgroundColor: widget.props.backgroundColor || (hasImage ? 'transparent' : '#f3f4f6'),
+              transition: widget.props.transition || 'transform 0.3s ease, box-shadow 0.3s ease'
+            };
+
+            const imageStyles: React.CSSProperties = {
+              width: '100%',
+              height: resolvedHeight ? '100%' : 'auto',
+              objectFit: widget.props.objectFit || 'cover',
+              objectPosition: widget.props.objectPosition || 'center',
+              opacity: resolvedOpacity,
+              filter: widget.props.filter || 'none',
+              display: 'block',
+              aspectRatio: widget.props.aspectRatio && widget.props.aspectRatio !== 'auto'
+                ? widget.props.aspectRatio
+                : undefined
+            };
+
+            const imageContent = (
+              <div
+                className={`relative ${containerClass} ${hoverEffectClass}`.trim()}
+                style={containerStyle}
+              >
                 {hasImage && (
                   <img
                     src={imageSrc}
                     alt={widget.props.alt || 'Image'}
                     className={imageClass}
                     loading={widget.props.loading || 'lazy'}
-                    style={{ aspectRatio: widget.props.aspectRatio || undefined }}
+                    style={imageStyles}
                     onError={(e) => {
                       const placeholder = e.currentTarget.parentElement?.querySelector('[data-image-placeholder]') as HTMLElement | null;
                       if (placeholder) {
@@ -3357,12 +3481,46 @@ export default function WebsiteEditPage() {
                 )}
                 <div
                   data-image-placeholder
-                  className={`absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-50 ${hasImage ? 'hidden' : ''}`}
+                  className={`absolute inset-0 flex flex-col items-center justify-center text-gray-500 ${hasImage ? 'hidden' : ''}`}
+                  style={{
+                    backgroundColor: widget.props.backgroundColor || '#f3f4f6'
+                  }}
                 >
                   <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
                   <span>No image selected</span>
                 </div>
               </div>
+            );
+
+            const clickableContent = widget.props.link ? (
+              <a
+                href={widget.props.link}
+                target={widget.props.openInNewTab ? '_blank' : undefined}
+                rel={widget.props.linkRel || 'noopener noreferrer'}
+                className="block w-full"
+                onClick={(e) => !isPreview && e.preventDefault()}
+              >
+                {imageContent}
+              </a>
+            ) : (
+              imageContent
+            );
+
+            return (
+              <figure style={figureStyle} className="w-full">
+                {clickableContent}
+                {widget.props.showCaption && widget.props.caption && (
+                  <figcaption
+                    style={{
+                      color: widget.props.captionColor || '#4b5563',
+                      textAlign: widget.props.captionAlign || alignment,
+                      fontSize: widget.props.captionSize || '0.875rem'
+                    }}
+                  >
+                    {widget.props.caption}
+                  </figcaption>
+                )}
+              </figure>
             );
           })()}
           {widget.type === 'button' && (() => {
@@ -3510,28 +3668,78 @@ export default function WebsiteEditPage() {
             </div>
           )}
           {widget.type === 'icon' && (() => {
-            // Function to render the icon
+            const iconSize = widget.props.size || '2rem';
+            const iconColor = widget.props.color || '#0066cc';
+            const strokeWidth = widget.props.strokeWidth !== undefined
+              ? (typeof widget.props.strokeWidth === 'number' ? widget.props.strokeWidth : parseFloat(widget.props.strokeWidth) || 1.5)
+              : 1.5;
+            const iconOpacity = widget.props.opacity !== undefined
+              ? (typeof widget.props.opacity === 'number' ? widget.props.opacity : parseFloat(widget.props.opacity) || 1)
+              : 1;
+            const rotationValue = widget.props.rotation !== undefined
+              ? (typeof widget.props.rotation === 'number' ? widget.props.rotation : parseFloat(widget.props.rotation) || 0)
+              : 0;
+            const hoverScaleValue = widget.props.hoverScale !== undefined
+              ? (typeof widget.props.hoverScale === 'number' ? widget.props.hoverScale : parseFloat(widget.props.hoverScale) || 1)
+              : 1;
+
+            const flipTransform = widget.props.flip === 'horizontal'
+              ? 'scaleX(-1)'
+              : widget.props.flip === 'vertical'
+                ? 'scaleY(-1)'
+                : widget.props.flip === 'both'
+                  ? 'scale(-1)'
+                  : 'scale(1)';
+            const baseTransform = `${flipTransform} rotate(${rotationValue}deg)`;
+
+            const iconContainerStyles: Record<string, StyleValue> = {
+              color: iconColor,
+              fontSize: iconSize,
+              backgroundColor: widget.props.backgroundColor || 'transparent',
+              borderRadius: widget.props.borderRadius || '0',
+              padding: widget.props.padding || '0',
+              borderWidth: widget.props.borderWidth || '0',
+              borderColor: widget.props.borderColor || 'transparent',
+              borderStyle: widget.props.borderStyle || 'solid',
+              boxShadow: widget.props.boxShadow || 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: widget.props.transition || 'transform 0.2s ease, box-shadow 0.2s ease',
+              transform: baseTransform,
+              opacity: iconOpacity,
+              cursor: widget.props.link ? 'pointer' : 'default',
+              width: 'fit-content',
+              height: 'fit-content'
+            };
+
+            const iconContainerClass = registerStyle('icon-container', iconContainerStyles);
+            const inlineIconStyles = iconContainerStyles as React.CSSProperties;
+
+            const hoverCss = buildCssBlock(`${iconContainerClass}:hover`, {
+              color: widget.props.hoverColor || undefined,
+              backgroundColor: widget.props.hoverBackground || undefined,
+              boxShadow: widget.props.hoverBoxShadow || undefined,
+              transform: hoverScaleValue !== 1 ? `${baseTransform} scale(${hoverScaleValue})` : undefined
+            });
+            if (hoverCss) {
+              widgetStyles.push(hoverCss);
+            }
+
             const renderIcon = () => {
-              // If it's an uploaded image
-              if (widget.props.useImage && widget.props.imageSrc) {
-                const iconImageClass = registerStyle('icon-image', {
-                  width: widget.props.size,
-                  height: widget.props.size
-                });
-                
+              const uploadedIcon = widget.props.uploadedIcon || widget.props.imageSrc;
+              if (uploadedIcon) {
                 return (
                   <img
-                    src={widget.props.imageSrc}
+                    src={uploadedIcon}
                     alt={widget.props.name || 'Icon'}
-                    className={iconImageClass}
+                    style={{ width: iconSize, height: iconSize, objectFit: 'contain' }}
+                    className="object-contain"
                   />
                 );
               }
-              
-              // Create a case-insensitive icon mapping
+
               const iconName = widget.props.name || 'Globe';
-              
-              // Map of icon names to components - matching exactly what IconPicker sends
               const iconMap: Record<string, any> = {
                 'User': User,
                 'Settings': Settings,
@@ -3559,6 +3767,7 @@ export default function WebsiteEditPage() {
                 'Trash2': Trash2,
                 'Edit': Edit,
                 'Save': Save,
+                'Home': Home,
                 'Plus': Plus,
                 'Minus': Minus,
                 'ChevronRight': ChevronRight,
@@ -3625,37 +3834,97 @@ export default function WebsiteEditPage() {
                 'Hash': Hash,
                 'AtSign': AtSign
               };
-              
-              // Get the icon component (case-sensitive match)
+
               const IconComponent = iconMap[iconName] || iconMap['Globe'] || Globe;
               return (
                 <IconComponent
-                  size={widget.props.size}
-                  color={widget.props.color}
-                  strokeWidth={1.5}
+                  size={iconSize}
+                  color={iconColor}
+                  strokeWidth={strokeWidth}
+                  style={{ display: 'block' }}
                 />
               );
             };
-            
-            const rotationValue = widget.props.rotation || 0;
-            const iconContainerClass = registerStyle('icon-container', {
-              color: widget.props.color,
-              fontSize: widget.props.size,
-              backgroundColor: widget.props.backgroundColor || 'transparent',
-              borderRadius: widget.props.borderRadius || '0',
-              padding: widget.props.padding || '0',
-              transform: `rotate(${rotationValue}deg) ${
-                widget.props.flip === 'horizontal' ? 'scaleX(-1)' : 
-                widget.props.flip === 'vertical' ? 'scaleY(-1)' : 
-                widget.props.flip === 'both' ? 'scale(-1)' : 'scale(1)'
-              }`,
-              width: 'fit-content',
-              height: 'fit-content'
-            });
+
+            const hasLink = Boolean(widget.props.link && widget.props.link.trim() !== '');
+            const labelPosition = widget.props.labelPosition || 'bottom';
+            const labelSpacing = widget.props.labelSpacing || '0.25rem';
+            const alignment = widget.props.align || 'center';
+            const alignMap: Record<string, string> = {
+              left: 'flex-start',
+              center: 'center',
+              right: 'flex-end'
+            };
+
+            const iconWrapper = (
+              <div
+                className={`${iconContainerClass}`}
+                style={inlineIconStyles}
+                title={widget.props.tooltip || undefined}
+                onClick={(e) => {
+                  if (!isPreview && hasLink) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+              >
+                {renderIcon()}
+              </div>
+            );
+
+            const linkedIcon = hasLink ? (
+              <a
+                href={widget.props.link}
+                target={isPreview && widget.props.openInNewTab ? '_blank' : '_self'}
+                rel={isPreview ? (widget.props.linkRel || 'noopener noreferrer') : 'noopener noreferrer'}
+                className="inline-flex"
+                onClick={(e) => {
+                  if (!isPreview) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+              >
+                {iconWrapper}
+              </a>
+            ) : iconWrapper;
+
+            const labelElement = widget.props.showLabel && widget.props.label ? (
+              <span
+                style={{
+                  color: widget.props.labelColor || '#1f2937',
+                  fontSize: widget.props.labelSize || '0.875rem'
+                }}
+              >
+                {widget.props.label}
+              </span>
+            ) : null;
+
+            const isHorizontalLabel = labelPosition === 'left' || labelPosition === 'right';
+            const stackDirection = isHorizontalLabel ? 'row' : 'column';
+            const reverseOrder = labelPosition === 'top' || labelPosition === 'left';
 
             return (
-              <div className={`flex items-center justify-center ${iconContainerClass}`}>
-                {renderIcon()}
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: alignMap[alignment] || 'center',
+                  margin: widget.props.margin || '0 auto 1rem'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    flexDirection: stackDirection,
+                    alignItems: 'center',
+                    gap: labelElement ? labelSpacing : 0
+                  }}
+                >
+                  {reverseOrder && labelElement}
+                  {linkedIcon}
+                  {!reverseOrder && labelElement}
+                </div>
               </div>
             );
           })()}
@@ -3814,21 +4083,55 @@ export default function WebsiteEditPage() {
             return <hr className={dividerClass} />;
           })()}
           {widget.type === 'card' && (() => {
+            const imageSrc = widget.props.image;
             const cardClass = registerStyle('card', {
               backgroundColor: widget.props.backgroundColor,
-              borderRadius: widget.props.borderRadius
+              borderRadius: widget.props.borderRadius,
+              boxShadow: widget.props.boxShadow,
+              borderWidth: widget.props.borderWidth,
+              borderColor: widget.props.borderColor,
+              borderStyle: widget.props.borderStyle,
+              padding: widget.props.padding,
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease'
             });
 
             return (
-              <Card className={`p-4 ${cardClass}`}>
-              {widget.props.image && (
-                <div className="mb-3 bg-gray-100 h-32 flex items-center justify-center">
-                  <ImageIcon className="h-8 w-8 text-gray-400" />
-                </div>
-              )}
-              <h3 className="font-bold mb-2">{widget.props.title}</h3>
-              <p className="text-sm text-gray-600">{widget.props.content}</p>
-              </Card>
+              <div
+                className={`${cardClass} hover:-translate-y-1 hover:shadow-lg cursor-pointer`}
+                style={{
+                  backgroundColor: widget.props.backgroundColor || '#ffffff',
+                  borderRadius: widget.props.borderRadius || '0.5rem',
+                  boxShadow: widget.props.boxShadow || '0 1px 3px rgba(0,0,0,0.1)',
+                  borderWidth: widget.props.borderWidth || '1px',
+                  borderStyle: widget.props.borderStyle || 'solid',
+                  borderColor: widget.props.borderColor || '#e5e7eb',
+                  padding: widget.props.padding || '1.5rem'
+                }}
+              >
+                {imageSrc ? (
+                  <img
+                    src={imageSrc}
+                    alt={widget.props.title || 'Card image'}
+                    className="w-full h-40 object-cover rounded-md mb-4"
+                  />
+                ) : (
+                  <div className="mb-4 bg-gray-100 h-40 flex items-center justify-center rounded-md text-gray-400 text-sm">
+                    <ImageIcon className="h-6 w-6 mr-2" />
+                    No image selected
+                  </div>
+                )}
+                <h3 className="font-semibold text-lg mb-2">{widget.props.title}</h3>
+                <p className="text-sm text-gray-600 mb-4">{widget.props.content}</p>
+                {widget.props.link && (
+                  <a
+                    href={widget.props.link}
+                    className="text-blue-600 font-medium text-sm hover:underline"
+                    onClick={(e) => !isPreview && e.preventDefault()}
+                  >
+                    Learn more →
+                  </a>
+                )}
+              </div>
             );
           })()}
           {widget.type === 'alert' && (
