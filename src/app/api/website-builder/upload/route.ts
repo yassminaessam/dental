@@ -14,7 +14,14 @@ const FTP_BASE_PATH = (process.env.FTP_BASE_PATH || '').replace(/\/+$/, '');
 const FTP_PUBLIC_BASE_URL = (process.env.FTP_PUBLIC_URL || process.env.NEXT_PUBLIC_FTP_PUBLIC_URL || `http://${FTP_CONFIG.host}`).replace(/\/$/, '');
 
 const ensureLeadingSlash = (path: string) => (path.startsWith('/') ? path : `/${path}`);
-
+const normalizePath = (path: string) => path.replace(/\\/g, '/').replace(/\/{2,}/g, '/');
+const resolveFtpPathFromRequest = (path: string) => {
+  const normalized = normalizePath(path);
+  if (!FTP_BASE_PATH && normalized.startsWith('/')) {
+    return normalized.slice(1);
+  }
+  return normalized;
+};
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -34,26 +41,27 @@ export async function POST(request: NextRequest) {
     const randomStr = Math.random().toString(36).substring(2, 8);
     const fileExtension = file.name.split('.').pop();
     const fileName = `${category}_${timestamp}_${randomStr}.${fileExtension}`;
-    const basePath = FTP_BASE_PATH ? ensureLeadingSlash(FTP_BASE_PATH) : '';
-    const filePath = `${basePath}/website-builder/${category}/${fileName}`
-      .replace(/\\/g, '/')
-      .replace(/\/{2,}/g, '/');
-    const normalizedFilePath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+    const relativePath = normalizePath(`website-builder/${category}/${fileName}`);
+    const ftpPath = FTP_BASE_PATH
+      ? normalizePath(`${ensureLeadingSlash(FTP_BASE_PATH)}/${relativePath}`)
+      : relativePath;
+    const ftpResponsePath = ftpPath.startsWith('/') ? ftpPath : `/${ftpPath}`;
 
     // Upload to FTP
-    const uploadSuccess = await uploadToFTP(buffer, normalizedFilePath);
+    const uploadSuccess = await uploadToFTP(buffer, ftpPath);
     
     if (!uploadSuccess) {
       return NextResponse.json({ error: 'FTP upload failed' }, { status: 500 });
     }
 
     // Return the public URL
-    const publicUrl = `${FTP_PUBLIC_BASE_URL}${normalizedFilePath}`;
+    const publicUrl = new URL(relativePath, `${FTP_PUBLIC_BASE_URL.replace(/\/?$/, '/')}`).toString();
     
     return NextResponse.json({ 
       success: true,
       url: publicUrl,
-      path: normalizedFilePath,
+      path: ftpResponsePath,
+      relativePath,
       filename: fileName
     });
 
@@ -74,7 +82,7 @@ async function uploadToFTP(buffer: Buffer, filePath: string): Promise<boolean> {
       try {
         // Ensure directory exists
         const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
-        await ensureDirectoryExists(client, dirPath);
+        await ensureDirectoryExists(client, dirPath, dirPath.startsWith('/'));
         
         // Upload file
         const stream = Readable.from(buffer);
@@ -100,17 +108,24 @@ async function uploadToFTP(buffer: Buffer, filePath: string): Promise<boolean> {
       resolve(false);
     });
     
-    client.connect({
+    const connectOptions: any = {
       host: FTP_CONFIG.host,
       port: FTP_CONFIG.port,
       user: FTP_CONFIG.user,
       password: FTP_CONFIG.password,
       secure: FTP_CONFIG.secure,
-    });
+      keepalive: 10000,
+    };
+
+    if (FTP_CONFIG.secure) {
+      connectOptions.secureOptions = { rejectUnauthorized: false };
+    }
+
+    client.connect(connectOptions);
   });
 }
 
-async function ensureDirectoryExists(client: any, dirPath: string): Promise<void> {
+async function ensureDirectoryExists(client: any, dirPath: string, isAbsolute: boolean): Promise<void> {
   return new Promise((resolve, reject) => {
     const parts = dirPath.split('/').filter(Boolean);
     let currentPath = '';
@@ -121,8 +136,12 @@ async function ensureDirectoryExists(client: any, dirPath: string): Promise<void
         return;
       }
       
-      currentPath += '/' + parts[index];
-      
+      if (isAbsolute) {
+        currentPath += '/' + parts[index];
+      } else {
+        currentPath = currentPath ? `${currentPath}/${parts[index]}` : parts[index];
+      }
+
       client.mkdir(currentPath, true, (err: any) => {
         // Ignore error if directory already exists
         createNextDir(index + 1);
@@ -142,7 +161,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
     }
 
-    const fileData = await readFromFTP(filePath);
+    const ftpPath = resolveFtpPathFromRequest(filePath);
+    const fileData = await readFromFTP(ftpPath);
     
     if (!fileData) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
@@ -200,13 +220,20 @@ async function readFromFTP(filePath: string): Promise<Buffer | null> {
       resolve(null);
     });
     
-    client.connect({
+    const connectOptions: any = {
       host: FTP_CONFIG.host,
       port: FTP_CONFIG.port,
       user: FTP_CONFIG.user,
       password: FTP_CONFIG.password,
       secure: FTP_CONFIG.secure,
-    });
+      keepalive: 10000,
+    };
+
+    if (FTP_CONFIG.secure) {
+      connectOptions.secureOptions = { rejectUnauthorized: false };
+    }
+
+    client.connect(connectOptions);
   });
 }
 
