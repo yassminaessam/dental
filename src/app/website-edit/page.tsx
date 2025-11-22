@@ -3391,6 +3391,30 @@ export default function WebsiteEditPage() {
             const borderColor = widget.props.borderColor || backgroundColor;
             const isDisabled = Boolean(widget.props.disabled);
 
+            const inlineStyle = {
+              backgroundColor,
+              color: textColor,
+              padding: resolvedPadding,
+              borderRadius: widget.props.borderRadius || '0.375rem',
+              fontWeight: widget.props.fontWeight || '600',
+              fontSize: resolvedFontSize,
+              width: widget.props.fullWidth ? '100%' : 'auto',
+              borderWidth: widget.props.borderWidth || '0px',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderColor,
+              boxShadow: widget.props.boxShadow || 'none',
+              letterSpacing: widget.props.letterSpacing || 'normal',
+              textTransform: widget.props.textTransform || 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: widget.props.align || 'center',
+              textDecoration: 'none',
+              cursor: isDisabled ? 'not-allowed' : 'pointer',
+              opacity: isDisabled ? 0.6 : 1,
+              pointerEvents: isDisabled ? 'none' : 'auto',
+              transition: widget.props.transition || 'all 0.2s ease'
+            } as React.CSSProperties;
+
             const buttonClass = registerStyle('button', {
               backgroundColor,
               color: textColor,
@@ -3434,6 +3458,7 @@ export default function WebsiteEditPage() {
 
             const commonProps = {
               className: `${buttonClass} focus:outline-none`,
+              style: inlineStyle,
               onClick: (e: React.MouseEvent) => {
                 if (!isPreview) {
                   e.preventDefault();
