@@ -788,7 +788,7 @@ export default function WebsiteEditPage() {
   };
 
   // Dental Clinic Landing Page Templates
-  const dentalTemplates: TemplateDefinition[] = [
+  const initialTemplates: TemplateDefinition[] = [
     {
       id: 'template1',
       name: 'Modern Dental Clinic',
@@ -2523,6 +2523,11 @@ export default function WebsiteEditPage() {
     }
   ];
 
+  const TEMPLATE_STORAGE_KEY = 'websiteBuilderTemplates';
+  const [templates, setTemplates] = React.useState<TemplateDefinition[]>(initialTemplates);
+  const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
+  const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
+
   const getWidgetHeight = (widget: Widget): number => {
     const rawHeight = widget.props?.height;
 
@@ -2568,26 +2573,104 @@ export default function WebsiteEditPage() {
   };
 
   // Apply template to canvas
-  const applyTemplate = (template: typeof dentalTemplates[0]) => {
-    const cloneWidgetTree = (widget: Widget): Widget => ({
-      ...widget,
-      id: generateId(),
-      props: { ...widget.props },
-      children: widget.children?.map(child => cloneWidgetTree(child)) || []
-    });
-
-    const clonedWidgets = template.widgets.map(cloneWidgetTree);
+  const applyTemplate = (template: TemplateDefinition) => {
+    const clonedWidgets = template.widgets.map((widget) => cloneWidgetWithNewIds(widget));
     const arrangedWidgets = template.id === 'template1'
       ? normalizeTemplateSections(clonedWidgets)
       : clonedWidgets;
-    
+
     setCanvasWidgets(arrangedWidgets);
+    setSelectedWidget(null);
     addToHistory(arrangedWidgets);
     toast({
       title: "Template Applied",
       description: `${template.name} has been applied to your canvas`,
     });
   };
+
+  const handleEditTemplate = (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) {
+      return;
+    }
+
+    applyTemplate(template);
+    setEditingTemplateId(templateId);
+    toast({
+      title: "Editing Template",
+      description: `You are now editing ${template.name}`,
+    });
+  };
+
+  const handleSaveTemplate = (templateId: string) => {
+    if (editingTemplateId !== templateId) {
+      toast({
+        title: "Cannot Save",
+        description: "Click Edit on this template before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canvasWidgets.length) {
+      toast({
+        title: "Nothing to Save",
+        description: "Add widgets to the canvas before saving the template.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) {
+      return;
+    }
+
+    const updatedTemplate = {
+      ...template,
+      widgets: cloneWidgetsForStorage(canvasWidgets),
+    };
+
+    setTemplates((prev) => prev.map((t) => (t.id === templateId ? updatedTemplate : t)));
+    setEditingTemplateId(null);
+
+    toast({
+      title: "Template Saved",
+      description: `${template.name} has been updated`,
+    });
+  };
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setTemplates(parsed as TemplateDefinition[]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load saved templates', error);
+    } finally {
+      setTemplatesHydrated(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!templatesHydrated || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+    } catch (error) {
+      console.error('Failed to persist templates', error);
+    }
+  }, [templates, templatesHydrated]);
 
   // Add global style for grab cursor
   React.useEffect(() => {
@@ -2642,6 +2725,19 @@ export default function WebsiteEditPage() {
 
   // Generate unique ID for widgets
   const generateId = () => `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const cloneWidgetWithNewIds = (widget: Widget): Widget => ({
+    ...widget,
+    id: generateId(),
+    children: widget.children?.map((child) => cloneWidgetWithNewIds(child)) || []
+  });
+
+  const cloneWidgetsForStorage = (widgets: Widget[]): Widget[] =>
+    widgets.map((widget) => ({
+      ...widget,
+      props: { ...widget.props },
+      children: widget.children ? cloneWidgetsForStorage(widget.children) : []
+    }));
 
   // Calculate next widget position (staggered to avoid overlap)
   const getNextPosition = () => {
@@ -4422,11 +4518,10 @@ export default function WebsiteEditPage() {
                     // Templates Section
                     <div className="p-4">
                       <div className="space-y-4">
-                        {dentalTemplates.map((template) => (
+                        {templates.map((template) => (
                           <Card
                             key={template.id}
-                            className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
-                            onClick={() => applyTemplate(template)}
+                            className="p-4 hover:shadow-lg transition-shadow"
                           >
                             <div className="flex items-start gap-4">
                               <div className="text-4xl">{template.thumbnail}</div>
@@ -4438,17 +4533,28 @@ export default function WebsiteEditPage() {
                                   <span>{template.widgets.length} sections</span>
                                 </div>
                               </div>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleEditTemplate(template.id)}
+                              >
+                                {editingTemplateId === template.id ? 'Continue Editing' : 'Edit Template'}
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  applyTemplate(template);
-                                }}
+                                onClick={() => handleSaveTemplate(template.id)}
+                                disabled={editingTemplateId !== template.id}
                               >
-                                Apply
+                                Save Template
                               </Button>
                             </div>
+                            {editingTemplateId === template.id && (
+                              <p className="mt-2 text-xs text-blue-600 font-medium">
+                                Editing in progress — make changes on the canvas and save when ready.
+                              </p>
+                            )}
                           </Card>
                         ))}
                       </div>
