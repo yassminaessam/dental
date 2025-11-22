@@ -3309,15 +3309,59 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'image' && (() => {
-            const imageClass = registerStyle('image', {
-              height: widget.props.height === 'auto' ? '200px' : widget.props.height,
-              borderRadius: widget.props.borderRadius
+            const imageSrc = widget.props.src || widget.props.uploadedUrl || widget.props.image;
+            const hasImage = Boolean(imageSrc);
+            const resolvedHeight = widget.props.height && widget.props.height !== 'auto'
+              ? widget.props.height
+              : undefined;
+
+            const containerClass = registerStyle('image-container', {
+              width: widget.props.width || '100%',
+              height: resolvedHeight || 'auto',
+              minHeight: resolvedHeight || hasImage ? undefined : '200px',
+              borderRadius: widget.props.borderRadius || '0',
+              borderWidth: widget.props.borderWidth || '0',
+              borderColor: widget.props.borderColor || 'transparent',
+              borderStyle: widget.props.borderStyle || 'solid',
+              overflow: 'hidden',
+              boxShadow: widget.props.boxShadow || 'none',
+              backgroundColor: hasImage ? 'transparent' : '#f3f4f6'
+            });
+
+            const imageClass = registerStyle('image-element', {
+              width: '100%',
+              height: resolvedHeight ? '100%' : 'auto',
+              objectFit: widget.props.objectFit || 'cover',
+              opacity: widget.props.opacity || 1,
+              filter: widget.props.filter || 'none',
+              display: 'block'
             });
 
             return (
-              <div className={`bg-gray-100 flex items-center justify-center ${imageClass}`}>
-                <ImageIcon className="h-12 w-12 text-gray-400" />
-                <span className="ml-2 text-gray-500">Image: {widget.props.alt}</span>
+              <div className={`relative ${containerClass}`}>
+                {hasImage && (
+                  <img
+                    src={imageSrc}
+                    alt={widget.props.alt || 'Image'}
+                    className={imageClass}
+                    loading={widget.props.loading || 'lazy'}
+                    style={{ aspectRatio: widget.props.aspectRatio || undefined }}
+                    onError={(e) => {
+                      const placeholder = e.currentTarget.parentElement?.querySelector('[data-image-placeholder]') as HTMLElement | null;
+                      if (placeholder) {
+                        placeholder.classList.remove('hidden');
+                      }
+                      e.currentTarget.classList.add('hidden');
+                    }}
+                  />
+                )}
+                <div
+                  data-image-placeholder
+                  className={`absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-50 ${hasImage ? 'hidden' : ''}`}
+                >
+                  <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
+                  <span>No image selected</span>
+                </div>
               </div>
             );
           })()}
