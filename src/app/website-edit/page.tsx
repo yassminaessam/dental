@@ -2684,11 +2684,6 @@ export default function WebsiteEditPage() {
       }
       .canvas-widget-wrapper * {
         cursor: inherit !important;
-        pointer-events: none;
-      }
-      .canvas-widget-wrapper button {
-        cursor: pointer !important;
-        pointer-events: auto !important;
       }
       .widget-dragging {
         opacity: 0.8;
