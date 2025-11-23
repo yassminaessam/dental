@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -121,6 +122,7 @@ import {
   Hash,
   AtSign
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PropertyEditor } from "@/components/website-builder/PropertyEditor";
 import type { Widget, WidgetDefinition, NavLink } from "@/types/website-builder";
@@ -381,7 +383,33 @@ const widgetLibrary: WidgetDefinition[] = [
     defaultProps: { 
       title: 'Accordion Title', 
       content: 'Accordion content goes here. You can add more details or information that will be revealed when the user clicks on the title.',
-      defaultOpen: false
+      defaultOpen: false,
+      headerBackground: '#f8fafc',
+      headerHoverBackground: '#eef2ff',
+      headerTextColor: '#0f172a',
+      containerBackground: 'transparent',
+      contentBackground: '#ffffff',
+      contentTextColor: '#4b5563',
+      borderColor: '#e5e7eb',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderRadius: '0.75rem',
+      boxShadow: 'none',
+      headerPadding: '1rem 1.25rem',
+      contentPadding: '1rem 1.25rem',
+      iconColor: '#0f172a',
+      iconBackground: 'transparent',
+      iconSize: '1.125rem',
+      iconShape: 'chevron',
+      iconPosition: 'right',
+      gap: '0.75rem',
+      transition: 'all 0.25s ease',
+      showDivider: false,
+      dividerColor: '#e5e7eb',
+      showContentBorder: false,
+      contentBorderColor: '#e5e7eb',
+      titleFontSize: '1rem',
+      contentFontSize: '0.95rem'
     }
   },
   {
@@ -391,9 +419,39 @@ const widgetLibrary: WidgetDefinition[] = [
     category: 'interactive',
     defaultProps: { 
       title: 'Contact Form',
+      description: 'We would love to hear from you. Fill out the form below and we will reply shortly.',
       fields: ['name', 'email', 'message'], 
       submitText: 'Submit',
-      action: ''
+      action: '',
+      method: 'POST',
+      backgroundColor: '#ffffff',
+      borderColor: '#e5e7eb',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderRadius: '0.75rem',
+      padding: '1.5rem',
+      gap: '1rem',
+      shadow: '0 10px 25px rgba(0,0,0,0.05)',
+      titleAlign: 'left',
+      descriptionColor: '#4b5563',
+      showLabels: true,
+      labelColor: '#111827',
+      labelFontSize: '0.95rem',
+      inputBackground: '#ffffff',
+      inputTextColor: '#111827',
+      inputBorderColor: '#d1d5db',
+      inputBorderWidth: '1px',
+      inputBorderStyle: 'solid',
+      inputBorderRadius: '0.5rem',
+      inputPadding: '0.75rem',
+      inputPlaceholderColor: '#9ca3af',
+      columns: 1,
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonPadding: '0.75rem 1.5rem',
+      buttonBorderRadius: '0.5rem',
+      buttonFullWidth: true,
+      buttonHoverBackground: '#1d4ed8'
     }
   },
   {
@@ -404,10 +462,64 @@ const widgetLibrary: WidgetDefinition[] = [
     defaultProps: { 
       heading: 'Take Action Now', 
       description: 'Don\'t miss this amazing opportunity!',
+      badgeText: 'Limited Offer',
+      showBadge: true,
+      alignment: 'center',
+      contentMaxWidth: '640px',
+      contentGap: '1rem',
+      buttonsGap: '0.75rem',
+      padding: '3rem',
+      borderRadius: '1.5rem',
+      shadow: '0 25px 70px rgba(15,23,42,0.35)',
+      backgroundColor: '#0f172a',
+      useBackgroundGradient: true,
+      backgroundGradient: 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)',
+      backgroundImage: '',
+      showOverlay: true,
+      overlayColor: '#0f172a',
+      overlayOpacity: 0.65,
+      textColor: '#ffffff',
+      color: '#ffffff',
+      headingColor: '#ffffff',
+      headingSize: '2.5rem',
+      headingWeight: '700',
+      descriptionColor: '#f8fafc',
+      descriptionSize: '1.125rem',
+      descriptionMaxWidth: '560px',
+      badgeBackground: 'rgba(255,255,255,0.15)',
+      badgeColor: '#ffffff',
+      badgePadding: '0.25rem 0.75rem',
+      badgeLetterSpacing: '0.1em',
       buttonText: 'Get Started', 
       link: '#',
-      backgroundColor: '#0066cc',
-      color: '#ffffff'
+      buttonStyle: 'solid',
+      buttonBackground: '#ffffff',
+      buttonTextColor: '#0f172a',
+      buttonHoverBackground: '#f1f5f9',
+      buttonHoverColor: '#0f172a',
+      buttonBorderRadius: '999px',
+      buttonPadding: '0.9rem 2.4rem',
+      buttonBorderWidth: '0px',
+      buttonBorderColor: '#ffffff',
+      buttonTransition: 'all 0.2s ease',
+      buttonNewTab: false,
+      buttonRel: 'noopener noreferrer',
+      buttonsFullWidth: false,
+      showSecondaryButton: false,
+      secondaryButtonText: 'Learn More',
+      secondaryButtonLink: '#',
+      secondaryButtonStyle: 'outline',
+      secondaryButtonBackground: 'transparent',
+      secondaryButtonTextColor: '#ffffff',
+      secondaryButtonHoverBackground: 'rgba(255,255,255,0.12)',
+      secondaryButtonHoverColor: '#ffffff',
+      secondaryButtonBorderColor: 'rgba(255,255,255,0.55)',
+      secondaryButtonBorderWidth: '1px',
+      secondaryButtonBorderRadius: '999px',
+      secondaryButtonPadding: '0.9rem 2.2rem',
+      secondaryButtonNewTab: false,
+      secondaryButtonRel: 'noopener noreferrer',
+      buttonsAlignment: 'center'
     }
   },
   {
@@ -447,12 +559,54 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: AlertCircle,
     category: 'content',
     defaultProps: { 
-      type: 'info', 
+      type: 'info',
+      title: 'Heads up!',
       message: 'This is an alert message. It can be used to display important information to your users.',
-      dismissible: false,
-      icon: true,
+      description: 'Additional context or supporting details can go here to guide the user.',
+      showDescription: true,
+      showIcon: true,
+      icon: 'AlertCircle',
+      iconSize: '1.25rem',
+      iconColor: '',
+      iconBackground: 'rgba(255,255,255,0.2)',
+      layout: 'vertical',
+      alignment: 'left',
+      backgroundColor: '',
+      textColor: '',
+      borderColor: '',
       borderWidth: '1px',
-      borderStyle: 'solid'
+      borderStyle: 'solid',
+      borderRadius: '0.75rem',
+      padding: '1rem 1.25rem',
+      shadow: 'none',
+      accentEnabled: false,
+      accentColor: '',
+      accentPosition: 'left',
+      fullWidth: true,
+      gap: '0.75rem',
+      textGap: '0.35rem',
+      iconSpacing: '0.75rem',
+      messageLineHeight: '1.5',
+      descriptionLineHeight: '1.5',
+      showActions: false,
+      primaryActionText: 'Resolve',
+      primaryActionLink: '#',
+      primaryActionVariant: 'solid',
+      primaryActionBackground: '',
+      primaryActionTextColor: '',
+      primaryActionHoverBackground: '',
+      primaryActionHoverTextColor: '',
+      secondaryActionText: 'Dismiss',
+      secondaryActionLink: '#',
+      secondaryActionVariant: 'ghost',
+      secondaryActionBackground: 'transparent',
+      secondaryActionTextColor: '',
+      secondaryActionHoverBackground: '',
+      secondaryActionHoverTextColor: '',
+      dismissible: false,
+      closeLabel: 'Dismiss',
+      closeIconColor: '',
+      closeButtonVariant: 'ghost'
     }
   },
   // Navigation
@@ -464,6 +618,8 @@ const widgetLibrary: WidgetDefinition[] = [
     defaultProps: {
       logo: '',
       logoText: 'Brand',
+      tagline: 'Quality Care For Every Smile',
+      showTagline: false,
       links: [
         { label: 'Home', href: '#home' },
         { label: 'About', href: '#about' },
@@ -471,10 +627,45 @@ const widgetLibrary: WidgetDefinition[] = [
         { label: 'Contact', href: '#contact' }
       ],
       backgroundColor: '#ffffff',
-      color: '#333333',
-      position: 'fixed',
+      backgroundGradient: '',
+      color: '#1f2937',
+      linkColor: '#0f172a',
+      linkHoverColor: '#2563eb',
+      linkHoverBackground: 'rgba(37,99,235,0.08)',
+      linkActiveColor: '#1d4ed8',
+      linkActiveBackground: 'rgba(37,99,235,0.12)',
+      linkUppercase: false,
+      linkGap: '1.5rem',
+      linkPadding: '0.25rem 0.5rem',
+      linkBorderRadius: '999px',
+      containerMaxWidth: '1200px',
+      padding: '0.75rem 2rem',
+      height: '72px',
+      linksAlignment: 'between',
+      position: 'sticky',
+      stickyOffset: '0px',
+      showDivider: false,
+      dividerColor: 'rgba(15,23,42,0.08)',
+      borderBottom: '1px solid rgba(15,23,42,0.08)',
+      rounded: '999px',
       shadow: true,
-      height: '60px'
+      showButton: true,
+      buttonText: 'Book Visit',
+      buttonLink: '#book',
+      buttonVariant: 'solid',
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonHoverBackground: '#1d4ed8',
+      buttonHoverTextColor: '#ffffff',
+      buttonBorderColor: '#2563eb',
+      buttonBorderWidth: '0px',
+      buttonBorderRadius: '999px',
+      showSecondaryAction: false,
+      secondaryActionIcon: 'Phone',
+      secondaryActionLabel: 'Call Us',
+      secondaryActionLink: '#contact',
+      socialPlatforms: ['facebook', 'instagram'],
+      showSocialIcons: false
     }
   },
   {
@@ -516,10 +707,50 @@ const widgetLibrary: WidgetDefinition[] = [
         ['Jane Smith', 'jane@example.com', 'Pending']
       ],
       striped: true,
-      bordered: true,
+      stripedColor: 'rgba(15,23,42,0.04)',
       hoverable: true,
-      headerBackground: '#f5f5f5',
-      headerColor: '#333333'
+      rowHoverColor: 'rgba(37,99,235,0.08)',
+      bordered: true,
+      borderColor: 'rgba(15,23,42,0.12)',
+      borderWidth: '1px',
+      borderRadius: '1rem',
+      showShadow: true,
+      tableShadow: '0 25px 45px rgba(15,23,42,0.08)',
+      tableBackground: '#ffffff',
+      tablePadding: '1.5rem',
+      headerBackground: '#f8fafc',
+      headerColor: '#0f172a',
+      headerFontSize: '0.75rem',
+      headerFontWeight: '600',
+      headerLetterSpacing: '0.08em',
+      headerTextTransform: 'uppercase',
+      headerPadding: '0.75rem 1rem',
+      headerBorderColor: 'rgba(15,23,42,0.12)',
+      cellPadding: '0.85rem 1rem',
+      cellFontSize: '0.95rem',
+      cellColor: '#1f2937',
+      cellBackground: '#ffffff',
+      showRowDividers: true,
+      rowBorderWidth: '1px',
+      rowBorderColor: 'rgba(15,23,42,0.08)',
+      showColumnDividers: false,
+      columnDividerWidth: '1px',
+      columnDividerColor: 'rgba(15,23,42,0.08)',
+      columnAlignments: ['left', 'left', 'center'],
+      minTableWidth: '640px',
+      maxVisibleRows: 4,
+      caption: 'Recent Performance',
+      showCaption: true,
+      captionPosition: 'top',
+      captionAlign: 'left',
+      showToolbar: true,
+      toolbarTitle: 'Team KPIs',
+      toolbarDescription: 'Snapshot of efficiency across the practice',
+      toolbarActionText: 'View All',
+      toolbarActionLink: '#reports',
+      toolbarActionVariant: 'ghost',
+      emptyStateText: 'No data available',
+      tableAccentColor: '#2563eb'
     }
   },
   {
@@ -543,15 +774,54 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: BarChart,
     category: 'data',
     defaultProps: {
-      value: 60,
+      min: 0,
+      value: 65,
       max: 100,
-      label: 'Progress',
-      showPercentage: true,
-      backgroundColor: '#e0e0e0',
-      fillColor: '#0066cc',
-      height: '20px',
-      borderRadius: '10px',
-      animated: true
+      valueStep: 1,
+      label: 'Treatment Progress',
+      description: 'Tracking quarterly patient acquisition goals',
+      showLabel: true,
+      showDescription: true,
+      showValue: true,
+      valueFormat: 'percent',
+      valueDecimalPlaces: 0,
+      valuePrefix: '',
+      valueSuffix: '%',
+      valuePosition: 'inline',
+      labelLayout: 'stacked',
+      labelColor: '#0f172a',
+      descriptionColor: '#475569',
+      valueColor: '#0f172a',
+      valueInsideColor: '#ffffff',
+      barHeight: '1rem',
+      height: '1rem',
+      borderRadius: '999px',
+      trackColor: '#e2e8f0',
+      backgroundColor: '#e2e8f0',
+      trackBorderWidth: '0px',
+      trackBorderColor: 'transparent',
+      fillColor: '#2563eb',
+      fillGradient: 'linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%)',
+      useGradient: true,
+      fillShadow: '0 12px 30px rgba(37,99,235,0.35)',
+      animateTransition: true,
+      animated: true,
+      striped: true,
+      stripeColor: 'rgba(255,255,255,0.35)',
+      stripeSize: '1.5rem 1.5rem',
+      animateStripes: true,
+      showGlow: true,
+      glowColor: 'rgba(14,165,233,0.35)',
+      showGoal: true,
+      goalValue: 90,
+      goalLabel: 'Target 90%',
+      goalColor: '#0ea5e9',
+      goalLabelColor: '#0f172a',
+      showGoalLabel: true,
+      showMinMaxLabels: true,
+      minLabel: '0%',
+      maxLabel: '100%',
+      minMaxColor: '#94a3b8'
     }
   },
   {
@@ -823,6 +1093,7 @@ export default function WebsiteEditPage() {
   const [widgetStartPos, setWidgetStartPos] = React.useState({ x: 0, y: 0 });
   const [activeMainTab, setActiveMainTab] = React.useState<'widgets' | 'templates'>('widgets');
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [accordionState, setAccordionState] = React.useState<Record<string, boolean>>({});
 
   type TemplateDefinition = {
     id: string;
@@ -3287,7 +3558,6 @@ export default function WebsiteEditPage() {
           setSelectedWidget(widget);
         } : undefined}
       >
-        {widgetStyles.length > 0 && <style>{widgetStyles.join('\n')}</style>}
         {/* Widget controls */}
         {!isPreview && (
           <div className="absolute -top-8 left-0 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-2 py-1 rounded-t text-xs z-10">
@@ -3549,30 +3819,6 @@ export default function WebsiteEditPage() {
             const borderColor = widget.props.borderColor || backgroundColor;
             const isDisabled = Boolean(widget.props.disabled);
 
-            const inlineStyle = {
-              backgroundColor,
-              color: textColor,
-              padding: resolvedPadding,
-              borderRadius: widget.props.borderRadius || '0.375rem',
-              fontWeight: widget.props.fontWeight || '600',
-              fontSize: resolvedFontSize,
-              width: widget.props.fullWidth ? '100%' : 'auto',
-              borderWidth: widget.props.borderWidth || '0px',
-              borderStyle: widget.props.borderStyle || 'solid',
-              borderColor,
-              boxShadow: widget.props.boxShadow || 'none',
-              letterSpacing: widget.props.letterSpacing || 'normal',
-              textTransform: widget.props.textTransform || 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: widget.props.align || 'center',
-              textDecoration: 'none',
-              cursor: isDisabled ? 'not-allowed' : 'pointer',
-              opacity: isDisabled ? 0.6 : 1,
-              pointerEvents: isDisabled ? 'none' : 'auto',
-              transition: widget.props.transition || 'all 0.2s ease'
-            } as React.CSSProperties;
-
             const buttonClass = registerStyle('button', {
               backgroundColor,
               color: textColor,
@@ -3616,7 +3862,6 @@ export default function WebsiteEditPage() {
 
             const commonProps = {
               className: `${buttonClass} focus:outline-none`,
-              style: inlineStyle,
               onClick: (e: React.MouseEvent) => {
                 if (!isPreview) {
                   e.preventDefault();
@@ -3638,7 +3883,7 @@ export default function WebsiteEditPage() {
                   target={isPreview ? target : '_self'}
                   rel={isPreview ? rel : 'noopener noreferrer'}
                   {...commonProps}
-                  aria-disabled={isDisabled}
+                  aria-disabled={isDisabled ? 'true' : 'false'}
                 >
                   {content}
                 </a>
@@ -3714,7 +3959,6 @@ export default function WebsiteEditPage() {
             };
 
             const iconContainerClass = registerStyle('icon-container', iconContainerStyles);
-            const inlineIconStyles = iconContainerStyles as React.CSSProperties;
 
             const hoverCss = buildCssBlock(`${iconContainerClass}:hover`, {
               color: widget.props.hoverColor || undefined,
@@ -3859,7 +4103,6 @@ export default function WebsiteEditPage() {
             const iconWrapper = (
               <div
                 className={`${iconContainerClass}`}
-                style={inlineIconStyles}
                 title={widget.props.tooltip || undefined}
                 onClick={(e) => {
                   if (!isPreview && hasLink) {
@@ -4134,71 +4377,899 @@ export default function WebsiteEditPage() {
               </div>
             );
           })()}
-          {widget.type === 'alert' && (
-            <div className={`p-4 rounded-lg flex items-start gap-2 ${
-              widget.props.type === 'info' ? 'bg-blue-50 text-blue-900 border-blue-200' :
-              widget.props.type === 'warning' ? 'bg-yellow-50 text-yellow-900 border-yellow-200' :
-              widget.props.type === 'error' ? 'bg-red-50 text-red-900 border-red-200' :
-              'bg-green-50 text-green-900 border-green-200'
-            } border-2`}>
-              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                {widget.props.message}
-              </div>
-              {widget.props.dismissible && (
-                <button className="text-current opacity-50 hover:opacity-100">×</button>
-              )}
-            </div>
-          )}
-          {widget.type === 'cta' && (() => {
-            const ctaClass = registerStyle('cta', {
-              backgroundColor: widget.props.backgroundColor,
-              color: widget.props.color
+          {widget.type === 'alert' && (() => {
+            const variant = (widget.props.type || 'info') as 'info' | 'success' | 'warning' | 'error';
+            const palette: Record<string, { background: string; border: string; text: string; accent: string }> = {
+              info: {
+                background: '#e0f2ff',
+                border: '#bae6fd',
+                text: '#0f172a',
+                accent: '#38bdf8'
+              },
+              success: {
+                background: '#ecfdf3',
+                border: '#bbf7d0',
+                text: '#065f46',
+                accent: '#34d399'
+              },
+              warning: {
+                background: '#fffbeb',
+                border: '#fde68a',
+                text: '#92400e',
+                accent: '#fbbf24'
+              },
+              error: {
+                background: '#fef2f2',
+                border: '#fecaca',
+                text: '#991b1b',
+                accent: '#f87171'
+              }
+            };
+
+            const resolvedPalette = palette[variant] || palette.info;
+            const backgroundColor = widget.props.backgroundColor && widget.props.backgroundColor !== ''
+              ? widget.props.backgroundColor
+              : resolvedPalette.background;
+            const borderColor = widget.props.borderColor && widget.props.borderColor !== ''
+              ? widget.props.borderColor
+              : resolvedPalette.border;
+            const textColor = widget.props.textColor && widget.props.textColor !== ''
+              ? widget.props.textColor
+              : resolvedPalette.text;
+            const accentColor = widget.props.accentColor && widget.props.accentColor !== ''
+              ? widget.props.accentColor
+              : resolvedPalette.accent;
+
+            const layout = widget.props.layout === 'horizontal' ? 'horizontal' : 'vertical';
+            const alignment = widget.props.alignment || 'left';
+            const textAlign = alignment === 'right' ? 'right' : alignment === 'center' ? 'center' : 'left';
+
+            const containerStyles: Record<string, StyleValue> = {
+              backgroundColor,
+              color: textColor,
+              borderColor,
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderRadius: widget.props.borderRadius || '0.75rem',
+              boxShadow: widget.props.shadow || 'none',
+              padding: widget.props.padding || '1rem 1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.gap || '0.75rem',
+              width: widget.props.fullWidth === false ? 'auto' : '100%',
+              position: widget.props.accentEnabled ? 'relative' : undefined
+            };
+
+            const bodyStyles: Record<string, StyleValue> = {
+              display: 'flex',
+              flexDirection: layout === 'horizontal' ? 'row' : 'column',
+              alignItems: layout === 'horizontal' ? 'center' : 'stretch',
+              gap: widget.props.iconSpacing || '0.75rem',
+              width: '100%'
+            };
+
+            const textGroupStyles: Record<string, StyleValue> = {
+              flex: 1,
+              width: '100%',
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.textGap || '0.4rem',
+              textAlign
+            };
+
+            const titleStyles: Record<string, StyleValue> = {
+              fontWeight: 600,
+              fontSize: '1rem',
+              margin: 0
+            };
+
+            const messageStyles: Record<string, StyleValue> = {
+              margin: 0,
+              lineHeight: widget.props.messageLineHeight || 1.5,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere'
+            };
+
+            const descriptionStyles: Record<string, StyleValue> = {
+              margin: 0,
+              marginTop: '0.15rem',
+              color: formatStyleValue(widget.props.descriptionColor) || formatStyleValue(widget.props.textColor) || textColor,
+              lineHeight: widget.props.descriptionLineHeight || 1.5,
+              fontSize: '0.95rem',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere'
+            };
+
+            const actionsStyles: Record<string, StyleValue> = {
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              justifyContent: textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start',
+              width: '100%'
+            };
+
+            const showIcon = widget.props.showIcon !== false;
+            const iconColor = widget.props.iconColor && widget.props.iconColor !== ''
+              ? widget.props.iconColor
+              : accentColor;
+            const iconBackground = widget.props.iconBackground || 'rgba(255,255,255,0.2)';
+            const iconStyles: Record<string, StyleValue> = {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: iconColor,
+              backgroundColor: iconBackground,
+              borderRadius: '999px',
+              padding: '0.4rem',
+              flexShrink: 0,
+              fontSize: widget.props.iconSize || '1.25rem'
+            };
+
+            const iconMap: Record<string, LucideIcon> = {
+              AlertCircle,
+              Info,
+              Check,
+              Bell,
+              HelpCircle,
+              X
+            };
+            const iconName = widget.props.icon || 'AlertCircle';
+            const IconComponent = iconMap[iconName] || iconMap.AlertCircle;
+
+            const accentPosition = widget.props.accentPosition || 'left';
+            const accentStyles: Record<string, StyleValue> =
+              accentPosition === 'left' || accentPosition === 'right'
+                ? {
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    width: '4px',
+                    [accentPosition]: 0,
+                    backgroundColor: accentColor,
+                    borderTopLeftRadius: accentPosition === 'left' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderBottomLeftRadius: accentPosition === 'left' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderTopRightRadius: accentPosition === 'right' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderBottomRightRadius: accentPosition === 'right' ? widget.props.borderRadius || '0.75rem' : undefined
+                  }
+                : {
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: '4px',
+                    [accentPosition]: 0,
+                    backgroundColor: accentColor,
+                    borderTopLeftRadius: accentPosition === 'top' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderTopRightRadius: accentPosition === 'top' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderBottomLeftRadius: accentPosition === 'bottom' ? widget.props.borderRadius || '0.75rem' : undefined,
+                    borderBottomRightRadius: accentPosition === 'bottom' ? widget.props.borderRadius || '0.75rem' : undefined
+                  };
+
+            const primaryVariant = widget.props.primaryActionVariant || 'solid';
+            const primaryBackground = widget.props.primaryActionBackground || (primaryVariant === 'solid' ? accentColor : 'transparent');
+            const primaryTextColor = widget.props.primaryActionTextColor || (primaryVariant === 'solid' ? '#ffffff' : accentColor);
+            const primaryHoverBackground = widget.props.primaryActionHoverBackground || primaryBackground;
+            const primaryHoverText = widget.props.primaryActionHoverTextColor || primaryTextColor;
+
+            const baseButtonStyles = (bg: string, color: string, variant: string) => ({
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.5rem 1rem',
+              borderRadius: '999px',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+              borderWidth: variant === 'solid' ? '0px' : '1px',
+              borderStyle: 'solid',
+              borderColor: variant === 'solid' ? 'transparent' : color,
+              backgroundColor: variant === 'ghost' ? 'transparent' : bg,
+              color,
+              transition: 'all 0.2s ease'
             });
 
-            const ctaButtonClass = registerStyle('cta-button', {
-              color: widget.props.backgroundColor
-            });
+            const primaryButtonStyles = baseButtonStyles(primaryBackground, primaryTextColor, primaryVariant);
+            const secondaryVariant = widget.props.secondaryActionVariant || 'ghost';
+            const secondaryBackground = widget.props.secondaryActionBackground || 'transparent';
+            const secondaryTextColor = widget.props.secondaryActionTextColor || accentColor;
+            const secondaryHoverBackground = widget.props.secondaryActionHoverBackground || secondaryBackground;
+            const secondaryHoverText = widget.props.secondaryActionHoverTextColor || secondaryTextColor;
+            const secondaryButtonStyles = baseButtonStyles(secondaryBackground, secondaryTextColor, secondaryVariant);
+
+            const closeVariant = widget.props.closeButtonVariant || 'ghost';
+            const closeColor = widget.props.closeIconColor || textColor;
+            const closeButtonStyles: Record<string, StyleValue> = {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '999px',
+              borderWidth: closeVariant === 'outline' ? '1px' : '0px',
+              borderStyle: 'solid',
+              borderColor: closeVariant === 'outline' ? closeColor : 'transparent',
+              backgroundColor: closeVariant === 'solid' ? closeColor : 'transparent',
+              color: closeVariant === 'solid' ? backgroundColor : closeColor,
+              marginLeft: layout === 'horizontal' ? 'auto' : undefined,
+              padding: 0,
+              cursor: 'pointer'
+            };
+
+            const containerClass = registerStyle('alert-container', containerStyles);
+            const bodyClass = registerStyle('alert-body', bodyStyles);
+            const textGroupClass = registerStyle('alert-text-group', textGroupStyles);
+            const titleClass = registerStyle('alert-title', titleStyles);
+            const messageClass = registerStyle('alert-message', messageStyles);
+            const descriptionClass = registerStyle('alert-description', descriptionStyles);
+            const actionsClass = registerStyle('alert-actions', actionsStyles);
+            const iconClass = showIcon ? registerStyle('alert-icon', iconStyles) : '';
+            const primaryButtonClass = widget.props.showActions && widget.props.primaryActionText
+              ? registerStyle('alert-primary-button', primaryButtonStyles)
+              : '';
+            const secondaryButtonClass = widget.props.showActions && widget.props.secondaryActionText
+              ? registerStyle('alert-secondary-button', secondaryButtonStyles)
+              : '';
+            const closeButtonClass = widget.props.dismissible
+              ? registerStyle('alert-close-button', closeButtonStyles)
+              : '';
+            const accentClass = widget.props.accentEnabled ? registerStyle('alert-accent', accentStyles) : '';
+
+            if (primaryButtonClass) {
+              const hoverCss = buildCssBlock(`.${primaryButtonClass}:hover`, {
+                backgroundColor: primaryVariant === 'solid' ? primaryHoverBackground : (primaryHoverBackground || 'transparent'),
+                color: primaryHoverText,
+                borderColor: primaryVariant === 'solid' ? undefined : (primaryHoverText || primaryTextColor)
+              });
+              if (hoverCss) widgetStyles.push(hoverCss);
+            }
+
+            if (secondaryButtonClass) {
+              const hoverCss = buildCssBlock(`.${secondaryButtonClass}:hover`, {
+                backgroundColor: secondaryHoverBackground,
+                color: secondaryHoverText,
+                borderColor: secondaryVariant === 'solid' ? 'transparent' : secondaryHoverText
+              });
+              if (hoverCss) widgetStyles.push(hoverCss);
+            }
+
+            const handleActionClick = (e: React.MouseEvent) => {
+              if (!isPreview) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            };
 
             return (
-              <div className={`p-8 rounded-lg text-center ${ctaClass}`}>
-                <h2 className="text-2xl font-bold mb-2">{widget.props.heading}</h2>
-                {widget.props.description && (
-                  <p className="mb-4 opacity-90">{widget.props.description}</p>
+              <div className={containerClass}>
+                {widget.props.accentEnabled && <div className={accentClass} aria-hidden="true" />}
+                <div className={bodyClass}>
+                  {showIcon && (
+                    <span className={iconClass}>
+                      <IconComponent size={widget.props.iconSize || '1.25rem'} />
+                    </span>
+                  )}
+                  <div className={textGroupClass}>
+                    {widget.props.title && <p className={titleClass}>{widget.props.title}</p>}
+                    {widget.props.message && <p className={messageClass}>{widget.props.message}</p>}
+                    {widget.props.showDescription !== false && widget.props.description && (
+                      <p className={descriptionClass}>{widget.props.description}</p>
+                    )}
+                  </div>
+                  {widget.props.dismissible && (
+                    <button
+                      className={`${closeButtonClass} focus:outline-none`}
+                      aria-label={widget.props.closeLabel || 'Dismiss alert'}
+                      onClick={handleActionClick}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {widget.props.showActions && (
+                  <div className={actionsClass}>
+                    {widget.props.primaryActionText && primaryButtonClass && (
+                      <a
+                        href={widget.props.primaryActionLink || '#'}
+                        target={isPreview ? '_blank' : '_self'}
+                        rel={isPreview ? 'noopener noreferrer' : undefined}
+                        className={`${primaryButtonClass} focus:outline-none`}
+                        onClick={handleActionClick}
+                      >
+                        {widget.props.primaryActionText}
+                      </a>
+                    )}
+                    {widget.props.secondaryActionText && secondaryButtonClass && (
+                      <a
+                        href={widget.props.secondaryActionLink || '#'}
+                        target={isPreview ? '_blank' : '_self'}
+                        rel={isPreview ? 'noopener noreferrer' : undefined}
+                        className={`${secondaryButtonClass} focus:outline-none`}
+                        onClick={handleActionClick}
+                      >
+                        {widget.props.secondaryActionText}
+                      </a>
+                    )}
+                  </div>
                 )}
-                <button className={`bg-white px-6 py-3 rounded-lg font-bold ${ctaButtonClass}`}>
-                  {widget.props.buttonText}
-                </button>
               </div>
             );
           })()}
-          {widget.type === 'form' && (
-            <div className="space-y-4 p-4 border rounded-lg">
-              {widget.props.title && (
-                <h3 className="font-bold text-lg mb-4">{widget.props.title}</h3>
-              )}
-              {widget.props.fields.map((field: string, idx: number) => (
-                <div key={idx}>
-                  <Label className="capitalize">{field}</Label>
-                  <Input placeholder={`Enter ${field}...`} />
+          {widget.type === 'cta' && (() => {
+            const alignment = widget.props.alignment || 'center';
+            const buttonsAlignment = widget.props.buttonsAlignment || alignment;
+            const alignItemsMap: Record<string, string> = {
+              left: 'flex-start',
+              center: 'center',
+              right: 'flex-end'
+            };
+            const textAlign = alignment === 'left' ? 'left' : alignment === 'right' ? 'right' : 'center';
+
+            const backgroundGradient = typeof widget.props.backgroundGradient === 'string'
+              ? widget.props.backgroundGradient.trim()
+              : '';
+            const backgroundImageUrl = typeof widget.props.backgroundImage === 'string'
+              ? widget.props.backgroundImage.trim()
+              : '';
+            const useGradient = widget.props.useBackgroundGradient !== false;
+            const backgroundImageValue = useGradient && backgroundGradient
+              ? backgroundGradient
+              : (backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined);
+
+            const overlayRaw = widget.props.overlayOpacity;
+            const overlayOpacity = (() => {
+              if (typeof overlayRaw === 'number') return overlayRaw;
+              const parsed = parseFloat(overlayRaw);
+              return Number.isFinite(parsed) ? parsed : 0.65;
+            })();
+            const safeOverlayOpacity = Math.max(0, Math.min(1, overlayOpacity));
+            const showOverlay = widget.props.showOverlay !== false && safeOverlayOpacity > 0;
+
+            const containerStyles: Record<string, StyleValue> = {
+              backgroundColor: widget.props.backgroundColor || '#0f172a',
+              backgroundImage: backgroundImageValue,
+              backgroundSize: backgroundImageValue ? 'cover' : undefined,
+              backgroundPosition: backgroundImageValue ? 'center' : undefined,
+              borderRadius: widget.props.borderRadius || '1.5rem',
+              padding: widget.props.padding || '3rem',
+              boxShadow: widget.props.shadow || 'none',
+              color: widget.props.textColor || widget.props.color || '#ffffff',
+              position: 'relative',
+              overflow: 'hidden'
+            };
+
+            const overlayStyles: Record<string, StyleValue> = {
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: widget.props.overlayColor || '#0f172a',
+              opacity: safeOverlayOpacity,
+              pointerEvents: 'none'
+            };
+
+            const contentStyles: Record<string, StyleValue> = {
+              position: 'relative',
+              zIndex: 1,
+              maxWidth: widget.props.contentMaxWidth || '640px',
+              textAlign,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.contentGap || '1rem',
+              alignItems: alignItemsMap[alignment] || 'center',
+              marginLeft: alignment === 'left' ? 0 : 'auto',
+              marginRight: alignment === 'right' ? 0 : 'auto'
+            };
+
+            const badgeStyles: Record<string, StyleValue> = {
+              alignSelf: alignItemsMap[alignment] || 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: widget.props.badgeLetterSpacing || '0.1em',
+              textTransform: 'uppercase',
+              padding: widget.props.badgePadding || '0.25rem 0.75rem',
+              borderRadius: '999px',
+              color: widget.props.badgeColor || '#ffffff',
+              backgroundColor: widget.props.badgeBackground || 'rgba(255,255,255,0.15)'
+            };
+
+            const headingStyles: Record<string, StyleValue> = {
+              fontSize: widget.props.headingSize || '2.5rem',
+              fontWeight: widget.props.headingWeight || '700',
+              color: widget.props.headingColor || widget.props.textColor || widget.props.color || '#ffffff',
+              margin: 0
+            };
+
+            const descriptionStyles: Record<string, StyleValue> = {
+              color: widget.props.descriptionColor || widget.props.color || '#f8fafc',
+              fontSize: widget.props.descriptionSize || '1.125rem',
+              lineHeight: 1.6,
+              margin: 0,
+              maxWidth: widget.props.descriptionMaxWidth || '560px',
+              alignSelf: alignItemsMap[alignment] || 'center'
+            };
+
+            const buttonsFullWidth = Boolean(widget.props.buttonsFullWidth);
+            const buttonGroupStyles: Record<string, StyleValue> = {
+              display: 'flex',
+              flexWrap: buttonsFullWidth ? 'nowrap' : 'wrap',
+              flexDirection: buttonsFullWidth ? 'column' : 'row',
+              gap: widget.props.buttonsGap || '0.75rem',
+              justifyContent: buttonsAlignment === 'left'
+                ? 'flex-start'
+                : buttonsAlignment === 'right'
+                  ? 'flex-end'
+                  : 'center',
+              alignItems: buttonsFullWidth ? 'stretch' : undefined,
+              width: '100%'
+            };
+
+            const primaryIsOutline = (widget.props.buttonStyle || 'solid') === 'outline';
+            const primaryBackground = primaryIsOutline
+              ? 'transparent'
+              : widget.props.buttonBackground || '#ffffff';
+            const primaryBorderWidth = widget.props.buttonBorderWidth || (primaryIsOutline ? '1px' : '0px');
+            const primaryBorderColor = widget.props.buttonBorderColor || (primaryIsOutline ? widget.props.buttonTextColor || '#0f172a' : 'transparent');
+            const primaryTextColor = widget.props.buttonTextColor || '#0f172a';
+
+            const baseButtonStyles: Record<string, StyleValue> = {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: widget.props.buttonTransition || 'all 0.2s ease',
+              borderRadius: widget.props.buttonBorderRadius || '999px',
+              padding: widget.props.buttonPadding || '0.9rem 2.4rem',
+              minWidth: buttonsFullWidth ? '100%' : undefined,
+              width: buttonsFullWidth ? '100%' : 'auto',
+              textAlign: 'center'
+            };
+
+            const primaryButtonStyles: Record<string, StyleValue> = {
+              ...baseButtonStyles,
+              backgroundColor: primaryBackground,
+              color: primaryTextColor,
+              borderWidth: primaryBorderWidth,
+              borderColor: primaryBorderColor,
+              borderStyle: 'solid',
+              boxShadow: primaryIsOutline ? 'none' : undefined
+            };
+
+            const secondaryStyle = widget.props.secondaryButtonStyle || 'outline';
+            const secondaryIsSolid = secondaryStyle === 'solid';
+            const secondaryIsGhost = secondaryStyle === 'ghost';
+            const secondaryBackground = secondaryIsGhost
+              ? 'transparent'
+              : widget.props.secondaryButtonBackground || 'transparent';
+            const secondaryBorderColor = widget.props.secondaryButtonBorderColor || (secondaryIsSolid ? 'transparent' : 'rgba(255,255,255,0.55)');
+            const secondaryBorderWidth = widget.props.secondaryButtonBorderWidth || (secondaryIsGhost ? '0px' : '1px');
+            const secondaryTextColor = widget.props.secondaryButtonTextColor || '#ffffff';
+            const showSecondaryButton = Boolean(widget.props.showSecondaryButton);
+            const secondaryText = widget.props.secondaryButtonText || 'Learn More';
+
+            const secondaryButtonStyles: Record<string, StyleValue> = {
+              ...baseButtonStyles,
+              backgroundColor: secondaryBackground,
+              color: secondaryTextColor,
+              borderWidth: secondaryBorderWidth,
+              borderColor: secondaryBorderColor,
+              borderStyle: 'solid',
+              padding: widget.props.secondaryButtonPadding || widget.props.buttonPadding || '0.9rem 2.2rem'
+            };
+
+            const optionalHoverCss = (className: string, styles: Record<string, StyleValue>) => {
+              const css = buildCssBlock(`.${className}:hover`, styles);
+              if (css) {
+                widgetStyles.push(css);
+              }
+            };
+
+            const ctaClass = registerStyle('cta', containerStyles);
+            const overlayClass = showOverlay ? registerStyle('cta-overlay', overlayStyles) : '';
+            const ctaContentClass = registerStyle('cta-content', contentStyles);
+            const badgeClass = registerStyle('cta-badge', badgeStyles);
+            const headingClass = registerStyle('cta-heading', headingStyles);
+            const descriptionClass = registerStyle('cta-description', descriptionStyles);
+            const buttonsClass = registerStyle('cta-buttons', buttonGroupStyles);
+            const primaryButtonClass = registerStyle('cta-button-primary', primaryButtonStyles);
+            const secondaryButtonClass = showSecondaryButton
+              ? registerStyle('cta-button-secondary', secondaryButtonStyles)
+              : '';
+
+            optionalHoverCss(primaryButtonClass, {
+              backgroundColor: widget.props.buttonHoverBackground || (primaryIsOutline ? 'transparent' : primaryBackground),
+              color: widget.props.buttonHoverColor || primaryTextColor,
+              borderColor: widget.props.buttonBorderColor || primaryBorderColor
+            });
+
+            if (secondaryButtonClass) {
+              optionalHoverCss(secondaryButtonClass, {
+                backgroundColor: widget.props.secondaryButtonHoverBackground || secondaryBackground,
+                color: widget.props.secondaryButtonHoverColor || secondaryTextColor,
+                borderColor: widget.props.secondaryButtonBorderColor || secondaryBorderColor
+              });
+            }
+
+            const primaryHref = widget.props.link && widget.props.link.trim() !== '' ? widget.props.link : '#';
+            const primaryTarget = widget.props.buttonNewTab ? '_blank' : '_self';
+            const primaryRel = widget.props.buttonNewTab
+              ? widget.props.buttonRel || 'noopener noreferrer'
+              : widget.props.buttonRel || undefined;
+
+            const secondaryHref = widget.props.secondaryButtonLink && widget.props.secondaryButtonLink.trim() !== ''
+              ? widget.props.secondaryButtonLink
+              : '#';
+            const secondaryTarget = widget.props.secondaryButtonNewTab ? '_blank' : '_self';
+            const secondaryRel = widget.props.secondaryButtonNewTab
+              ? widget.props.secondaryButtonRel || 'noopener noreferrer'
+              : widget.props.secondaryButtonRel || undefined;
+
+            const handleButtonClick = (e: React.MouseEvent) => {
+              if (!isPreview) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            };
+
+            return (
+              <div className={`${ctaClass}`}>
+                {showOverlay && overlayClass && <div className={overlayClass} aria-hidden="true" />}
+                <div className={ctaContentClass}>
+                  {widget.props.showBadge !== false && widget.props.badgeText && (
+                    <span className={badgeClass}>{widget.props.badgeText}</span>
+                  )}
+                  {widget.props.heading && (
+                    <h2 className={headingClass}>{widget.props.heading}</h2>
+                  )}
+                  {widget.props.description && (
+                    <p className={descriptionClass}>{widget.props.description}</p>
+                  )}
+                  <div className={buttonsClass}>
+                    <a
+                      href={primaryHref}
+                      target={isPreview ? primaryTarget : '_self'}
+                      rel={isPreview ? primaryRel : 'noopener noreferrer'}
+                      className={`${primaryButtonClass} focus:outline-none`}
+                      onClick={handleButtonClick}
+                    >
+                      {widget.props.buttonText || 'Get Started'}
+                    </a>
+                    {showSecondaryButton && (
+                      <a
+                        href={secondaryHref}
+                        target={isPreview ? secondaryTarget : '_self'}
+                        rel={isPreview ? secondaryRel : 'noopener noreferrer'}
+                        className={`${secondaryButtonClass} focus:outline-none`}
+                        onClick={handleButtonClick}
+                      >
+                        {secondaryText}
+                      </a>
+                    )}
+                  </div>
                 </div>
-              ))}
-              <Button className="w-full">{widget.props.submitText}</Button>
-            </div>
-          )}
-          {widget.type === 'accordion' && (
-            <div className="border rounded-lg overflow-hidden">
-              <div className="p-4 bg-gray-50 font-medium flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                {widget.props.title}
-                <ChevronDown className="h-4 w-4" />
               </div>
-              {widget.props.defaultOpen && (
-                <div className="p-4 border-t bg-white">
-                  {widget.props.content}
+            );
+          })()}
+          {widget.type === 'form' && (() => {
+            const fields: string[] = Array.isArray(widget.props.fields)
+              ? widget.props.fields
+              : [];
+            const columns = Math.max(1, parseInt(String(widget.props.columns || 1), 10) || 1);
+            const gapValue = widget.props.gap || '1rem';
+            const containerStyles: Record<string, StyleValue> = {
+              backgroundColor: widget.props.backgroundColor || '#ffffff',
+              borderColor: widget.props.borderColor || '#e5e7eb',
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderRadius: widget.props.borderRadius || '0.75rem',
+              padding: widget.props.padding || '1.5rem',
+              boxShadow: widget.props.shadow || '0 10px 25px rgba(0,0,0,0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem'
+            };
+
+            const labelStyles: Record<string, StyleValue> = {
+              color: widget.props.labelColor || '#111827',
+              fontSize: widget.props.labelFontSize || '0.95rem',
+              fontWeight: 500,
+              marginBottom: '0.35rem'
+            };
+
+            const inputStyles: Record<string, StyleValue> = {
+              backgroundColor: widget.props.inputBackground || '#ffffff',
+              color: widget.props.inputTextColor || '#111827',
+              borderColor: widget.props.inputBorderColor || '#d1d5db',
+              borderWidth: widget.props.inputBorderWidth || '1px',
+              borderStyle: widget.props.inputBorderStyle || 'solid',
+              borderRadius: widget.props.inputBorderRadius || '0.5rem',
+              padding: widget.props.inputPadding || '0.75rem',
+              width: '100%',
+              boxShadow: 'none'
+            };
+
+            const buttonStyles: Record<string, StyleValue> = {
+              backgroundColor: widget.props.buttonBackground || '#2563eb',
+              color: widget.props.buttonTextColor || '#ffffff',
+              padding: widget.props.buttonPadding || '0.75rem 1.5rem',
+              borderRadius: widget.props.buttonBorderRadius || '0.5rem',
+              fontWeight: 600,
+              border: 'none',
+              width: widget.props.buttonFullWidth === false ? 'auto' : '100%',
+              textAlign: 'center',
+              transition: 'background-color 0.2s ease',
+              cursor: 'pointer'
+            };
+
+            const gridStyles: Record<string, StyleValue> = {
+              display: 'grid',
+              gridTemplateColumns: columns === 1 ? '1fr' : `repeat(${columns}, minmax(0, 1fr))`,
+              gap: gapValue
+            };
+
+            const titleAlign = widget.props.titleAlign || 'left';
+            const titleStyles: Record<string, StyleValue> = {
+              textAlign: titleAlign,
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              margin: 0
+            };
+
+            const descriptionStyles: Record<string, StyleValue> = {
+              marginTop: '0.5rem',
+              color: widget.props.descriptionColor || '#4b5563',
+              textAlign: titleAlign
+            };
+
+            const fieldWideStyles: Record<string, StyleValue> = {
+              gridColumn: '1 / -1'
+            };
+
+            const containerClass = registerStyle('form-container', containerStyles);
+            const labelClass = registerStyle('form-label', labelStyles);
+            const inputClass = registerStyle('form-input', inputStyles);
+            const buttonClass = registerStyle('form-button', buttonStyles);
+            const gridClass = registerStyle('form-grid', gridStyles);
+            const titleClass = registerStyle('form-title', titleStyles);
+            const descriptionClass = registerStyle('form-description', descriptionStyles);
+            const fieldWideClass = registerStyle('form-field-wide', fieldWideStyles);
+
+            const placeholderCss = buildCssBlock(`.${inputClass}::placeholder`, {
+              color: widget.props.inputPlaceholderColor || '#9ca3af'
+            });
+            if (placeholderCss) {
+              widgetStyles.push(placeholderCss);
+            }
+
+            const buttonHoverCss = buildCssBlock(`.${buttonClass}:hover`, {
+              backgroundColor: widget.props.buttonHoverBackground || widget.props.buttonBackground || '#1d4ed8'
+            });
+            if (buttonHoverCss) {
+              widgetStyles.push(buttonHoverCss);
+            }
+
+            const getFieldType = (fieldName: string) => {
+              const lower = fieldName.toLowerCase();
+              if (lower.includes('email')) return 'email';
+              if (lower.includes('phone') || lower.includes('tel')) return 'tel';
+              if (lower.includes('date')) return 'date';
+              return 'text';
+            };
+
+            const shouldUseTextarea = (fieldName: string) => /message|note|comment|address|details/i.test(fieldName);
+
+            return (
+              <form
+                className={containerClass}
+                action={widget.props.action || undefined}
+                method={(widget.props.method || 'POST').toString().toUpperCase()}
+                onSubmit={(e) => e.preventDefault()}
+              >
+                {widget.props.title && (
+                  <div>
+                    <h3 className={titleClass}>{widget.props.title}</h3>
+                    {widget.props.description && (
+                      <p className={descriptionClass}>{widget.props.description}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className={gridClass}>
+                  {fields.map((field, idx) => {
+                    const trimmed = (field || '').trim();
+                    if (!trimmed) return null;
+                    const isTextarea = shouldUseTextarea(trimmed);
+                    const inputType = getFieldType(trimmed);
+                    const displayLabel = trimmed.replace(/_/g, ' ');
+                    const key = `${widget.id}-field-${idx}-${trimmed}`;
+
+                    return (
+                      <div
+                        key={key}
+                        className={isTextarea && columns > 1 ? fieldWideClass : undefined}
+                      >
+                        {widget.props.showLabels !== false && (
+                          <Label className={labelClass}>
+                            {displayLabel.charAt(0).toUpperCase() + displayLabel.slice(1)}
+                          </Label>
+                        )}
+                        {isTextarea ? (
+                          <Textarea
+                            className={inputClass}
+                            placeholder={`Enter ${displayLabel}...`}
+                            rows={4}
+                          />
+                        ) : (
+                          <Input
+                            type={inputType}
+                            className={inputClass}
+                            placeholder={`Enter ${displayLabel}...`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
+
+                <button
+                  type="submit"
+                  className={buttonClass}
+                >
+                  {widget.props.submitText || 'Submit'}
+                </button>
+              </form>
+            );
+          })()}
+          {widget.type === 'accordion' && (() => {
+            const iconShape = widget.props.iconShape || 'chevron';
+            const iconPosition = widget.props.iconPosition || 'right';
+            const iconColor = widget.props.iconColor || widget.props.headerTextColor || '#0f172a';
+            const iconSize = widget.props.iconSize || '1.125rem';
+
+            const iconMap: Record<string, { open: LucideIcon; closed: LucideIcon }> = {
+              chevron: { open: ChevronUp, closed: ChevronDown },
+              caret: { open: ChevronDown, closed: ChevronRight },
+              plus: { open: Minus, closed: Plus }
+            };
+            const selectedIcon = iconMap[iconShape] || iconMap.chevron;
+
+            const currentOpenState = Object.prototype.hasOwnProperty.call(accordionState, widget.id)
+              ? accordionState[widget.id]
+              : Boolean(widget.props.defaultOpen);
+            const IconComponent = currentOpenState ? selectedIcon.open : selectedIcon.closed;
+
+            const containerBackground = widget.props.containerBackground || 'transparent';
+            const headerBackground = widget.props.headerBackground || containerBackground || '#f8fafc';
+            const contentBackground = widget.props.contentBackground || containerBackground || '#ffffff';
+
+            const containerStyles: Record<string, StyleValue> = {
+              borderWidth: widget.props.borderWidth || '1px',
+              borderColor: widget.props.borderColor || '#e5e7eb',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderRadius: widget.props.borderRadius || '0.75rem',
+              boxShadow: widget.props.boxShadow || 'none',
+              overflow: 'hidden',
+              backgroundColor: containerBackground
+            };
+
+            const headerStyles: Record<string, StyleValue> = {
+              backgroundColor: headerBackground,
+              color: widget.props.headerTextColor || '#0f172a',
+              padding: widget.props.headerPadding || '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: widget.props.gap || '0.75rem',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: widget.props.transition || 'all 0.25s ease',
+              fontSize: widget.props.titleFontSize || '1rem'
+            };
+
+            const contentStyles: Record<string, StyleValue> = {
+              backgroundColor: contentBackground,
+              color: widget.props.contentTextColor || '#4b5563',
+              padding: widget.props.contentPadding || '1rem 1.25rem',
+              fontSize: widget.props.contentFontSize || '0.95rem',
+              borderTop: widget.props.showContentBorder
+                ? `1px solid ${widget.props.contentBorderColor || '#e5e7eb'}`
+                : 'none'
+            };
+
+            const iconStyles: React.CSSProperties = {
+              color: iconColor,
+              width: iconSize,
+              height: iconSize,
+              backgroundColor: widget.props.iconBackground || 'transparent',
+              borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            };
+
+            const dividerStyles: Record<string, StyleValue> = {
+              height: '1px',
+              backgroundColor: widget.props.dividerColor || '#e5e7eb'
+            };
+
+            const containerClass = registerStyle('accordion', containerStyles);
+            const headerClass = registerStyle('accordion-header', headerStyles);
+            const contentClass = registerStyle('accordion-content', contentStyles);
+            const dividerClass = registerStyle('accordion-divider', dividerStyles);
+
+            const headerHoverCss = buildCssBlock(`${headerClass}:hover`, {
+              backgroundColor: widget.props.headerHoverBackground || headerBackground || '#eef2ff'
+            });
+            if (headerHoverCss) {
+              widgetStyles.push(headerHoverCss);
+            }
+
+            const inlineContainerStyle = containerStyles as React.CSSProperties;
+            const inlineHeaderStyle = headerStyles as React.CSSProperties;
+            const inlineContentStyle = contentStyles as React.CSSProperties;
+            const inlineDividerStyle = dividerStyles as React.CSSProperties;
+
+            const handleAccordionToggle = (event?: React.SyntheticEvent) => {
+              event?.stopPropagation();
+              if (!isPreview) {
+                setSelectedWidget(widget);
+              }
+              setAccordionState((prev) => {
+                const nextValue = !(Object.prototype.hasOwnProperty.call(prev, widget.id)
+                  ? prev[widget.id]
+                  : Boolean(widget.props.defaultOpen));
+                return {
+                  ...prev,
+                  [widget.id]: nextValue
+                };
+              });
+            };
+
+            const headerContent = (
+              <div
+                className={`${headerClass}`}
+                style={inlineHeaderStyle}
+                role="button"
+                tabIndex={0}
+                aria-expanded={currentOpenState ? 'true' : 'false'}
+                onClick={handleAccordionToggle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleAccordionToggle(e);
+                  }
+                }}
+              >
+                {iconPosition === 'left' && (
+                  <span style={iconStyles}>
+                    <IconComponent size={iconSize} color={iconColor} />
+                  </span>
+                )}
+                <div className="flex-1">{widget.props.title}</div>
+                {iconPosition === 'right' && (
+                  <span style={iconStyles}>
+                    <IconComponent size={iconSize} color={iconColor} />
+                  </span>
+                )}
+              </div>
+            );
+
+            return (
+              <div className={`${containerClass}`} style={inlineContainerStyle}>
+                {headerContent}
+                {widget.props.showDivider && <div className={dividerClass} style={inlineDividerStyle} />}
+                {currentOpenState && (
+                  <div className={`${contentClass}`} style={inlineContentStyle}>
+                    {widget.props.content}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {widget.type === 'social' && (() => {
             const socialItemClass = registerStyle('social-item', {
               width:
@@ -4234,51 +5305,269 @@ export default function WebsiteEditPage() {
           {widget.type === 'navbar' && (() => {
             const navLinks: NavLink[] = normalizeNavLinks(widget.props.links);
             const hasLogoImage = Boolean(widget.props.logo);
+            const linksAlignment = widget.props.linksAlignment || 'between';
+            const backgroundGradient = (widget.props.backgroundGradient || '').trim();
+            const justifyMap: Record<string, string> = {
+              start: 'flex-start',
+              center: 'center',
+              between: 'space-between',
+              end: 'flex-end'
+            };
+            const linkJustifyMap: Record<string, string> = {
+              start: 'flex-start',
+              center: 'center',
+              between: 'center',
+              end: 'flex-end'
+            };
 
             const navbarClass = registerStyle('navbar', {
-              backgroundColor: widget.props.backgroundColor,
-              color: widget.props.color,
-              minHeight: widget.props.height || '60px',
-              boxShadow: widget.props.shadow ? '0 10px 30px rgba(15,23,42,0.12)' : 'none'
+              backgroundColor: backgroundGradient ? undefined : (widget.props.backgroundColor || '#ffffff'),
+              backgroundImage: backgroundGradient || undefined,
+              color: widget.props.color || '#1f2937',
+              minHeight: widget.props.height || '72px',
+              padding: widget.props.padding || '0.75rem 2rem',
+              borderRadius: widget.props.rounded || '999px',
+              boxShadow: widget.props.shadow ? '0 20px 45px rgba(15,23,42,0.08)' : 'none',
+              borderBottom: widget.props.showDivider
+                ? widget.props.borderBottom || `1px solid ${widget.props.dividerColor || 'rgba(15,23,42,0.08)'}`
+                : widget.props.borderBottom || 'none',
+              position: widget.props.position === 'fixed'
+                ? 'fixed'
+                : widget.props.position === 'sticky'
+                  ? 'sticky'
+                  : 'relative',
+              top: widget.props.position === 'sticky'
+                ? widget.props.stickyOffset || '0px'
+                : widget.props.position === 'fixed'
+                  ? '0px'
+                  : undefined,
+              left: widget.props.position === 'fixed' ? 0 : undefined,
+              right: widget.props.position === 'fixed' ? 0 : undefined,
+              width: widget.props.position === 'fixed' ? '100%' : undefined,
+              zIndex: widget.props.position === 'fixed' ? 60 : widget.props.position === 'sticky' ? 50 : undefined
             });
 
+            const innerClass = registerStyle('navbar-inner', {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: justifyMap[linksAlignment] || 'space-between',
+              gap: '1.5rem',
+              width: '100%',
+              flexWrap: 'wrap',
+              maxWidth: widget.props.containerMaxWidth || '1200px',
+              margin: '0 auto'
+            });
+
+            const brandClass = registerStyle('navbar-brand', {
+              display: 'flex',
+              flexDirection: widget.props.showTagline ? 'column' : 'row',
+              alignItems: widget.props.showTagline ? 'flex-start' : 'center',
+              gap: widget.props.showTagline ? '0.15rem' : '0.5rem',
+              fontWeight: 600,
+              fontSize: '1rem'
+            });
+
+            const taglineClass = registerStyle('navbar-tagline', {
+              fontSize: '0.75rem',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: 'rgba(0,0,0,0.55)'
+            });
+
+            const linksWrapperClass = registerStyle('navbar-links', {
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: linkJustifyMap[linksAlignment] || 'center',
+              gap: widget.props.linkGap || '1.5rem',
+              flex: linksAlignment === 'between' ? '1' : 'unset'
+            });
+
+            const linkStyles: Record<string, StyleValue> = {
+              color: widget.props.linkColor || widget.props.color || '#0f172a',
+              textDecoration: 'none',
+              fontWeight: 500,
+              textTransform: widget.props.linkUppercase ? 'uppercase' : 'none',
+              padding: widget.props.linkPadding || '0.25rem 0.5rem',
+              borderRadius: widget.props.linkBorderRadius || '999px',
+              transition: 'color 0.2s ease, background-color 0.2s ease'
+            };
+            const linkClass = registerStyle('navbar-link', linkStyles);
+            const hoverCss = buildCssBlock(`.${linkClass}:hover`, {
+              color: widget.props.linkHoverColor || '#2563eb',
+              backgroundColor: widget.props.linkHoverBackground || 'rgba(37, 99, 235, 0.08)'
+            });
+            if (hoverCss) widgetStyles.push(hoverCss);
+            const activeCss = buildCssBlock(`.${linkClass}[data-active="true"]`, {
+              color: widget.props.linkActiveColor || widget.props.linkHoverColor || '#2563eb',
+              backgroundColor: widget.props.linkActiveBackground || 'rgba(37, 99, 235, 0.12)'
+            });
+            if (activeCss) widgetStyles.push(activeCss);
+
+            const actionsClass = registerStyle('navbar-actions', {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              flexWrap: 'wrap'
+            });
+
+            const buttonVariant = widget.props.buttonVariant || 'solid';
+            const buttonBackground = buttonVariant === 'solid'
+              ? widget.props.buttonBackground || '#2563eb'
+              : 'transparent';
+            const buttonTextColor = widget.props.buttonTextColor || (buttonVariant === 'solid' ? '#ffffff' : widget.props.buttonBackground || '#2563eb');
+            const primaryButtonClass = registerStyle('navbar-button', {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.55rem 1.5rem',
+              borderRadius: widget.props.buttonBorderRadius || '999px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              backgroundColor: buttonBackground,
+              color: buttonTextColor,
+              borderWidth: widget.props.buttonBorderWidth || (buttonVariant === 'outline' ? '1px' : '0px'),
+              borderStyle: 'solid',
+              borderColor: widget.props.buttonBorderColor || widget.props.buttonBackground || '#2563eb',
+              transition: 'all 0.2s ease'
+            });
+            const buttonHoverCss = buildCssBlock(`.${primaryButtonClass}:hover`, {
+              backgroundColor: widget.props.buttonHoverBackground || (buttonVariant === 'solid' ? '#1d4ed8' : 'transparent'),
+              color: widget.props.buttonHoverTextColor || buttonTextColor,
+              borderColor: widget.props.buttonBorderColor || widget.props.buttonHoverBackground || '#1d4ed8'
+            });
+            if (buttonHoverCss) widgetStyles.push(buttonHoverCss);
+
+            const secondaryIconMap: Record<string, LucideIcon> = {
+              Phone,
+              Mail,
+              Calendar,
+              User,
+              ShoppingCart,
+              Bell
+            };
+            const SecondaryIcon = secondaryIconMap[widget.props.secondaryActionIcon || 'Phone'] || Phone;
+            const secondaryActionClass = registerStyle('navbar-secondary-action', {
+              width: '2.5rem',
+              height: '2.5rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(15,23,42,0.15)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: widget.props.color || '#1f2937',
+              backgroundColor: 'transparent',
+              textDecoration: 'none'
+            });
+
+            const socialIconMap: Record<string, LucideIcon> = {
+              facebook: Facebook,
+              twitter: Twitter,
+              instagram: Instagram,
+              linkedin: Linkedin,
+              youtube: Youtube
+            };
+            const socialWrapperClass = registerStyle('navbar-social', {
+              display: 'flex',
+              gap: '0.35rem',
+              alignItems: 'center'
+            });
+            const socialButtonClass = registerStyle('navbar-social-button', {
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(15,23,42,0.05)',
+              color: widget.props.color || '#1f2937',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            });
+
+            const handleNavClick = (e: React.MouseEvent) => {
+              if (!isPreview) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            };
+
             return (
-              <div
-                className={`flex w-full flex-wrap items-center gap-4 rounded-xl px-4 py-3 transition-all ${navbarClass}`}
-              >
-                <div className="flex items-center gap-3 font-semibold text-base">
-                  {hasLogoImage ? (
-                    <img
-                      src={widget.props.logo}
-                      alt={widget.props.logoText || 'Logo'}
-                      className="h-10 w-10 rounded-md border border-white/40 bg-white/20 object-contain"
-                    />
-                  ) : (
-                    <span>{widget.props.logoText || 'Brand'}</span>
-                  )}
-                  {hasLogoImage && widget.props.logoText && (
-                    <span className="text-sm font-medium opacity-80">{widget.props.logoText}</span>
-                  )}
-                </div>
+              <div className={navbarClass}>
+                <div className={innerClass}>
+                  <div className={brandClass}>
+                    <div className="flex items-center gap-2">
+                      {hasLogoImage ? (
+                        <img
+                          src={widget.props.logo}
+                          alt={widget.props.logoText || 'Logo'}
+                          className="h-10 w-10 rounded-md border border-white/40 bg-white/20 object-contain"
+                        />
+                      ) : (
+                        <span>{widget.props.logoText || 'Brand'}</span>
+                      )}
+                      {!hasLogoImage && widget.props.logoText && widget.props.showTagline && (
+                        <span className={taglineClass}>{widget.props.tagline}</span>
+                      )}
+                    </div>
+                    {hasLogoImage && widget.props.showTagline && (
+                      <span className={taglineClass}>{widget.props.tagline}</span>
+                    )}
+                  </div>
 
-                <div className="flex flex-1 flex-wrap items-center justify-end gap-4 text-sm font-medium">
-                  {navLinks.length > 0 ? (
-                    navLinks.map((link, idx) => (
+                  <div className={linksWrapperClass}>
+                    {navLinks.length > 0 ? (
+                      navLinks.map((link, idx) => (
+                        <a
+                          key={`${link.label}-${idx}`}
+                          href={link.href || '#'}
+                          data-active={idx === 0 ? 'true' : undefined}
+                          className={linkClass}
+                          onClick={handleNavClick}
+                        >
+                          {link.label || `Link ${idx + 1}`}
+                        </a>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-500">No links configured</span>
+                    )}
+                  </div>
+
+                  <div className={actionsClass}>
+                    {widget.props.showSocialIcons && Array.isArray(widget.props.socialPlatforms) && widget.props.socialPlatforms.length > 0 && (
+                      <div className={socialWrapperClass}>
+                        {widget.props.socialPlatforms.map((platform: string) => {
+                          const Icon = socialIconMap[platform];
+                          if (!Icon) return null;
+                          return (
+                            <span key={platform} className={socialButtonClass} title={platform}>
+                              <Icon className="h-4 w-4" />
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {widget.props.showSecondaryAction && (
                       <a
-                        key={`${link.label}-${idx}`}
-                        href={link.href || '#'}
-                        onClick={(e) => e.preventDefault()}
-                        className="hover:text-blue-600 transition-colors"
-                        title={link.href}
+                        href={widget.props.secondaryActionLink || '#'}
+                        className={`${secondaryActionClass} focus:outline-none`}
+                        onClick={handleNavClick}
+                        title={widget.props.secondaryActionLabel || 'Action'}
                       >
-                        {link.label || `Link ${idx + 1}`}
+                        <SecondaryIcon className="h-4 w-4" />
                       </a>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-500">No links configured</span>
-                  )}
-                </div>
+                    )}
 
+                    {widget.props.showButton && widget.props.buttonText && (
+                      <a
+                        href={widget.props.buttonLink || '#'}
+                        className={`${primaryButtonClass} focus:outline-none`}
+                        onClick={handleNavClick}
+                      >
+                        {widget.props.buttonText}
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })()}
@@ -4318,36 +5607,323 @@ export default function WebsiteEditPage() {
           
           {/* Data Display widgets */}
           {widget.type === 'table' && (() => {
-            const tableHeadClass = registerStyle('table-head', {
-              backgroundColor: widget.props.headerBackground
+            const headers: string[] = Array.isArray(widget.props.headers) ? widget.props.headers : [];
+            const rawRows: string[][] = Array.isArray(widget.props.rows) ? widget.props.rows : [];
+            const rawAlignments: string[] = Array.isArray(widget.props.columnAlignments)
+              ? widget.props.columnAlignments
+              : [];
+
+            const normalizeRows = (data: string[][]): string[][] => {
+              if (headers.length === 0) {
+                return data;
+              }
+              return data.map((row) => {
+                const next = [...row];
+                while (next.length < headers.length) {
+                  next.push('');
+                }
+                if (next.length > headers.length) {
+                  next.splice(headers.length);
+                }
+                return next;
+              });
+            };
+
+            const resolveAlignment = (value: string): 'left' | 'center' | 'right' => {
+              if (value === 'center' || value === 'right') return value;
+              return 'left';
+            };
+
+            const rows = normalizeRows(rawRows);
+            const alignments: ('left' | 'center' | 'right')[] = headers.map((_, idx) => resolveAlignment(rawAlignments[idx]));
+            const rawMaxRows = typeof widget.props.maxVisibleRows === 'number' ? widget.props.maxVisibleRows : undefined;
+            const maxVisibleRows = rawMaxRows ?? (rows.length || 3);
+            const displayRows = rows.slice(0, Math.max(maxVisibleRows, 1));
+            const remainingRows = Math.max(rows.length - displayRows.length, 0);
+            const accentColor = widget.props.tableAccentColor || '#2563eb';
+            const captionAlignMap: Record<string, string> = {
+              left: 'flex-start',
+              center: 'center',
+              right: 'flex-end',
+              between: 'space-between'
+            };
+            const captionAlignment = captionAlignMap[widget.props.captionAlign || 'left'] || 'flex-start';
+            const showColumnDividers = Boolean(widget.props.showColumnDividers);
+            const columnDividerStyle = `${widget.props.columnDividerWidth || '1px'} solid ${widget.props.columnDividerColor || 'rgba(15,23,42,0.08)'}`;
+
+            const tableWrapperClass = registerStyle('table-wrapper', {
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              backgroundColor: widget.props.tableBackground || '#ffffff',
+              padding: widget.props.tablePadding || '1.5rem',
+              borderRadius: widget.props.borderRadius || '1rem',
+              borderWidth: widget.props.bordered === false ? '0px' : widget.props.borderWidth || '1px',
+              borderStyle: widget.props.bordered === false ? 'none' : 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.12)',
+              boxShadow: widget.props.showShadow === false ? 'none' : widget.props.tableShadow || '0 25px 45px rgba(15,23,42,0.08)'
             });
 
-            const tableHeaderCellClass = registerStyle('table-header-cell', {
-              color: widget.props.headerColor
+            const toolbarClass =
+              widget.props.showToolbar === false
+                ? ''
+                : registerStyle('table-toolbar', {
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  });
+
+            const toolbarTitleClass = registerStyle('table-toolbar-title', {
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              color: '#0f172a'
             });
+
+            const toolbarSubtitleClass = registerStyle('table-toolbar-subtitle', {
+              fontSize: '0.85rem',
+              color: '#475569'
+            });
+
+            const toolbarActionClass =
+              widget.props.showToolbar !== false && widget.props.toolbarActionText
+                ? registerStyle('table-toolbar-action', {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    borderWidth: widget.props.toolbarActionVariant === 'outline' ? '1px' : '0px',
+                    borderStyle: 'solid',
+                    borderColor:
+                      widget.props.toolbarActionVariant === 'outline'
+                        ? accentColor
+                        : 'transparent',
+                    backgroundColor:
+                      widget.props.toolbarActionVariant === 'solid'
+                        ? accentColor
+                        : 'transparent',
+                    color:
+                      widget.props.toolbarActionVariant === 'solid'
+                        ? '#ffffff'
+                        : accentColor
+                  })
+                : '';
+
+            if (toolbarActionClass) {
+              const hoverCss = buildCssBlock(`${toolbarActionClass}:hover`, {
+                opacity: widget.props.toolbarActionVariant === 'solid' ? 0.9 : undefined,
+                backgroundColor:
+                  widget.props.toolbarActionVariant === 'ghost'
+                    ? `${accentColor}14`
+                    : undefined
+              });
+              if (hoverCss) widgetStyles.push(hoverCss);
+            }
+
+            const captionClass =
+              widget.props.showCaption === false
+                ? ''
+                : registerStyle('table-caption', {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: captionAlignment,
+                    gap: '0.5rem',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    color: '#0f172a'
+                  });
+
+            const captionDotClass =
+              widget.props.showCaption === false
+                ? ''
+                : registerStyle('table-caption-dot', {
+                    width: '0.5rem',
+                    height: '0.5rem',
+                    borderRadius: '999px',
+                    backgroundColor: accentColor,
+                    display: 'inline-flex'
+                  });
+
+            const scrollClass = registerStyle('table-scroll', {
+              width: '100%',
+              overflowX: 'auto'
+            });
+
+            const tableClass = registerStyle('table', {
+              width: '100%',
+              borderCollapse: 'separate',
+              borderSpacing: 0,
+              minWidth: widget.props.minTableWidth || '640px'
+            });
+
+            const tableHeadClass = registerStyle('table-head', {
+              backgroundColor: widget.props.headerBackground || '#f8fafc'
+            });
+
+            const headerRowClass = registerStyle('table-head-row', {
+              borderBottom: `1px solid ${widget.props.headerBorderColor || 'rgba(15,23,42,0.12)'}`
+            });
+
+            const headerCellClass = registerStyle('table-header-cell', {
+              padding: widget.props.headerPadding || '0.75rem 1rem',
+              color: widget.props.headerColor || '#0f172a',
+              fontWeight: widget.props.headerFontWeight || '600',
+              fontSize: widget.props.headerFontSize || '0.75rem',
+              letterSpacing: widget.props.headerLetterSpacing || '0.08em',
+              textTransform: widget.props.headerTextTransform || 'uppercase',
+              textAlign: 'left',
+              backgroundColor: widget.props.headerBackground || '#f8fafc'
+            });
+
+            const bodyRowClass = registerStyle('table-row', {
+              backgroundColor: widget.props.cellBackground || '#ffffff',
+              borderBottom:
+                widget.props.showRowDividers === false
+                  ? 'none'
+                  : `${widget.props.rowBorderWidth || '1px'} solid ${widget.props.rowBorderColor || 'rgba(15,23,42,0.08)'}`
+            });
+
+            if (widget.props.striped) {
+              const stripeCss = buildCssBlock(`${bodyRowClass}:nth-of-type(even)`, {
+                backgroundColor: widget.props.stripedColor || 'rgba(15,23,42,0.04)'
+              });
+              if (stripeCss) widgetStyles.push(stripeCss);
+            }
+
+            if (widget.props.hoverable) {
+              const hoverCss = buildCssBlock(`${bodyRowClass}:hover`, {
+                backgroundColor: widget.props.rowHoverColor || 'rgba(37,99,235,0.08)'
+              });
+              if (hoverCss) widgetStyles.push(hoverCss);
+            }
+
+            const bodyCellClass = registerStyle('table-cell', {
+              padding: widget.props.cellPadding || '0.85rem 1rem',
+              fontSize: widget.props.cellFontSize || '0.95rem',
+              color: widget.props.cellColor || '#1f2937'
+            });
+
+            const emptyStateText = widget.props.emptyStateText || 'No data available';
+
+            const handleActionClick = (e: React.MouseEvent) => {
+              if (!isPreview) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            };
+
+            const renderCaption = (position: 'top' | 'bottom') => {
+              if (
+                widget.props.showCaption === false ||
+                !widget.props.caption ||
+                widget.props.captionPosition !== position
+              ) {
+                return null;
+              }
+              return (
+                <div className={captionClass} data-position={position}>
+                  <span className={captionDotClass} aria-hidden="true" />
+                  <span>{widget.props.caption}</span>
+                </div>
+              );
+            };
 
             return (
-              <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className={tableHeadClass}>
-                    <tr>
-                      {widget.props.headers?.map((header: string, idx: number) => (
-                        <th key={idx} className={`p-2 text-left ${tableHeaderCellClass}`}>
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                <tbody>
-                  {widget.props.rows?.slice(0, 2).map((row: string[], rowIdx: number) => (
-                    <tr key={rowIdx} className={widget.props.striped && rowIdx % 2 ? 'bg-gray-50' : ''}>
-                      {row.map((cell: string, cellIdx: number) => (
-                        <td key={cellIdx} className="p-2 border-t">{cell}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-                </table>
+              <div className={tableWrapperClass}>
+                {renderCaption('top')}
+
+                {widget.props.showToolbar !== false && (
+                  (widget.props.toolbarTitle || widget.props.toolbarDescription || widget.props.toolbarActionText) ? (
+                    <div className={toolbarClass}>
+                      <div className="space-y-1">
+                        {widget.props.toolbarTitle && (
+                          <p className={toolbarTitleClass}>{widget.props.toolbarTitle}</p>
+                        )}
+                        {widget.props.toolbarDescription && (
+                          <p className={toolbarSubtitleClass}>{widget.props.toolbarDescription}</p>
+                        )}
+                      </div>
+                      {widget.props.toolbarActionText && toolbarActionClass && (
+                        <a
+                          href={widget.props.toolbarActionLink || '#'}
+                          className={`${toolbarActionClass} focus:outline-none`}
+                          onClick={handleActionClick}
+                        >
+                          {widget.props.toolbarActionText}
+                          <ArrowRight className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                  ) : null
+                )}
+
+                <div className={scrollClass}>
+                  <table className={tableClass}>
+                    <thead className={tableHeadClass}>
+                      <tr className={headerRowClass}>
+                        {headers.length > 0 ? (
+                          headers.map((header, idx) => (
+                            <th
+                              key={`header-${idx}`}
+                              className={headerCellClass}
+                              style={{
+                                textAlign: alignments[idx] || 'left',
+                                borderRight:
+                                  showColumnDividers && idx < headers.length - 1 ? columnDividerStyle : undefined
+                              }}
+                            >
+                              {header || `Column ${idx + 1}`}
+                            </th>
+                          ))
+                        ) : (
+                          <th className={headerCellClass}>Add columns to populate the table</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayRows.length > 0 ? (
+                        displayRows.map((row, rowIdx) => (
+                          <tr key={`row-${rowIdx}`} className={bodyRowClass}>
+                            {(headers.length > 0 ? headers : row).map((_, cellIdx) => (
+                              <td
+                                key={`row-${rowIdx}-cell-${cellIdx}`}
+                                className={bodyCellClass}
+                                style={{
+                                  textAlign: alignments[cellIdx] || 'left',
+                                  borderRight:
+                                    showColumnDividers && cellIdx < (headers.length || row.length) - 1
+                                      ? columnDividerStyle
+                                      : undefined
+                                }}
+                              >
+                                {row[cellIdx] ?? ''}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className={bodyRowClass}>
+                          <td className={bodyCellClass} colSpan={Math.max(headers.length, 1)}>
+                            {emptyStateText}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {remainingRows > 0 && (
+                  <p className="text-xs text-gray-500">
+                    Showing {displayRows.length} of {rows.length} rows
+                  </p>
+                )}
+
+                {renderCaption('bottom')}
               </div>
             );
           })()}
@@ -4369,28 +5945,226 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'progressBar' && (() => {
-            const progressContainerClass = registerStyle('progress-container', {
-              backgroundColor: widget.props.backgroundColor,
-              height: widget.props.height,
-              borderRadius: widget.props.borderRadius
+            const parseNumber = (value: any, fallback: number) => {
+              const parsed = Number(value);
+              return Number.isFinite(parsed) ? parsed : fallback;
+            };
+
+            const minValue = parseNumber(widget.props.min, 0);
+            const rawMax = parseNumber(widget.props.max, 100);
+            const safeMax = rawMax > minValue ? rawMax : minValue + 1;
+            const rawValue = parseNumber(widget.props.value, minValue);
+            const clampedValue = Math.min(Math.max(rawValue, minValue), safeMax);
+            const range = safeMax - minValue;
+            const progressPercent = range === 0 ? 0 : ((clampedValue - minValue) / range) * 100;
+            const boundedPercent = Math.max(0, Math.min(progressPercent, 100));
+            const goalValue = parseNumber(widget.props.goalValue, safeMax);
+            const goalPercentRaw = range === 0 ? 0 : ((goalValue - minValue) / range) * 100;
+            const goalPercent = Math.max(0, Math.min(goalPercentRaw, 100));
+
+            const showValue = widget.props.showValue ?? widget.props.showPercentage ?? true;
+            const valuePosition = widget.props.valuePosition || 'inline';
+            const valueFormat = widget.props.valueFormat || 'percent';
+            const decimalsRaw = typeof widget.props.valueDecimalPlaces === 'number'
+              ? widget.props.valueDecimalPlaces
+              : parseInt(widget.props.valueDecimalPlaces || 0, 10) || 0;
+            const decimals = Math.max(0, Math.min(4, decimalsRaw));
+            const displayBase = valueFormat === 'value' ? clampedValue : boundedPercent;
+            const formattedNumber = Number.isFinite(displayBase)
+              ? displayBase.toFixed(decimals)
+              : '0';
+            const valueSuffix = widget.props.valueSuffix ?? (valueFormat === 'percent' ? '%' : '');
+            const valueDisplay = `${widget.props.valuePrefix || ''}${formattedNumber}${valueSuffix}`;
+
+            const labelLayout = widget.props.labelLayout || 'stacked';
+            const containerClass = registerStyle('progress-wrapper', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
             });
 
-            const progressFillClass = registerStyle('progress-fill', {
-              backgroundColor: widget.props.fillColor,
-              width: `${widget.props.value}%`
+            const headerClass = registerStyle('progress-header', {
+              display: 'flex',
+              flexDirection: labelLayout === 'stacked' ? 'column' : 'row',
+              alignItems: labelLayout === 'stacked' ? 'flex-start' : 'center',
+              justifyContent: labelLayout === 'between' ? 'space-between' : 'flex-start',
+              gap: labelLayout === 'stacked' ? '0.35rem' : '0.75rem'
             });
+
+            const labelClass = registerStyle('progress-label', {
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              color: widget.props.labelColor || '#0f172a'
+            });
+
+            const descriptionClass = registerStyle('progress-description', {
+              fontSize: '0.85rem',
+              color: widget.props.descriptionColor || '#475569'
+            });
+
+            const valueInlineClass = registerStyle('progress-value-inline', {
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              color: widget.props.valueColor || '#0f172a'
+            });
+
+            const insideValueClass = registerStyle('progress-value-inside', {
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: widget.props.valueInsideColor || '#ffffff'
+            });
+
+            const belowValueClass = registerStyle('progress-value-below', {
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              color: widget.props.valueColor || '#0f172a'
+            });
+
+            const barWrapperClass = registerStyle('progress-bar-wrapper', {
+              position: 'relative',
+              width: '100%',
+              paddingBottom:
+                widget.props.showGoal !== false && widget.props.showGoalLabel !== false && widget.props.goalLabel
+                  ? '1.5rem'
+                  : '0.25rem'
+            });
+
+            const trackClass = registerStyle('progress-track', {
+              width: '100%',
+              backgroundColor: widget.props.trackColor || widget.props.backgroundColor || '#e2e8f0',
+              height: widget.props.barHeight || widget.props.height || '1rem',
+              borderRadius: widget.props.borderRadius || '999px',
+              position: 'relative',
+              overflow: 'hidden',
+              borderWidth: widget.props.trackBorderWidth || '0px',
+              borderStyle: 'solid',
+              borderColor: widget.props.trackBorderColor || 'transparent'
+            });
+
+            const stripeColor = widget.props.stripeColor || 'rgba(255,255,255,0.35)';
+            const stripeSize = widget.props.stripeSize || '1.5rem 1.5rem';
+            const useGradient = widget.props.useGradient !== false && Boolean((widget.props.fillGradient || '').trim());
+            const fillColor = widget.props.fillColor || '#2563eb';
+            const backgroundLayers: string[] = [];
+            if (useGradient && widget.props.fillGradient) {
+              backgroundLayers.push(widget.props.fillGradient);
+            } else {
+              backgroundLayers.push(`linear-gradient(90deg, ${fillColor}, ${fillColor})`);
+            }
+            if (widget.props.striped) {
+              backgroundLayers.push(
+                `linear-gradient(45deg, ${stripeColor} 25%, transparent 25%, transparent 50%, ${stripeColor} 50%, ${stripeColor} 75%, transparent 75%, transparent)`
+              );
+            }
+
+            const fillStyles: Record<string, StyleValue> = {
+              height: '100%',
+              borderRadius: widget.props.borderRadius || '999px',
+              backgroundColor: useGradient ? undefined : fillColor,
+              backgroundImage: backgroundLayers.join(', '),
+              backgroundSize: widget.props.striped ? `100% 100%, ${stripeSize}` : '100% 100%',
+              backgroundPosition: widget.props.striped ? '0 0, 0 0' : undefined,
+              boxShadow: widget.props.showGlow ? widget.props.fillShadow || '0 12px 30px rgba(37,99,235,0.35)' : undefined,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: valuePosition === 'inside' ? 'flex-end' : 'flex-start',
+              paddingRight: valuePosition === 'inside' ? '0.75rem' : undefined,
+              paddingLeft: valuePosition === 'inside' ? '0.75rem' : undefined,
+              transition:
+                widget.props.animateTransition === false || widget.props.animated === false
+                  ? 'none'
+                  : 'width 0.4s ease, background-position 1.2s linear'
+            };
+
+            if (widget.props.striped && widget.props.animateStripes !== false) {
+              const stripeAnimation = `progress-stripes-${widget.id}`;
+              widgetStyles.push(
+                `@keyframes ${stripeAnimation} { from { background-position: 0 0, 0 0; } to { background-position: 0 0, 60px 0; } }`
+              );
+              fillStyles.animation = `${stripeAnimation} 1.5s linear infinite`;
+            }
+
+            const fillClass = registerStyle('progress-fill', fillStyles);
+
+            const goalMarkerClass = registerStyle('progress-goal-marker', {
+              position: 'absolute',
+              top: '0',
+              bottom: '0',
+              width: '2px',
+              backgroundColor: widget.props.goalColor || '#0ea5e9',
+              borderRadius: '999px',
+              pointerEvents: 'none'
+            });
+
+            const goalLabelClass = registerStyle('progress-goal-label', {
+              position: 'absolute',
+              top: 'calc(100% + 0.2rem)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              padding: '0.2rem 0.5rem',
+              borderRadius: '999px',
+              backgroundColor: '#ffffff',
+              color: widget.props.goalLabelColor || widget.props.goalColor || '#0ea5e9',
+              boxShadow: '0 8px 20px rgba(15,23,42,0.12)',
+              whiteSpace: 'nowrap'
+            });
+
+            const minMaxClass = registerStyle('progress-min-max', {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.75rem',
+              color: widget.props.minMaxColor || '#94a3b8',
+              fontWeight: 500
+            });
+
+            const showInlineValue = showValue && valuePosition === 'inline';
+            const showInsideValue = showValue && valuePosition === 'inside';
+            const showValueBelowExplicit = showValue && valuePosition === 'below';
+            const allowInsideBadge = showInsideValue && boundedPercent > 12;
+            const showValueBelow = showValueBelowExplicit || (showInsideValue && !allowInsideBadge);
+            const showLabelText = widget.props.showLabel !== false && Boolean(widget.props.label);
+            const showDescriptionText = widget.props.showDescription !== false && Boolean(widget.props.description);
+            const hasHeaderContent = showLabelText || showDescriptionText || showInlineValue;
+            const hasGoalLabel = widget.props.showGoal !== false && widget.props.showGoalLabel !== false && Boolean(widget.props.goalLabel);
 
             return (
-              <div>
-                {widget.props.label && <div className="text-sm mb-1">{widget.props.label}</div>}
-                <div className={`relative overflow-hidden ${progressContainerClass}`}>
-                  <div className={`h-full transition-all ${progressFillClass}`} />
-                  {widget.props.showPercentage && (
-                    <div className="absolute inset-0 flex items-center justify-center text-xs font-medium">
-                      {widget.props.value}%
+              <div className={containerClass}>
+                {hasHeaderContent && (
+                  <div className={headerClass}>
+                    <div className="space-y-1">
+                      {showLabelText && <p className={labelClass}>{widget.props.label}</p>}
+                      {showDescriptionText && (
+                        <p className={descriptionClass}>{widget.props.description}</p>
+                      )}
+                    </div>
+                    {showInlineValue && <span className={valueInlineClass}>{valueDisplay}</span>}
+                  </div>
+                )}
+
+                <div className={barWrapperClass}>
+                  <div className={trackClass}>
+                    <div className={fillClass} style={{ width: `${boundedPercent}%` }}>
+                      {allowInsideBadge && <span className={insideValueClass}>{valueDisplay}</span>}
+                    </div>
+                  </div>
+                  {widget.props.showGoal !== false && range > 0 && (
+                    <div className={goalMarkerClass} style={{ left: `${goalPercent}%` }}>
+                      {hasGoalLabel && <span className={goalLabelClass}>{widget.props.goalLabel}</span>}
                     </div>
                   )}
                 </div>
+
+                {showValueBelow && <span className={belowValueClass}>{valueDisplay}</span>}
+
+                {widget.props.showMinMaxLabels !== false && (
+                  <div className={minMaxClass}>
+                    <span>{widget.props.minLabel || `${minValue}`}</span>
+                    <span>{widget.props.maxLabel || `${safeMax}`}</span>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -4823,6 +6597,7 @@ export default function WebsiteEditPage() {
             </div>
           )}
         </div>
+        {widgetStyles.length > 0 && <style>{widgetStyles.join('\n')}</style>}
       </div>
     );
   };

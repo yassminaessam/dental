@@ -40,25 +40,46 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
   };
 
   // Common property editors
-  const renderColorPicker = (label: string, prop: string, value: string) => (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          type="color"
-          value={value}
-          onChange={(e) => handleUpdate(prop, e.target.value)}
-          className="w-20 h-10 cursor-pointer"
-        />
-        <Input
-          value={value}
-          onChange={(e) => handleUpdate(prop, e.target.value)}
-          placeholder="#000000"
-          className="flex-1 font-mono text-sm"
-        />
+  type ColorPickerOptions = {
+    onChange?: (value: string) => void;
+  };
+
+  const renderColorPicker = (
+    label: string,
+    prop: string,
+    value: string,
+    options?: ColorPickerOptions
+  ) => {
+    const resolvedValue = value || '';
+
+    const handleValueChange = (newValue: string) => {
+      if (options?.onChange) {
+        options.onChange(newValue);
+      } else {
+        handleUpdate(prop, newValue);
+      }
+    };
+
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="flex gap-2">
+          <Input
+            type="color"
+            value={/^#([0-9A-Fa-f]{3}){1,2}$/.test(resolvedValue) ? resolvedValue : '#000000'}
+            onChange={(e) => handleValueChange(e.target.value)}
+            className="w-20 h-10 cursor-pointer"
+          />
+          <Input
+            value={resolvedValue}
+            onChange={(e) => handleValueChange(e.target.value)}
+            placeholder="#000000"
+            className="flex-1 font-mono text-sm"
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderTextInput = (label: string, prop: string, value: string, placeholder?: string, isTextarea?: boolean) => (
     <div className="space-y-2">
@@ -614,6 +635,48 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
       {renderTextInput('Title', 'title', widget.props.title, 'Accordion title...')}
       {renderTextInput('Content', 'content', widget.props.content, 'Accordion content...', true)}
       {renderSwitch('Default Open', 'defaultOpen', widget.props.defaultOpen || false, 'Start in expanded state')}
+      {renderColorPicker('Container Background', 'containerBackground', widget.props.containerBackground || 'transparent')}
+      {renderColorPicker('Header Background', 'headerBackground', widget.props.headerBackground || '#f8fafc')}
+      {renderColorPicker('Header Hover Background', 'headerHoverBackground', widget.props.headerHoverBackground || '#eef2ff')}
+      {renderColorPicker('Header Text Color', 'headerTextColor', widget.props.headerTextColor || '#0f172a')}
+      {renderColorPicker('Content Background', 'contentBackground', widget.props.contentBackground || '#ffffff')}
+      {renderColorPicker('Content Text Color', 'contentTextColor', widget.props.contentTextColor || '#4b5563')}
+      {renderTextInput('Title Font Size', 'titleFontSize', widget.props.titleFontSize || '1rem', 'e.g., 1rem, 18px')}
+      {renderTextInput('Content Font Size', 'contentFontSize', widget.props.contentFontSize || '0.95rem', 'e.g., 0.95rem, 16px')}
+      {renderTextInput('Header Padding', 'headerPadding', widget.props.headerPadding || '1rem 1.25rem', 'CSS padding e.g., 1rem 1.25rem')}
+      {renderTextInput('Content Padding', 'contentPadding', widget.props.contentPadding || '1rem 1.25rem', 'CSS padding')}
+      {renderTextInput('Gap', 'gap', widget.props.gap || '0.75rem', 'Spacing between title and icon')}
+      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.75rem', '0px, 8px, 16px...')}
+      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', '0px, 1px, 2px...')}
+      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e5e7eb')}
+      {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+        { value: 'solid', label: 'Solid' },
+        { value: 'dashed', label: 'Dashed' },
+        { value: 'dotted', label: 'Dotted' },
+        { value: 'double', label: 'Double' }
+      ])}
+      {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'e.g., 0 10px 25px rgba(0,0,0,0.08)')}
+      {renderSelect('Icon Style', 'iconShape', widget.props.iconShape || 'chevron', [
+        { value: 'chevron', label: 'Chevron' },
+        { value: 'caret', label: 'Caret' },
+        { value: 'plus', label: 'Plus / Minus' }
+      ])}
+      {renderSelect('Icon Position', 'iconPosition', widget.props.iconPosition || 'right', [
+        { value: 'left', label: 'Left' },
+        { value: 'right', label: 'Right' }
+      ])}
+      {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor || '#0f172a')}
+      {renderColorPicker('Icon Background', 'iconBackground', widget.props.iconBackground || 'transparent')}
+      {renderTextInput('Icon Size', 'iconSize', widget.props.iconSize || '1.125rem', 'e.g., 1rem, 18px')}
+      {renderTextInput('Transition', 'transition', widget.props.transition || 'all 0.25s ease', 'CSS transition')}
+      {renderSwitch('Show Divider', 'showDivider', widget.props.showDivider || false, 'Display a divider between header and content')}
+      {widget.props.showDivider && (
+        renderColorPicker('Divider Color', 'dividerColor', widget.props.dividerColor || '#e5e7eb')
+      )}
+      {renderSwitch('Show Content Border', 'showContentBorder', widget.props.showContentBorder || false, 'Add a border above the content area')}
+      {widget.props.showContentBorder && (
+        renderColorPicker('Content Border Color', 'contentBorderColor', widget.props.contentBorderColor || '#e5e7eb')
+      )}
       {renderPositionAndSize()}
     </>
   );
@@ -621,32 +684,220 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
   const renderFormProperties = () => (
     <>
       {renderTextInput('Form Title', 'title', widget.props.title || '', 'Contact Form')}
+      {renderTextarea('Description', 'description', widget.props.description || '', 'We would love to hear from you...')}
       {renderTextInput('Submit Text', 'submitText', widget.props.submitText, 'Submit, Send, Contact Us...')}
       {renderTextInput('Action URL', 'action', widget.props.action || '', 'Form submission URL')}
+      {renderSelect('HTTP Method', 'method', widget.props.method || 'POST', [
+        { value: 'POST', label: 'POST' },
+        { value: 'GET', label: 'GET' }
+      ])}
       <div className="space-y-2">
         <Label>Form Fields (comma-separated)</Label>
         <Input
           value={widget.props.fields?.join(', ') || ''}
-          onChange={(e) => handleUpdate('fields', e.target.value.split(',').map(f => f.trim()))}
-          placeholder="name, email, message"
+          onChange={(e) => handleUpdate('fields', e.target.value.split(',').map(f => f.trim()).filter(Boolean))}
+          placeholder="name, email, phone, message"
         />
         <p className="text-xs text-muted-foreground">Example: name, email, phone, message</p>
       </div>
+      {renderSelect('Columns', 'columns', String(widget.props.columns || 1), [
+        { value: '1', label: 'Single Column' },
+        { value: '2', label: 'Two Columns' }
+      ])}
+      {renderTextInput('Field Gap', 'gap', widget.props.gap || '1rem', 'Spacing between fields e.g., 1rem')}
+      {renderTextInput('Padding', 'padding', widget.props.padding || '1.5rem', 'Form padding e.g., 1.5rem')}
+      {renderColorPicker('Container Background', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+      {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#4b5563')}
+      {renderSelect('Title Alignment', 'titleAlign', widget.props.titleAlign || 'left', [
+        { value: 'left', label: 'Left' },
+        { value: 'center', label: 'Center' },
+        { value: 'right', label: 'Right' }
+      ])}
+      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '#e5e7eb')}
+      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', '0px, 1px, 2px...')}
+      {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+        { value: 'solid', label: 'Solid' },
+        { value: 'dashed', label: 'Dashed' },
+        { value: 'dotted', label: 'Dotted' },
+        { value: 'double', label: 'Double' }
+      ])}
+      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.75rem', '8px, 16px...')}
+      {renderTextInput('Box Shadow', 'shadow', widget.props.shadow || '0 10px 25px rgba(0,0,0,0.05)', 'CSS shadow value')}
+      {renderSwitch('Show Labels', 'showLabels', widget.props.showLabels !== false, 'Toggle field labels visibility')}
+      {renderColorPicker('Label Color', 'labelColor', widget.props.labelColor || '#111827')}
+      {renderTextInput('Label Font Size', 'labelFontSize', widget.props.labelFontSize || '0.95rem', 'Font size e.g., 0.95rem')}
+      {renderColorPicker('Input Background', 'inputBackground', widget.props.inputBackground || '#ffffff')}
+      {renderColorPicker('Input Text Color', 'inputTextColor', widget.props.inputTextColor || '#111827')}
+      {renderColorPicker('Input Placeholder Color', 'inputPlaceholderColor', widget.props.inputPlaceholderColor || '#9ca3af')}
+      {renderColorPicker('Input Border Color', 'inputBorderColor', widget.props.inputBorderColor || '#d1d5db')}
+      {renderTextInput('Input Border Width', 'inputBorderWidth', widget.props.inputBorderWidth || '1px', '0px, 1px, 2px...')}
+      {renderSelect('Input Border Style', 'inputBorderStyle', widget.props.inputBorderStyle || 'solid', [
+        { value: 'solid', label: 'Solid' },
+        { value: 'dashed', label: 'Dashed' },
+        { value: 'dotted', label: 'Dotted' },
+        { value: 'double', label: 'Double' }
+      ])}
+      {renderTextInput('Input Border Radius', 'inputBorderRadius', widget.props.inputBorderRadius || '0.5rem', '6px, 12px...')}
+      {renderTextInput('Input Padding', 'inputPadding', widget.props.inputPadding || '0.75rem', '0.75rem, 1rem...')}
+      {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+      {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+      {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+      {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.75rem 1.5rem', 'e.g., 0.75rem 1.5rem')}
+      {renderTextInput('Button Border Radius', 'buttonBorderRadius', widget.props.buttonBorderRadius || '0.5rem', '8px, 9999px...')}
+      {renderSwitch('Button Full Width', 'buttonFullWidth', widget.props.buttonFullWidth !== false, 'Make submit button span full width')}
       {renderPositionAndSize()}
     </>
   );
 
-  const renderCTAProperties = () => (
-    <>
-      {renderTextInput('Heading', 'heading', widget.props.heading, 'Call to action heading...')}
-      {renderTextInput('Description', 'description', widget.props.description || '', 'Optional description...', true)}
-      {renderTextInput('Button Text', 'buttonText', widget.props.buttonText, 'Get Started, Learn More...')}
-      {renderTextInput('Button Link', 'link', widget.props.link, 'https://...')}
-      {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#0066cc')}
-      {renderColorPicker('Text Color', 'color', widget.props.color || '#ffffff')}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderCTAProperties = () => {
+    const overlayRaw = widget.props.overlayOpacity;
+    const overlayOpacity = typeof overlayRaw === 'number'
+      ? overlayRaw
+      : parseFloat(overlayRaw) || 0.65;
+    const safeOverlayOpacity = Math.max(0, Math.min(1, overlayOpacity));
+
+    return (
+      <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Content</h3>
+        {renderTextInput('Heading', 'heading', widget.props.heading, 'Call to action heading...')}
+        {renderTextInput('Description', 'description', widget.props.description || '', 'Optional description...', true)}
+        {renderSwitch('Show Badge', 'showBadge', widget.props.showBadge !== false, 'Display badge / eyebrow text above the heading')}
+        {widget.props.showBadge !== false && (
+          <div className="space-y-3">
+            {renderTextInput('Badge Text', 'badgeText', widget.props.badgeText || '', 'Limited Offer, New, Hot Deal...')}
+            {renderTextInput('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(255,255,255,0.15)', 'CSS color e.g., rgba(255,255,255,0.15)')}
+            {renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#ffffff')}
+            {renderTextInput('Badge Padding', 'badgePadding', widget.props.badgePadding || '0.25rem 0.75rem', 'Padding e.g., 0.25rem 0.75rem')}
+            {renderTextInput('Badge Letter Spacing', 'badgeLetterSpacing', widget.props.badgeLetterSpacing || '0.1em', 'Tracking e.g., 0.1em')}
+          </div>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Spacing</h3>
+        {renderSelect('Content Alignment', 'alignment', widget.props.alignment || 'center', [
+          { value: 'left', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'right', label: 'Right' }
+        ])}
+        {renderSelect('Buttons Alignment', 'buttonsAlignment', widget.props.buttonsAlignment || widget.props.alignment || 'center', [
+          { value: 'left', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'right', label: 'Right' }
+        ])}
+        {renderTextInput('Content Max Width', 'contentMaxWidth', widget.props.contentMaxWidth || '640px', 'e.g., 640px, 60%')}
+        {renderTextInput('Content Gap', 'contentGap', widget.props.contentGap || '1rem', 'Spacing between CTA elements')}
+        {renderTextInput('Buttons Gap', 'buttonsGap', widget.props.buttonsGap || '0.75rem', 'Spacing between action buttons')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '3rem', 'Inner spacing e.g., 3rem 2rem')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.5rem', 'Rounded corners e.g., 1.5rem')}
+        {renderTextInput('Box Shadow', 'shadow', widget.props.shadow || '0 25px 70px rgba(15,23,42,0.35)', 'CSS box-shadow value')}
+        {renderSwitch('Full Width Buttons', 'buttonsFullWidth', widget.props.buttonsFullWidth || false, 'Stretch action buttons to fill available width')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Background & Overlay</h3>
+        {renderColorPicker(
+          'Background Color',
+          'backgroundColor',
+          widget.props.backgroundColor || '#0f172a',
+          {
+            onChange: (val) => {
+              handleUpdateMultiple({
+                backgroundColor: val,
+                ...(widget.props.useBackgroundGradient !== false ? { useBackgroundGradient: false } : {})
+              });
+            }
+          }
+        )}
+        {renderSwitch(
+          'Enable Background Gradient',
+          'useBackgroundGradient',
+          widget.props.useBackgroundGradient !== false,
+          'Toggle a gradient overlay on top of the base color'
+        )}
+        {widget.props.useBackgroundGradient !== false && (
+          renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'CSS gradient e.g., linear-gradient(...)')
+        )}
+        {renderTextInput('Background Image URL', 'backgroundImage', widget.props.backgroundImage || '', 'https://example.com/image.jpg')}
+        {renderSwitch('Show Overlay', 'showOverlay', widget.props.showOverlay !== false, 'Apply a translucent overlay on top of the background')}
+        {widget.props.showOverlay !== false && (
+          <>
+            {renderTextInput('Overlay Color', 'overlayColor', widget.props.overlayColor || '#0f172a', 'CSS color (hex, rgba, etc.)')}
+            {renderSlider('Overlay Opacity', 'overlayOpacity', safeOverlayOpacity, 0, 1, 0.05)}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Typography & Colors</h3>
+        {renderColorPicker('Heading Color', 'headingColor', widget.props.headingColor || widget.props.textColor || '#ffffff')}
+        {renderTextInput('Heading Font Size', 'headingSize', widget.props.headingSize || '2.5rem', 'e.g., 2.5rem, 48px')}
+        {renderSelect('Heading Weight', 'headingWeight', widget.props.headingWeight || '700', [
+          { value: '400', label: 'Regular (400)' },
+          { value: '500', label: 'Medium (500)' },
+          { value: '600', label: 'Semibold (600)' },
+          { value: '700', label: 'Bold (700)' },
+          { value: '800', label: 'Extra Bold (800)' }
+        ])}
+        {renderColorPicker('Body Text Color', 'color', widget.props.color || widget.props.textColor || '#ffffff')}
+        {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#f8fafc')}
+        {renderTextInput('Description Font Size', 'descriptionSize', widget.props.descriptionSize || '1.125rem', 'e.g., 1rem, 18px')}
+        {renderTextInput('Description Max Width', 'descriptionMaxWidth', widget.props.descriptionMaxWidth || '560px', 'Limit paragraph width, e.g., 560px')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Button</h3>
+        {renderTextInput('Primary Button Text', 'buttonText', widget.props.buttonText || 'Get Started', 'Get Started, Book Now...')}
+        {renderTextInput('Primary Button Link', 'link', widget.props.link || '', 'https://...')}
+        {renderSwitch('Open in New Tab', 'buttonNewTab', widget.props.buttonNewTab || false, 'Opens the primary button link in a new tab')}
+        {renderTextInput('Primary Button rel Attribute', 'buttonRel', widget.props.buttonRel || 'noopener noreferrer', 'rel attribute for SEO/security')}
+        {renderSelect('Primary Button Style', 'buttonStyle', widget.props.buttonStyle || 'solid', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'outline', label: 'Outline' }
+        ])}
+        {renderColorPicker('Primary Button Background', 'buttonBackground', widget.props.buttonBackground || '#ffffff')}
+        {renderColorPicker('Primary Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#0f172a')}
+        {renderColorPicker('Primary Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#f1f5f9')}
+        {renderColorPicker('Primary Button Hover Text Color', 'buttonHoverColor', widget.props.buttonHoverColor || widget.props.buttonTextColor || '#0f172a')}
+        {renderTextInput('Primary Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px', '0px, 1px, 2px...')}
+        {renderColorPicker('Primary Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || widget.props.buttonTextColor || '#0f172a')}
+        {renderTextInput('Primary Button Border Radius', 'buttonBorderRadius', widget.props.buttonBorderRadius || '999px', 'e.g., 0.75rem, 999px')}
+        {renderTextInput('Primary Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.9rem 2.4rem', 'e.g., 0.75rem 1.5rem')}
+        {renderTextInput('Button Transition', 'buttonTransition', widget.props.buttonTransition || 'all 0.2s ease', 'CSS transition')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Button</h3>
+        {renderSwitch('Show Secondary Button', 'showSecondaryButton', widget.props.showSecondaryButton || false, {
+          description: 'Display a secondary action button',
+          onChange: (checked) => {
+            handleUpdate('showSecondaryButton', checked);
+            if (checked && !widget.props.secondaryButtonText) {
+              handleUpdate('secondaryButtonText', 'Learn More');
+            }
+          }
+        })}
+        {widget.props.showSecondaryButton && (
+          <div className="space-y-3">
+            {renderTextInput('Secondary Button Text', 'secondaryButtonText', widget.props.secondaryButtonText || 'Learn More', 'Learn More, Contact Us...')}
+            {renderTextInput('Secondary Button Link', 'secondaryButtonLink', widget.props.secondaryButtonLink || '', 'https://...')}
+            {renderSwitch('Open Secondary in New Tab', 'secondaryButtonNewTab', widget.props.secondaryButtonNewTab || false, 'Open secondary button link in a new tab')}
+            {renderTextInput('Secondary Button rel Attribute', 'secondaryButtonRel', widget.props.secondaryButtonRel || 'noopener noreferrer', 'rel attribute for SEO/security')}
+            {renderSelect('Secondary Button Style', 'secondaryButtonStyle', widget.props.secondaryButtonStyle || 'outline', [
+              { value: 'solid', label: 'Solid' },
+              { value: 'outline', label: 'Outline' },
+              { value: 'ghost', label: 'Ghost' }
+            ])}
+            {renderTextInput('Secondary Button Background', 'secondaryButtonBackground', widget.props.secondaryButtonBackground || 'transparent', 'CSS color or gradient')}
+            {renderColorPicker('Secondary Button Text Color', 'secondaryButtonTextColor', widget.props.secondaryButtonTextColor || '#ffffff')}
+            {renderTextInput('Secondary Button Hover Background', 'secondaryButtonHoverBackground', widget.props.secondaryButtonHoverBackground || 'rgba(255,255,255,0.12)', 'CSS color for hover state')}
+            {renderColorPicker('Secondary Button Hover Text Color', 'secondaryButtonHoverColor', widget.props.secondaryButtonHoverColor || widget.props.secondaryButtonTextColor || '#ffffff')}
+            {renderTextInput('Secondary Button Border Width', 'secondaryButtonBorderWidth', widget.props.secondaryButtonBorderWidth || '1px', '0px, 1px, 2px...')}
+            {renderTextInput('Secondary Button Border Color', 'secondaryButtonBorderColor', widget.props.secondaryButtonBorderColor || 'rgba(255,255,255,0.55)', 'CSS color for border')}
+            {renderTextInput('Secondary Button Border Radius', 'secondaryButtonBorderRadius', widget.props.secondaryButtonBorderRadius || '999px', 'Rounded corners e.g., 0.75rem, 999px')}
+            {renderTextInput('Secondary Button Padding', 'secondaryButtonPadding', widget.props.secondaryButtonPadding || '0.9rem 2.2rem', 'Spacing e.g., 0.75rem 1.5rem')}
+          </div>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderCardProperties = () => (
     <>
@@ -673,19 +924,148 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     </>
   );
 
-  const renderAlertProperties = () => (
-    <>
-      {renderSelect('Alert Type', 'type', widget.props.type, [
-        { value: 'info', label: 'Info' },
-        { value: 'success', label: 'Success' },
-        { value: 'warning', label: 'Warning' },
-        { value: 'error', label: 'Error' }
-      ])}
-      {renderTextInput('Message', 'message', widget.props.message, 'Alert message...', true)}
-      {renderSwitch('Dismissible', 'dismissible', widget.props.dismissible || false, 'Can be closed by user')}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderAlertProperties = () => {
+    const iconOptions = [
+      { value: 'AlertCircle', label: 'Alert Circle' },
+      { value: 'Info', label: 'Info' },
+      { value: 'Check', label: 'Check' },
+      { value: 'Bell', label: 'Bell' },
+      { value: 'HelpCircle', label: 'Help Circle' },
+      { value: 'X', label: 'X' }
+    ];
+
+    return (
+      <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Content</h3>
+        {renderSelect('Variant', 'type', widget.props.type || 'info', [
+          { value: 'info', label: 'Info' },
+          { value: 'success', label: 'Success' },
+          { value: 'warning', label: 'Warning' },
+          { value: 'error', label: 'Error' }
+        ])}
+        {renderTextInput('Title', 'title', widget.props.title || '', 'Short headline...')}
+        {renderTextInput('Message', 'message', widget.props.message || '', 'Main alert message...', true)}
+        {renderTextInput('Message Line Height', 'messageLineHeight', widget.props.messageLineHeight || '1.5', 'e.g., 1.5, 1.75')}
+        {renderSwitch('Show Description', 'showDescription', widget.props.showDescription !== false, 'Display additional supporting text')}
+        {widget.props.showDescription !== false && (
+          <>
+            {renderTextInput('Description', 'description', widget.props.description || '', 'Optional supporting text...', true)}
+            {renderTextInput('Description Line Height', 'descriptionLineHeight', widget.props.descriptionLineHeight || '1.5', 'e.g., 1.5, 1.75')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Alignment</h3>
+        {renderSelect('Layout', 'layout', widget.props.layout || 'vertical', [
+          { value: 'vertical', label: 'Stacked' },
+          { value: 'horizontal', label: 'Inline' }
+        ])}
+        {renderSelect('Text Alignment', 'alignment', widget.props.alignment || 'left', [
+          { value: 'left', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'right', label: 'Right' }
+        ])}
+        {renderSwitch('Full Width', 'fullWidth', widget.props.fullWidth !== false, 'Alert spans the available width')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '1rem 1.25rem', 'Spacing e.g., 1rem 1.25rem')}
+        {renderTextInput('Content Gap', 'gap', widget.props.gap || '0.75rem', 'Spacing between icon/text/actions')}
+        {renderTextInput('Text Gap', 'textGap', widget.props.textGap || '0.35rem', 'Spacing between lines of text')}
+        {renderTextInput('Icon Gap', 'iconSpacing', widget.props.iconSpacing || '0.75rem', 'Spacing between icon and content')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Colors & Styles</h3>
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '')}
+        {renderColorPicker('Text Color', 'textColor', widget.props.textColor || '')}
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || '')}
+        {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', '0px, 1px, 2px...')}
+        {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+          { value: 'solid', label: 'Solid' },
+          { value: 'dashed', label: 'Dashed' },
+          { value: 'dotted', label: 'Dotted' },
+          { value: 'double', label: 'Double' },
+          { value: 'none', label: 'None' }
+        ])}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '0.75rem', 'Rounded corners e.g., 0.75rem')}
+        {renderTextInput('Box Shadow', 'shadow', widget.props.shadow || 'none', 'CSS shadow value e.g., 0 4px 12px rgba(0,0,0,0.1)')}
+        {renderSwitch('Accent Bar', 'accentEnabled', widget.props.accentEnabled || false, 'Display a colored accent bar')}        
+        {widget.props.accentEnabled && (
+          <>
+            {renderColorPicker('Accent Color', 'accentColor', widget.props.accentColor || '')}
+            {renderSelect('Accent Position', 'accentPosition', widget.props.accentPosition || 'left', [
+              { value: 'left', label: 'Left' },
+              { value: 'right', label: 'Right' },
+              { value: 'top', label: 'Top' },
+              { value: 'bottom', label: 'Bottom' }
+            ])}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Icon</h3>
+        {renderSwitch('Show Icon', 'showIcon', widget.props.showIcon !== false, 'Display an icon alongside the text')}
+        {widget.props.showIcon !== false && (
+          <div className="space-y-3">
+            {renderSelect('Icon', 'icon', widget.props.icon || 'AlertCircle', iconOptions)}
+            {renderTextInput('Icon Size', 'iconSize', widget.props.iconSize || '1.25rem', '1rem, 20px...')}
+            {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor || '')}
+            {renderColorPicker('Icon Background', 'iconBackground', widget.props.iconBackground || 'rgba(255,255,255,0.2)')}
+          </div>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Actions</h3>
+        {renderSwitch('Show Actions', 'showActions', widget.props.showActions || false, 'Display primary/secondary actions inside the alert')}
+        {widget.props.showActions && (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase">Primary Action</h4>
+              {renderTextInput('Primary Text', 'primaryActionText', widget.props.primaryActionText || 'Resolve', 'Resolve, View details...')}
+              {renderTextInput('Primary Link', 'primaryActionLink', widget.props.primaryActionLink || '', 'https://...')}
+              {renderSelect('Primary Variant', 'primaryActionVariant', widget.props.primaryActionVariant || 'solid', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'outline', label: 'Outline' },
+                { value: 'ghost', label: 'Ghost' }
+              ])}
+              {renderColorPicker('Primary Background', 'primaryActionBackground', widget.props.primaryActionBackground || '')}
+              {renderColorPicker('Primary Text Color', 'primaryActionTextColor', widget.props.primaryActionTextColor || '')}
+              {renderColorPicker('Primary Hover Background', 'primaryActionHoverBackground', widget.props.primaryActionHoverBackground || '')}
+              {renderColorPicker('Primary Hover Text', 'primaryActionHoverTextColor', widget.props.primaryActionHoverTextColor || '')}
+            </div>
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase">Secondary Action</h4>
+              {renderTextInput('Secondary Text', 'secondaryActionText', widget.props.secondaryActionText || 'Dismiss', 'Optional secondary action label')}
+              {renderTextInput('Secondary Link', 'secondaryActionLink', widget.props.secondaryActionLink || '', 'https://...')}
+              {renderSelect('Secondary Variant', 'secondaryActionVariant', widget.props.secondaryActionVariant || 'ghost', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'outline', label: 'Outline' },
+                { value: 'ghost', label: 'Ghost' }
+              ])}
+              {renderColorPicker('Secondary Background', 'secondaryActionBackground', widget.props.secondaryActionBackground || 'transparent')}
+              {renderColorPicker('Secondary Text Color', 'secondaryActionTextColor', widget.props.secondaryActionTextColor || '')}
+              {renderColorPicker('Secondary Hover Background', 'secondaryActionHoverBackground', widget.props.secondaryActionHoverBackground || '')}
+              {renderColorPicker('Secondary Hover Text', 'secondaryActionHoverTextColor', widget.props.secondaryActionHoverTextColor || '')}
+            </div>
+          </div>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Dismiss Button</h3>
+        {renderSwitch('Dismissible', 'dismissible', widget.props.dismissible || false, 'Show a close button on the alert')}
+        {widget.props.dismissible && (
+          <div className="space-y-3">
+            {renderTextInput('Close Label', 'closeLabel', widget.props.closeLabel || 'Dismiss', 'Accessible label for the close button')}
+            {renderSelect('Close Button Variant', 'closeButtonVariant', widget.props.closeButtonVariant || 'ghost', [
+              { value: 'ghost', label: 'Ghost' },
+              { value: 'solid', label: 'Solid' },
+              { value: 'outline', label: 'Outline' }
+            ])}
+            {renderColorPicker('Close Icon/Text Color', 'closeIconColor', widget.props.closeIconColor || '')}
+          </div>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderSocialProperties = () => (
     <>
@@ -835,6 +1215,16 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
   // Navigation widgets properties
   const renderNavbarProperties = () => {
     const navLinks = normalizeNavLinks(widget.props.links);
+    const secondaryActionIcons = ['Phone', 'Mail', 'Calendar', 'User', 'ShoppingCart', 'Bell'];
+    const socialPlatforms = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'];
+    const togglePlatform = (platform: string, enabled: boolean) => {
+      const current = Array.isArray(widget.props.socialPlatforms) ? widget.props.socialPlatforms : [];
+      if (enabled && !current.includes(platform)) {
+        handleUpdate('socialPlatforms', [...current, platform]);
+      } else if (!enabled) {
+        handleUpdate('socialPlatforms', current.filter((p: string) => p !== platform));
+      }
+    };
 
     const handleNavLinkChange = (index: number, key: keyof NavLink, value: string) => {
       const updated = [...navLinks];
@@ -854,7 +1244,10 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
 
     return (
       <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Branding</h3>
         {renderTextInput('Logo Text', 'logoText', widget.props.logoText || '')}
+        {renderSwitch('Show Tagline', 'showTagline', widget.props.showTagline || false, 'Display a short tagline next to the logo')}
+        {widget.props.showTagline && renderTextInput('Tagline', 'tagline', widget.props.tagline || 'Quality Care For Every Smile')}
         <ImageUpload
           value={widget.props.logo}
           onChange={(url) => handleUpdate('logo', url)}
@@ -908,19 +1301,99 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
           </Button>
         </div>
 
-        {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-        {renderColorPicker('Text Color', 'color', widget.props.color)}
-        {renderTextInput('Height', 'height', widget.props.height || '60px')}
-        {renderSwitch(
-          'Fixed Position',
-          'position',
-          widget.props.position === 'fixed',
-          {
-            description: 'Keep the navigation bar pinned to the top of the page',
-            onChange: (checked) => handleUpdate('position', checked ? 'fixed' : 'relative')
-          }
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Links Styling</h3>
+        {renderSelect('Links Alignment', 'linksAlignment', widget.props.linksAlignment || 'between', [
+          { value: 'start', label: 'Left' },
+          { value: 'center', label: 'Center' },
+          { value: 'between', label: 'Spread / Centered' },
+          { value: 'end', label: 'Right' }
+        ])}
+        {renderColorPicker('Link Color', 'linkColor', widget.props.linkColor || widget.props.color || '#0f172a')}
+        {renderColorPicker('Link Hover Color', 'linkHoverColor', widget.props.linkHoverColor || '#2563eb')}
+        {renderColorPicker('Link Active Color', 'linkActiveColor', widget.props.linkActiveColor || '#1d4ed8')}
+        {renderColorPicker('Link Hover Background', 'linkHoverBackground', widget.props.linkHoverBackground || 'rgba(37,99,235,0.08)')}
+        {renderColorPicker('Link Active Background', 'linkActiveBackground', widget.props.linkActiveBackground || 'rgba(37,99,235,0.12)')}
+        {renderSwitch('Uppercase Links', 'linkUppercase', widget.props.linkUppercase || false, 'Transform link labels to uppercase')}
+        {renderTextInput('Link Gap', 'linkGap', widget.props.linkGap || '1.5rem', 'Spacing between links')}
+        {renderTextInput('Link Padding', 'linkPadding', widget.props.linkPadding || '0.25rem 0.5rem', 'Clickable padding per link')}
+        {renderTextInput('Link Border Radius', 'linkBorderRadius', widget.props.linkBorderRadius || '999px', 'Rounded corners for link pill')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        {renderTextInput('Container Max Width', 'containerMaxWidth', widget.props.containerMaxWidth || '1200px', 'e.g., 1200px, 100%')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '0.75rem 2rem', 'Top/bottom + left/right padding')}
+        {renderTextInput('Height', 'height', widget.props.height || '72px', 'Minimum navbar height')}
+        {renderSelect('Position', 'position', widget.props.position || 'sticky', [
+          { value: 'sticky', label: 'Sticky' },
+          { value: 'fixed', label: 'Fixed' },
+          { value: 'relative', label: 'Static' }
+        ])}
+        {widget.props.position === 'sticky' && (
+          renderTextInput('Sticky Offset', 'stickyOffset', widget.props.stickyOffset || '0px', 'e.g., 0px, 24px')
         )}
-        {renderSwitch('Show Shadow', 'shadow', widget.props.shadow ?? true, 'Adds a subtle drop shadow beneath the navbar')}
+        {renderSwitch('Show Shadow', 'shadow', widget.props.shadow ?? true, 'Adds a drop shadow beneath the navbar')}
+        {renderSwitch('Show Divider', 'showDivider', widget.props.showDivider || false, 'Adds a subtle divider under the navbar')}
+        {widget.props.showDivider && renderColorPicker('Divider Color', 'dividerColor', widget.props.dividerColor || 'rgba(15,23,42,0.08)')}
+        {renderTextInput('Border Bottom', 'borderBottom', widget.props.borderBottom || '1px solid rgba(15,23,42,0.08)', 'CSS border value or none')}
+        {renderTextInput('Rounded Corners', 'rounded', widget.props.rounded || '999px', '0px, 12px, 999px...')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Background & Colors</h3>
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+        {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'Optional CSS gradient e.g., linear-gradient(...)')}
+        {renderColorPicker('Text Color', 'color', widget.props.color || '#1f2937')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Action Button</h3>
+        {renderSwitch('Show Primary Button', 'showButton', widget.props.showButton || false, 'Display a call-to-action button on the right')}
+        {widget.props.showButton && (
+          <div className="space-y-3">
+            {renderTextInput('Button Text', 'buttonText', widget.props.buttonText || 'Book Visit')}
+            {renderTextInput('Button Link', 'buttonLink', widget.props.buttonLink || '#book')}
+            {renderSelect('Button Variant', 'buttonVariant', widget.props.buttonVariant || 'solid', [
+              { value: 'solid', label: 'Solid' },
+              { value: 'outline', label: 'Outline' },
+              { value: 'ghost', label: 'Ghost' }
+            ])}
+            {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+            {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+            {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+            {renderColorPicker('Button Hover Text Color', 'buttonHoverTextColor', widget.props.buttonHoverTextColor || '#ffffff')}
+            {renderTextInput('Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px', '0px, 1px, 2px...')}
+            {renderColorPicker('Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || widget.props.buttonBackground || '#2563eb')}
+            {renderTextInput('Button Border Radius', 'buttonBorderRadius', widget.props.buttonBorderRadius || '999px', 'Rounded corners e.g., 0.5rem, 999px')}
+          </div>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Actions & Social</h3>
+        {renderSwitch('Show Secondary Action', 'showSecondaryAction', widget.props.showSecondaryAction || false, 'Display an icon action next to the button')}
+        {widget.props.showSecondaryAction && (
+          <div className="space-y-3">
+            {renderSelect('Secondary Action Icon', 'secondaryActionIcon', widget.props.secondaryActionIcon || 'Phone', secondaryActionIcons.map((icon) => ({ value: icon, label: icon })))}
+            {renderTextInput('Secondary Action Label', 'secondaryActionLabel', widget.props.secondaryActionLabel || 'Call Us')}
+            {renderTextInput('Secondary Action Link', 'secondaryActionLink', widget.props.secondaryActionLink || '#contact')}
+          </div>
+        )}
+        {renderSwitch('Show Social Icons', 'showSocialIcons', widget.props.showSocialIcons || false, 'Display quick social links on the right')}
+        {widget.props.showSocialIcons && (
+          <div className="space-y-2">
+            <Label>Social Platforms</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {socialPlatforms.map((platform) => (
+                <div key={platform} className="flex items-center justify-between rounded-md border px-2 py-1 text-sm capitalize">
+                  <span>{platform}</span>
+                  <Switch
+                    checked={Array.isArray(widget.props.socialPlatforms) ? widget.props.socialPlatforms.includes(platform) : false}
+                    onCheckedChange={(checked) => togglePlatform(platform, checked)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {renderPositionAndSize()}
       </>
     );
@@ -969,38 +1442,290 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
   );
 
   // Data Display widgets properties
-  const renderTableProperties = () => (
-    <>
-      <div className="space-y-2">
-        <Label>Table Headers</Label>
-        {widget.props.headers?.map((header: string, idx: number) => (
-          <Input
-            key={idx}
-            value={header}
-            onChange={(e) => {
-              const newHeaders = [...widget.props.headers];
-              newHeaders[idx] = e.target.value;
-              handleUpdate('headers', newHeaders);
-            }}
-            placeholder={`Header ${idx + 1}`}
-          />
-        ))}
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => handleUpdate('headers', [...(widget.props.headers || []), 'Header'])}
-        >
-          Add Header
-        </Button>
-      </div>
-      {renderSwitch('Striped Rows', 'striped', widget.props.striped)}
-      {renderSwitch('Bordered', 'bordered', widget.props.bordered)}
-      {renderSwitch('Hoverable', 'hoverable', widget.props.hoverable)}
-      {renderColorPicker('Header Background', 'headerBackground', widget.props.headerBackground)}
-      {renderColorPicker('Header Color', 'headerColor', widget.props.headerColor)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderTableProperties = () => {
+    const headers: string[] = Array.isArray(widget.props.headers) ? widget.props.headers : [];
+    const rows: string[][] = Array.isArray(widget.props.rows) ? widget.props.rows : [];
+    const rawAlignments: string[] = Array.isArray(widget.props.columnAlignments)
+      ? widget.props.columnAlignments
+      : [];
+
+    const normalizeRows = (data: string[][]): string[][] => {
+      return data.map((row) => {
+        const next = [...row];
+        while (next.length < headers.length) {
+          next.push('');
+        }
+        if (next.length > headers.length) {
+          next.splice(headers.length);
+        }
+        return next;
+      });
+    };
+
+    const normalizedRows = normalizeRows(rows);
+    const normalizedAlignments = headers.map((_, idx) => rawAlignments[idx] || 'left');
+
+    const handleHeaderChange = (index: number, value: string) => {
+      const updatedHeaders = [...headers];
+      updatedHeaders[index] = value;
+      handleUpdate('headers', updatedHeaders);
+    };
+
+    const handleAddHeader = () => {
+      const newHeader = `Column ${headers.length + 1}`;
+      const updatedHeaders = [...headers, newHeader];
+      const updatedRows = normalizedRows.map((row) => [...row, '']);
+      const updatedAlignments = [...normalizedAlignments, 'left'];
+      handleUpdateMultiple({
+        headers: updatedHeaders,
+        rows: updatedRows,
+        columnAlignments: updatedAlignments
+      });
+    };
+
+    const handleRemoveHeader = (index: number) => {
+      const updatedHeaders = headers.filter((_, idx) => idx !== index);
+      const updatedRows = normalizedRows.map((row) => row.filter((_, idx) => idx !== index));
+      const updatedAlignments = normalizedAlignments.filter((_, idx) => idx !== index);
+      handleUpdateMultiple({
+        headers: updatedHeaders,
+        rows: updatedRows,
+        columnAlignments: updatedAlignments
+      });
+    };
+
+    const handleAlignmentChange = (index: number, value: string) => {
+      const updated = [...normalizedAlignments];
+      updated[index] = value;
+      handleUpdate('columnAlignments', updated);
+    };
+
+    const handleRowChange = (rowIndex: number, cellIndex: number, value: string) => {
+      const updatedRows = normalizedRows.map((row) => [...row]);
+      if (!updatedRows[rowIndex]) return;
+      updatedRows[rowIndex][cellIndex] = value;
+      handleUpdate('rows', updatedRows);
+    };
+
+    const handleAddRow = () => {
+      const template = headers.map(() => '');
+      handleUpdate('rows', [...normalizedRows, template]);
+    };
+
+    const handleRemoveRow = (index: number) => {
+      const updatedRows = normalizedRows.filter((_, idx) => idx !== index);
+      handleUpdate('rows', updatedRows);
+    };
+
+    return (
+      <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Data</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Headers</Label>
+              <span className="text-xs text-muted-foreground">{headers.length} column{headers.length === 1 ? '' : 's'}</span>
+            </div>
+            {headers.length === 0 && (
+              <p className="text-xs text-muted-foreground">Add at least one column to start populating the table.</p>
+            )}
+            <div className="space-y-3">
+              {headers.map((header, idx) => (
+                <div key={`${header}-${idx}`} className="space-y-2 rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={header}
+                      onChange={(e) => handleHeaderChange(idx, e.target.value)}
+                      placeholder={`Column ${idx + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      disabled={headers.length <= 1}
+                      onClick={() => handleRemoveHeader(idx)}
+                      aria-label={`Remove column ${idx + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Alignment</span>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant={normalizedAlignments[idx] === 'left' ? 'default' : 'outline'}
+                        className="h-8 w-8"
+                        onClick={() => handleAlignmentChange(idx, 'left')}
+                      >
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant={normalizedAlignments[idx] === 'center' ? 'default' : 'outline'}
+                        className="h-8 w-8"
+                        onClick={() => handleAlignmentChange(idx, 'center')}
+                      >
+                        <AlignCenter className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant={normalizedAlignments[idx] === 'right' ? 'default' : 'outline'}
+                        className="h-8 w-8"
+                        onClick={() => handleAlignmentChange(idx, 'right')}
+                      >
+                        <AlignRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddHeader}>
+              <Plus className="h-4 w-4 mr-2" /> Add Column
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Rows</Label>
+              <span className="text-xs text-muted-foreground">{normalizedRows.length} row{normalizedRows.length === 1 ? '' : 's'}</span>
+            </div>
+            {normalizedRows.length === 0 && (
+              <p className="text-xs text-muted-foreground">No rows yet. Use “Add Row” to create sample data.</p>
+            )}
+            <div className="space-y-3">
+              {normalizedRows.map((row, rowIdx) => (
+                <div key={`row-${rowIdx}`} className="space-y-2 rounded-lg border p-3">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span>Row {rowIdx + 1}</span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleRemoveRow(rowIdx)}
+                      aria-label={`Remove row ${rowIdx + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {row.map((cell, cellIdx) => (
+                      <Input
+                        key={`row-${rowIdx}-cell-${cellIdx}`}
+                        value={cell}
+                        onChange={(e) => handleRowChange(rowIdx, cellIdx, e.target.value)}
+                        placeholder={headers[cellIdx] || `Column ${cellIdx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddRow}>
+              <Plus className="h-4 w-4 mr-2" /> Add Row
+            </Button>
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        {renderColorPicker('Table Background', 'tableBackground', widget.props.tableBackground || '#ffffff')}
+        {renderTextInput('Table Padding', 'tablePadding', widget.props.tablePadding || '1.5rem')}
+        {renderTextInput('Min Table Width', 'minTableWidth', widget.props.minTableWidth || '640px')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1rem')}
+        {renderSwitch('Show Border', 'bordered', widget.props.bordered ?? true)}
+        {widget.props.bordered !== false && (
+          <>
+            {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px')}
+            {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.12)')}
+          </>
+        )}
+        {renderSwitch('Show Shadow', 'showShadow', widget.props.showShadow ?? true, 'Adds depth behind the table container')}
+        {widget.props.showShadow !== false &&
+          renderTextInput('Shadow', 'tableShadow', widget.props.tableShadow || '0 25px 45px rgba(15,23,42,0.08)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Header Styling</h3>
+        {renderColorPicker('Header Background', 'headerBackground', widget.props.headerBackground || '#f8fafc')}
+        {renderColorPicker('Header Text Color', 'headerColor', widget.props.headerColor || '#0f172a')}
+        {renderTextInput('Header Font Size', 'headerFontSize', widget.props.headerFontSize || '0.75rem')}
+        {renderTextInput('Header Font Weight', 'headerFontWeight', widget.props.headerFontWeight || '600')}
+        {renderTextInput('Header Letter Spacing', 'headerLetterSpacing', widget.props.headerLetterSpacing || '0.08em')}
+        {renderSelect('Header Text Transform', 'headerTextTransform', widget.props.headerTextTransform || 'uppercase', [
+          { value: 'none', label: 'None' },
+          { value: 'uppercase', label: 'Uppercase' },
+          { value: 'capitalize', label: 'Capitalized' }
+        ])}
+        {renderTextInput('Header Padding', 'headerPadding', widget.props.headerPadding || '0.75rem 1rem')}
+        {renderColorPicker('Header Divider Color', 'headerBorderColor', widget.props.headerBorderColor || 'rgba(15,23,42,0.12)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Rows & Cells</h3>
+        {renderTextInput('Cell Padding', 'cellPadding', widget.props.cellPadding || '0.85rem 1rem')}
+        {renderTextInput('Cell Font Size', 'cellFontSize', widget.props.cellFontSize || '0.95rem')}
+        {renderColorPicker('Cell Text Color', 'cellColor', widget.props.cellColor || '#1f2937')}
+        {renderColorPicker('Cell Background', 'cellBackground', widget.props.cellBackground || '#ffffff')}
+        {renderSwitch('Striped Rows', 'striped', widget.props.striped ?? true)}
+        {widget.props.striped !== false && renderColorPicker('Striped Row Color', 'stripedColor', widget.props.stripedColor || 'rgba(15,23,42,0.04)')}
+        {renderSwitch('Row Hover Highlight', 'hoverable', widget.props.hoverable ?? true)}
+        {widget.props.hoverable !== false && renderColorPicker('Row Hover Color', 'rowHoverColor', widget.props.rowHoverColor || 'rgba(37,99,235,0.08)')}
+        {renderSwitch('Row Dividers', 'showRowDividers', widget.props.showRowDividers ?? true)}
+        {widget.props.showRowDividers !== false && (
+          <>
+            {renderTextInput('Row Divider Width', 'rowBorderWidth', widget.props.rowBorderWidth || '1px')}
+            {renderColorPicker('Row Divider Color', 'rowBorderColor', widget.props.rowBorderColor || 'rgba(15,23,42,0.08)')}
+          </>
+        )}
+        {renderSwitch('Column Dividers', 'showColumnDividers', widget.props.showColumnDividers || false)}
+        {widget.props.showColumnDividers && (
+          <>
+            {renderTextInput('Column Divider Width', 'columnDividerWidth', widget.props.columnDividerWidth || '1px')}
+            {renderColorPicker('Column Divider Color', 'columnDividerColor', widget.props.columnDividerColor || 'rgba(15,23,42,0.08)')}
+          </>
+        )}
+        {renderSlider('Visible Rows (preview)', 'maxVisibleRows', widget.props.maxVisibleRows ?? 4, 1, 8, 1, '')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Caption & Toolbar</h3>
+        {renderSwitch('Show Caption', 'showCaption', widget.props.showCaption ?? true)}
+        {widget.props.showCaption !== false && (
+          <>
+            {renderTextInput('Caption', 'caption', widget.props.caption || 'Recent Performance')}
+            {renderSelect('Caption Position', 'captionPosition', widget.props.captionPosition || 'top', [
+              { value: 'top', label: 'Top' },
+              { value: 'bottom', label: 'Bottom' }
+            ])}
+            {renderSelect('Caption Align', 'captionAlign', widget.props.captionAlign || 'left', [
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Center' },
+              { value: 'between', label: 'Spread' },
+              { value: 'right', label: 'Right' }
+            ])}
+          </>
+        )}
+
+        {renderSwitch('Show Toolbar', 'showToolbar', widget.props.showToolbar ?? true)}
+        {widget.props.showToolbar !== false && (
+          <>
+            {renderTextInput('Toolbar Title', 'toolbarTitle', widget.props.toolbarTitle || 'Team KPIs')}
+            {renderTextarea('Toolbar Description', 'toolbarDescription', widget.props.toolbarDescription || 'Snapshot of efficiency across the practice')}
+            {renderTextInput('Action Label', 'toolbarActionText', widget.props.toolbarActionText || 'View All')}
+            {renderTextInput('Action Link', 'toolbarActionLink', widget.props.toolbarActionLink || '#reports')}
+            {renderSelect('Action Variant', 'toolbarActionVariant', widget.props.toolbarActionVariant || 'ghost', [
+              { value: 'solid', label: 'Solid' },
+              { value: 'outline', label: 'Outline' },
+              { value: 'ghost', label: 'Ghost' }
+            ])}
+          </>
+        )}
+        {renderColorPicker('Accent Color', 'tableAccentColor', widget.props.tableAccentColor || '#2563eb')}
+        {renderTextInput('Empty State Text', 'emptyStateText', widget.props.emptyStateText || 'No data available')}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderListProperties = () => (
     <>
@@ -1045,20 +1770,124 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     </>
   );
 
-  const renderProgressBarProperties = () => (
-    <>
-      {renderSlider('Value', 'value', widget.props.value, 0, widget.props.max || 100, 1)}
-      {renderSlider('Max Value', 'max', widget.props.max, 10, 1000, 10)}
-      {renderTextInput('Label', 'label', widget.props.label)}
-      {renderSwitch('Show Percentage', 'showPercentage', widget.props.showPercentage)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderColorPicker('Fill Color', 'fillColor', widget.props.fillColor)}
-      {renderTextInput('Height', 'height', widget.props.height)}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius)}
-      {renderSwitch('Animated', 'animated', widget.props.animated)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderProgressBarProperties = () => {
+    const parseNumber = (value: any, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const minValue = parseNumber(widget.props.min, 0);
+    const rawMax = parseNumber(widget.props.max, 100);
+    const safeMax = rawMax > minValue ? rawMax : minValue + 1;
+    const valueStepRaw = parseNumber(widget.props.valueStep, 1);
+    const sliderStep = valueStepRaw > 0 ? valueStepRaw : 1;
+    const rawValue = parseNumber(widget.props.value, minValue);
+    const clampedValue = Math.min(Math.max(rawValue, minValue), safeMax);
+    const goalValue = parseNumber(widget.props.goalValue, safeMax);
+    const decimals = parseInt(widget.props.valueDecimalPlaces ?? 0, 10) || 0;
+    const showValueSwitch = widget.props.showValue ?? widget.props.showPercentage ?? true;
+
+    return (
+      <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Data & Value</h3>
+        {renderSlider('Value', 'value', clampedValue, minValue, safeMax, sliderStep)}
+        <div className="grid grid-cols-2 gap-3">
+          {renderNumberInput('Minimum', 'min', minValue)}
+          {renderNumberInput('Maximum', 'max', safeMax)}
+        </div>
+        {renderNumberInput('Step', 'valueStep', sliderStep)}
+        {renderSelect('Value Display', 'valueFormat', widget.props.valueFormat || 'percent', [
+          { value: 'percent', label: 'Percent' },
+          { value: 'value', label: 'Raw Value' }
+        ])}
+        {renderNumberInput('Decimal Places', 'valueDecimalPlaces', Math.max(0, decimals))}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Value Prefix', 'valuePrefix', widget.props.valuePrefix ?? '')}
+          {renderTextInput('Value Suffix', 'valueSuffix', widget.props.valueSuffix ?? (widget.props.valueFormat === 'percent' ? '%' : ''))}
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Labels & Value Text</h3>
+        {renderSwitch('Show Label', 'showLabel', widget.props.showLabel ?? true)}
+        {renderSwitch('Show Description', 'showDescription', widget.props.showDescription ?? true)}
+        {renderTextInput('Label', 'label', widget.props.label || '')}
+        {renderTextarea('Description', 'description', widget.props.description || '')}
+        {renderSelect('Label Layout', 'labelLayout', widget.props.labelLayout || 'stacked', [
+          { value: 'stacked', label: 'Stacked' },
+          { value: 'inline', label: 'Inline' },
+          { value: 'between', label: 'Spread Apart' }
+        ])}
+        {renderColorPicker('Label Color', 'labelColor', widget.props.labelColor || '#0f172a')}
+        {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#475569')}
+        {renderSwitch('Show Value Text', 'showValue', showValueSwitch)}
+        {renderSelect('Value Position', 'valuePosition', widget.props.valuePosition || 'inline', [
+          { value: 'inline', label: 'Inline with Label' },
+          { value: 'inside', label: 'Inside Bar' },
+          { value: 'below', label: 'Below Bar' }
+        ])}
+        {renderColorPicker('Value Text Color', 'valueColor', widget.props.valueColor || '#0f172a')}
+        {widget.props.valuePosition === 'inside' && (
+          renderColorPicker('Value Inside Color', 'valueInsideColor', widget.props.valueInsideColor || '#ffffff')
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Bar Appearance</h3>
+        {renderTextInput('Bar Height', 'barHeight', widget.props.barHeight || widget.props.height || '1rem')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '999px')}
+        {renderColorPicker('Track Color', 'trackColor', widget.props.trackColor || widget.props.backgroundColor || '#e2e8f0')}
+        {renderColorPicker('Track Border Color', 'trackBorderColor', widget.props.trackBorderColor || 'transparent')}
+        {renderTextInput('Track Border Width', 'trackBorderWidth', widget.props.trackBorderWidth || '0px')}
+        {renderSwitch('Gradient Fill', 'useGradient', widget.props.useGradient ?? true, 'Use CSS gradients for the fill background')}
+        {widget.props.useGradient === false
+          ? renderColorPicker('Fill Color', 'fillColor', widget.props.fillColor || '#2563eb')
+          : renderTextInput('Fill Gradient CSS', 'fillGradient', widget.props.fillGradient || 'linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%)')}
+        {renderSwitch('Striped Fill', 'striped', widget.props.striped ?? true)}
+        {widget.props.striped && (
+          <>
+            {renderColorPicker('Stripe Color', 'stripeColor', widget.props.stripeColor || 'rgba(255,255,255,0.35)')}
+            {renderTextInput('Stripe Size', 'stripeSize', widget.props.stripeSize || '1.5rem 1.5rem', 'e.g. 1.5rem 1.5rem')}
+            {renderSwitch('Animate Stripes', 'animateStripes', widget.props.animateStripes ?? true)}
+          </>
+        )}
+        {renderSwitch('Animate Width', 'animateTransition', widget.props.animateTransition ?? widget.props.animated ?? true)}
+        {renderSwitch('Glow / Shadow', 'showGlow', widget.props.showGlow ?? true)}
+        {widget.props.showGlow && (
+          <>
+            {renderColorPicker('Glow Color', 'glowColor', widget.props.glowColor || 'rgba(14,165,233,0.35)')}
+            {renderTextInput('Glow Shadow', 'fillShadow', widget.props.fillShadow || '0 12px 30px rgba(37,99,235,0.35)')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Goal Indicator</h3>
+        {renderSwitch('Show Goal Marker', 'showGoal', widget.props.showGoal ?? true)}
+        {widget.props.showGoal !== false && (
+          <>
+            {renderNumberInput('Goal Value', 'goalValue', goalValue)}
+            {renderTextInput('Goal Label', 'goalLabel', widget.props.goalLabel || '')}
+            {renderSwitch('Show Goal Label', 'showGoalLabel', widget.props.showGoalLabel ?? true)}
+            {renderColorPicker('Goal Color', 'goalColor', widget.props.goalColor || '#0ea5e9')}
+            {renderColorPicker('Goal Label Color', 'goalLabelColor', widget.props.goalLabelColor || '#0f172a')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Min / Max Labels</h3>
+        {renderSwitch('Show Min/Max Labels', 'showMinMaxLabels', widget.props.showMinMaxLabels ?? true)}
+        {widget.props.showMinMaxLabels !== false && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Min Label', 'minLabel', widget.props.minLabel || '')}
+              {renderTextInput('Max Label', 'maxLabel', widget.props.maxLabel || '')}
+            </div>
+            {renderColorPicker('Meta Text Color', 'minMaxColor', widget.props.minMaxColor || '#94a3b8')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderStatsProperties = () => (
     <>
