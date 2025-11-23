@@ -65,6 +65,7 @@ import {
   Download,
   Upload,
   Share2,
+  Maximize2,
   Facebook,
   Twitter,
   Instagram,
@@ -81,10 +82,12 @@ import {
   HelpCircle,
   Plus,
   Minus,
-  ArrowRight,
-  ArrowLeft,
-  ArrowUp,
-  ArrowDown,
+  ArrowRight, 
+  ArrowLeft, 
+  ArrowUp, 
+  ArrowDown, 
+  ArrowUpRight,
+  ArrowDownRight,
   Edit,
   Sun,
   Moon,
@@ -122,6 +125,7 @@ import {
   Hash,
   AtSign
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PropertyEditor } from "@/components/website-builder/PropertyEditor";
@@ -831,12 +835,77 @@ const widgetLibrary: WidgetDefinition[] = [
     category: 'data',
     defaultProps: {
       value: '1,234',
+      valuePrefix: '',
+      valueSuffix: '',
+      valueColor: '#0f172a',
+      valueFontSize: '2.5rem',
+      valueFontWeight: '700',
+      valueLineHeight: '1.1',
+      valueLetterSpacing: '-0.02em',
       label: 'Total Sales',
-      icon: 'trending-up',
+      labelColor: '#475569',
+      labelFontSize: '1rem',
+      labelFontWeight: '600',
+      labelUppercase: false,
+      description: 'vs last month',
+      descriptionColor: '#94a3b8',
+      showDescription: true,
+      showBadge: true,
+      badgeText: 'Live',
+      badgeStyle: 'pill',
+      badgeColor: '#1d4ed8',
+      badgeBackground: 'rgba(59,130,246,0.12)',
+      showIcon: true,
+      iconName: 'TrendingUp',
+      icon: 'TrendingUp',
+      iconUpload: '',
+      iconColor: '#2563eb',
+      iconBackground: 'rgba(37,99,235,0.12)',
+      iconPadding: '0.65rem',
+      iconBorderRadius: '0.85rem',
+      iconBorderWidth: '0px',
+      iconBorderStyle: 'solid',
+      iconBorderColor: 'transparent',
+      iconShadow: 'none',
+      iconSize: '2rem',
+      iconPosition: 'left',
+      showChange: true,
       change: '+12%',
+      changeLabel: 'vs last month',
+      changeLabelColor: '#94a3b8',
       changeType: 'positive',
-      backgroundColor: '#f8f9fa',
-      iconColor: '#0066cc'
+      changePrefix: '',
+      changeSuffix: '',
+      changeIconStyle: 'arrow',
+      changeBadgeStyle: 'pill',
+      changePositiveColor: '#15803d',
+      changePositiveBackground: 'rgba(34,197,94,0.15)',
+      changeNegativeColor: '#b91c1c',
+      changeNegativeBackground: 'rgba(239,68,68,0.15)',
+      changeNeutralColor: '#475569',
+      changeNeutralBackground: 'rgba(71,85,105,0.12)',
+      changeCustomColor: '#0f172a',
+      changeCustomBackground: 'rgba(15,23,42,0.08)',
+      layout: 'vertical',
+      alignment: 'left',
+      gap: '1rem',
+      padding: '1.5rem',
+      backgroundColor: '#ffffff',
+      backgroundGradient: '',
+      borderRadius: '1rem',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: 'rgba(15,23,42,0.08)',
+      boxShadow: '0 20px 40px rgba(15,23,42,0.08)',
+      showAccent: false,
+      accentColor: '#2563eb',
+      accentPosition: 'top',
+      accentSize: '48px',
+      accentThickness: '4px',
+      accentInset: '1rem',
+      showDivider: false,
+      dividerColor: 'rgba(15,23,42,0.12)',
+      dividerThickness: '1px'
     }
   },
   // Forms & Inputs
@@ -846,14 +915,78 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: Search,
     category: 'forms',
     defaultProps: {
-      placeholder: 'Search...',
-      buttonText: 'Search',
-      backgroundColor: '#ffffff',
-      borderRadius: '0.375rem',
-      borderWidth: '1px',
-      borderColor: '#e0e0e0',
+      layout: 'inline',
+      alignment: 'left',
+      fullWidth: true,
+      maxWidth: '640px',
+      padding: '0',
+      gap: '0.75rem',
+      backgroundColor: 'transparent',
+      backgroundGradient: '',
+      borderRadius: '999px',
+      borderWidth: '0px',
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      placeholder: 'Search services, doctors, or treatments...',
+      label: 'Search',
+      labelColor: '#0f172a',
+      labelSize: '0.9rem',
+      labelUppercase: false,
+      showLabel: false,
+      helperText: '',
+      helperColor: '#94a3b8',
+      showHelperText: false,
+      inputTextColor: '#0f172a',
+      inputFontSize: '1rem',
+      inputHeight: '52px',
+      inputPadding: '0.75rem 1rem',
+      inputBackground: '#ffffff',
+      inputBackgroundGradient: '',
+      inputBorderRadius: '999px',
+      inputBorderWidth: '1px',
+      inputBorderStyle: 'solid',
+      inputBorderColor: '#e2e8f0',
+      inputPlaceholderColor: '#94a3b8',
+      focusRingColor: '#2563eb',
+      inputShadow: '0 4px 12px rgba(15,23,42,0.08)',
+      showIcon: true,
+      iconName: 'Search',
+      iconColor: '#2563eb',
+      iconBackground: 'transparent',
+      iconSize: '1.1rem',
+      iconPosition: 'left',
       showButton: true,
-      showIcon: true
+      buttonText: 'Search',
+      buttonVariant: 'solid',
+      buttonPadding: '0.75rem 1.5rem',
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonHoverBackground: '#1d4ed8',
+      buttonHoverTextColor: '#ffffff',
+      buttonBorderWidth: '0px',
+      buttonBorderStyle: 'solid',
+      buttonBorderColor: 'transparent',
+      buttonRadius: '999px',
+      buttonIconName: '',
+      buttonIconPosition: 'right',
+      showVoiceButton: false,
+      voiceButtonTooltip: 'Voice search',
+      voiceButtonColor: '#475569',
+      voiceButtonBackground: 'rgba(148,163,184,0.15)',
+      showAdvancedButton: false,
+      advancedButtonLabel: 'Advanced',
+      advancedButtonVariant: 'ghost',
+      advancedButtonTextColor: '#2563eb',
+      advancedButtonHoverColor: '#1d4ed8',
+      showFilters: false,
+      filtersLabel: 'Popular searches',
+      quickFilters: ['Teeth whitening', 'Braces', 'Dental implants'],
+      filterStyle: 'pill',
+      filterTextColor: '#2563eb',
+      filterBackground: 'rgba(37,99,235,0.08)',
+      filterBorderColor: 'transparent',
+      filterHoverBackground: 'rgba(37,99,235,0.15)',
+      filterGap: '0.5rem'
     }
   },
   {
@@ -862,13 +995,90 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: Mail,
     category: 'forms',
     defaultProps: {
+      layout: 'centered',
+      alignment: 'center',
+      maxWidth: '720px',
+      padding: '3rem',
+      gap: '1.5rem',
+      textGap: '1.25rem',
+      backgroundColor: '#ffffff',
+      backgroundGradient: '',
+      borderRadius: '1.25rem',
+      borderWidth: '1px',
+      borderColor: 'rgba(15,23,42,0.08)',
+      boxShadow: '0 30px 60px rgba(15,23,42,0.08)',
+      showBadge: true,
+      badgeText: 'Free dental tips',
+      badgeBackground: 'rgba(59,130,246,0.12)',
+      badgeColor: '#2563eb',
+      showEyebrow: true,
+      eyebrow: 'Stay in the loop',
+      eyebrowColor: '#2563eb',
       title: 'Subscribe to our Newsletter',
-      description: 'Get the latest updates delivered to your inbox',
-      placeholder: 'Enter your email',
+      titleFontSize: '2.5rem',
+      titleFontWeight: '700',
+      titleColor: '#0f172a',
+      description: 'Monthly dental care news, promotions, and patient success stories delivered straight to your inbox.',
+      descriptionColor: '#475569',
+      descriptionSpacing: '1.25rem',
+      bulletPoints: [
+        'Exclusive promotions and offers',
+        'Monthly dental health tips',
+        'Priority access to new services'
+      ],
+      bulletIconName: 'Check',
+      bulletIconColor: '#16a34a',
+      bulletTextColor: '#0f172a',
+      inputLabel: '',
+      inputLabelColor: '#0f172a',
+      placeholder: 'Enter your email address',
+      inputHelperText: '',
+      helperColor: '#94a3b8',
+      inputBackground: '#ffffff',
+      inputBackgroundGradient: '',
+      inputBorderRadius: '999px',
+      inputBorderWidth: '1px',
+      inputBorderColor: 'rgba(148,163,184,0.6)',
+      inputShadow: '0 10px 30px rgba(15,23,42,0.12)',
+      inputTextColor: '#0f172a',
+      inputPlaceholderColor: '#94a3b8',
       buttonText: 'Subscribe',
-      backgroundColor: '#f8f9fa',
-      buttonColor: '#0066cc',
-      padding: '2rem'
+      buttonVariant: 'solid',
+      buttonPadding: '0.85rem 1.75rem',
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonHoverBackground: '#1d4ed8',
+      buttonHoverTextColor: '#ffffff',
+      buttonBorderWidth: '0px',
+      buttonBorderStyle: 'solid',
+      buttonBorderColor: 'transparent',
+      buttonRadius: '999px',
+      buttonIconName: 'ArrowRight',
+      buttonIconPosition: 'right',
+      showSecondaryButton: true,
+      secondaryButtonText: 'No thanks, maybe later',
+      secondaryButtonVariant: 'link',
+      secondaryButtonColor: '#64748b',
+      secondaryButtonHoverColor: '#0f172a',
+      consentText: 'By subscribing you agree to receive emails from us. Unsubscribe anytime.',
+      consentTextColor: '#94a3b8',
+      successMessage: "You're in! Check your inbox for a confirmation email.",
+      successMessageColor: '#15803d',
+      showStats: true,
+      statsValue: '98%',
+      statsLabel: 'Patient satisfaction',
+      statsAccentColor: '#22c55e',
+      showLogos: true,
+      logosTitle: 'Trusted by leading clinics',
+      logos: ['SmileCo', 'BrightDental', 'OralCare+'],
+      logoTextColor: '#64748b',
+      showImage: true,
+      imagePosition: 'right',
+      imageUrl: '',
+      imageAlt: 'Happy patient illustration',
+      imageBackground: '#eef2ff',
+      imageBorderRadius: '1rem',
+      imageHeight: '280px'
     }
   },
   {
@@ -877,13 +1087,80 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: Phone,
     category: 'forms',
     defaultProps: {
-      phone: '+1 234 567 8900',
-      email: 'info@example.com',
-      address: '123 Main St, City, Country',
+      layout: 'cards',
+      alignment: 'left',
+      columns: '2',
+      itemGap: '1rem',
+      padding: '2rem',
+      backgroundColor: '#ffffff',
+      backgroundGradient: '',
+      borderRadius: '1.25rem',
+      borderWidth: '1px',
+      borderColor: 'rgba(15,23,42,0.08)',
+      boxShadow: '0 20px 45px rgba(15,23,42,0.12)',
+      heading: 'Contact our care team',
+      subheading: 'We respond within one business day',
+      headingColor: '#0f172a',
+      subheadingColor: '#475569',
+      textGap: '1rem',
       showIcons: true,
-      iconColor: '#0066cc',
-      textColor: '#333333',
-      fontSize: '1rem'
+      iconColor: '#2563eb',
+      iconBackground: 'rgba(37,99,235,0.08)',
+      iconSize: '1.1rem',
+      textColor: '#0f172a',
+      helperColor: '#64748b',
+      fontSize: '1rem',
+      valueFontWeight: '600',
+      contactItems: [
+        {
+          icon: 'Phone',
+          label: 'Call us',
+          value: '(555) 123-4567',
+          helper: 'Mon-Fri · 9am-6pm',
+          href: 'tel:+15551234567'
+        },
+        {
+          icon: 'Mail',
+          label: 'Email',
+          value: 'smiles@cairodental.com',
+          helper: 'We reply within 24h',
+          href: 'mailto:smiles@cairodental.com'
+        },
+        {
+          icon: 'MapPin',
+          label: 'Visit us',
+          value: '12 Nile St, Cairo',
+          helper: 'Parking available on site',
+          href: 'https://maps.google.com/'
+        }
+      ],
+      showCTA: true,
+      ctaText: 'Book an appointment',
+      ctaHref: '#',
+      ctaVariant: 'solid',
+      ctaBackground: '#2563eb',
+      ctaTextColor: '#ffffff',
+      ctaPadding: '0.85rem 1.5rem',
+      ctaBorderWidth: '0px',
+      ctaBorderColor: 'transparent',
+      ctaIconName: 'ArrowRight',
+      ctaIconPosition: 'right',
+      showSecondaryCTA: true,
+      secondaryCTAText: 'Email our coordinators',
+      secondaryCTAHref: 'mailto:smiles@cairodental.com',
+      secondaryCTAColor: '#2563eb',
+      footnote: 'Emergency patients can call our hotline 24/7.',
+      footnoteColor: '#94a3b8',
+      showSocial: true,
+      socialLabel: 'Connect with us',
+      socialPlatforms: ['facebook', 'instagram', 'linkedin'],
+      socialIconColor: '#2563eb',
+      socialIconBackground: 'rgba(37,99,235,0.08)',
+      socialLinks: {
+        facebook: 'https://facebook.com/cairodental',
+        instagram: 'https://instagram.com/cairodental',
+        linkedin: 'https://linkedin.com/company/cairodental'
+      }
     }
   },
   // Media
@@ -893,13 +1170,75 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: Grid,
     category: 'media',
     defaultProps: {
-      images: [],
+      images: [
+        {
+          src: 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=800&q=80',
+          alt: 'Modern dental suite',
+          title: 'Modern Suites',
+          description: 'Spa-like treatment rooms with panoramic city views.',
+          badge: 'Clinic'
+        },
+        {
+          src: 'https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=800&q=80',
+          alt: 'Patient smile makeover',
+          title: 'Smile Makeover',
+          description: 'Composite veneers applied in a single visit.',
+          badge: 'Case Study'
+        },
+        {
+          src: 'https://images.unsplash.com/photo-1507457379470-08b5f7c4f1b4?auto=format&fit=crop&w=800&q=80',
+          alt: 'Digital scanning',
+          title: 'Digital Scans',
+          description: '3D intraoral scanning for accurate treatment planning.',
+          badge: 'Technology'
+        }
+      ],
+      heading: 'Treatment Gallery',
+      subheading: 'Recent cases and behind-the-scenes moments from our specialists.',
+      textGap: '1rem',
+      layout: 'grid',
       columns: 3,
+      mobileColumns: 1,
       gap: '1rem',
-      borderRadius: '0.5rem',
-      aspectRatio: '16/9',
+      rowGap: '1rem',
+      padding: '1.5rem',
+      backgroundColor: '#ffffff',
+      backgroundGradient: '',
+      borderRadius: '1rem',
+      borderWidth: '0px',
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      imageBorderRadius: '1rem',
+      imageBorderWidth: '0px',
+      imageBorderColor: 'transparent',
+      imageShadow: '0 12px 25px rgba(15,23,42,0.12)',
+      imageAspectRatio: '16/9',
+      imageHeight: '',
+      objectFit: 'cover',
+      hoverEffect: 'zoom',
+      showOverlay: true,
+      overlayColor: 'rgba(15,23,42,0.45)',
+      overlayIconName: 'Maximize2',
+      showPreviewIcon: true,
+      showCaptions: true,
+      captionAlignment: 'left',
+      captionColor: '#0f172a',
+      captionDescriptionColor: '#475569',
+      showBadges: true,
+      badgeBackground: 'rgba(37,99,235,0.12)',
+      badgeColor: '#2563eb',
       lightbox: true,
-      captions: false
+      openLinksInNewTab: true,
+      ctaText: 'View all cases',
+      ctaHref: '#',
+      ctaVariant: 'outline',
+      ctaBackground: '#2563eb',
+      ctaTextColor: '#2563eb',
+      ctaBorderColor: '#2563eb',
+      ctaBorderWidth: '1px',
+      ctaPadding: '0.65rem 1.25rem',
+      ctaIconName: 'ArrowRight',
+      ctaIconPosition: 'right'
     }
   },
   {
@@ -908,13 +1247,71 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: Layers,
     category: 'media',
     defaultProps: {
-      slides: [],
+      slides: [
+        {
+          image: 'https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=1400&q=80',
+          alt: 'Patient smile makeover',
+          badge: 'Smile Makeover',
+          headline: 'Transformative cosmetic dentistry',
+          subheadline: 'Tailored veneer & whitening plans',
+          description: 'See how our cosmetic specialists craft confident smiles with same-day restorations.',
+          buttonText: 'Explore services',
+          buttonHref: '#services'
+        },
+        {
+          image: 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1400&q=80',
+          alt: 'Modern dental studio',
+          badge: 'Technology',
+          headline: 'Comfort-first clinics',
+          subheadline: 'Relaxing suites and digital workflows',
+          description: 'Every chair features aromatherapy, streaming entertainment, and guided relaxation.',
+          buttonText: 'Tour facilities',
+          buttonHref: '#tour'
+        },
+        {
+          image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1400&q=80',
+          alt: 'Pediatric dentistry',
+          badge: 'Kids Club',
+          headline: 'Gentle pediatric visits',
+          subheadline: 'Playful care for growing smiles',
+          description: 'Board-certified pediatric dentists make every visit positive with comfort kits and story time.',
+          buttonText: 'Book kids visit',
+          buttonHref: '#kids'
+        }
+      ],
+      height: '460px',
+      slideWidth: '80%',
+      slideGap: '1.5rem',
+      padding: '0',
+      backgroundColor: 'transparent',
+      backgroundGradient: '',
+      borderRadius: '1.5rem',
+      showOverlay: true,
+      overlayColor: 'rgba(15,23,42,0.35)',
+      overlayBlur: '0px',
+      showContent: true,
+      contentAlignment: 'left',
+      headlineColor: '#ffffff',
+      bodyColor: 'rgba(255,255,255,0.9)',
+      badgeBackground: 'rgba(255,255,255,0.12)',
+      badgeColor: '#ffffff',
+      buttonPadding: '0.7rem 1.5rem',
+      buttonBackground: '#ffffff',
+      buttonTextColor: '#0f172a',
+      showArrows: true,
+      arrowPosition: 'sides',
+      arrowBackground: 'rgba(15,23,42,0.6)',
+      arrowColor: '#ffffff',
+      showIndicators: true,
+      indicatorStyle: 'dots',
+      indicatorColor: 'rgba(255,255,255,0.4)',
+      indicatorActiveColor: '#ffffff',
+      showThumbnails: false,
       autoplay: true,
       interval: 5000,
-      showIndicators: true,
-      showArrows: true,
-      height: '400px',
-      borderRadius: '0'
+      transitionDuration: 600,
+      loop: true,
+      pauseOnHover: true
     }
   },
   {
@@ -939,15 +1336,92 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: ShoppingCart,
     category: 'commerce',
     defaultProps: {
-      title: 'Product Name',
-      price: '$99.99',
-      originalPrice: '$129.99',
-      image: '',
-      rating: 4.5,
-      badge: 'Sale',
-      badgeColor: '#ff4444',
-      buttonText: 'Add to Cart',
-      currency: '$'
+      layoutVariant: 'vertical',
+      alignment: 'left',
+      cardPadding: '1.75rem',
+      contentGap: '1.25rem',
+      cardBackground: '#ffffff',
+      cardBackgroundGradient: '',
+      borderRadius: '1.5rem',
+      borderWidth: '1px',
+      borderColor: 'rgba(15,23,42,0.08)',
+      boxShadow: '0 25px 45px rgba(15,23,42,0.12)',
+      showImage: true,
+      image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80',
+      imageAlt: 'SonicClean Pro whitening kit',
+      imageHeight: '260px',
+      imageBorderRadius: '1.25rem',
+      imageBackground: '#eef2ff',
+      objectFit: 'cover',
+      mediaWidth: '320px',
+      showBadge: true,
+      badge: 'Bestseller',
+      badgePosition: 'top-left',
+      badgeBackground: 'rgba(59,130,246,0.18)',
+      badgeTextColor: '#1d4ed8',
+      showFavoriteIcon: true,
+      favoriteIconName: 'Heart',
+      favoriteIconColor: '#ef4444',
+      favoriteIconBackground: '#ffffff',
+      title: 'SonicClean Pro Whitening Kit',
+      subtitle: 'Enamel-safe LED light treatment',
+      description: 'Complete at-home whitening system with dual-light therapy, enamel-safe serum pens, and a travel-ready case.',
+      price: '249',
+      originalPrice: '329',
+      currency: '$',
+      showCurrency: true,
+      priceSuffix: '/kit',
+      priceLabel: 'One-time payment',
+      priceColor: '#0f172a',
+      originalPriceColor: '#94a3b8',
+      showDiscount: true,
+      discountText: 'Save 25%',
+      discountColor: '#15803d',
+      discountBackground: 'rgba(34,197,94,0.15)',
+      titleColor: '#0f172a',
+      subtitleColor: '#2563eb',
+      descriptionColor: '#475569',
+      stockStatus: 'In stock · Ships in 24h',
+      stockColor: '#16a34a',
+      shippingText: 'Free worldwide shipping',
+      shippingColor: '#2563eb',
+      showRating: true,
+      rating: 4.8,
+      ratingCountLabel: '128 reviews',
+      ratingLabel: 'Recommended by dentists',
+      starColor: '#facc15',
+      ratingColor: '#475569',
+      showFeatures: true,
+      features: [
+        'Enamel-safe LED dual-light therapy',
+        'Built-in 15-minute auto timer',
+        'Wireless magnetic charging travel case'
+      ],
+      featureIconName: 'Check',
+      featureIconColor: '#2563eb',
+      buttonText: 'Add to cart',
+      buttonHref: '#',
+      buttonVariant: 'solid',
+      buttonFullWidth: true,
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonHoverBackground: '#1d4ed8',
+      buttonHoverTextColor: '#ffffff',
+      buttonPadding: '0.85rem 1.4rem',
+      buttonBorderRadius: '999px',
+      buttonBorderWidth: '0px',
+      buttonBorderColor: 'transparent',
+      ctaIconName: 'ShoppingCart',
+      ctaIconPosition: 'right',
+      showSecondaryButton: true,
+      secondaryButtonText: 'View details',
+      secondaryButtonHref: '#',
+      secondaryButtonVariant: 'link',
+      secondaryButtonColor: '#2563eb',
+      secondaryButtonHoverColor: '#1d4ed8',
+      secondaryButtonBackground: 'transparent',
+      secondaryButtonHoverBackground: 'transparent',
+      secondaryButtonPadding: '0.5rem 0.75rem'
     }
   },
   {
@@ -956,14 +1430,80 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: CreditCard,
     category: 'commerce',
     defaultProps: {
-      title: 'Basic Plan',
-      price: '$29',
-      period: '/month',
-      features: ['Feature 1', 'Feature 2', 'Feature 3'],
-      buttonText: 'Choose Plan',
-      featured: false,
+      layoutVariant: 'card',
+      alignment: 'left',
+      maxWidth: '420px',
+      cardPadding: '2.25rem',
       backgroundColor: '#ffffff',
-      accentColor: '#0066cc'
+      backgroundGradient: '',
+      borderRadius: '1.5rem',
+      borderWidth: '1px',
+      borderColor: 'rgba(15,23,42,0.08)',
+      boxShadow: '0 25px 45px rgba(15,23,42,0.12)',
+      showAccentBar: true,
+      accentPosition: 'top',
+      accentColor: '#2563eb',
+      accentThickness: '4px',
+      featured: true,
+      badgeText: 'Most popular',
+      badgeBackground: 'rgba(59,130,246,0.12)',
+      badgeColor: '#1d4ed8',
+      title: 'Professional Plan',
+      subtitle: 'For rapidly scaling dental groups',
+      description: 'Unlock unlimited messaging, advanced automations, and dedicated onboarding.',
+      titleColor: '#0f172a',
+      subtitleColor: '#2563eb',
+      price: '149',
+      originalPrice: '199',
+      currency: '$',
+      showCurrency: true,
+      priceSuffix: '/month',
+      priceLabel: 'Billed monthly · Cancel anytime',
+      priceSubtext: 'Switch to annual billing and save 15%',
+      priceColor: '#0f172a',
+      priceSuffixColor: '#475569',
+      originalPriceColor: '#94a3b8',
+      descriptionColor: '#475569',
+      showOriginalPrice: true,
+      showFeatures: true,
+      features: [
+        'Unlimited patient profiles & messaging',
+        'Priority phone & WhatsApp support',
+        'AI-powered reminders + smart routing'
+      ],
+      featureIconName: 'Check',
+      featureIconColor: '#16a34a',
+      limitedFeatures: ['On-site training available with Enterprise'],
+      limitedFeatureIconName: 'X',
+      limitedFeatureIconColor: '#ef4444',
+      buttonText: 'Start free trial',
+      buttonHref: '#',
+      buttonVariant: 'solid',
+      buttonFullWidth: true,
+      buttonBackground: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonHoverBackground: '#1d4ed8',
+      buttonHoverTextColor: '#ffffff',
+      buttonPadding: '0.9rem 1.5rem',
+      buttonBorderRadius: '999px',
+      buttonBorderWidth: '0px',
+      buttonBorderColor: 'transparent',
+      ctaIconName: 'ArrowRight',
+      ctaIconPosition: 'right',
+      showSecondaryButton: true,
+      secondaryButtonText: 'Compare all plans',
+      secondaryButtonHref: '#',
+      secondaryButtonVariant: 'ghost',
+      secondaryButtonColor: '#2563eb',
+      secondaryButtonHoverColor: '#1d4ed8',
+      secondaryButtonBackground: 'rgba(37,99,235,0.08)',
+      secondaryButtonHoverBackground: 'rgba(37,99,235,0.16)',
+      secondaryButtonPadding: '0.75rem 1rem',
+      showGuarantee: true,
+      guaranteeText: '30-day money-back guarantee',
+      guaranteeColor: '#16a34a',
+      showFooterNote: true,
+      footerNote: 'Need a custom plan? Talk to our enterprise team.'
     }
   },
   {
@@ -972,13 +1512,53 @@ const widgetLibrary: WidgetDefinition[] = [
     icon: MessageSquare,
     category: 'commerce',
     defaultProps: {
-      quote: 'This is an amazing product that has helped our business grow significantly.',
-      author: 'John Doe',
-      role: 'CEO, Company',
-      avatar: '',
-      rating: 5,
-      backgroundColor: '#f8f9fa',
-      quoteIcon: true
+      layoutVariant: 'card',
+      alignment: 'left',
+      maxWidth: '640px',
+      cardPadding: '2.75rem',
+      backgroundColor: '#0f172a',
+      backgroundGradient: 'linear-gradient(135deg, #0f172a, #1d4ed8)',
+      borderRadius: '1.75rem',
+      borderWidth: '0px',
+      borderColor: 'transparent',
+      boxShadow: '0 35px 65px rgba(15,23,42,0.35)',
+      quote: '“CairoDental gave us the operating system we always wanted — patients feel heard, and our team works in perfect sync.”',
+      highlightText: 'patients',
+      quoteColor: '#ffffff',
+      highlightColor: '#fde047',
+      quoteSize: 1.6,
+      quoteLineHeight: 1.5,
+      quoteItalic: true,
+      showQuoteIcon: true,
+      quoteIconName: 'MessageSquare',
+      quoteIconColor: '#0f172a',
+      quoteIconBackground: '#fde47a',
+      showAvatar: true,
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+      avatarShape: 'circle',
+      avatarSize: '64px',
+      author: 'Dr. Layla Hassan',
+      role: 'Clinical Director, BrightSmiles Network',
+      company: 'Cairo, Egypt',
+      authorColor: '#ffffff',
+      roleColor: 'rgba(255,255,255,0.7)',
+      showRating: true,
+      rating: 4.9,
+      ratingLabel: 'Based on 180 patient stories',
+      starColor: '#facc15',
+      ratingColor: 'rgba(255,255,255,0.8)',
+      showCTA: true,
+      ctaText: 'Read full case study',
+      ctaHref: '#',
+      ctaBackground: '#fde047',
+      ctaTextColor: '#0f172a',
+      ctaHoverBackground: '#facc15',
+      ctaHoverTextColor: '#0f172a',
+      ctaPadding: '0.85rem 1.6rem',
+      ctaBorderRadius: '999px',
+      showLogos: true,
+      logos: ['SmileCo', 'OralCare+', 'Dental360'],
+      logoTextColor: 'rgba(255,255,255,0.6)'
     }
   },
   // Special
@@ -6169,112 +6749,1451 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'stats' && (() => {
-            const statsClass = registerStyle('stats', {
-              backgroundColor: widget.props.backgroundColor
+            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const layoutVariant = widget.props.layout === 'horizontal' ? 'horizontal' : 'vertical';
+            const alignment = widget.props.alignment || 'left';
+            const alignItemsMap: Record<string, StyleValue> = {
+              left: 'flex-start',
+              center: 'center',
+              right: 'flex-end'
+            };
+            const alignItems = alignItemsMap[alignment] || 'flex-start';
+            const textAlign = alignment === 'center' ? 'center' : alignment === 'right' ? 'right' : 'left';
+            const gapValue = widget.props.gap || (layoutVariant === 'horizontal' ? '1.5rem' : '1rem');
+            const rawValue = widget.props.value;
+            const resolvedValue = rawValue === null || rawValue === undefined
+              ? ''
+              : typeof rawValue === 'number'
+                ? rawValue.toLocaleString()
+                : rawValue;
+            const valueDisplayString = `${widget.props.valuePrefix || ''}${resolvedValue || ''}${widget.props.valueSuffix || ''}`;
+            const valueDisplay = valueDisplayString.length > 0 ? valueDisplayString : '0';
+
+            const changeValueString = `${widget.props.changePrefix || ''}${widget.props.change || ''}${widget.props.changeSuffix || ''}`;
+            const hasChangeValue = changeValueString.trim().length > 0;
+            const showChange = widget.props.showChange !== false && (hasChangeValue || Boolean(widget.props.changeLabel));
+            const showIcon = widget.props.showIcon !== false && Boolean(widget.props.iconUpload || widget.props.uploadedIcon || widget.props.iconName || widget.props.icon);
+            const showBadge = widget.props.showBadge ?? Boolean(widget.props.badgeText);
+            const showDescription = widget.props.showDescription !== false && Boolean(widget.props.description);
+            const showDivider = widget.props.showDivider === true;
+            const showAccent = widget.props.showAccent === true;
+            const badgeText = widget.props.badgeText || 'Live';
+            const badgeStyle = widget.props.badgeStyle || 'pill';
+            const changeBadgeStyle = widget.props.changeBadgeStyle || 'pill';
+            const changeIconStyle = widget.props.changeIconStyle || 'arrow';
+            const changeType = (widget.props.changeType || 'positive') as 'positive' | 'negative' | 'neutral' | 'custom';
+
+            const changeColors = (() => {
+              switch (changeType) {
+                case 'negative':
+                  return {
+                    text: widget.props.changeNegativeColor || '#b91c1c',
+                    bg: widget.props.changeNegativeBackground || 'rgba(239,68,68,0.15)'
+                  };
+                case 'neutral':
+                  return {
+                    text: widget.props.changeNeutralColor || '#475569',
+                    bg: widget.props.changeNeutralBackground || 'rgba(71,85,105,0.12)'
+                  };
+                case 'custom':
+                  return {
+                    text: widget.props.changeCustomColor || '#0f172a',
+                    bg: widget.props.changeCustomBackground || 'rgba(15,23,42,0.08)'
+                  };
+                case 'positive':
+                default:
+                  return {
+                    text: widget.props.changePositiveColor || '#15803d',
+                    bg: widget.props.changePositiveBackground || 'rgba(34,197,94,0.15)'
+                  };
+              }
+            })();
+
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if (iconRegistry[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return iconRegistry[formatted] ? formatted : undefined;
+            };
+
+            const resolvedIconName = normalizeIconName(widget.props.iconName || widget.props.icon) || 'TrendingUp';
+            const IconComponent = iconRegistry[resolvedIconName] || TrendingUp;
+            const iconUpload = widget.props.iconUpload || widget.props.uploadedIcon;
+            const iconSize = widget.props.iconSize || '2rem';
+            const iconPlacement = widget.props.iconPosition === 'top' ? 'top' : 'left';
+
+            const containerClass = registerStyle('stats-card', {
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: gapValue,
+              padding: widget.props.padding || '1.5rem',
+              borderRadius: widget.props.borderRadius || '1rem',
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: widget.props.borderStyle || 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.08)',
+              boxShadow: widget.props.boxShadow || '0 20px 40px rgba(15,23,42,0.08)',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || '#ffffff',
+              backgroundImage: backgroundGradient || undefined,
+              overflow: 'hidden'
             });
 
+            const headerClass = registerStyle('stats-header', {
+              display: 'flex',
+              flexDirection: layoutVariant === 'horizontal' ? 'row' : 'column',
+              alignItems: layoutVariant === 'horizontal' ? 'center' : alignItems,
+              justifyContent: layoutVariant === 'horizontal' ? 'space-between' : 'flex-start',
+              width: '100%',
+              gap: layoutVariant === 'horizontal' ? gapValue : '0.75rem'
+            });
+
+            const metaStackClass = registerStyle('stats-meta', {
+              display: 'flex',
+              flexDirection: iconPlacement === 'top' ? 'column' : 'row',
+              alignItems: iconPlacement === 'top' ? alignItems : 'center',
+              gap: showIcon ? (iconPlacement === 'top' ? '0.75rem' : '0.85rem') : '0.35rem',
+              width: '100%'
+            });
+
+            const textStackClass = registerStyle('stats-text-stack', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.35rem',
+              width: '100%',
+              textAlign,
+              alignItems: alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start'
+            });
+
+            const badgeClass = showBadge
+              ? registerStyle('stats-badge', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  textTransform: badgeStyle === 'underline' ? 'uppercase' : undefined,
+                  letterSpacing: badgeStyle === 'underline' ? '0.08em' : undefined,
+                  color: widget.props.badgeColor || '#1d4ed8',
+                  backgroundColor: badgeStyle === 'underline' ? 'transparent' : widget.props.badgeBackground || 'rgba(59,130,246,0.12)',
+                  padding:
+                    badgeStyle === 'pill'
+                      ? '0.25rem 0.65rem'
+                      : badgeStyle === 'soft'
+                        ? '0.2rem 0.4rem'
+                        : '0',
+                  borderRadius:
+                    badgeStyle === 'pill'
+                      ? '999px'
+                      : badgeStyle === 'soft'
+                        ? '0.35rem'
+                        : '0',
+                  textDecoration: badgeStyle === 'underline' ? 'underline' : undefined,
+                  textUnderlineOffset: badgeStyle === 'underline' ? '0.2rem' : undefined
+                })
+              : '';
+
+            const labelClass = widget.props.label
+              ? registerStyle('stats-label', {
+                  fontSize: widget.props.labelFontSize || '1rem',
+                  fontWeight: widget.props.labelFontWeight || 600,
+                  color: widget.props.labelColor || '#475569',
+                  margin: 0,
+                  textTransform: widget.props.labelUppercase ? 'uppercase' : undefined,
+                  letterSpacing: widget.props.labelUppercase ? '0.08em' : undefined
+                })
+              : '';
+
+            const descriptionClass = showDescription
+              ? registerStyle('stats-description', {
+                  fontSize: '0.9rem',
+                  color: widget.props.descriptionColor || '#94a3b8',
+                  margin: 0,
+                  lineHeight: 1.5,
+                  textAlign,
+                  whiteSpace: 'pre-wrap'
+                })
+              : '';
+
+            const iconWrapperClass = showIcon
+              ? registerStyle('stats-icon-wrapper', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: widget.props.iconPadding || '0.65rem',
+                  borderRadius: widget.props.iconBorderRadius || '0.85rem',
+                  backgroundColor: widget.props.iconBackground || 'rgba(37,99,235,0.12)',
+                  color: widget.props.iconColor || '#2563eb',
+                  borderWidth: widget.props.iconBorderWidth || '0px',
+                  borderStyle: widget.props.iconBorderStyle || 'solid',
+                  borderColor: widget.props.iconBorderColor || 'transparent',
+                  boxShadow: widget.props.iconShadow || 'none',
+                  flexShrink: 0
+                })
+              : '';
+
+            const valueClass = registerStyle('stats-value', {
+              fontSize: widget.props.valueFontSize || '2.5rem',
+              fontWeight: widget.props.valueFontWeight || '700',
+              color: widget.props.valueColor || '#0f172a',
+              letterSpacing: widget.props.valueLetterSpacing || '-0.02em',
+              lineHeight: widget.props.valueLineHeight || '1.1',
+              margin: 0,
+              textAlign,
+              whiteSpace: 'nowrap'
+            });
+
+            const valueStackClass = registerStyle('stats-value-stack', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: showChange ? '0.35rem' : '0',
+              alignItems: layoutVariant === 'horizontal' ? 'flex-end' : alignItems,
+              textAlign
+            });
+
+            const changeWrapperClass = showChange
+              ? registerStyle('stats-change', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: changeBadgeStyle === 'inline' ? 'flex-start' : 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: changeColors.text,
+                  backgroundColor: changeBadgeStyle === 'inline' ? 'transparent' : changeColors.bg,
+                  padding:
+                    changeBadgeStyle === 'pill'
+                      ? '0.25rem 0.7rem'
+                      : changeBadgeStyle === 'soft'
+                        ? '0.15rem 0.5rem'
+                        : '0',
+                  borderRadius:
+                    changeBadgeStyle === 'pill'
+                      ? '999px'
+                      : changeBadgeStyle === 'soft'
+                        ? '0.5rem'
+                        : '0',
+                  fontVariantNumeric: 'tabular-nums',
+                  whiteSpace: 'nowrap'
+                })
+              : '';
+
+            const changeStackClass = showChange
+              ? registerStyle('stats-change-stack', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: widget.props.changeLabel ? '0.2rem' : '0',
+                  alignItems: layoutVariant === 'horizontal' ? 'flex-end' : alignItems,
+                  textAlign
+                })
+              : '';
+
+            const changeDotClass = showChange && changeIconStyle === 'dot'
+              ? registerStyle('stats-change-dot', {
+                  width: '0.5rem',
+                  height: '0.5rem',
+                  borderRadius: '999px',
+                  backgroundColor: changeColors.text,
+                  flexShrink: 0
+                })
+              : '';
+
+            const changeLabelClass = widget.props.changeLabel
+              ? registerStyle('stats-change-label', {
+                  fontSize: '0.75rem',
+                  color: widget.props.changeLabelColor || '#94a3b8',
+                  textAlign,
+                  fontWeight: 500
+                })
+              : '';
+
+            const dividerClass = showDivider
+              ? registerStyle('stats-divider', {
+                  width: '100%',
+                  height: widget.props.dividerThickness || '1px',
+                  backgroundColor: widget.props.dividerColor || 'rgba(15,23,42,0.12)',
+                  opacity: 0.6
+                })
+              : '';
+
+            const accentPosition = widget.props.accentPosition || 'top';
+            const accentSize = widget.props.accentSize || '48px';
+            const accentThickness = widget.props.accentThickness || '4px';
+            const accentInset = widget.props.accentInset || '1rem';
+            const accentStyles: Record<string, StyleValue> = (() => {
+              switch (accentPosition) {
+                case 'bottom':
+                  return { bottom: accentInset, left: '50%', transform: 'translateX(-50%)', width: accentSize, height: accentThickness };
+                case 'left':
+                  return { left: accentInset, top: '50%', transform: 'translateY(-50%)', width: accentThickness, height: accentSize };
+                case 'right':
+                  return { right: accentInset, top: '50%', transform: 'translateY(-50%)', width: accentThickness, height: accentSize };
+                case 'top':
+                default:
+                  return { top: accentInset, left: '50%', transform: 'translateX(-50%)', width: accentSize, height: accentThickness };
+              }
+            })();
+
+            const accentClass = showAccent
+              ? registerStyle('stats-accent', {
+                  position: 'absolute',
+                  backgroundColor: widget.props.accentColor || '#2563eb',
+                  borderRadius: '999px',
+                  ...accentStyles
+                })
+              : '';
+
+            let changeIconElement: React.ReactNode = null;
+            if (showChange) {
+              if (changeIconStyle === 'dot') {
+                changeIconElement = <span className={changeDotClass} />;
+              } else if (changeIconStyle === 'arrow') {
+                const ArrowIcon = changeType === 'negative' ? ArrowDownRight : changeType === 'neutral' ? Minus : ArrowUpRight;
+                changeIconElement = <ArrowIcon className="h-4 w-4" strokeWidth={2.5} />;
+              } else if (changeIconStyle === 'trend') {
+                const TrendIcon = changeType === 'negative' ? TrendingDown : changeType === 'neutral' ? Minus : TrendingUp;
+                changeIconElement = <TrendIcon className="h-4 w-4" strokeWidth={2} />;
+              }
+            }
+
+            const renderChange = () => {
+              if (!showChange) return null;
+              return (
+                <div className={changeStackClass}>
+                  <div className={changeWrapperClass}>
+                    {changeIconElement}
+                    {hasChangeValue && <span>{changeValueString}</span>}
+                  </div>
+                  {widget.props.changeLabel && <span className={changeLabelClass}>{widget.props.changeLabel}</span>}
+                </div>
+              );
+            };
+
             return (
-              <div className={`p-4 rounded ${statsClass}`}>
-                <div className="text-2xl font-bold">{widget.props.value}</div>
-                <div className="text-sm text-gray-600">{widget.props.label}</div>
-                {widget.props.change && (
-                  <div className={`text-sm ${widget.props.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                    {widget.props.change}
+              <div className={containerClass}>
+                {showAccent && <span className={accentClass} />}
+                <div className={headerClass}>
+                  <div className={metaStackClass}>
+                    {showIcon && (
+                      <div className={iconWrapperClass}>
+                        {iconUpload ? (
+                          <img
+                            src={iconUpload}
+                            alt="Statistic icon"
+                            className="h-auto w-auto"
+                            style={{ width: iconSize, height: iconSize }}
+                          />
+                        ) : (
+                          <IconComponent style={{ width: iconSize, height: iconSize, color: widget.props.iconColor || '#2563eb' }} />
+                        )}
+                      </div>
+                    )}
+                    <div className={textStackClass}>
+                      {showBadge && <span className={badgeClass}>{badgeText}</span>}
+                      {widget.props.label && <p className={labelClass}>{widget.props.label}</p>}
+                      {showDescription && <p className={descriptionClass}>{widget.props.description}</p>}
+                    </div>
+                  </div>
+                  {layoutVariant === 'horizontal' && (
+                    <div className={valueStackClass}>
+                      <p className={valueClass}>{valueDisplay}</p>
+                      {renderChange()}
+                    </div>
+                  )}
+                </div>
+                {layoutVariant === 'vertical' && showDivider && <div className={dividerClass} />}
+                {layoutVariant === 'vertical' && (
+                  <div className={valueStackClass}>
+                    <p className={valueClass}>{valueDisplay}</p>
+                    {renderChange()}
                   </div>
                 )}
+                {layoutVariant === 'horizontal' && showDivider && <div className={dividerClass} />}
               </div>
             );
           })()}
           
           {/* Forms & Inputs widgets */}
           {widget.type === 'searchBar' && (() => {
-            const searchClass = registerStyle('search-bar', {
-              backgroundColor: widget.props.backgroundColor,
-              borderRadius: widget.props.borderRadius
+            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if (iconRegistry[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return iconRegistry[formatted] ? formatted : undefined;
+            };
+
+            const layout = widget.props.layout === 'stacked' ? 'stacked' : 'inline';
+            const alignment = widget.props.alignment || 'left';
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const inputGradient = (widget.props.inputBackgroundGradient || '').toString().trim();
+            const showLabel = widget.props.showLabel && Boolean(widget.props.label);
+            const showHelperText = widget.props.showHelperText && Boolean(widget.props.helperText);
+            const showIcon = widget.props.showIcon !== false;
+            const showButton = widget.props.showButton !== false;
+            const showVoiceButton = widget.props.showVoiceButton === true;
+            const showAdvancedButton = widget.props.showAdvancedButton === true;
+            const quickFilters: string[] = Array.isArray(widget.props.quickFilters)
+              ? widget.props.quickFilters
+              : typeof widget.props.quickFilters === 'string'
+                ? widget.props.quickFilters.split(',').map((item: string) => item.trim()).filter(Boolean)
+                : [];
+            const showFilters = widget.props.showFilters && quickFilters.length > 0;
+            const textAlign = alignment === 'center' ? 'center' : alignment === 'right' ? 'right' : 'left';
+
+            const containerStyles: Record<string, StyleValue> = {
+              width: widget.props.fullWidth === false ? 'auto' : '100%',
+              maxWidth: widget.props.maxWidth || '640px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: showFilters ? '1rem' : '0.75rem',
+              padding: widget.props.padding || '0',
+              borderRadius: widget.props.borderRadius || '999px',
+              borderWidth: widget.props.borderWidth || '0px',
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'transparent',
+              boxShadow: widget.props.boxShadow || 'none',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || 'transparent',
+              backgroundImage: backgroundGradient || undefined
+            };
+            if (alignment === 'center') {
+              containerStyles.marginLeft = 'auto';
+              containerStyles.marginRight = 'auto';
+            } else if (alignment === 'right') {
+              containerStyles.marginLeft = 'auto';
+            }
+
+            const containerClass = registerStyle('search-container', containerStyles);
+            const headerClass = (showLabel || showHelperText)
+              ? registerStyle('search-header', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.3rem',
+                  textAlign
+                })
+              : '';
+
+            const labelClass = showLabel
+              ? registerStyle('search-label', {
+                  fontSize: widget.props.labelSize || '0.9rem',
+                  fontWeight: 600,
+                  color: widget.props.labelColor || '#0f172a',
+                  textTransform: widget.props.labelUppercase ? 'uppercase' : undefined,
+                  letterSpacing: widget.props.labelUppercase ? '0.08em' : undefined
+                })
+              : '';
+
+            const helperClass = showHelperText
+              ? registerStyle('search-helper', {
+                  fontSize: '0.85rem',
+                  color: widget.props.helperColor || '#94a3b8'
+                })
+              : '';
+
+            const barClass = registerStyle('search-bar', {
+              display: 'flex',
+              flexDirection: layout === 'stacked' ? 'column' : 'row',
+              gap: widget.props.gap || '0.75rem',
+              alignItems: layout === 'stacked' ? 'stretch' : 'center',
+              width: '100%'
             });
 
+            const inputWrapperClass = registerStyle('search-input-wrapper', {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flex: layout === 'inline' && widget.props.fullWidth !== false ? 1 : undefined,
+              width: '100%',
+              backgroundColor: inputGradient ? undefined : widget.props.inputBackground || '#ffffff',
+              backgroundImage: inputGradient || undefined,
+              borderRadius: widget.props.inputBorderRadius || '999px',
+              borderWidth: widget.props.inputBorderWidth || '1px',
+              borderStyle: widget.props.inputBorderStyle || 'solid',
+              borderColor: widget.props.inputBorderColor || '#e2e8f0',
+              boxShadow: widget.props.inputShadow || 'none',
+              paddingLeft: showIcon && widget.props.iconPosition !== 'right' ? '0.75rem' : '1rem',
+              paddingRight: showIcon && widget.props.iconPosition === 'right' ? '0.75rem' : '1rem',
+              minHeight: widget.props.inputHeight || '52px'
+            });
+
+            const inputClass = registerStyle('search-input', {
+              flex: 1,
+              border: 'none',
+              background: 'transparent',
+              color: widget.props.inputTextColor || '#0f172a',
+              fontSize: widget.props.inputFontSize || '1rem',
+              padding: widget.props.inputPadding || '0.75rem 0',
+              outline: 'none',
+              width: '100%'
+            });
+
+            const focusCss = buildCssBlock(`.${inputClass}:focus`, {
+              outline: 'none',
+              boxShadow: widget.props.focusRingColor ? `0 0 0 2px ${widget.props.focusRingColor}` : 'none'
+            });
+            const placeholderCss = buildCssBlock(`.${inputClass}::placeholder`, {
+              color: widget.props.inputPlaceholderColor || '#94a3b8'
+            });
+            if (focusCss) widgetStyles.push(focusCss);
+            if (placeholderCss) widgetStyles.push(placeholderCss);
+
+            const iconClass = showIcon
+              ? registerStyle('search-icon', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: widget.props.iconColor || '#2563eb',
+                  backgroundColor: widget.props.iconBackground || 'transparent',
+                  borderRadius: '999px'
+                })
+              : '';
+
+            const actionsClass = (showButton || showAdvancedButton)
+              ? registerStyle('search-actions', {
+                  display: 'flex',
+                  flexDirection: layout === 'stacked' ? 'column' : 'row',
+                  gap: '0.5rem',
+                  alignItems: layout === 'stacked' ? 'stretch' : 'center',
+                  width: layout === 'stacked' ? '100%' : 'auto'
+                })
+              : '';
+
+            const buttonClass = showButton
+              ? registerStyle('search-button', {
+                  backgroundColor: widget.props.buttonBackground || '#2563eb',
+                  color: widget.props.buttonTextColor || '#ffffff',
+                  borderRadius: widget.props.buttonRadius || '999px',
+                  borderWidth: widget.props.buttonBorderWidth || '0px',
+                  borderStyle: widget.props.buttonBorderStyle || 'solid',
+                  borderColor: widget.props.buttonBorderColor || 'transparent',
+                  padding: widget.props.buttonPadding || '0.75rem 1.5rem',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: widget.props.buttonIconName ? '0.5rem' : '0.35rem',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
+                })
+              : '';
+            const buttonHoverCss = showButton
+              ? buildCssBlock(`.${buttonClass}:hover`, {
+                  backgroundColor: widget.props.buttonHoverBackground || widget.props.buttonBackground || '#2563eb',
+                  color: widget.props.buttonHoverTextColor || widget.props.buttonTextColor || '#ffffff'
+                })
+              : '';
+            if (buttonHoverCss) widgetStyles.push(buttonHoverCss);
+
+            const voiceButtonClass = showVoiceButton
+              ? registerStyle('search-voice-button', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  borderRadius: '999px',
+                  color: widget.props.voiceButtonColor || '#475569',
+                  backgroundColor: widget.props.voiceButtonBackground || 'rgba(148,163,184,0.15)',
+                  border: 'none',
+                  flexShrink: 0
+                })
+              : '';
+
+            const advancedButtonClass = showAdvancedButton
+              ? registerStyle('search-advanced-button', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: layout === 'stacked' ? '0.75rem 1rem' : '0.5rem 0.75rem',
+                  borderRadius: widget.props.buttonRadius || '999px',
+                  borderWidth: widget.props.advancedButtonVariant === 'outline' ? '1px' : '0px',
+                  borderStyle: 'solid',
+                  borderColor: widget.props.advancedButtonVariant === 'outline'
+                    ? widget.props.advancedButtonTextColor || '#2563eb'
+                    : 'transparent',
+                  color: widget.props.advancedButtonTextColor || '#2563eb',
+                  backgroundColor:
+                    widget.props.advancedButtonVariant === 'ghost'
+                      ? 'rgba(37,99,235,0.08)'
+                      : 'transparent',
+                  textDecoration: widget.props.advancedButtonVariant === 'link' ? 'underline' : 'none',
+                  fontWeight: 600,
+                  gap: '0.35rem'
+                })
+              : '';
+            const advancedHoverCss = showAdvancedButton
+              ? buildCssBlock(`.${advancedButtonClass}:hover`, {
+                  color: widget.props.advancedButtonHoverColor || widget.props.advancedButtonTextColor || '#1d4ed8'
+                })
+              : '';
+            if (advancedHoverCss) widgetStyles.push(advancedHoverCss);
+
+            const filtersWrapperClass = showFilters
+              ? registerStyle('search-filters', {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: widget.props.filterGap || '0.5rem'
+                })
+              : '';
+            const filtersLabelClass = showFilters && widget.props.filtersLabel
+              ? registerStyle('search-filters-label', {
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: widget.props.helperColor || '#94a3b8'
+                })
+              : '';
+            const filterBadgeClass = showFilters
+              ? registerStyle('search-filter', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding:
+                    widget.props.filterStyle === 'link'
+                      ? '0'
+                      : widget.props.filterStyle === 'chip'
+                        ? '0.2rem 0.75rem'
+                        : '0.25rem 0.9rem',
+                  borderRadius:
+                    widget.props.filterStyle === 'pill'
+                      ? '999px'
+                      : widget.props.filterStyle === 'chip'
+                        ? '0.75rem'
+                        : '0',
+                  borderWidth: widget.props.filterStyle === 'link' ? '0px' : '1px',
+                  borderStyle: 'solid',
+                  borderColor: widget.props.filterBorderColor || 'transparent',
+                  backgroundColor: widget.props.filterStyle === 'link'
+                    ? 'transparent'
+                    : widget.props.filterBackground || 'rgba(37,99,235,0.08)',
+                  color: widget.props.filterTextColor || '#2563eb',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textDecoration: widget.props.filterStyle === 'link' ? 'underline' : 'none'
+                })
+              : '';
+            const filterHoverCss = showFilters
+              ? buildCssBlock(`.${filterBadgeClass}:hover`, {
+                  backgroundColor: widget.props.filterStyle === 'link' ? 'transparent' : widget.props.filterHoverBackground || 'rgba(37,99,235,0.15)'
+                })
+              : '';
+            if (filterHoverCss) widgetStyles.push(filterHoverCss);
+
+            const iconName = normalizeIconName(widget.props.iconName || widget.props.icon);
+            const IconComponent = iconName ? iconRegistry[iconName] : Search;
+            const iconUpload = widget.props.iconUpload;
+            const buttonIconName = normalizeIconName(widget.props.buttonIconName);
+            const ButtonIconComponent = buttonIconName ? iconRegistry[buttonIconName] : undefined;
+            const buttonIconUpload = widget.props.buttonIconUpload;
+
+            const renderInputIcon = () => {
+              if (!showIcon) return null;
+              if (iconUpload) {
+                return <img src={iconUpload} alt="Search icon" style={{ width: widget.props.iconSize || '1rem', height: widget.props.iconSize || '1rem' }} className={iconClass} />;
+              }
+              const Icon = IconComponent || Search;
+              return <Icon className={iconClass} style={{ width: widget.props.iconSize || '1rem', height: widget.props.iconSize || '1rem' }} />;
+            };
+
+            const renderButtonIcon = () => {
+              if (!widget.props.buttonIconName && !buttonIconUpload) return null;
+              if (buttonIconUpload) {
+                return <img src={buttonIconUpload} alt="Button icon" style={{ width: '1rem', height: '1rem' }} />;
+              }
+              if (ButtonIconComponent) {
+                return <ButtonIconComponent className="h-4 w-4" />;
+              }
+              return null;
+            };
+
             return (
-              <div className={`flex items-center gap-2 p-2 border rounded ${searchClass}`}>
-                {widget.props.showIcon && <Search className="h-4 w-4 text-gray-400" />}
-                <input 
-                  type="text" 
-                  placeholder={widget.props.placeholder}
-                  className="flex-1 outline-none bg-transparent text-sm"
-                />
-                {widget.props.showButton && (
-                  <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
-                    {widget.props.buttonText}
-                  </button>
+              <div className={containerClass}>
+                {(showLabel || showHelperText) && (
+                  <div className={headerClass}>
+                    {showLabel && <span className={labelClass}>{widget.props.label}</span>}
+                    {showHelperText && <span className={helperClass}>{widget.props.helperText}</span>}
+                  </div>
+                )}
+                <div className={barClass}>
+                  <div className={inputWrapperClass}>
+                    {showIcon && widget.props.iconPosition !== 'right' && renderInputIcon()}
+                    <input
+                      className={inputClass}
+                      type="text"
+                      placeholder={widget.props.placeholder || 'Search...'}
+                      readOnly
+                    />
+                    {showIcon && widget.props.iconPosition === 'right' && renderInputIcon()}
+                    {showVoiceButton && (
+                      <button type="button" className={voiceButtonClass} title={widget.props.voiceButtonTooltip || 'Voice search'} aria-label="Voice search">
+                        <Mic className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {(showButton || showAdvancedButton) && (
+                    <div className={actionsClass}>
+                      {showButton && (
+                        <button type="button" className={buttonClass}>
+                          {widget.props.buttonIconPosition === 'left' && renderButtonIcon()}
+                          {widget.props.buttonText || 'Search'}
+                          {widget.props.buttonIconPosition !== 'left' && renderButtonIcon()}
+                        </button>
+                      )}
+                      {showAdvancedButton && (
+                        <button type="button" className={advancedButtonClass}>
+                          <Settings className="h-4 w-4" />
+                          {widget.props.advancedButtonLabel || 'Advanced'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {showFilters && (
+                  <div className="space-y-2">
+                    {widget.props.filtersLabel && <span className={filtersLabelClass}>{widget.props.filtersLabel}</span>}
+                    <div className={filtersWrapperClass}>
+                      {quickFilters.map((filter, idx) => (
+                        <span key={`${widget.id}-filter-${idx}`} className={filterBadgeClass}>
+                          {filter}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             );
           })()}
           {widget.type === 'newsletter' && (() => {
-            const newsletterClass = registerStyle('newsletter', {
-              backgroundColor: widget.props.backgroundColor,
-              padding: widget.props.padding
+            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if (iconRegistry[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return iconRegistry[formatted] ? formatted : undefined;
+            };
+
+            const layout = widget.props.layout === 'split' ? 'split' : 'centered';
+            const alignment = widget.props.alignment === 'left' ? 'left' : 'center';
+            const showBadge = widget.props.showBadge !== false && Boolean(widget.props.badgeText);
+            const showEyebrow = widget.props.showEyebrow !== false && Boolean(widget.props.eyebrow);
+            const showSecondaryButton = widget.props.showSecondaryButton === true && Boolean(widget.props.secondaryButtonText);
+            const showStats = widget.props.showStats !== false && Boolean(widget.props.statsValue);
+            const showLogos = widget.props.showLogos === true;
+            const showImage = widget.props.showImage !== false;
+            const showSuccessMessage = Boolean(widget.props.successMessage);
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const inputGradient = (widget.props.inputBackgroundGradient || '').toString().trim();
+
+            const bulletPoints: string[] = Array.isArray(widget.props.bulletPoints)
+              ? widget.props.bulletPoints
+              : typeof widget.props.bulletPoints === 'string'
+                ? widget.props.bulletPoints.split(/[\r\n]+/).map((item: string) => item.trim()).filter(Boolean)
+                : [];
+            const logos: string[] = Array.isArray(widget.props.logos)
+              ? widget.props.logos
+              : typeof widget.props.logos === 'string'
+                ? widget.props.logos.split(/[\r\n]+/).map((item: string) => item.trim()).filter(Boolean)
+                : [];
+
+            const bulletIconName = normalizeIconName(widget.props.bulletIconName || 'Check');
+            const bulletIconUpload = widget.props.bulletIconUpload;
+            const BulletIconComponent = bulletIconName && iconRegistry[bulletIconName] ? iconRegistry[bulletIconName] : Check;
+            const buttonIconName = normalizeIconName(widget.props.buttonIconName || undefined);
+            const buttonIconUpload = widget.props.buttonIconUpload;
+            const ButtonIconComponent = buttonIconName ? iconRegistry[buttonIconName] : undefined;
+
+            const textAlign = alignment === 'left' ? 'left' : 'center';
+            const alignItems = textAlign === 'left' ? 'flex-start' : 'center';
+            const maxWidth = widget.props.maxWidth || '720px';
+
+            const containerClass = registerStyle('newsletter-container', {
+              width: '100%',
+              maxWidth,
+              marginLeft: alignment === 'left' ? 0 : 'auto',
+              marginRight: 'auto',
+              display: 'flex',
+              flexDirection: layout === 'split' ? 'row' : 'column',
+              flexWrap: layout === 'split' ? 'wrap' : 'nowrap',
+              alignItems: layout === 'split' ? 'center' : alignItems,
+              gap: layout === 'split' ? '2.5rem' : widget.props.gap || '1.5rem',
+              padding: widget.props.padding || '3rem',
+              borderRadius: widget.props.borderRadius || '1.25rem',
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.08)',
+              boxShadow: widget.props.boxShadow || '0 30px 60px rgba(15,23,42,0.08)',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || '#ffffff',
+              backgroundImage: backgroundGradient || undefined,
+              overflow: 'hidden',
+              boxSizing: 'border-box'
             });
 
-            const newsletterButtonClass = registerStyle('newsletter-button', {
-              backgroundColor: widget.props.buttonColor
+            const contentClass = registerStyle('newsletter-content', {
+              flex: layout === 'split' ? '1 1 360px' : '1 1 100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.textGap || widget.props.gap || '1.25rem',
+              textAlign,
+              alignItems,
+              width: '100%',
+              minWidth: 0
             });
+
+            const badgeClass = showBadge
+              ? registerStyle('newsletter-badge', {
+                  alignSelf: textAlign === 'left' ? 'flex-start' : 'center',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.05em',
+                  fontWeight: 600,
+                  color: widget.props.badgeColor || '#2563eb',
+                  backgroundColor: widget.props.badgeBackground || 'rgba(59,130,246,0.12)'
+                })
+              : '';
+
+            const eyebrowClass = showEyebrow
+              ? registerStyle('newsletter-eyebrow', {
+                  color: widget.props.eyebrowColor || '#2563eb',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase'
+                })
+              : '';
+
+            const titleClass = registerStyle('newsletter-title', {
+              fontSize: widget.props.titleFontSize || '2.5rem',
+              fontWeight: widget.props.titleFontWeight || '700',
+              color: widget.props.titleColor || '#0f172a',
+              margin: 0,
+              lineHeight: 1.1
+            });
+
+            const descriptionClass = widget.props.description
+              ? registerStyle('newsletter-description', {
+                  color: widget.props.descriptionColor || '#475569',
+                  fontSize: '1rem',
+                  lineHeight: 1.6,
+                  margin: 0,
+                  marginBottom: widget.props.descriptionSpacing || '1.25rem'
+                })
+              : '';
+
+            const bulletListClass = bulletPoints.length
+              ? registerStyle('newsletter-bullets', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                  width: '100%'
+                })
+              : '';
+            const bulletItemClass = registerStyle('newsletter-bullet-item', {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              justifyContent: textAlign === 'center' ? 'center' : 'flex-start'
+            });
+            const bulletIconClass = registerStyle('newsletter-bullet-icon', {
+              width: '1.25rem',
+              height: '1.25rem',
+              borderRadius: '999px',
+              backgroundColor: (widget.props.bulletIconColor || '#16a34a') + '1a',
+              color: widget.props.bulletIconColor || '#16a34a',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            });
+            const bulletTextClass = registerStyle('newsletter-bullet-text', {
+              color: widget.props.bulletTextColor || '#0f172a',
+              fontSize: '0.95rem',
+              fontWeight: 500
+            });
+
+            const formClass = registerStyle('newsletter-form', {
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            });
+            const inputLabelClass = widget.props.inputLabel
+              ? registerStyle('newsletter-input-label', {
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: widget.props.inputLabelColor || '#0f172a',
+                  textAlign
+                })
+              : '';
+            const inputWrapperClass = registerStyle('newsletter-input-wrapper', {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: inputGradient ? undefined : widget.props.inputBackground || '#ffffff',
+              backgroundImage: inputGradient || undefined,
+              borderRadius: widget.props.inputBorderRadius || '999px',
+              borderWidth: widget.props.inputBorderWidth || '1px',
+              borderStyle: 'solid',
+              borderColor: widget.props.inputBorderColor || 'rgba(148,163,184,0.6)',
+              boxShadow: widget.props.inputShadow || '0 10px 30px rgba(15,23,42,0.12)',
+              padding: '0.35rem 0.35rem'
+            });
+            const inputClass = registerStyle('newsletter-input', {
+              flex: 1,
+              border: 'none',
+              background: 'transparent',
+              color: widget.props.inputTextColor || '#0f172a',
+              fontSize: '1rem',
+              padding: '0.75rem 1rem',
+              outline: 'none'
+            });
+            const helperClass = widget.props.inputHelperText
+              ? registerStyle('newsletter-input-helper', {
+                  fontSize: '0.8rem',
+                  color: widget.props.helperColor || '#94a3b8',
+                  textAlign
+                })
+              : '';
+
+            const placeholderCss = buildCssBlock(`.${inputClass}::placeholder`, {
+              color: widget.props.inputPlaceholderColor || '#94a3b8'
+            });
+            if (placeholderCss) widgetStyles.push(placeholderCss);
+
+            const buttonVariant = widget.props.buttonVariant || 'solid';
+            const resolvedButtonBackground = buttonVariant === 'solid' ? (widget.props.buttonBackground || '#2563eb') : 'transparent';
+            const resolvedButtonColor = widget.props.buttonTextColor || (buttonVariant === 'solid' ? '#ffffff' : widget.props.buttonBackground || '#2563eb');
+            const resolvedButtonBorderWidth = widget.props.buttonBorderWidth || (buttonVariant === 'outline' ? '1px' : '0px');
+            const resolvedButtonBorderColor = widget.props.buttonBorderColor || (buttonVariant === 'outline' ? widget.props.buttonBackground || '#2563eb' : 'transparent');
+
+            const buttonClass = registerStyle('newsletter-button', {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: widget.props.buttonIconName ? '0.4rem' : '0.25rem',
+              padding: widget.props.buttonPadding || '0.85rem 1.75rem',
+              borderRadius: widget.props.buttonRadius || '999px',
+              backgroundColor: resolvedButtonBackground,
+              color: resolvedButtonColor,
+              borderWidth: resolvedButtonBorderWidth,
+              borderStyle: widget.props.buttonBorderStyle || 'solid',
+              borderColor: resolvedButtonBorderColor,
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease'
+            });
+            const buttonHoverCss = buildCssBlock(`.${buttonClass}:hover`, {
+              backgroundColor: widget.props.buttonHoverBackground || resolvedButtonBackground,
+              color: widget.props.buttonHoverTextColor || resolvedButtonColor
+            });
+            if (buttonHoverCss) widgetStyles.push(buttonHoverCss);
+
+            const secondaryVariant = widget.props.secondaryButtonVariant || 'link';
+            const secondaryButtonClass = showSecondaryButton
+              ? registerStyle('newsletter-secondary-button', {
+                  alignSelf: textAlign === 'center' ? 'center' : 'flex-start',
+                  background: 'transparent',
+                  border: secondaryVariant === 'outline' ? '1px solid currentColor' : 'none',
+                  color: widget.props.secondaryButtonColor || '#64748b',
+                  textDecoration: secondaryVariant === 'link' ? 'underline' : 'none',
+                  fontWeight: 500,
+                  fontSize: '0.9rem'
+                })
+              : '';
+            const secondaryHoverCss = showSecondaryButton
+              ? buildCssBlock(`.${secondaryButtonClass}:hover`, {
+                  color: widget.props.secondaryButtonHoverColor || widget.props.secondaryButtonColor || '#0f172a'
+                })
+              : '';
+            if (secondaryHoverCss) widgetStyles.push(secondaryHoverCss);
+
+            const consentClass = widget.props.consentText
+              ? registerStyle('newsletter-consent', {
+                  fontSize: '0.8rem',
+                  color: widget.props.consentTextColor || '#94a3b8',
+                  textAlign,
+                  lineHeight: 1.6
+                })
+              : '';
+
+            const successClass = showSuccessMessage
+              ? registerStyle('newsletter-success', {
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: widget.props.successMessageColor || '#15803d',
+                  textAlign
+                })
+              : '';
+
+            const statsClass = showStats
+              ? registerStyle('newsletter-stats', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  alignSelf: textAlign === 'center' ? 'center' : 'flex-start'
+                })
+              : '';
+            const statsValueClass = registerStyle('newsletter-stats-value', {
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: widget.props.statsAccentColor || '#22c55e'
+            });
+            const statsLabelClass = registerStyle('newsletter-stats-label', {
+              fontSize: '0.85rem',
+              color: widget.props.descriptionColor || '#475569'
+            });
+
+            const logosWrapperClass = showLogos
+              ? registerStyle('newsletter-logos', {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.4rem',
+                  justifyContent: textAlign === 'center' ? 'center' : 'flex-start'
+                })
+              : '';
+            const logoClass = registerStyle('newsletter-logo', {
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: widget.props.logoTextColor || '#64748b',
+              padding: '0.3rem 0.6rem',
+              border: '1px solid rgba(148,163,184,0.3)',
+              borderRadius: '999px'
+            });
+
+            const imageWrapperClass = showImage
+              ? registerStyle('newsletter-image-wrapper', {
+                  flex: layout === 'split' ? '1 1 280px' : '1 1 100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: layout === 'split' ? '0' : '1rem',
+                  backgroundColor: widget.props.imageBackground || '#eef2ff',
+                  borderRadius: widget.props.imageBorderRadius || '1rem',
+                  minHeight: layout === 'split' ? widget.props.imageHeight || '280px' : '220px',
+                  width: '100%',
+                  minWidth: 0,
+                  overflow: 'hidden'
+                })
+              : '';
+            const imageClass = registerStyle('newsletter-image', {
+              width: '100%',
+              height: widget.props.imageHeight || '280px',
+              objectFit: 'cover',
+              borderRadius: widget.props.imageBorderRadius || '1rem'
+            });
+
+            const renderBulletIcon = () => {
+              if (bulletIconUpload) {
+                return <img src={bulletIconUpload} alt="Bullet icon" className={bulletIconClass} />;
+              }
+              const Icon = BulletIconComponent || Check;
+              return (
+                <span className={bulletIconClass}>
+                  <Icon className="h-3 w-3" />
+                </span>
+              );
+            };
+
+            const renderButtonIcon = () => {
+              if (buttonIconUpload) {
+                return <img src={buttonIconUpload} alt="Button icon" className="h-4 w-4" />;
+              }
+              if (ButtonIconComponent) {
+                const Icon = ButtonIconComponent;
+                return <Icon className="h-4 w-4" />;
+              }
+              return null;
+            };
+
+            const renderIllustration = () => {
+              if (!showImage) return null;
+              return (
+                <div className={imageWrapperClass}>
+                  {widget.props.imageUrl ? (
+                    <img src={widget.props.imageUrl} alt={widget.props.imageAlt || 'Newsletter illustration'} className={imageClass} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ImageIcon className="h-16 w-16" />
+                    </div>
+                  )}
+                </div>
+              );
+            };
+
+            const buttonContent = (
+              <>
+                {widget.props.buttonIconPosition === 'left' && renderButtonIcon()}
+                <span>{widget.props.buttonText || 'Subscribe'}</span>
+                {widget.props.buttonIconPosition !== 'left' && renderButtonIcon()}
+              </>
+            );
 
             return (
-              <div className={`text-center ${newsletterClass}`}>
-                <h3 className="font-bold mb-2">{widget.props.title}</h3>
-                <p className="text-sm mb-4">{widget.props.description}</p>
-                <div className="flex gap-2 max-w-md mx-auto">
-                  <input 
-                    type="email" 
-                    placeholder={widget.props.placeholder}
-                    className="flex-1 p-2 border rounded text-sm"
-                  />
-                  <button 
-                    className={`px-4 py-2 text-white rounded text-sm ${newsletterButtonClass}`}
-                  >
-                    {widget.props.buttonText}
-                  </button>
+              <div className={containerClass}>
+                {layout === 'split' && widget.props.imagePosition === 'left' && renderIllustration()}
+                <div className={contentClass}>
+                  {showBadge && <span className={badgeClass}>{widget.props.badgeText}</span>}
+                  {showEyebrow && <span className={eyebrowClass}>{widget.props.eyebrow}</span>}
+                  <h3 className={titleClass}>{widget.props.title}</h3>
+                  {widget.props.description && <p className={descriptionClass}>{widget.props.description}</p>}
+                  {bulletPoints.length > 0 && (
+                    <div className={bulletListClass}>
+                      {bulletPoints.map((point, idx) => (
+                        <div key={`${widget.id}-bullet-${idx}`} className={bulletItemClass}>
+                          {renderBulletIcon()}
+                          <span className={bulletTextClass}>{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className={formClass}>
+                    {widget.props.inputLabel && <span className={inputLabelClass}>{widget.props.inputLabel}</span>}
+                    <div className={inputWrapperClass}>
+                      <input
+                        type="email"
+                        readOnly
+                        className={inputClass}
+                        placeholder={widget.props.placeholder || 'Enter your email'}
+                      />
+                      <button type="button" className={buttonClass}>
+                        {buttonContent}
+                      </button>
+                    </div>
+                    {widget.props.inputHelperText && <span className={helperClass}>{widget.props.inputHelperText}</span>}
+                    {showSecondaryButton && (
+                      <button type="button" className={secondaryButtonClass}>
+                        {widget.props.secondaryButtonText}
+                      </button>
+                    )}
+                  </div>
+                  {widget.props.consentText && <p className={consentClass}>{widget.props.consentText}</p>}
+                  {showStats && (
+                    <div className={statsClass}>
+                      <span className={statsValueClass}>{widget.props.statsValue}</span>
+                      <span className={statsLabelClass}>{widget.props.statsLabel}</span>
+                    </div>
+                  )}
+                  {showLogos && logos.length > 0 && (
+                    <div className="space-y-2 w-full">
+                      {widget.props.logosTitle && (
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 text-center">{widget.props.logosTitle}</p>
+                      )}
+                      <div className={logosWrapperClass}>
+                        {logos.map((logo, idx) => (
+                          <span key={`${widget.id}-logo-${idx}`} className={logoClass}>
+                            {logo}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {showSuccessMessage && <p className={successClass}>{widget.props.successMessage}</p>}
                 </div>
+                {layout === 'split' && widget.props.imagePosition !== 'left' && renderIllustration()}
+                {layout !== 'split' && renderIllustration()}
               </div>
             );
           })()}
           {widget.type === 'contactInfo' && (() => {
-            const contactTextClass = registerStyle('contact-text', {
-              color: widget.props.textColor,
-              fontSize: widget.props.fontSize
+            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if (iconRegistry[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return iconRegistry[formatted] ? formatted : undefined;
+            };
+
+            const layout = widget.props.layout || 'cards';
+            const alignment = widget.props.alignment || 'left';
+            const textAlign = alignment === 'center' ? 'center' : 'left';
+            const columns = Math.max(1, parseInt(widget.props.columns, 10) || (layout === 'list' ? 1 : 2));
+            const itemGap = widget.props.itemGap || '1rem';
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+
+            const contactItemsRaw = Array.isArray(widget.props.contactItems) ? widget.props.contactItems : [];
+            const fallbackItems: any[] = [];
+            if (widget.props.phone) fallbackItems.push({ icon: 'Phone', label: 'Phone', value: widget.props.phone, helper: '', href: widget.props.phoneHref });
+            if (widget.props.email) fallbackItems.push({ icon: 'Mail', label: 'Email', value: widget.props.email, helper: '', href: widget.props.emailHref });
+            if (widget.props.address) fallbackItems.push({ icon: 'MapPin', label: 'Address', value: widget.props.address, helper: '', href: widget.props.addressHref });
+            const contactItems = contactItemsRaw.length ? contactItemsRaw : fallbackItems;
+
+            const showIcons = widget.props.showIcons !== false;
+            const showCTA = widget.props.showCTA !== false && Boolean(widget.props.ctaText);
+            const showSecondaryCTA = widget.props.showSecondaryCTA && Boolean(widget.props.secondaryCTAText);
+            const showSocial = widget.props.showSocial !== false && Array.isArray(widget.props.socialPlatforms) && widget.props.socialPlatforms.length > 0;
+            const socialLinks = widget.props.socialLinks && typeof widget.props.socialLinks === 'object' ? widget.props.socialLinks : {};
+
+            const containerClass = registerStyle('contact-container', {
+              width: '100%',
+              maxWidth: widget.props.maxWidth || '720px',
+              marginLeft: alignment === 'left' ? 0 : 'auto',
+              marginRight: 'auto',
+              padding: widget.props.padding || '2rem',
+              borderRadius: widget.props.borderRadius || '1.25rem',
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.08)',
+              boxShadow: widget.props.boxShadow || '0 20px 45px rgba(15,23,42,0.12)',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || '#ffffff',
+              backgroundImage: backgroundGradient || undefined,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.textGap || '1rem',
+              overflow: 'hidden',
+              boxSizing: 'border-box'
             });
 
-            const contactIconClass = widget.props.showIcons
-              ? registerStyle('contact-icon', {
-                  color: widget.props.iconColor
+            const headingClass = widget.props.heading
+              ? registerStyle('contact-heading', {
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: widget.props.headingColor || '#0f172a',
+                  textAlign,
+                  margin: 0
+                })
+              : '';
+            const subheadingClass = widget.props.subheading
+              ? registerStyle('contact-subheading', {
+                  color: widget.props.subheadingColor || '#475569',
+                  fontSize: '1rem',
+                  textAlign,
+                  margin: 0,
+                  lineHeight: 1.5
                 })
               : '';
 
+            const gridClass = registerStyle('contact-grid',
+              layout === 'list'
+                ? {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: itemGap
+                  }
+                : {
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                    gap: itemGap
+                  }
+            );
+
+            const itemClass = registerStyle('contact-item', {
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              padding: layout === 'cards' ? '1rem' : '0',
+              borderRadius: layout === 'cards' ? '0.85rem' : undefined,
+              border: layout === 'cards' ? '1px solid rgba(15,23,42,0.08)' : undefined,
+              backgroundColor: layout === 'cards' ? 'rgba(15,23,42,0.02)' : 'transparent'
+            });
+
+            const iconClass = showIcons
+              ? registerStyle('contact-icon', {
+                  width: '2.25rem',
+                  height: '2.25rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: widget.props.iconBackground || 'rgba(37,99,235,0.08)',
+                  color: widget.props.iconColor || '#2563eb',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                })
+              : '';
+
+            const valueClass = registerStyle('contact-value', {
+              color: widget.props.textColor || '#0f172a',
+              fontSize: widget.props.fontSize || '1rem',
+              fontWeight: widget.props.valueFontWeight || 600,
+              textDecoration: 'none'
+            });
+            const helperClass = registerStyle('contact-helper', {
+              color: widget.props.helperColor || '#64748b',
+              fontSize: '0.85rem'
+            });
+
+            const ctaVariant = widget.props.ctaVariant || 'solid';
+            const ctaBackground = ctaVariant === 'solid' ? widget.props.ctaBackground || '#2563eb' : 'transparent';
+            const ctaTextColor = widget.props.ctaTextColor || (ctaVariant === 'solid' ? '#ffffff' : widget.props.ctaBackground || '#2563eb');
+            const ctaBorderColor = widget.props.ctaBorderColor || (ctaVariant === 'outline' ? widget.props.ctaBackground || '#2563eb' : 'transparent');
+            const ctaBorderWidth = widget.props.ctaBorderWidth || (ctaVariant === 'outline' ? '1px' : '0px');
+
+            const ctaButtonClass = showCTA
+              ? registerStyle('contact-cta', {
+                  alignSelf: textAlign === 'center' ? 'center' : 'flex-start',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: widget.props.ctaIconName ? '0.4rem' : '0.25rem',
+                  padding: widget.props.ctaPadding || '0.85rem 1.5rem',
+                  borderRadius: '999px',
+                  backgroundColor: ctaBackground,
+                  color: ctaTextColor,
+                  borderWidth: ctaBorderWidth,
+                  borderStyle: 'solid',
+                  borderColor: ctaBorderColor,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                })
+              : '';
+            if (showCTA) {
+              const hoverCss = buildCssBlock(`.${ctaButtonClass}:hover`, {
+                filter: 'brightness(0.95)'
+              });
+              if (hoverCss) widgetStyles.push(hoverCss);
+            }
+
+            const socialIconMap: Record<string, LucideIcon> = {
+              facebook: Facebook,
+              instagram: Instagram,
+              twitter: Twitter,
+              linkedin: Linkedin,
+              whatsapp: Phone
+            };
+
+            const socialWrapperClass = showSocial
+              ? registerStyle('contact-socials', {
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap',
+                  alignItems: 'center'
+                })
+              : '';
+            const socialButtonClass = registerStyle('contact-social-button', {
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.75rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: widget.props.socialIconBackground || 'rgba(37,99,235,0.08)',
+              color: widget.props.socialIconColor || '#2563eb'
+            });
+
+            const renderIcon = (itemIcon?: string) => {
+              if (!showIcons) return null;
+              const normalized = normalizeIconName(itemIcon || 'Phone') || 'Phone';
+              const IconComponent = iconRegistry[normalized] || Phone;
+              return (
+                <div className={iconClass}>
+                  <IconComponent style={{ width: widget.props.iconSize || '1.1rem', height: widget.props.iconSize || '1.1rem' }} />
+                </div>
+              );
+            };
+
+            const renderCTAIcon = () => {
+              if (!showCTA || (!widget.props.ctaIconName && !widget.props.ctaIconUpload)) {
+                return null;
+              }
+              if (widget.props.ctaIconUpload) {
+                return <img src={widget.props.ctaIconUpload} alt="CTA icon" className="h-4 w-4" />;
+              }
+              const normalized = normalizeIconName(widget.props.ctaIconName) || 'ArrowRight';
+              const IconComponent = iconRegistry[normalized] || ArrowRight;
+              return <IconComponent className="h-4 w-4" />;
+            };
+
             return (
-              <div className="space-y-2">
-                {widget.props.phone && (
-                  <div className="flex items-center gap-2">
-                    {widget.props.showIcons && <Phone className={`h-4 w-4 ${contactIconClass}`} />}
-                    <span className={contactTextClass}>
-                      {widget.props.phone}
-                    </span>
+              <div className={containerClass}>
+                {widget.props.heading && <h3 className={headingClass}>{widget.props.heading}</h3>}
+                {widget.props.subheading && <p className={subheadingClass}>{widget.props.subheading}</p>}
+                {contactItems.length > 0 && (
+                  <div className={gridClass}>
+                    {contactItems.map((item: any, idx: number) => {
+                      const valueContent = item?.href ? (
+                        <a href={item.href} className={valueClass}>{item.value}</a>
+                      ) : (
+                        <span className={valueClass}>{item?.value}</span>
+                      );
+                      return (
+                        <div key={`${widget.id}-contact-${idx}`} className={itemClass}>
+                          {renderIcon(item?.icon)}
+                          <div className="space-y-1" style={{ textAlign }}>
+                            {item?.label && <p className="text-sm font-semibold" style={{ color: widget.props.helperColor || '#64748b', margin: 0 }}>{item.label}</p>}
+                            {valueContent}
+                            {item?.helper && <p className={helperClass}>{item.helper}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
-                {widget.props.email && (
-                  <div className="flex items-center gap-2">
-                    {widget.props.showIcons && <Mail className={`h-4 w-4 ${contactIconClass}`} />}
-                    <span className={contactTextClass}>
-                      {widget.props.email}
-                    </span>
+                {(showCTA || showSecondaryCTA) && (
+                  <div className="flex flex-col gap-3" style={{ alignItems: textAlign === 'center' ? 'center' : 'flex-start' }}>
+                    {showCTA && (
+                      <a href={widget.props.ctaHref || '#'} className={ctaButtonClass}>
+                        {widget.props.ctaIconPosition === 'left' && renderCTAIcon()}
+                        <span>{widget.props.ctaText}</span>
+                        {widget.props.ctaIconPosition !== 'left' && renderCTAIcon()}
+                      </a>
+                    )}
+                    {showSecondaryCTA && (
+                      <a href={widget.props.secondaryCTAHref || '#'} className="text-sm font-semibold" style={{ color: widget.props.secondaryCTAColor || '#2563eb' }}>
+                        {widget.props.secondaryCTAText}
+                      </a>
+                    )}
                   </div>
                 )}
-                {widget.props.address && (
-                  <div className="flex items-center gap-2">
-                    {widget.props.showIcons && <MapPin className={`h-4 w-4 ${contactIconClass}`} />}
-                    <span className={contactTextClass}>
-                      {widget.props.address}
-                    </span>
+                {showSocial && (
+                  <div className="space-y-2" style={{ textAlign }}>
+                    {widget.props.socialLabel && (
+                      <p className="text-sm font-semibold" style={{ color: widget.props.helperColor || '#64748b' }}>{widget.props.socialLabel}</p>
+                    )}
+                    <div className={socialWrapperClass}>
+                      {(widget.props.socialPlatforms || []).map((platform: string) => {
+                        const IconComponent = socialIconMap[platform] || Share2;
+                        const href = socialLinks?.[platform];
+                        const iconNode = (
+                          <div className={socialButtonClass}>
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                        );
+                        if (href) {
+                          return (
+                            <a
+                              key={`${widget.id}-social-${platform}`}
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex"
+                            >
+                              {iconNode}
+                            </a>
+                          );
+                        }
+                        return (
+                          <div key={`${widget.id}-social-${platform}`} className="inline-flex">
+                            {iconNode}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
+                )}
+                {widget.props.footnote && (
+                  <p className="text-sm" style={{ color: widget.props.footnoteColor || '#94a3b8', textAlign }}>
+                    {widget.props.footnote}
+                  </p>
                 )}
               </div>
             );
@@ -6282,56 +8201,558 @@ export default function WebsiteEditPage() {
           
           {/* Media widgets */}
           {widget.type === 'gallery' && (() => {
-            const galleryGridClass = registerStyle('gallery-grid', {
-              display: 'grid',
-              gridTemplateColumns: `repeat(${widget.props.columns}, 1fr)`,
-              gap: widget.props.gap
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if ((LucideIcons as any)[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return (LucideIcons as any)[formatted] ? formatted : undefined;
+            };
+
+            const galleryItemsRaw = Array.isArray(widget.props.images) ? widget.props.images : [];
+            const fallbackItems = [
+              { src: '', title: 'Gallery Item 1', description: '', badge: '' },
+              { src: '', title: 'Gallery Item 2', description: '', badge: '' },
+              { src: '', title: 'Gallery Item 3', description: '', badge: '' }
+            ];
+            const galleryItems = galleryItemsRaw.length ? galleryItemsRaw : fallbackItems;
+
+            const layout = widget.props.layout || 'grid';
+            const columns = Math.max(1, parseInt(widget.props.columns, 10) || 3);
+            const mobileColumns = Math.max(1, parseInt(widget.props.mobileColumns, 10) || 1);
+            const gap = widget.props.gap || '1rem';
+            const rowGap = widget.props.rowGap || gap;
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const hoverEffect = widget.props.hoverEffect || 'zoom';
+            const showOverlay = widget.props.showOverlay !== false;
+            const showCaptions = widget.props.showCaptions !== false;
+            const showBadges = widget.props.showBadges !== false;
+            const showPreviewIcon = widget.props.showPreviewIcon !== false;
+            const objectFit = widget.props.objectFit || 'cover';
+            const overlayIconName = normalizeIconName(widget.props.overlayIconName || 'Maximize2');
+            const OverlayIcon = (overlayIconName && (LucideIcons as any)[overlayIconName]) || Maximize2;
+            const overlayIconUpload = widget.props.overlayIconUpload;
+            const openLinksInNewTab = widget.props.openLinksInNewTab !== false;
+
+            const containerClass = registerStyle('gallery-container', {
+              width: '100%',
+              maxWidth: widget.props.maxWidth || '100%',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              padding: widget.props.padding || '1.5rem',
+              borderRadius: widget.props.borderRadius || '1rem',
+              borderWidth: widget.props.borderWidth || '0px',
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'transparent',
+              boxShadow: widget.props.boxShadow || 'none',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || 'transparent',
+              backgroundImage: backgroundGradient || undefined,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.textGap || '1rem'
             });
 
-            const galleryItemClass = registerStyle('gallery-item', {
-              aspectRatio: widget.props.aspectRatio,
-              borderRadius: widget.props.borderRadius
+            const galleryHeadingAlignment = widget.props.headingAlignment || 'left';
+
+            const gridStyles: Record<string, StyleValue> = {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+              columnGap: gap,
+              rowGap
+            };
+            if (layout === 'masonry') {
+              gridStyles.gridAutoRows = widget.props.imageHeight || '200px';
+            }
+            const gridClass = registerStyle('gallery-grid', gridStyles);
+            const mobileCss = `@media (max-width: 768px) { .${gridClass} { grid-template-columns: repeat(${mobileColumns}, minmax(0, 1fr)); } }`;
+            widgetStyles.push(mobileCss);
+
+            const cardClass = registerStyle('gallery-card', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.65rem'
             });
+
+            const imageWrapperClass = registerStyle('gallery-image-wrapper', {
+              position: 'relative',
+              width: '100%',
+              overflow: 'hidden',
+              borderRadius: widget.props.imageBorderRadius || '1rem',
+              borderWidth: widget.props.imageBorderWidth || '0px',
+              borderStyle: 'solid',
+              borderColor: widget.props.imageBorderColor || 'transparent',
+              boxShadow: widget.props.imageShadow || '0 12px 25px rgba(15,23,42,0.12)',
+              aspectRatio: widget.props.imageHeight ? undefined : widget.props.imageAspectRatio || '16/9',
+              height: widget.props.imageHeight || undefined
+            });
+
+            const imageClass = registerStyle('gallery-image', {
+              width: '100%',
+              height: widget.props.imageHeight ? '100%' : 'auto',
+              objectFit,
+              display: 'block',
+              transition: 'transform 0.4s ease, filter 0.4s ease'
+            });
+
+            if (hoverEffect === 'zoom') {
+              widgetStyles.push(buildCssBlock(`.${cardClass}:hover .${imageClass}`, { transform: 'scale(1.08)' }));
+            } else if (hoverEffect === 'lift') {
+              widgetStyles.push(buildCssBlock(`.${cardClass}:hover .${imageWrapperClass}`, { transform: 'translateY(-6px)' }));
+            } else if (hoverEffect === 'fade') {
+              widgetStyles.push(buildCssBlock(`.${cardClass}:hover .${imageClass}`, { opacity: 0.85 }));
+            } else if (hoverEffect === 'grayscale') {
+              widgetStyles.push(buildCssBlock(`.${cardClass}:hover .${imageClass}`, { filter: 'grayscale(100%)' }));
+            }
+
+            const overlayClass = showOverlay
+              ? registerStyle('gallery-overlay', {
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: widget.props.overlayColor || 'rgba(15,23,42,0.45)',
+                  opacity: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'opacity 0.3s ease',
+                  color: '#ffffff'
+                })
+              : '';
+            if (showOverlay) {
+              widgetStyles.push(buildCssBlock(`.${cardClass}:hover .${overlayClass}`, { opacity: 1 }));
+            }
+
+            const captionWrapperClass = showCaptions
+              ? registerStyle('gallery-caption', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem',
+                  textAlign: widget.props.captionAlignment || 'left'
+                })
+              : '';
+            const badgeClass = showBadges
+              ? registerStyle('gallery-badge', {
+                  alignSelf: widget.props.captionAlignment === 'center' ? 'center' : 'flex-start',
+                  backgroundColor: widget.props.badgeBackground || 'rgba(37,99,235,0.12)',
+                  color: widget.props.badgeColor || '#2563eb',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em'
+                })
+              : '';
+            const captionTitleClass = registerStyle('gallery-caption-title', {
+              color: widget.props.captionColor || '#0f172a',
+              fontWeight: 600,
+              fontSize: '1rem',
+              margin: 0
+            });
+            const captionDescriptionClass = registerStyle('gallery-caption-description', {
+              color: widget.props.captionDescriptionColor || '#475569',
+              fontSize: '0.9rem',
+              margin: 0
+            });
+
+            const ctaVariant = widget.props.ctaVariant || 'outline';
+            const showCTA = Boolean(widget.props.ctaText);
+            const ctaBackground = ctaVariant === 'solid' ? widget.props.ctaBackground || '#2563eb' : 'transparent';
+            const ctaTextColor = widget.props.ctaTextColor || (ctaVariant === 'solid' ? '#ffffff' : widget.props.ctaBackground || '#2563eb');
+            const ctaBorderColor = widget.props.ctaBorderColor || (ctaVariant === 'outline' ? widget.props.ctaBackground || '#2563eb' : 'transparent');
+            const ctaBorderWidth = widget.props.ctaBorderWidth || (ctaVariant === 'outline' ? '1px' : '0px');
+            const ctaButtonClass = showCTA
+              ? registerStyle('gallery-cta', {
+                  alignSelf: widget.props.captionAlignment === 'center' ? 'center' : 'flex-start',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: widget.props.ctaIconName ? '0.35rem' : '0.2rem',
+                  padding: widget.props.ctaPadding || '0.7rem 1.25rem',
+                  borderRadius: '999px',
+                  backgroundColor: ctaBackground,
+                  color: ctaTextColor,
+                  borderWidth: ctaBorderWidth,
+                  borderStyle: 'solid',
+                  borderColor: ctaBorderColor,
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                })
+              : '';
+            if (showCTA) {
+              widgetStyles.push(buildCssBlock(`.${ctaButtonClass}:hover`, { filter: 'brightness(0.92)' }));
+            }
+
+            const overlayIconNode = overlayIconUpload
+              ? <img src={overlayIconUpload} alt="Preview" className="h-6 w-6" />
+              : <OverlayIcon className="h-6 w-6" />;
+
+            const ctaIconNameNormalized = normalizeIconName(widget.props.ctaIconName);
+            const CTAIcon = ctaIconNameNormalized ? (LucideIcons as any)[ctaIconNameNormalized] : null;
+            const ctaIconUpload = widget.props.ctaIconUpload;
+            const ctaIconNode = ctaIconUpload ? (
+              <img src={ctaIconUpload} alt="CTA icon" className="h-4 w-4" />
+            ) : CTAIcon ? (
+              <CTAIcon className="h-4 w-4" />
+            ) : null;
+            const ctaIconPosition = widget.props.ctaIconPosition || 'right';
 
             return (
-              <div className={galleryGridClass}>
-                {[1, 2, 3, 4].slice(0, widget.props.columns * 2).map((_, idx) => (
-                  <div 
-                    key={idx}
-                    className={`bg-gray-200 ${galleryItemClass}`}
-                  >
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <ImageIcon className="h-8 w-8" />
-                    </div>
-                  </div>
-                ))}
+              <div className={containerClass}>
+                {widget.props.heading && <h3 className="text-lg font-bold" style={{ color: widget.props.headingColor || '#0f172a', textAlign: galleryHeadingAlignment }}>{widget.props.heading}</h3>}
+                {widget.props.subheading && <p className="text-sm text-muted-foreground" style={{ color: widget.props.subheadingColor || '#475569', textAlign: galleryHeadingAlignment }}>{widget.props.subheading}</p>}
+                <div className={gridClass}>
+                  {galleryItems.map((item: any, idx: number) => {
+                    const src = typeof item === 'string' ? item : item?.src;
+                    const title = typeof item === 'string' ? '' : item?.title;
+                    const description = typeof item === 'string' ? '' : item?.description;
+                    const badge = typeof item === 'string' ? '' : item?.badge;
+                    const href = typeof item === 'object' && item?.href ? item.href : undefined;
+                    const alt = typeof item === 'object' && item?.alt ? item.alt : 'Gallery image';
+
+                    const imageElement = src ? (
+                      <img src={src} alt={alt} className={imageClass} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-400" style={{ height: widget.props.imageHeight || '100%' }}>
+                        <ImageIcon className="h-8 w-8" />
+                      </div>
+                    );
+
+                    const mediaContent = (
+                      <div className={imageWrapperClass}>
+                        {imageElement}
+                        {showOverlay && (
+                          <div className={overlayClass}>
+                            {showPreviewIcon && overlayIconNode}
+                          </div>
+                        )}
+                      </div>
+                    );
+
+                    const clickableMedia = href ? (
+                      <a
+                        href={href}
+                        target={openLinksInNewTab ? '_blank' : undefined}
+                        rel={openLinksInNewTab ? 'noreferrer' : undefined}
+                        className="block"
+                      >
+                        {mediaContent}
+                      </a>
+                    ) : mediaContent;
+
+                    return (
+                      <div key={`${widget.id}-gallery-${idx}`} className={cardClass}>
+                        {clickableMedia}
+                        {showCaptions && (
+                          <div className={captionWrapperClass}>
+                            {showBadges && badge && <span className={badgeClass}>{badge}</span>}
+                            {title && <p className={captionTitleClass}>{title}</p>}
+                            {description && <p className={captionDescriptionClass}>{description}</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {showCTA && (
+                  <a href={widget.props.ctaHref || '#'} className={ctaButtonClass} target={openLinksInNewTab ? '_blank' : undefined} rel={openLinksInNewTab ? 'noreferrer' : undefined}>
+                    {ctaIconNode && ctaIconPosition === 'left' && ctaIconNode}
+                    <span>{widget.props.ctaText}</span>
+                    {ctaIconNode && ctaIconPosition !== 'left' && ctaIconNode}
+                  </a>
+                )}
               </div>
             );
           })()}
-          {widget.type === 'carousel' && (
-            <div 
-              className="relative bg-gray-200 flex items-center justify-center"
-              style={{ 
-                height: widget.props.height,
-                borderRadius: widget.props.borderRadius
-              }}
-            >
-              <ImageIcon className="h-12 w-12 text-gray-400" />
-              {widget.props.showArrows && (
-                <>
-                  <ChevronLeft className="absolute left-2 h-6 w-6 text-white bg-black/50 rounded" />
-                  <ChevronRight className="absolute right-2 h-6 w-6 text-white bg-black/50 rounded" />
-                </>
-              )}
-              {widget.props.showIndicators && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                  {[1, 2, 3].map((_, idx) => (
-                    <div key={idx} className="w-2 h-2 bg-white/50 rounded-full" />
-                  ))}
+          {widget.type === 'carousel' && (() => {
+            const slidesRaw = Array.isArray(widget.props.slides) ? widget.props.slides : [];
+            const fallbackSlides = [
+              { image: '', headline: 'Carousel headline', subheadline: 'Subheadline', description: '', badge: '' },
+              { image: '', headline: 'Second slide', subheadline: '', description: '', badge: '' },
+              { image: '', headline: 'Third slide', subheadline: '', description: '', badge: '' }
+            ];
+            const slides = slidesRaw.length ? slidesRaw : fallbackSlides;
+            const previewSlides = slides.slice(0, 3);
+
+            const height = widget.props.height || '420px';
+            const slideWidth = widget.props.slideWidth || '80%';
+            const slideGap = widget.props.slideGap || '1.5rem';
+            const borderRadius = widget.props.borderRadius || '1.25rem';
+            const showOverlay = widget.props.showOverlay !== false;
+            const showContent = widget.props.showContent !== false;
+            const showArrows = widget.props.showArrows !== false;
+            const showIndicators = widget.props.showIndicators !== false;
+            const contentAlignment = widget.props.contentAlignment || 'left';
+            const headingColor = widget.props.headlineColor || '#ffffff';
+            const bodyColor = widget.props.bodyColor || 'rgba(255,255,255,0.85)';
+            const badgeBackground = widget.props.badgeBackground || 'rgba(255,255,255,0.15)';
+            const badgeColor = widget.props.badgeColor || '#ffffff';
+            const buttonBg = widget.props.buttonBackground || '#ffffff';
+            const buttonColor = widget.props.buttonTextColor || '#0f172a';
+            const showIndicatorsThumbnails = widget.props.showThumbnails === true;
+
+            const containerClass = registerStyle('carousel-container', {
+              position: 'relative',
+              width: '100%',
+              overflow: 'hidden',
+              borderRadius,
+              height,
+              padding: widget.props.padding || '0',
+              backgroundColor: widget.props.backgroundGradient ? undefined : widget.props.backgroundColor || 'transparent',
+              backgroundImage: widget.props.backgroundGradient || undefined
+            });
+
+            const trackClass = registerStyle('carousel-track', {
+              display: 'flex',
+              height: '100%',
+              alignItems: 'stretch',
+              gap: slideGap,
+              transition: `transform ${(widget.props.transitionDuration || 600)}ms ease`
+            });
+
+            const slideClass = registerStyle('carousel-slide', {
+              position: 'relative',
+              flex: '0 0 100%',
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            });
+
+            const slideInnerClass = registerStyle('carousel-slide-inner', {
+              position: 'relative',
+              width: slideWidth,
+              height: '100%',
+              borderRadius,
+              overflow: 'hidden',
+              boxShadow: '0 25px 45px rgba(15,23,42,0.25)',
+              backgroundColor: '#0f172a'
+            });
+
+            const mediaClass = registerStyle('carousel-media', {
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: widget.props.mediaFilter || 'none'
+            });
+
+            const overlayClass = showOverlay
+              ? registerStyle('carousel-overlay', {
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: widget.props.overlayColor || 'rgba(0,0,0,0.35)',
+                  backdropFilter: widget.props.overlayBlur && widget.props.overlayBlur !== '0px' ? `blur(${widget.props.overlayBlur})` : undefined
+                })
+              : '';
+
+            const contentClass = showContent
+              ? registerStyle('carousel-content', {
+                  position: 'relative',
+                  zIndex: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  height: '100%',
+                  justifyContent: 'center',
+                  padding: '0 3rem',
+                  textAlign: contentAlignment,
+                  color: headingColor
+                })
+              : '';
+
+            const badgeClass = registerStyle('carousel-badge', {
+              display: 'inline-flex',
+              alignSelf: contentAlignment === 'center' ? 'center' : 'flex-start',
+              padding: '0.3rem 0.75rem',
+              borderRadius: '999px',
+              backgroundColor: badgeBackground,
+              color: badgeColor,
+              fontSize: '0.75rem',
+              letterSpacing: '0.05em',
+              fontWeight: 600,
+              textTransform: 'uppercase'
+            });
+
+            const headlineClass = registerStyle('carousel-headline', {
+              fontSize: '2.25rem',
+              lineHeight: 1.15,
+              margin: 0,
+              color: headingColor
+            });
+
+            const subheadlineClass = registerStyle('carousel-subheadline', {
+              fontSize: '1.25rem',
+              fontWeight: 500,
+              margin: 0,
+              color: headingColor
+            });
+
+            const bodyClass = registerStyle('carousel-body', {
+              fontSize: '1rem',
+              color: bodyColor,
+              margin: 0
+            });
+
+            const buttonClass = registerStyle('carousel-button', {
+              alignSelf: contentAlignment === 'center' ? 'center' : 'flex-start',
+              backgroundColor: buttonBg,
+              color: buttonColor,
+              padding: widget.props.buttonPadding || '0.65rem 1.5rem',
+              borderRadius: '999px',
+              fontWeight: 600,
+              border: 'none',
+              textDecoration: 'none',
+              boxShadow: '0 10px 20px rgba(0,0,0,0.25)'
+            });
+
+            const arrowBaseClass = showArrows
+              ? registerStyle('carousel-arrow', {
+                  position: 'absolute',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: '999px',
+                  backgroundColor: widget.props.arrowBackground || 'rgba(15,23,42,0.6)',
+                  color: widget.props.arrowColor || '#ffffff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                })
+              : '';
+
+            const indicatorsClass = showIndicators
+              ? registerStyle('carousel-indicators', {
+                  position: 'absolute',
+                  bottom: '1.5rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: '0.5rem'
+                })
+              : '';
+
+            const indicatorDotClass = registerStyle('carousel-indicator', {
+              width: widget.props.indicatorStyle === 'line' ? '1.5rem' : '0.6rem',
+              height: '0.6rem',
+              borderRadius: widget.props.indicatorStyle === 'line' ? '999px' : '50%',
+              backgroundColor: widget.props.indicatorColor || 'rgba(255,255,255,0.4)'
+            });
+            const indicatorActiveClass = registerStyle('carousel-indicator-active', {
+              backgroundColor: widget.props.indicatorActiveColor || '#ffffff'
+            });
+
+            const thumbnailsWrapperClass = showIndicatorsThumbnails
+              ? registerStyle('carousel-thumbnails', {
+                  display: 'flex',
+                  gap: '0.5rem',
+                  marginTop: '1rem',
+                  justifyContent: 'center'
+                })
+              : '';
+            const thumbnailClass = registerStyle('carousel-thumbnail', {
+              width: '70px',
+              height: '50px',
+              borderRadius: '0.5rem',
+              overflow: 'hidden',
+              border: '2px solid transparent'
+            });
+
+            return (
+              <div className={containerClass}>
+                <div className={trackClass}>
+                  {previewSlides.map((slide, idx) => {
+                    const image = slide?.image || (typeof slide === 'string' ? slide : '');
+                    const headline = slide?.headline || (typeof slide === 'string' ? slide : '');
+                    const subheadline = slide?.subheadline;
+                    const description = slide?.description;
+                    const badge = slide?.badge;
+                    const buttonText = slide?.buttonText;
+                    const buttonHref = slide?.buttonHref;
+
+                    const slideMedia = image ? (
+                      <img src={image} alt={slide?.alt || 'Carousel slide'} className={mediaClass} />
+                    ) : (
+                      <div className="absolute inset-0 bg-slate-300 flex items-center justify-center text-slate-500">
+                        <ImageIcon className="h-10 w-10" />
+                      </div>
+                    );
+
+                    const slideContent = showContent ? (
+                      <div className={contentClass}>
+                        {badge && <span className={badgeClass}>{badge}</span>}
+                        {headline && <h3 className={headlineClass}>{headline}</h3>}
+                        {subheadline && <p className={subheadlineClass}>{subheadline}</p>}
+                        {description && <p className={bodyClass}>{description}</p>}
+                        {buttonText && (
+                          <a href={buttonHref || '#'} className={buttonClass}>
+                            {buttonText}
+                          </a>
+                        )}
+                      </div>
+                    ) : null;
+
+                    return (
+                      <div key={`${widget.id}-slide-${idx}`} className={slideClass}>
+                        <div className={slideInnerClass}>
+                          {slideMedia}
+                          {showOverlay && <div className={overlayClass} />}
+                          {slideContent}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
+                {showArrows && (
+                  <>
+                    <div
+                      className={arrowBaseClass}
+                      style={{ left: widget.props.arrowPosition === 'inside' ? '1rem' : '-1.5rem' }}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </div>
+                    <div
+                      className={arrowBaseClass}
+                      style={{ right: widget.props.arrowPosition === 'inside' ? '1rem' : '-1.5rem' }}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </div>
+                  </>
+                )}
+                {showIndicators && (
+                  <div className={indicatorsClass}>
+                    {previewSlides.map((_, idx) => (
+                      <span
+                        key={`${widget.id}-indicator-${idx}`}
+                        className={`${indicatorDotClass} ${idx === 0 ? indicatorActiveClass : ''}`}
+                      />
+                    ))}
+                  </div>
+                )}
+                {showIndicatorsThumbnails && (
+                  <div className={thumbnailsWrapperClass}>
+                    {previewSlides.map((slide, idx) => (
+                      <div
+                        key={`${widget.id}-thumb-${idx}`}
+                        className={thumbnailClass}
+                        style={{
+                          borderColor: idx === 0 ? widget.props.indicatorActiveColor || '#ffffff' : 'transparent'
+                        }}
+                      >
+                        {slide?.image ? (
+                          <img src={slide.image} alt="thumb" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-slate-200" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {widget.type === 'audioPlayer' && (
             <div 
               className="p-4 rounded"
@@ -6353,95 +8774,1001 @@ export default function WebsiteEditPage() {
           )}
           
           {/* Commerce widgets */}
-          {widget.type === 'productCard' && (
-            <div className="border rounded overflow-hidden">
-              <div className="bg-gray-200 h-40 flex items-center justify-center">
-                <ImageIcon className="h-12 w-12 text-gray-400" />
-              </div>
-              <div className="p-3">
-                {widget.props.badge && (
-                  <span 
-                    className="text-xs px-2 py-1 rounded text-white"
-                    style={{ backgroundColor: widget.props.badgeColor }}
-                  >
-                    {widget.props.badge}
-                  </span>
+          {widget.type === 'productCard' && (() => {
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if ((LucideIcons as any)[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return (LucideIcons as any)[formatted] ? formatted : undefined;
+            };
+
+            const layoutVariant = widget.props.layoutVariant || 'vertical';
+            const alignment = widget.props.alignment || 'left';
+            const textAlign = alignment;
+            const alignItems = alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
+            const showImage = widget.props.showImage !== false && (widget.props.image || widget.props.imageBackground);
+            const showBadge = widget.props.showBadge !== false && Boolean(widget.props.badge);
+            const showFavoriteIcon = widget.props.showFavoriteIcon !== false;
+            const showDiscount = widget.props.showDiscount !== false && Boolean(widget.props.discountText);
+            const showRating = widget.props.showRating !== false && typeof widget.props.rating === 'number';
+            const showSecondaryButton = widget.props.showSecondaryButton !== false && widget.props.secondaryButtonText;
+            const showCurrency = widget.props.showCurrency !== false;
+            const cardBackgroundGradient = (widget.props.cardBackgroundGradient || '').toString().trim();
+            const features = Array.isArray(widget.props.features) ? widget.props.features.filter((item: string) => item?.trim()) : [];
+            const showFeatures = widget.props.showFeatures !== false && features.length > 0;
+
+            const currencySymbol = widget.props.currency || '';
+            const priceValue = widget.props.price || '';
+            const originalPriceValue = widget.props.originalPrice || '';
+            const prependCurrency = (value: string) => {
+              if (!showCurrency || !currencySymbol) return value;
+              return value.trim().startsWith(currencySymbol) ? value : `${currencySymbol}${value}`;
+            };
+            const displayPrice = priceValue ? prependCurrency(priceValue) : (showCurrency ? currencySymbol : '');
+            const displayOriginalPrice = originalPriceValue ? prependCurrency(originalPriceValue) : '';
+
+            const ratingValue = typeof widget.props.rating === 'number'
+              ? Math.min(5, Math.max(0, widget.props.rating))
+              : 0;
+
+            const CTAIconName = normalizeIconName(widget.props.ctaIconName || 'ShoppingCart');
+            const CTAIcon = (CTAIconName && (LucideIcons as any)[CTAIconName]) || ShoppingCart;
+            const hasCtaIcon = Boolean(widget.props.ctaIconUpload || widget.props.ctaIconName);
+            const ctaIconNode = widget.props.ctaIconUpload ? (
+              <img src={widget.props.ctaIconUpload} alt="cta icon" className="h-4 w-4" />
+            ) : hasCtaIcon ? (
+              <CTAIcon className="h-4 w-4" />
+            ) : null;
+
+            const featureIconName = normalizeIconName(widget.props.featureIconName || 'Check');
+            const FeatureIcon = (featureIconName && (LucideIcons as any)[featureIconName]) || Check;
+            const favoriteIconName = normalizeIconName(widget.props.favoriteIconName || 'Heart');
+            const FavoriteIcon = (favoriteIconName && (LucideIcons as any)[favoriteIconName]) || Heart;
+
+            const cardClass = registerStyle('product-card', {
+              width: '100%',
+              display: layoutVariant === 'horizontal' ? 'grid' : 'flex',
+              flexDirection: layoutVariant === 'horizontal' ? undefined : 'column',
+              gridTemplateColumns: layoutVariant === 'horizontal' && showImage ? `${widget.props.mediaWidth || '320px'} 1fr` : undefined,
+              gap: widget.props.contentGap || (layoutVariant === 'horizontal' ? '1.75rem' : '1.25rem'),
+              padding: widget.props.cardPadding || '1.5rem',
+              borderRadius: widget.props.borderRadius || '1.25rem',
+              borderWidth: widget.props.borderWidth || '1px',
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.08)',
+              boxShadow: widget.props.boxShadow || '0 25px 45px rgba(15,23,42,0.12)',
+              backgroundColor: cardBackgroundGradient ? undefined : widget.props.cardBackground || '#ffffff',
+              backgroundImage: cardBackgroundGradient || undefined,
+              alignItems: layoutVariant === 'horizontal' ? 'stretch' : undefined
+            });
+
+            const mediaWrapperClass = registerStyle('product-card-media', {
+              position: 'relative',
+              width: '100%',
+              height: layoutVariant === 'horizontal' ? '100%' : widget.props.imageHeight || '260px',
+              borderRadius: widget.props.imageBorderRadius || '1.25rem',
+              overflow: 'hidden',
+              backgroundColor: widget.props.imageBackground || '#f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            });
+
+            const imageClass = registerStyle('product-card-image', {
+              width: '100%',
+              height: '100%',
+              objectFit: widget.props.objectFit || 'cover',
+              display: 'block'
+            });
+
+            const badgeClass = showBadge
+              ? registerStyle('product-card-badge', {
+                  position: 'absolute',
+                  top: '1rem',
+                  left: widget.props.badgePosition === 'top-right' ? undefined : '1rem',
+                  right: widget.props.badgePosition === 'top-right' ? '1rem' : undefined,
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  backgroundColor: widget.props.badgeBackground || 'rgba(59,130,246,0.2)',
+                  color: widget.props.badgeTextColor || '#1d4ed8'
+                })
+              : '';
+
+            const favoriteButtonClass = showFavoriteIcon
+              ? registerStyle('product-card-favorite', {
+                  position: 'absolute',
+                  top: '1rem',
+                  right: widget.props.badgePosition === 'top-right' && showBadge ? '4rem' : '1rem',
+                  width: '2.75rem',
+                  height: '2.75rem',
+                  borderRadius: '999px',
+                  backgroundColor: widget.props.favoriteIconBackground || '#ffffff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 10px 20px rgba(15,23,42,0.15)'
+                })
+              : '';
+
+            const contentClass = registerStyle('product-card-content', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: widget.props.contentGap || '1rem',
+              textAlign,
+              alignItems: layoutVariant === 'horizontal' ? 'flex-start' : alignItems,
+              justifyContent: 'center'
+            });
+
+            const titleClass = registerStyle('product-card-title', {
+              fontSize: '1.4rem',
+              lineHeight: 1.2,
+              margin: 0,
+              color: widget.props.titleColor || '#0f172a'
+            });
+
+            const subtitleClass = registerStyle('product-card-subtitle', {
+              fontSize: '0.95rem',
+              margin: 0,
+              color: widget.props.subtitleColor || '#2563eb',
+              fontWeight: 600
+            });
+
+            const descriptionClass = registerStyle('product-card-description', {
+              fontSize: '0.95rem',
+              lineHeight: 1.6,
+              color: widget.props.descriptionColor || '#475569',
+              margin: 0
+            });
+
+            const priceRowClass = registerStyle('product-card-price-row', {
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'baseline',
+              gap: '0.75rem'
+            });
+
+            const priceClass = registerStyle('product-card-price', {
+              fontSize: '2rem',
+              fontWeight: 700,
+              color: widget.props.priceColor || '#0f172a',
+              display: 'inline-flex',
+              alignItems: 'baseline',
+              gap: '0.35rem'
+            });
+
+            const priceSuffixClass = registerStyle('product-card-price-suffix', {
+              fontSize: '1rem',
+              color: widget.props.priceColor || '#0f172a',
+              opacity: 0.8
+            });
+
+            const originalPriceClass = registerStyle('product-card-original', {
+              fontSize: '1rem',
+              color: widget.props.originalPriceColor || '#94a3b8',
+              textDecoration: 'line-through'
+            });
+
+            const discountClass = showDiscount
+              ? registerStyle('product-card-discount', {
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor: widget.props.discountBackground || 'rgba(34,197,94,0.15)',
+                  color: widget.props.discountColor || '#15803d'
+                })
+              : '';
+
+            const priceLabelClass = registerStyle('product-card-price-label', {
+              fontSize: '0.85rem',
+              color: '#94a3b8',
+              margin: 0
+            });
+
+            const metaRowClass = registerStyle('product-card-meta', {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.35rem'
+            });
+
+            const ratingRowClass = showRating
+              ? registerStyle('product-card-rating', {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  alignItems: 'center'
+                })
+              : '';
+
+            const starClass = registerStyle('product-card-star', {
+              width: '1rem',
+              height: '1rem',
+              color: widget.props.starColor || '#facc15'
+            });
+
+            const ratingTextClass = registerStyle('product-card-rating-text', {
+              fontSize: '0.9rem',
+              color: widget.props.ratingColor || '#475569'
+            });
+
+            const featureListClass = showFeatures
+              ? registerStyle('product-card-features', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                })
+              : '';
+
+            const featureItemClass = registerStyle('product-card-feature', {
+              display: 'flex',
+              gap: '0.5rem',
+              alignItems: 'center',
+              fontSize: '0.95rem',
+              color: widget.props.descriptionColor || '#475569'
+            });
+
+            const featureIconClass = registerStyle('product-card-feature-icon', {
+              width: '1.1rem',
+              height: '1.1rem',
+              color: widget.props.featureIconColor || '#2563eb'
+            });
+
+            const buttonVariant = widget.props.buttonVariant || 'solid';
+            const buttonBackground = buttonVariant === 'solid'
+              ? widget.props.buttonBackground || '#2563eb'
+              : buttonVariant === 'outline'
+                ? 'transparent'
+                : 'transparent';
+            const buttonColor = widget.props.buttonTextColor || (buttonVariant === 'solid'
+              ? '#ffffff'
+              : widget.props.buttonBackground || '#2563eb');
+            const buttonBorderColor = buttonVariant === 'outline'
+              ? widget.props.buttonBorderColor || widget.props.buttonBackground || '#2563eb'
+              : widget.props.buttonBorderColor || 'transparent';
+            const buttonBorderWidth = widget.props.buttonBorderWidth || (buttonVariant === 'outline' ? '1px' : '0px');
+
+            const buttonAlignSelf = widget.props.buttonFullWidth === false
+              ? (alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start')
+              : 'stretch';
+
+            const buttonClass = registerStyle('product-card-button', {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: widget.props.buttonFullWidth === false ? 'auto' : '100%',
+              gap: hasCtaIcon ? '0.4rem' : '0.2rem',
+              padding: widget.props.buttonPadding || '0.85rem 1.4rem',
+              borderRadius: widget.props.buttonBorderRadius || '999px',
+              backgroundColor: buttonBackground,
+              color: buttonColor,
+              borderWidth: buttonBorderWidth,
+              borderStyle: 'solid',
+              borderColor: buttonBorderColor,
+              fontWeight: 600,
+              textDecoration: 'none',
+              textAlign: 'center',
+              boxShadow: buttonVariant === 'solid' ? '0 15px 30px rgba(37,99,235,0.25)' : 'none',
+              transition: 'all 0.2s ease',
+              alignSelf: buttonAlignSelf
+            });
+            widgetStyles.push(buildCssBlock(`.${buttonClass}:hover`, {
+              backgroundColor: widget.props.buttonHoverBackground || buttonBackground,
+              color: widget.props.buttonHoverTextColor || buttonColor
+            }));
+
+            const secondaryButtonClass = showSecondaryButton
+              ? registerStyle('product-card-secondary', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start',
+                  color: widget.props.secondaryButtonColor || '#2563eb',
+                  textDecoration: widget.props.secondaryButtonVariant === 'link' ? 'underline' : 'none',
+                  fontWeight: 600,
+                  padding: widget.props.secondaryButtonVariant === 'ghost'
+                    ? widget.props.secondaryButtonPadding || '0.75rem 1rem'
+                    : '0.25rem 0',
+                  backgroundColor: widget.props.secondaryButtonVariant === 'ghost'
+                    ? widget.props.secondaryButtonBackground || 'rgba(37,99,235,0.08)'
+                    : 'transparent',
+                  borderRadius: widget.props.secondaryButtonVariant === 'ghost' ? '999px' : '0',
+                  width: widget.props.buttonFullWidth === false ? 'auto' : '100%'
+                })
+              : '';
+            if (showSecondaryButton) {
+              widgetStyles.push(buildCssBlock(`.${secondaryButtonClass}:hover`, {
+                color: widget.props.secondaryButtonHoverColor || widget.props.secondaryButtonColor || '#1d4ed8',
+                backgroundColor: widget.props.secondaryButtonVariant === 'ghost'
+                  ? widget.props.secondaryButtonHoverBackground || 'rgba(37,99,235,0.16)'
+                  : 'transparent'
+              }));
+            }
+
+            const favoriteIconNode = widget.props.favoriteIconUpload ? (
+              <img src={widget.props.favoriteIconUpload} alt="favorite" className="h-4 w-4" />
+            ) : (
+              <FavoriteIcon className="h-4 w-4" style={{ color: widget.props.favoriteIconColor || '#ef4444' }} />
+            );
+
+            return (
+              <div className={cardClass}>
+                {showImage && (
+                  <div className={mediaWrapperClass}>
+                    {widget.props.image ? (
+                      <img src={widget.props.image} alt={widget.props.imageAlt || widget.props.title || 'Product image'} className={imageClass} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <ImageIcon className="h-10 w-10" />
+                      </div>
+                    )}
+                    {showBadge && <span className={badgeClass}>{widget.props.badge}</span>}
+                    {showFavoriteIcon && <div className={favoriteButtonClass}>{favoriteIconNode}</div>}
+                  </div>
                 )}
-                <h3 className="font-bold mt-2">{widget.props.title}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-lg font-bold">{widget.props.price}</span>
-                  {widget.props.originalPrice && (
-                    <span className="text-sm line-through text-gray-500">{widget.props.originalPrice}</span>
+                <div className={contentClass}>
+                  {widget.props.subtitle && <p className={subtitleClass}>{widget.props.subtitle}</p>}
+                  {widget.props.title && <h3 className={titleClass}>{widget.props.title}</h3>}
+                  {widget.props.description && <p className={descriptionClass}>{widget.props.description}</p>}
+                  <div className={priceRowClass}>
+                    <div className={priceClass}>
+                      <span>{displayPrice}</span>
+                      {widget.props.priceSuffix && <span className={priceSuffixClass}>{widget.props.priceSuffix}</span>}
+                    </div>
+                    {displayOriginalPrice && <span className={originalPriceClass}>{displayOriginalPrice}</span>}
+                    {showDiscount && <span className={discountClass}>{widget.props.discountText}</span>}
+                  </div>
+                  {widget.props.priceLabel && <p className={priceLabelClass}>{widget.props.priceLabel}</p>}
+                  <div className={metaRowClass}>
+                    {widget.props.stockStatus && (
+                      <span style={{ color: widget.props.stockColor || '#16a34a', fontWeight: 600 }}>{widget.props.stockStatus}</span>
+                    )}
+                    {widget.props.shippingText && (
+                      <span style={{ color: widget.props.shippingColor || '#2563eb', fontWeight: 600 }}>{widget.props.shippingText}</span>
+                    )}
+                  </div>
+                  {showRating && (
+                    <div className={ratingRowClass}>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                          <Star
+                            key={`${widget.id}-rating-${idx}`}
+                            className={starClass}
+                            style={{ opacity: ratingValue >= idx + 0.25 ? 1 : 0.2, fill: ratingValue >= idx + 0.25 ? (widget.props.starColor || '#facc15') : 'transparent' }}
+                          />
+                        ))}
+                      </div>
+                      {(widget.props.ratingCountLabel || widget.props.ratingLabel) && (
+                        <span className={ratingTextClass}>
+                          {[widget.props.ratingCountLabel, widget.props.ratingLabel].filter(Boolean).join(' · ')}
+                        </span>
+                      )}
+                    </div>
                   )}
+                  {showFeatures && (
+                    <div className={featureListClass}>
+                      {features.map((feature, idx) => (
+                        <div key={`${widget.id}-feature-${idx}`} className={featureItemClass}>
+                          {widget.props.featureIconUpload ? (
+                            <img src={widget.props.featureIconUpload} alt="feature icon" className={featureIconClass} />
+                          ) : (
+                            <FeatureIcon className={featureIconClass} />
+                          )}
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-3 w-full">
+                    {widget.props.buttonText && (
+                      <a href={widget.props.buttonHref || '#'} className={buttonClass}>
+                        {ctaIconNode && widget.props.ctaIconPosition === 'left' && ctaIconNode}
+                        <span>{widget.props.buttonText}</span>
+                        {ctaIconNode && widget.props.ctaIconPosition !== 'left' && ctaIconNode}
+                      </a>
+                    )}
+                    {showSecondaryButton && widget.props.secondaryButtonText && (
+                      <a href={widget.props.secondaryButtonHref || '#'} className={secondaryButtonClass}>
+                        {widget.props.secondaryButtonText}
+                      </a>
+                    )}
+                  </div>
                 </div>
-                {widget.props.rating && (
-                  <div className="flex items-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-4 w-4 ${i < Math.floor(widget.props.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+              </div>
+            );
+          })()}
+          {widget.type === 'pricing' && (() => {
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if ((LucideIcons as any)[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return (LucideIcons as any)[formatted] ? formatted : undefined;
+            };
+
+            const includedFeatures = Array.isArray(widget.props.features)
+              ? widget.props.features.filter((feature: string) => feature && feature.trim())
+              : [];
+            const limitedFeatures = Array.isArray(widget.props.limitedFeatures)
+              ? widget.props.limitedFeatures.filter((feature: string) => feature && feature.trim())
+              : [];
+
+            const layoutVariant = widget.props.layoutVariant || 'card';
+            const alignment = widget.props.alignment === 'center' ? 'center' : 'left';
+            const textAlign = alignment;
+            const showAccentBar = widget.props.showAccentBar !== false;
+            const accentPosition = widget.props.accentPosition || 'top';
+            const showCurrency = widget.props.showCurrency !== false;
+            const showOriginalPrice = widget.props.showOriginalPrice !== false && widget.props.originalPrice;
+            const showFeatures = widget.props.showFeatures !== false && includedFeatures.length > 0;
+            const showLimited = widget.props.showFeatures !== false && limitedFeatures.length > 0;
+            const showSecondaryButton = widget.props.showSecondaryButton !== false && widget.props.secondaryButtonText;
+            const showGuarantee = widget.props.showGuarantee !== false && widget.props.guaranteeText;
+            const showFooterNote = widget.props.showFooterNote !== false && widget.props.footerNote;
+
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const currencySymbol = widget.props.currency || '';
+            const formatPrice = (value?: string) => {
+              if (!value) return '';
+              if (!showCurrency || !currencySymbol) return value;
+              return value.trim().startsWith(currencySymbol) ? value : `${currencySymbol}${value}`;
+            };
+            const displayPrice = formatPrice(widget.props.price);
+            const displayOriginalPrice = showOriginalPrice ? formatPrice(widget.props.originalPrice) : '';
+
+            const featureIconName = normalizeIconName(widget.props.featureIconName || 'Check');
+            const FeatureIcon = (featureIconName && (LucideIcons as any)[featureIconName]) || Check;
+            const limitedIconName = normalizeIconName(widget.props.limitedFeatureIconName || 'X');
+            const LimitedIcon = (limitedIconName && (LucideIcons as any)[limitedIconName]) || X;
+
+            const buttonVariant = widget.props.buttonVariant || 'solid';
+            const buttonBackground = buttonVariant === 'solid'
+              ? widget.props.buttonBackground || '#2563eb'
+              : 'transparent';
+            const buttonBorderColor = buttonVariant === 'outline'
+              ? widget.props.buttonBorderColor || widget.props.buttonBackground || '#2563eb'
+              : widget.props.buttonBorderColor || 'transparent';
+            const buttonBorderWidth = widget.props.buttonBorderWidth || (buttonVariant === 'outline' ? '1px' : '0px');
+            const buttonTextColor = widget.props.buttonTextColor || (buttonVariant === 'solid' ? '#ffffff' : widget.props.buttonBackground || '#2563eb');
+
+            const buttonClass = registerStyle('pricing-button', {
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: widget.props.buttonFullWidth === false ? 'auto' : '100%',
+              gap: widget.props.ctaIconName || widget.props.ctaIconUpload ? '0.5rem' : '0.25rem',
+              padding: widget.props.buttonPadding || '0.85rem 1.5rem',
+              borderRadius: widget.props.buttonBorderRadius || '999px',
+              fontWeight: 600,
+              borderWidth: buttonBorderWidth,
+              borderStyle: 'solid',
+              borderColor: buttonBorderColor,
+              backgroundColor: buttonBackground,
+              color: buttonTextColor,
+              textDecoration: 'none',
+              boxShadow: buttonVariant === 'solid' ? '0 15px 30px rgba(37,99,235,0.25)' : 'none',
+              transition: 'all 0.2s ease'
+            });
+            widgetStyles.push(buildCssBlock(`.${buttonClass}:hover`, {
+              backgroundColor: widget.props.buttonHoverBackground || buttonBackground,
+              color: widget.props.buttonHoverTextColor || buttonTextColor
+            }));
+
+            const secondaryButtonClass = showSecondaryButton
+              ? registerStyle('pricing-secondary-button', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: alignment === 'center' ? 'center' : 'flex-start',
+                  color: widget.props.secondaryButtonColor || '#2563eb',
+                  padding: widget.props.secondaryButtonVariant === 'ghost'
+                    ? widget.props.secondaryButtonPadding || '0.75rem 1rem'
+                    : '0.25rem 0',
+                  borderRadius: widget.props.secondaryButtonVariant === 'ghost' ? '999px' : '0',
+                  backgroundColor: widget.props.secondaryButtonVariant === 'ghost'
+                    ? widget.props.secondaryButtonBackground || 'rgba(37,99,235,0.08)'
+                    : 'transparent',
+                  fontWeight: 600,
+                  textDecoration: widget.props.secondaryButtonVariant === 'link' ? 'underline' : 'none',
+                  width: widget.props.buttonFullWidth === false ? 'auto' : '100%'
+                })
+              : '';
+            if (showSecondaryButton) {
+              widgetStyles.push(buildCssBlock(`.${secondaryButtonClass}:hover`, {
+                color: widget.props.secondaryButtonHoverColor || widget.props.secondaryButtonColor || '#1d4ed8',
+                backgroundColor: widget.props.secondaryButtonVariant === 'ghost'
+                  ? widget.props.secondaryButtonHoverBackground || 'rgba(37,99,235,0.16)'
+                  : 'transparent'
+              }));
+            }
+
+            const cardClass = registerStyle('pricing-card', {
+              position: 'relative',
+              width: '100%',
+              maxWidth: widget.props.maxWidth || '420px',
+              padding: widget.props.cardPadding || '2rem',
+              borderRadius: widget.props.borderRadius || '1.5rem',
+              borderWidth: widget.props.borderWidth || (layoutVariant === 'minimal' ? '0px' : '1px'),
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'rgba(15,23,42,0.08)',
+              boxShadow: layoutVariant === 'minimal' ? 'none' : widget.props.boxShadow || '0 25px 45px rgba(15,23,42,0.12)',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || '#ffffff',
+              backgroundImage: backgroundGradient || undefined,
+              textAlign,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem'
+            });
+
+            const accentBase: Record<string, StyleValue> = {
+              position: 'absolute',
+              backgroundColor: widget.props.accentColor || '#2563eb'
+            };
+            if (accentPosition === 'top') {
+              accentBase.top = '0';
+              accentBase.left = '0';
+              accentBase.right = '0';
+              accentBase.height = widget.props.accentThickness || '4px';
+              accentBase.borderTopLeftRadius = widget.props.borderRadius || '1.5rem';
+              accentBase.borderTopRightRadius = widget.props.borderRadius || '1.5rem';
+            } else {
+              accentBase.top = '0';
+              accentBase.bottom = '0';
+              accentBase.left = '0';
+              accentBase.width = widget.props.accentThickness || '4px';
+              accentBase.borderTopLeftRadius = widget.props.borderRadius || '1.5rem';
+              accentBase.borderBottomLeftRadius = widget.props.borderRadius || '1.5rem';
+            }
+            const accentClass = showAccentBar ? registerStyle('pricing-accent', accentBase) : '';
+
+            const badgeClass = widget.props.badgeText
+              ? registerStyle('pricing-badge', {
+                  alignSelf: alignment === 'center' ? 'center' : 'flex-start',
+                  padding: '0.3rem 0.85rem',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  backgroundColor: widget.props.badgeBackground || 'rgba(59,130,246,0.12)',
+                  color: widget.props.badgeColor || '#1d4ed8'
+                })
+              : '';
+
+            const titleClass = registerStyle('pricing-title', {
+              fontSize: '2rem',
+              margin: 0,
+              color: widget.props.titleColor || '#0f172a'
+            });
+
+            const subtitleClass = widget.props.subtitle
+              ? registerStyle('pricing-subtitle', {
+                  fontSize: '1rem',
+                  color: widget.props.subtitleColor || '#2563eb',
+                  margin: 0,
+                  fontWeight: 600
+                })
+              : '';
+
+            const descriptionClass = widget.props.description
+              ? registerStyle('pricing-description', {
+                  fontSize: '0.95rem',
+                  lineHeight: 1.6,
+                  color: widget.props.descriptionColor || '#475569',
+                  margin: 0
+                })
+              : '';
+
+            const priceRowClass = registerStyle('pricing-price-row', {
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'baseline',
+              gap: '0.75rem',
+              justifyContent: alignment === 'center' ? 'center' : 'flex-start'
+            });
+
+            const priceClass = registerStyle('pricing-price', {
+              fontSize: '3rem',
+              fontWeight: 700,
+              color: widget.props.priceColor || '#0f172a',
+              lineHeight: 1
+            });
+
+            const suffixClass = registerStyle('pricing-suffix', {
+              fontSize: '1rem',
+              color: widget.props.priceSuffixColor || '#475569'
+            });
+
+            const originalClass = showOriginalPrice
+              ? registerStyle('pricing-original', {
+                  fontSize: '1rem',
+                  color: widget.props.originalPriceColor || '#94a3b8',
+                  textDecoration: 'line-through'
+                })
+              : '';
+
+            const featureListClass = showFeatures
+              ? registerStyle('pricing-features', {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem'
+                })
+              : '';
+
+            const featureItemClass = registerStyle('pricing-feature-item', {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontSize: '0.95rem',
+              color: '#1f2937'
+            });
+
+            const limitedFeatureClass = showLimited
+              ? registerStyle('pricing-limited-feature', {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  fontSize: '0.95rem',
+                  color: '#94a3b8'
+                })
+              : '';
+
+            const guaranteeClass = showGuarantee
+              ? registerStyle('pricing-guarantee', {
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: widget.props.guaranteeColor || '#16a34a',
+                  textAlign
+                })
+              : '';
+
+            const footnoteClass = showFooterNote
+              ? registerStyle('pricing-footnote', {
+                  fontSize: '0.85rem',
+                  color: '#94a3b8',
+                  textAlign
+                })
+              : '';
+
+            const CTAIconNode = widget.props.ctaIconUpload ? (
+              <img src={widget.props.ctaIconUpload} alt="cta icon" className="h-4 w-4" />
+            ) : (() => {
+              const iconName = normalizeIconName(widget.props.ctaIconName || 'ArrowRight');
+              const IconComponent = iconName && (LucideIcons as any)[iconName] ? (LucideIcons as any)[iconName] : ArrowRight;
+              return widget.props.ctaIconName || widget.props.ctaIconUpload ? <IconComponent className="h-4 w-4" /> : null;
+            })();
+
+            const renderIncludedIcon = () => {
+              if (widget.props.featureIconUpload) {
+                return <img src={widget.props.featureIconUpload} alt="feature" className="h-4 w-4" />;
+              }
+              return <FeatureIcon className="h-4 w-4" style={{ color: widget.props.featureIconColor || '#16a34a' }} />;
+            };
+
+            const renderLimitedIcon = () => {
+              if (widget.props.limitedFeatureIconUpload) {
+                return <img src={widget.props.limitedFeatureIconUpload} alt="limited" className="h-4 w-4" />;
+              }
+              return <LimitedIcon className="h-4 w-4" style={{ color: widget.props.limitedFeatureIconColor || '#ef4444' }} />;
+            };
+
+            return (
+              <div className={cardClass}>
+                {showAccentBar && <span className={accentClass} />}
+                {widget.props.badgeText && <span className={badgeClass}>{widget.props.badgeText}</span>}
+                {widget.props.subtitle && <p className={subtitleClass}>{widget.props.subtitle}</p>}
+                {widget.props.title && <h3 className={titleClass}>{widget.props.title}</h3>}
+                {widget.props.description && <p className={descriptionClass}>{widget.props.description}</p>}
+                <div className={priceRowClass}>
+                  <div className="flex items-baseline gap-2">
+                    <span className={priceClass}>{displayPrice || currencySymbol}</span>
+                    {widget.props.priceSuffix && <span className={suffixClass}>{widget.props.priceSuffix}</span>}
+                  </div>
+                  {displayOriginalPrice && <span className={originalClass}>{displayOriginalPrice}</span>}
+                </div>
+                {widget.props.priceLabel && (
+                  <p className="text-sm font-medium" style={{ color: '#1e293b', textAlign }}>{widget.props.priceLabel}</p>
+                )}
+                {widget.props.priceSubtext && (
+                  <p className="text-sm" style={{ color: '#94a3b8', textAlign }}>{widget.props.priceSubtext}</p>
+                )}
+                {showFeatures && (
+                  <div className={featureListClass}>
+                    {includedFeatures.map((feature, idx) => (
+                      <div key={`${widget.id}-feature-${idx}`} className={featureItemClass}>
+                        {renderIncludedIcon()}
+                        <span>{feature}</span>
+                      </div>
                     ))}
                   </div>
                 )}
-                <button className="w-full mt-3 py-2 bg-blue-500 text-white rounded text-sm">
-                  {widget.props.buttonText}
-                </button>
-              </div>
-            </div>
-          )}
-          {widget.type === 'pricing' && (
-            <div 
-              className="border rounded p-4 text-center"
-              style={{ 
-                backgroundColor: widget.props.backgroundColor,
-                borderColor: widget.props.featured ? widget.props.accentColor : undefined
-              }}
-            >
-              <h3 className="font-bold text-lg">{widget.props.title}</h3>
-              <div className="mt-4">
-                <span className="text-3xl font-bold">{widget.props.price}</span>
-                <span className="text-gray-600">{widget.props.period}</span>
-              </div>
-              <ul className="mt-4 space-y-2 text-sm">
-                {widget.props.features?.map((feature: string, idx: number) => (
-                  <li key={idx}>✓ {feature}</li>
-                ))}
-              </ul>
-              <button 
-                className="w-full mt-4 py-2 rounded text-white"
-                style={{ backgroundColor: widget.props.accentColor }}
-              >
-                {widget.props.buttonText}
-              </button>
-            </div>
-          )}
-          {widget.type === 'testimonial' && (
-            <div 
-              className="p-4 rounded"
-              style={{ backgroundColor: widget.props.backgroundColor }}
-            >
-              {widget.props.quoteIcon && (
-                <MessageSquare className="h-8 w-8 text-gray-300 mb-3" />
-              )}
-              <p className="italic mb-3">"{widget.props.quote}"</p>
-              <div className="flex items-center gap-3">
-                {widget.props.avatar ? (
-                  <img src={widget.props.avatar} className="w-10 h-10 rounded-full" alt="" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-300" />
+                {showLimited && (
+                  <div className="flex flex-col gap-2">
+                    {limitedFeatures.map((feature, idx) => (
+                      <div key={`${widget.id}-limited-${idx}`} className={limitedFeatureClass}>
+                        {renderLimitedIcon()}
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <div>
-                  <div className="font-medium">{widget.props.author}</div>
-                  <div className="text-sm text-gray-600">{widget.props.role}</div>
+                <div className="flex flex-col gap-3">
+                  {widget.props.buttonText && (
+                    <a href={widget.props.buttonHref || '#'} className={buttonClass}>
+                      {CTAIconNode && widget.props.ctaIconPosition === 'left' && CTAIconNode}
+                      <span>{widget.props.buttonText}</span>
+                      {CTAIconNode && widget.props.ctaIconPosition !== 'left' && CTAIconNode}
+                    </a>
+                  )}
+                  {showSecondaryButton && (
+                    <a href={widget.props.secondaryButtonHref || '#'} className={secondaryButtonClass}>
+                      {widget.props.secondaryButtonText}
+                    </a>
+                  )}
                 </div>
+                {showGuarantee && <p className={guaranteeClass}>{widget.props.guaranteeText}</p>}
+                {showFooterNote && <p className={footnoteClass}>{widget.props.footerNote}</p>}
               </div>
-              {widget.props.rating && (
-                <div className="flex mt-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < widget.props.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                  ))}
+            );
+          })()}
+          {widget.type === 'testimonial' && (() => {
+            const normalizeIconName = (name?: string) => {
+              if (!name) return undefined;
+              if ((LucideIcons as any)[name]) return name;
+              const formatted = name
+                .split(/[\s_-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join('');
+              return (LucideIcons as any)[formatted] ? formatted : undefined;
+            };
+
+            const layoutVariant = widget.props.layoutVariant || 'card';
+            const alignment = widget.props.alignment === 'center' ? 'center' : 'left';
+            const textAlign = alignment;
+            const showQuoteIcon = widget.props.showQuoteIcon !== false;
+            const showAvatar = widget.props.showAvatar !== false;
+            const showRating = widget.props.showRating !== false && typeof widget.props.rating === 'number';
+            const showCTA = widget.props.showCTA !== false && widget.props.ctaText;
+            const showLogos = widget.props.showLogos !== false && Array.isArray(widget.props.logos) && widget.props.logos.length > 0;
+
+            const quoteText = widget.props.quote || '';
+            const highlightText = (widget.props.highlightText || '').trim();
+            const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const highlightParts = highlightText
+              ? quoteText.split(new RegExp(`(${escapeRegExp(highlightText)})`, 'gi')).filter(Boolean)
+              : [quoteText];
+
+            const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
+            const logos = Array.isArray(widget.props.logos) ? widget.props.logos : [];
+
+            const cardClass = registerStyle('testimonial-card', {
+              position: 'relative',
+              width: '100%',
+              maxWidth: widget.props.maxWidth || '640px',
+              padding: widget.props.cardPadding || '2.5rem',
+              borderRadius: widget.props.borderRadius || '1.75rem',
+              borderWidth: widget.props.borderWidth || (layoutVariant === 'minimal' ? '0px' : '1px'),
+              borderStyle: 'solid',
+              borderColor: widget.props.borderColor || 'rgba(255,255,255,0.15)',
+              boxShadow: layoutVariant === 'minimal' ? 'none' : widget.props.boxShadow || '0 35px 65px rgba(15,23,42,0.35)',
+              backgroundColor: backgroundGradient ? undefined : widget.props.backgroundColor || '#0f172a',
+              backgroundImage: backgroundGradient || undefined,
+              textAlign,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+              color: widget.props.quoteColor || '#ffffff'
+            });
+
+            const quoteLineHeight = typeof widget.props.quoteLineHeight === 'number'
+              ? widget.props.quoteLineHeight
+              : parseFloat(widget.props.quoteLineHeight) || 1.5;
+
+            const quoteClass = registerStyle('testimonial-quote', {
+              fontSize: `${widget.props.quoteSize || 1.4}rem`,
+              lineHeight: quoteLineHeight,
+              fontStyle: widget.props.quoteItalic === false ? 'normal' : 'italic',
+              margin: 0,
+              color: widget.props.quoteColor || '#ffffff'
+            });
+
+            const highlightClass = registerStyle('testimonial-highlight', {
+              color: widget.props.highlightColor || '#fde047',
+              fontWeight: 600
+            });
+
+            const quoteIconClass = showQuoteIcon
+              ? registerStyle('testimonial-quote-icon', {
+                  width: '3.5rem',
+                  height: '3.5rem',
+                  borderRadius: '1rem',
+                  backgroundColor: widget.props.quoteIconBackground || '#fde68a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: widget.props.quoteIconColor || '#0f172a'
+                })
+              : '';
+
+            const authorRowClass = registerStyle('testimonial-author-row', {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: alignment === 'center' ? 'center' : 'flex-start',
+              gap: '1rem',
+              textAlign
+            });
+
+            const authorNameClass = registerStyle('testimonial-author-name', {
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              color: widget.props.authorColor || '#ffffff',
+              margin: 0
+            });
+
+            const authorRoleClass = registerStyle('testimonial-author-role', {
+              fontSize: '0.95rem',
+              color: widget.props.roleColor || 'rgba(255,255,255,0.75)',
+              margin: 0
+            });
+
+            const ratingRowClass = showRating
+              ? registerStyle('testimonial-rating', {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.6rem',
+                  alignItems: 'center',
+                  justifyContent: alignment === 'center' ? 'center' : 'flex-start'
+                })
+              : '';
+
+            const starClass = registerStyle('testimonial-star', {
+              width: '1.1rem',
+              height: '1.1rem',
+              color: widget.props.starColor || '#facc15'
+            });
+
+            const ratingLabelClass = registerStyle('testimonial-rating-label', {
+              fontSize: '0.9rem',
+              color: widget.props.ratingColor || 'rgba(255,255,255,0.85)'
+            });
+
+            const ctaButtonClass = showCTA
+              ? registerStyle('testimonial-cta', {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  padding: widget.props.ctaPadding || '0.85rem 1.6rem',
+                  borderRadius: widget.props.ctaBorderRadius || '999px',
+                  backgroundColor: widget.props.ctaBackground || '#fde047',
+                  color: widget.props.ctaTextColor || '#0f172a',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  alignSelf: alignment === 'center' ? 'center' : 'flex-start'
+                })
+              : '';
+            if (showCTA) {
+              widgetStyles.push(buildCssBlock(`.${ctaButtonClass}:hover`, {
+                backgroundColor: widget.props.ctaHoverBackground || widget.props.ctaBackground || '#facc15',
+                color: widget.props.ctaHoverTextColor || widget.props.ctaTextColor || '#0f172a'
+              }));
+            }
+
+            const logosRowClass = showLogos
+              ? registerStyle('testimonial-logos', {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '1.25rem',
+                  justifyContent: alignment === 'center' ? 'center' : 'flex-start',
+                  color: widget.props.logoTextColor || 'rgba(255,255,255,0.6)',
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase'
+                })
+              : '';
+
+            const QuoteIconName = normalizeIconName(widget.props.quoteIconName || 'MessageSquare');
+            const QuoteIcon = (QuoteIconName && (LucideIcons as any)[QuoteIconName]) || MessageSquare;
+            const quoteIconNode = widget.props.quoteIconUpload ? (
+              <img src={widget.props.quoteIconUpload} alt="quote" className="h-5 w-5" />
+            ) : (
+              <QuoteIcon className="h-5 w-5" />
+            );
+
+            const ratingValue = typeof widget.props.rating === 'number'
+              ? Math.max(0, Math.min(5, widget.props.rating))
+              : 0;
+
+            const renderQuote = () => (
+              <p className={quoteClass}>
+                {highlightParts.map((part, idx) => (
+                  highlightText && part.toLowerCase() === highlightText.toLowerCase() ? (
+                    <span key={`${widget.id}-highlight-${idx}`} className={highlightClass}>{part}</span>
+                  ) : (
+                    <React.Fragment key={`${widget.id}-quote-${idx}`}>{part}</React.Fragment>
+                  )
+                ))}
+              </p>
+            );
+
+            const avatarSize = widget.props.avatarSize || '64px';
+            const avatarBorderRadius = widget.props.avatarShape === 'rounded' ? '1rem' : '999px';
+            const avatarNode = widget.props.avatar ? (
+              <img
+                src={widget.props.avatar}
+                alt={widget.props.author || 'Author avatar'}
+                style={{ width: avatarSize, height: avatarSize, borderRadius: avatarBorderRadius, objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: avatarSize,
+                  height: avatarSize,
+                  borderRadius: avatarBorderRadius,
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 600,
+                  color: widget.props.authorColor || '#ffffff'
+                }}
+              >
+                {widget.props.author?.[0] || 'A'}
+              </div>
+            );
+
+            return (
+              <div className={cardClass}>
+                {showQuoteIcon && <div className={quoteIconClass}>{quoteIconNode}</div>}
+                {renderQuote()}
+                {showRating && (
+                  <div className={ratingRowClass}>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, idx) => (
+                        <Star
+                          key={`${widget.id}-testimonial-star-${idx}`}
+                          className={starClass}
+                          style={{ opacity: ratingValue >= idx + 0.25 ? 1 : 0.2, fill: ratingValue >= idx + 0.25 ? (widget.props.starColor || '#facc15') : 'transparent' }}
+                        />
+                      ))}
+                    </div>
+                    {widget.props.ratingLabel && <span className={ratingLabelClass}>{widget.props.ratingLabel}</span>}
+                  </div>
+                )}
+                <div className={authorRowClass}>
+                  {showAvatar && avatarNode}
+                  <div className="space-y-1" style={{ textAlign }}>
+                    {widget.props.author && <p className={authorNameClass}>{widget.props.author}</p>}
+                    {(widget.props.role || widget.props.company) && (
+                      <p className={authorRoleClass}>
+                        {[widget.props.role, widget.props.company].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+                {showCTA && (
+                  <a href={widget.props.ctaHref || '#'} className={ctaButtonClass}>
+                    <span>{widget.props.ctaText}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                )}
+                {showLogos && (
+                  <div className={logosRowClass}>
+                    {logos.map((logo: string, idx: number) => (
+                      <span key={`${widget.id}-logo-${idx}`}>{logo}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Special widgets */}
           {widget.type === 'countdown' && (

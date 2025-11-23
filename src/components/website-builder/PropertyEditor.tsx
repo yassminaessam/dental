@@ -1889,141 +1889,1412 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     );
   };
 
-  const renderStatsProperties = () => (
-    <>
-      {renderTextInput('Value', 'value', widget.props.value)}
-      {renderTextInput('Label', 'label', widget.props.label)}
-      {renderTextInput('Change', 'change', widget.props.change)}
-      {renderSelect('Change Type', 'changeType', widget.props.changeType, [
-        { value: 'positive', label: 'Positive' },
-        { value: 'negative', label: 'Negative' },
-        { value: 'neutral', label: 'Neutral' }
-      ])}
-      {renderTextInput('Icon', 'icon', widget.props.icon)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderStatsProperties = () => {
+    const layout = widget.props.layout || 'vertical';
+    const showDescription = widget.props.showDescription !== false;
+    const showIcon = widget.props.showIcon !== false;
+    const showBadge = widget.props.showBadge ?? Boolean(widget.props.badgeText);
+    const showChange = widget.props.showChange !== false;
+    const showAccent = widget.props.showAccent ?? false;
+    const showDivider = widget.props.showDivider ?? false;
+    const changeType = widget.props.changeType || 'positive';
+    const iconNameValue = widget.props.iconName || widget.props.icon || 'TrendingUp';
+
+    return (
+      <>
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Metric</h3>
+        {renderTextInput('Value', 'value', typeof widget.props.value === 'number' ? widget.props.value.toString() : widget.props.value || '')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Value Prefix', 'valuePrefix', widget.props.valuePrefix || '')}
+          {renderTextInput('Value Suffix', 'valueSuffix', widget.props.valueSuffix || '')}
+        </div>
+        {renderTextInput('Value Font Size', 'valueFontSize', widget.props.valueFontSize || '2.5rem', 'e.g., 2.75rem, 48px')}
+        {renderSelect('Value Weight', 'valueFontWeight', widget.props.valueFontWeight || '700', [
+          { value: '400', label: 'Regular (400)' },
+          { value: '500', label: 'Medium (500)' },
+          { value: '600', label: 'Semibold (600)' },
+          { value: '700', label: 'Bold (700)' },
+          { value: '800', label: 'Extra Bold (800)' }
+        ])}
+        {renderTextInput('Value Line Height', 'valueLineHeight', widget.props.valueLineHeight || '1.1', 'e.g., 1.1, 120%')}
+        {renderTextInput('Value Letter Spacing', 'valueLetterSpacing', widget.props.valueLetterSpacing || '-0.02em', 'e.g., 0, -0.02em')}
+        {renderColorPicker('Value Color', 'valueColor', widget.props.valueColor || '#0f172a')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Labels & Description</h3>
+        {renderTextInput('Label', 'label', widget.props.label || '')}
+        {renderTextInput('Label Font Size', 'labelFontSize', widget.props.labelFontSize || '1rem', 'e.g., 1rem, 16px')}
+        {renderSelect('Label Weight', 'labelFontWeight', widget.props.labelFontWeight || '600', [
+          { value: '400', label: 'Regular (400)' },
+          { value: '500', label: 'Medium (500)' },
+          { value: '600', label: 'Semibold (600)' },
+          { value: '700', label: 'Bold (700)' }
+        ])}
+        {renderSwitch('Uppercase Label', 'labelUppercase', widget.props.labelUppercase ?? false)}
+        {renderColorPicker('Label Color', 'labelColor', widget.props.labelColor || '#475569')}
+        {renderSwitch('Show Description', 'showDescription', showDescription)}
+        {showDescription && (
+          <>
+            {renderTextarea('Description', 'description', widget.props.description || '', 'Optional supporting text')}
+            {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#94a3b8')}
+          </>
+        )}
+        {renderSwitch('Show Badge', 'showBadge', showBadge)}
+        {showBadge && (
+          <>
+            {renderTextInput('Badge Text', 'badgeText', widget.props.badgeText || 'Live')}
+            {renderSelect('Badge Style', 'badgeStyle', widget.props.badgeStyle || 'pill', [
+              { value: 'pill', label: 'Pill' },
+              { value: 'soft', label: 'Soft Square' },
+              { value: 'underline', label: 'Underline' }
+            ])}
+            {renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#1d4ed8')}
+            {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(59,130,246,0.12)')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Icon</h3>
+        {renderSwitch('Show Icon', 'showIcon', showIcon)}
+        {showIcon && (
+          <>
+            <IconPicker
+              value={iconNameValue}
+              uploadedIcon={widget.props.iconUpload || widget.props.uploadedIcon}
+              onChange={(name, uploadedUrl) => {
+                handleUpdateMultiple({
+                  iconName: name,
+                  icon: name,
+                  iconUpload: uploadedUrl || '',
+                  uploadedIcon: uploadedUrl || ''
+                });
+              }}
+              size={widget.props.iconSize || '2rem'}
+              color={widget.props.iconColor || '#2563eb'}
+            />
+            {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor || '#2563eb')}
+            {renderColorPicker('Icon Background', 'iconBackground', widget.props.iconBackground || 'rgba(37,99,235,0.12)')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Icon Size', 'iconSize', widget.props.iconSize || '2rem', 'Icon size e.g., 1.75rem')}
+              {renderTextInput('Icon Padding', 'iconPadding', widget.props.iconPadding || '0.65rem', 'Around the icon e.g., 0.75rem')}
+            </div>
+            {renderTextInput('Icon Border Radius', 'iconBorderRadius', widget.props.iconBorderRadius || '0.85rem', 'e.g., 0.5rem, 999px')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Icon Border Width', 'iconBorderWidth', widget.props.iconBorderWidth || '0px', 'e.g., 0px, 1px')}
+              {renderSelect('Icon Border Style', 'iconBorderStyle', widget.props.iconBorderStyle || 'solid', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'dashed', label: 'Dashed' },
+                { value: 'dotted', label: 'Dotted' }
+              ])}
+            </div>
+            {renderColorPicker('Icon Border Color', 'iconBorderColor', widget.props.iconBorderColor || 'transparent')}
+            {renderTextInput('Icon Shadow', 'iconShadow', widget.props.iconShadow || 'none', 'CSS shadow e.g., 0 10px 20px rgba(0,0,0,0.08)')}
+            {renderSelect('Icon Placement', 'iconPosition', widget.props.iconPosition || 'left', [
+              { value: 'left', label: 'Inline left' },
+              { value: 'top', label: 'Stacked above text' }
+            ])}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Change Indicator</h3>
+        {renderSwitch('Show Change Indicator', 'showChange', showChange)}
+        {showChange && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Change Value', 'change', typeof widget.props.change === 'number' ? widget.props.change.toString() : widget.props.change || '')}
+              {renderSelect('Change Type', 'changeType', changeType, [
+                { value: 'positive', label: 'Positive' },
+                { value: 'negative', label: 'Negative' },
+                { value: 'neutral', label: 'Neutral' },
+                { value: 'custom', label: 'Custom' }
+              ])}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Change Prefix', 'changePrefix', widget.props.changePrefix || '', '+, ↑, etc')}
+              {renderTextInput('Change Suffix', 'changeSuffix', widget.props.changeSuffix || '', '%, pts, etc')}
+            </div>
+            {renderTextInput('Change Label', 'changeLabel', widget.props.changeLabel || '', 'e.g., vs last month')}
+            {renderColorPicker('Change Label Color', 'changeLabelColor', widget.props.changeLabelColor || '#94a3b8')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderSelect('Indicator Icon Style', 'changeIconStyle', widget.props.changeIconStyle || 'arrow', [
+                { value: 'arrow', label: 'Arrow' },
+                { value: 'trend', label: 'Trend line' },
+                { value: 'dot', label: 'Colored dot' },
+                { value: 'none', label: 'No icon' }
+              ])}
+              {renderSelect('Indicator Badge Style', 'changeBadgeStyle', widget.props.changeBadgeStyle || 'pill', [
+                { value: 'pill', label: 'Filled pill' },
+                { value: 'soft', label: 'Soft background' },
+                { value: 'inline', label: 'Text only' }
+              ])}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Positive Text', 'changePositiveColor', widget.props.changePositiveColor || '#15803d')}
+              {renderColorPicker('Positive Background', 'changePositiveBackground', widget.props.changePositiveBackground || 'rgba(34,197,94,0.15)')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Negative Text', 'changeNegativeColor', widget.props.changeNegativeColor || '#b91c1c')}
+              {renderColorPicker('Negative Background', 'changeNegativeBackground', widget.props.changeNegativeBackground || 'rgba(239,68,68,0.15)')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Neutral Text', 'changeNeutralColor', widget.props.changeNeutralColor || '#475569')}
+              {renderColorPicker('Neutral Background', 'changeNeutralBackground', widget.props.changeNeutralBackground || 'rgba(71,85,105,0.12)')}
+            </div>
+            {changeType === 'custom' && (
+              <div className="grid grid-cols-2 gap-3">
+                {renderColorPicker('Custom Text', 'changeCustomColor', widget.props.changeCustomColor || '#0f172a')}
+                {renderColorPicker('Custom Background', 'changeCustomBackground', widget.props.changeCustomBackground || 'rgba(15,23,42,0.08)')}
+              </div>
+            )}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Card</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layout', layout, [
+            { value: 'vertical', label: 'Stacked' },
+            { value: 'horizontal', label: 'Split / horizontal' }
+          ])}
+          {renderSelect('Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' }
+          ])}
+        </div>
+        {renderTextInput('Content Gap', 'gap', widget.props.gap || (layout === 'horizontal' ? '1.5rem' : '1rem'), 'Spacing between groups e.g., 1rem')}
+        {renderTextInput('Padding', 'padding', widget.props.padding || '1.5rem', 'CSS padding e.g., 1.5rem')}
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+        {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...) overrides background color when set')}
+        {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1rem', '0px, 1rem, 999px...')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px', 'e.g., 0px, 1px')}
+          {renderSelect('Border Style', 'borderStyle', widget.props.borderStyle || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'dashed', label: 'Dashed' },
+            { value: 'dotted', label: 'Dotted' }
+          ])}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.08)')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 20px 40px rgba(15,23,42,0.08)', 'CSS shadow e.g., 0 15px 30px rgba(15,23,42,0.08)')}
+        {renderSwitch('Show Accent Indicator', 'showAccent', showAccent)}
+        {showAccent && (
+          <>
+            {renderColorPicker('Accent Color', 'accentColor', widget.props.accentColor || '#2563eb')}
+            {renderSelect('Accent Position', 'accentPosition', widget.props.accentPosition || 'top', [
+              { value: 'top', label: 'Top' },
+              { value: 'bottom', label: 'Bottom' },
+              { value: 'left', label: 'Left' },
+              { value: 'right', label: 'Right' }
+            ])}
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Accent Length', 'accentSize', widget.props.accentSize || '48px', 'Length e.g., 48px')}
+              {renderTextInput('Accent Thickness', 'accentThickness', widget.props.accentThickness || '4px', 'Thickness e.g., 4px')}
+            </div>
+            {renderTextInput('Accent Offset', 'accentInset', widget.props.accentInset || '1rem', 'Distance from edge e.g., 1rem')}
+          </>
+        )}
+        {renderSwitch('Show Divider', 'showDivider', showDivider)}
+        {showDivider && (
+          <>
+            {renderTextInput('Divider Thickness', 'dividerThickness', widget.props.dividerThickness || '1px')}
+            {renderColorPicker('Divider Color', 'dividerColor', widget.props.dividerColor || 'rgba(15,23,42,0.12)')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   // Forms & Inputs widgets properties
-  const renderSearchBarProperties = () => (
-    <>
-      {renderTextInput('Placeholder', 'placeholder', widget.props.placeholder)}
-      {renderTextInput('Button Text', 'buttonText', widget.props.buttonText)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius)}
-      {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth)}
-      {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor)}
-      {renderSwitch('Show Button', 'showButton', widget.props.showButton)}
-      {renderSwitch('Show Icon', 'showIcon', widget.props.showIcon)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderSearchBarProperties = () => {
+    const layout = widget.props.layout || 'inline';
+    const showLabel = widget.props.showLabel ?? false;
+    const showHelperText = widget.props.showHelperText ?? false;
+    const showIcon = widget.props.showIcon !== false;
+    const showButton = widget.props.showButton !== false;
+    const showVoiceButton = widget.props.showVoiceButton ?? false;
+    const showAdvancedButton = widget.props.showAdvancedButton ?? false;
+    const showFilters = widget.props.showFilters ?? false;
+    const quickFilters = Array.isArray(widget.props.quickFilters)
+      ? widget.props.quickFilters
+      : typeof widget.props.quickFilters === 'string'
+        ? widget.props.quickFilters.split(',').map((item: string) => item.trim()).filter(Boolean)
+        : [];
+    const quickFiltersValue = quickFilters.join('\n');
 
-  const renderNewsletterProperties = () => (
-    <>
-      {renderTextInput('Title', 'title', widget.props.title)}
-      {renderTextarea('Description', 'description', widget.props.description)}
-      {renderTextInput('Placeholder', 'placeholder', widget.props.placeholder)}
-      {renderTextInput('Button Text', 'buttonText', widget.props.buttonText)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderColorPicker('Button Color', 'buttonColor', widget.props.buttonColor)}
-      {renderTextInput('Padding', 'padding', widget.props.padding)}
-      {renderPositionAndSize()}
-    </>
-  );
+    const handleQuickFiltersChange = (value: string) => {
+      const next = value
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+      handleUpdate('quickFilters', next);
+    };
 
-  const renderContactInfoProperties = () => (
-    <>
-      {renderTextInput('Phone', 'phone', widget.props.phone)}
-      {renderTextInput('Email', 'email', widget.props.email)}
-      {renderTextarea('Address', 'address', widget.props.address)}
-      {renderSwitch('Show Icons', 'showIcons', widget.props.showIcons)}
-      {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor)}
-      {renderColorPicker('Text Color', 'textColor', widget.props.textColor)}
-      {renderTextInput('Font Size', 'fontSize', widget.props.fontSize)}
-      {renderPositionAndSize()}
-    </>
-  );
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layout', layout, [
+            { value: 'inline', label: 'Inline' },
+            { value: 'stacked', label: 'Stacked' }
+          ])}
+          {renderSelect('Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSwitch('Full Width', 'fullWidth', widget.props.fullWidth ?? true)}
+          {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '640px', 'e.g., 640px, 100%')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Container Padding', 'padding', widget.props.padding || '0', 'e.g., 0, 1rem')}
+          {renderTextInput('Content Gap', 'gap', widget.props.gap || '0.75rem', 'Spacing between elements')}
+        </div>
+        {renderColorPicker('Container Background', 'backgroundColor', widget.props.backgroundColor || 'transparent')}
+        {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '999px')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0px')}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'transparent')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || 'none', 'CSS shadow e.g., 0 20px 40px rgba(15,23,42,0.08)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Label & Helper Text</h3>
+        {renderSwitch('Show Label', 'showLabel', showLabel)}
+        {showLabel && (
+          <>
+            {renderTextInput('Label', 'label', widget.props.label || 'Search')}
+            {renderColorPicker('Label Color', 'labelColor', widget.props.labelColor || '#0f172a')}
+            {renderTextInput('Label Size', 'labelSize', widget.props.labelSize || '0.9rem')}
+            {renderSwitch('Uppercase Label', 'labelUppercase', widget.props.labelUppercase ?? false)}
+          </>
+        )}
+        {renderSwitch('Show Helper Text', 'showHelperText', showHelperText)}
+        {showHelperText && (
+          <>
+            {renderTextarea('Helper Text', 'helperText', widget.props.helperText || '', 'Shown beneath the field')}
+            {renderColorPicker('Helper Text Color', 'helperColor', widget.props.helperColor || '#94a3b8')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Input Field</h3>
+        {renderTextInput('Placeholder', 'placeholder', widget.props.placeholder || 'Search...')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Input Text Color', 'inputTextColor', widget.props.inputTextColor || '#0f172a')}
+          {renderTextInput('Font Size', 'inputFontSize', widget.props.inputFontSize || '1rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Input Height', 'inputHeight', widget.props.inputHeight || '52px')}
+          {renderTextInput('Input Padding', 'inputPadding', widget.props.inputPadding || '0.75rem 1rem')}
+        </div>
+        {renderColorPicker('Input Background', 'inputBackground', widget.props.inputBackground || '#ffffff')}
+        {renderTextInput('Input Gradient', 'inputBackgroundGradient', widget.props.inputBackgroundGradient || '', 'linear-gradient(...)')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Input Border Radius', 'inputBorderRadius', widget.props.inputBorderRadius || '999px')}
+          {renderTextInput('Input Border Width', 'inputBorderWidth', widget.props.inputBorderWidth || '1px')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Input Border Style', 'inputBorderStyle', widget.props.inputBorderStyle || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'dashed', label: 'Dashed' },
+            { value: 'dotted', label: 'Dotted' }
+          ])}
+          {renderColorPicker('Input Border Color', 'inputBorderColor', widget.props.inputBorderColor || '#e2e8f0')}
+        </div>
+        {renderColorPicker('Placeholder Color', 'inputPlaceholderColor', widget.props.inputPlaceholderColor || '#94a3b8')}
+        {renderColorPicker('Focus Ring Color', 'focusRingColor', widget.props.focusRingColor || '#2563eb')}
+        {renderTextInput('Input Shadow', 'inputShadow', widget.props.inputShadow || '0 4px 12px rgba(15,23,42,0.08)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Input Icon</h3>
+        {renderSwitch('Show Icon', 'showIcon', showIcon)}
+        {showIcon && (
+          <>
+            <IconPicker
+              value={widget.props.iconName || widget.props.icon || 'Search'}
+              uploadedIcon={widget.props.iconUpload}
+              onChange={(name, uploadedUrl) => {
+                handleUpdateMultiple({
+                  iconName: name,
+                  icon: name,
+                  iconUpload: uploadedUrl || ''
+                });
+              }}
+              size={widget.props.iconSize || '1.1rem'}
+              color={widget.props.iconColor || '#2563eb'}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              {renderSelect('Icon Position', 'iconPosition', widget.props.iconPosition || 'left', [
+                { value: 'left', label: 'Left inside field' },
+                { value: 'right', label: 'Right inside field' }
+              ])}
+              {renderTextInput('Icon Size', 'iconSize', widget.props.iconSize || '1.1rem')}
+            </div>
+            {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor || '#2563eb')}
+            {renderColorPicker('Icon Background', 'iconBackground', widget.props.iconBackground || 'transparent')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Button</h3>
+        {renderSwitch('Show Button', 'showButton', showButton)}
+        {showButton && (
+          <>
+            {renderTextInput('Button Text', 'buttonText', widget.props.buttonText || 'Search')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderSelect('Button Variant', 'buttonVariant', widget.props.buttonVariant || 'solid', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'outline', label: 'Outline' },
+                { value: 'ghost', label: 'Ghost' }
+              ])}
+              {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.75rem 1.5rem')}
+            </div>
+            {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+            {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+              {renderColorPicker('Button Hover Text', 'buttonHoverTextColor', widget.props.buttonHoverTextColor || '#ffffff')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px')}
+              {renderSelect('Button Border Style', 'buttonBorderStyle', widget.props.buttonBorderStyle || 'solid', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'dashed', label: 'Dashed' },
+                { value: 'dotted', label: 'Dotted' }
+              ])}
+            </div>
+            {renderColorPicker('Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || 'transparent')}
+            {renderTextInput('Button Border Radius', 'buttonRadius', widget.props.buttonRadius || '999px')}
+            <div className="grid grid-cols-2 gap-3">
+              <IconPicker
+                value={widget.props.buttonIconName || ''}
+                uploadedIcon={widget.props.buttonIconUpload}
+                onChange={(name, uploadedUrl) => {
+                  handleUpdateMultiple({
+                    buttonIconName: name,
+                    buttonIconUpload: uploadedUrl || ''
+                  });
+                }}
+                size="1rem"
+                color={widget.props.buttonTextColor || '#ffffff'}
+              />
+              {renderSelect('Button Icon Position', 'buttonIconPosition', widget.props.buttonIconPosition || 'right', [
+                { value: 'left', label: 'Left of text' },
+                { value: 'right', label: 'Right of text' }
+              ])}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Actions</h3>
+        {renderSwitch('Show Voice Button', 'showVoiceButton', showVoiceButton)}
+        {showVoiceButton && (
+          <>
+            {renderTextInput('Voice Tooltip', 'voiceButtonTooltip', widget.props.voiceButtonTooltip || 'Voice search')}
+            {renderColorPicker('Voice Button Color', 'voiceButtonColor', widget.props.voiceButtonColor || '#64748b')}
+            {renderColorPicker('Voice Button Background', 'voiceButtonBackground', widget.props.voiceButtonBackground || 'rgba(148,163,184,0.15)')}
+          </>
+        )}
+        {renderSwitch('Show Advanced Button', 'showAdvancedButton', showAdvancedButton)}
+        {showAdvancedButton && (
+          <>
+            {renderTextInput('Advanced Button Label', 'advancedButtonLabel', widget.props.advancedButtonLabel || 'Advanced')}
+            {renderSelect('Advanced Variant', 'advancedButtonVariant', widget.props.advancedButtonVariant || 'ghost', [
+              { value: 'ghost', label: 'Ghost' },
+              { value: 'outline', label: 'Outline' },
+              { value: 'link', label: 'Text Link' }
+            ])}
+            {renderColorPicker('Advanced Text Color', 'advancedButtonTextColor', widget.props.advancedButtonTextColor || '#2563eb')}
+            {renderColorPicker('Advanced Hover Color', 'advancedButtonHoverColor', widget.props.advancedButtonHoverColor || '#1d4ed8')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Quick Filters</h3>
+        {renderSwitch('Show Quick Filters', 'showFilters', showFilters)}
+        {showFilters && (
+          <>
+            {renderTextInput('Filters Label', 'filtersLabel', widget.props.filtersLabel || 'Popular searches')}
+            <div className="space-y-2">
+              <Label>Filter Items (one per line)</Label>
+              <Textarea
+                rows={4}
+                value={quickFiltersValue}
+                onChange={(e) => handleQuickFiltersChange(e.target.value)}
+                placeholder="Teeth whitening\nBraces\nImplants"
+              />
+            </div>
+            {renderSelect('Filter Style', 'filterStyle', widget.props.filterStyle || 'pill', [
+              { value: 'pill', label: 'Rounded pills' },
+              { value: 'chip', label: 'Soft chips' },
+              { value: 'link', label: 'Underline links' }
+            ])}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Filter Text Color', 'filterTextColor', widget.props.filterTextColor || '#2563eb')}
+              {renderColorPicker('Filter Background', 'filterBackground', widget.props.filterBackground || 'rgba(37,99,235,0.08)')}
+            </div>
+            {renderColorPicker('Filter Border Color', 'filterBorderColor', widget.props.filterBorderColor || 'transparent')}
+            {renderColorPicker('Filter Hover Background', 'filterHoverBackground', widget.props.filterHoverBackground || 'rgba(37,99,235,0.15)')}
+            {renderTextInput('Filters Gap', 'filterGap', widget.props.filterGap || '0.5rem')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
+  const renderNewsletterProperties = () => {
+    const layout = widget.props.layout || 'centered';
+    const alignment = widget.props.alignment || 'center';
+    const showImage = widget.props.showImage ?? true;
+    const showBadge = widget.props.showBadge ?? true;
+    const showEyebrow = widget.props.showEyebrow ?? true;
+    const showSecondaryButton = widget.props.showSecondaryButton ?? false;
+    const showStats = widget.props.showStats ?? true;
+    const showLogos = widget.props.showLogos ?? false;
+
+    const bulletPoints = Array.isArray(widget.props.bulletPoints)
+      ? widget.props.bulletPoints
+      : typeof widget.props.bulletPoints === 'string'
+        ? widget.props.bulletPoints.split(/[\r\n]+/).map(point => point.trim()).filter(Boolean)
+        : [];
+    const bulletPointsValue = bulletPoints.join('\n');
+
+    const logos = Array.isArray(widget.props.logos)
+      ? widget.props.logos
+      : typeof widget.props.logos === 'string'
+        ? widget.props.logos.split(/[\r\n]+/).map(logo => logo.trim()).filter(Boolean)
+        : [];
+    const logosValue = logos.join('\n');
+
+    const handleBulletPointsChange = (value: string) => {
+      const list = value
+        .split(/\r?\n/)
+        .map(item => item.trim())
+        .filter(Boolean);
+      handleUpdate('bulletPoints', list);
+    };
+
+    const handleLogosChange = (value: string) => {
+      const list = value
+        .split(/\r?\n/)
+        .map(item => item.trim())
+        .filter(Boolean);
+      handleUpdate('logos', list);
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layout', layout, [
+            { value: 'centered', label: 'Centered Card' },
+            { value: 'split', label: 'Split with Illustration' }
+          ])}
+          {renderSelect('Alignment', 'alignment', alignment, [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '720px')}
+          {renderTextInput('Padding', 'padding', widget.props.padding || '3rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Content Gap', 'gap', widget.props.gap || '1.5rem')}
+          {renderTextInput('Text Block Gap', 'textGap', widget.props.textGap || '1.25rem', 'Spacing between text sections')}
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.25rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px')}
+          {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.08)')}
+        </div>
+        {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+        {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 20px 45px rgba(15,23,42,0.12)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Content</h3>
+        {renderSwitch('Show Highlight Badge', 'showBadge', showBadge)}
+        {showBadge && (
+          <div className="grid grid-cols-2 gap-3">
+            {renderTextInput('Badge Text', 'badgeText', widget.props.badgeText || 'Free dental tips')}
+            {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(59,130,246,0.12)')}
+          </div>
+        )}
+        {showBadge && renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#2563eb')}
+        {renderSwitch('Show Eyebrow', 'showEyebrow', showEyebrow)}
+        {showEyebrow && (
+          <div className="grid grid-cols-2 gap-3">
+            {renderTextInput('Eyebrow', 'eyebrow', widget.props.eyebrow || 'Stay in the loop')}
+            {renderColorPicker('Eyebrow Color', 'eyebrowColor', widget.props.eyebrowColor || '#2563eb')}
+          </div>
+        )}
+        {renderTextInput('Title', 'title', widget.props.title || 'Subscribe to our Newsletter')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Title Font Size', 'titleFontSize', widget.props.titleFontSize || '2rem')}
+          {renderSelect('Title Weight', 'titleFontWeight', widget.props.titleFontWeight || '700', [
+            { value: '500', label: 'Medium' },
+            { value: '600', label: 'Semibold' },
+            { value: '700', label: 'Bold' },
+            { value: '800', label: 'Extra Bold' }
+          ])}
+        </div>
+        {renderColorPicker('Title Color', 'titleColor', widget.props.titleColor || '#0f172a')}
+        {renderTextarea('Description', 'description', widget.props.description || 'Get the latest updates delivered to your inbox.')}
+        {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#475569')}
+        {renderTextInput('Description Gap', 'descriptionSpacing', widget.props.descriptionSpacing || '1.25rem', 'Spacing below description text')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Highlight List</h3>
+        <div className="space-y-2">
+          <Label>Bullet Points (one per line)</Label>
+          <Textarea
+            rows={4}
+            value={bulletPointsValue}
+            onChange={(e) => handleBulletPointsChange(e.target.value)}
+            placeholder={'Exclusive offers\nMonthly dental tips\nPriority access to new services'}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <IconPicker
+            value={widget.props.bulletIconName || 'Check'}
+            uploadedIcon={widget.props.bulletIconUpload}
+            onChange={(name, uploadedUrl) => {
+              handleUpdateMultiple({
+                bulletIconName: name,
+                bulletIconUpload: uploadedUrl || ''
+              });
+            }}
+            size="1rem"
+            color={widget.props.bulletIconColor || '#16a34a'}
+          />
+          {renderColorPicker('Bullet Icon Color', 'bulletIconColor', widget.props.bulletIconColor || '#16a34a')}
+        </div>
+        {renderColorPicker('Bullet Text Color', 'bulletTextColor', widget.props.bulletTextColor || '#0f172a')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Form Input</h3>
+        {renderTextInput('Input Label', 'inputLabel', widget.props.inputLabel || '')}
+        {renderColorPicker('Input Label Color', 'inputLabelColor', widget.props.inputLabelColor || '#0f172a')}
+        {renderTextInput('Placeholder', 'placeholder', widget.props.placeholder || 'Enter your email')}
+        {renderColorPicker('Input Text Color', 'inputTextColor', widget.props.inputTextColor || '#0f172a')}
+        {renderColorPicker('Placeholder Color', 'inputPlaceholderColor', widget.props.inputPlaceholderColor || '#94a3b8')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Input Background', 'inputBackground', widget.props.inputBackground || '#ffffff')}
+          {renderTextInput('Input Gradient', 'inputBackgroundGradient', widget.props.inputBackgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Input Border Radius', 'inputBorderRadius', widget.props.inputBorderRadius || '999px')}
+          {renderTextInput('Input Border Width', 'inputBorderWidth', widget.props.inputBorderWidth || '1px')}
+        </div>
+        {renderColorPicker('Input Border Color', 'inputBorderColor', widget.props.inputBorderColor || 'rgba(148,163,184,0.6)')}
+        {renderTextInput('Input Shadow', 'inputShadow', widget.props.inputShadow || '0 10px 30px rgba(15,23,42,0.08)')}
+        {renderTextarea('Input Helper Text', 'inputHelperText', widget.props.inputHelperText || '')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Button</h3>
+        {renderTextInput('Button Text', 'buttonText', widget.props.buttonText || 'Subscribe')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Button Variant', 'buttonVariant', widget.props.buttonVariant || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'outline', label: 'Outline' },
+            { value: 'ghost', label: 'Ghost' }
+          ])}
+          {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.85rem 1.75rem')}
+        </div>
+        {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+        {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+          {renderColorPicker('Button Hover Text', 'buttonHoverTextColor', widget.props.buttonHoverTextColor || '#ffffff')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px')}
+          {renderSelect('Button Border Style', 'buttonBorderStyle', widget.props.buttonBorderStyle || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'dashed', label: 'Dashed' },
+            { value: 'dotted', label: 'Dotted' }
+          ])}
+        </div>
+        {renderColorPicker('Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || 'transparent')}
+        {renderTextInput('Button Border Radius', 'buttonRadius', widget.props.buttonRadius || '999px')}
+        <div className="grid grid-cols-2 gap-3">
+          <IconPicker
+            value={widget.props.buttonIconName || 'ArrowRight'}
+            uploadedIcon={widget.props.buttonIconUpload}
+            onChange={(name, uploadedUrl) => {
+              handleUpdateMultiple({
+                buttonIconName: name,
+                buttonIconUpload: uploadedUrl || ''
+              });
+            }}
+            size="1rem"
+            color={widget.props.buttonTextColor || '#ffffff'}
+          />
+          {renderSelect('Button Icon Position', 'buttonIconPosition', widget.props.buttonIconPosition || 'right', [
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' }
+          ])}
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Action</h3>
+        {renderSwitch('Show Secondary Button', 'showSecondaryButton', showSecondaryButton)}
+        {showSecondaryButton && (
+          <>
+            {renderTextInput('Secondary Text', 'secondaryButtonText', widget.props.secondaryButtonText || 'No thanks, maybe later')}
+            {renderSelect('Secondary Variant', 'secondaryButtonVariant', widget.props.secondaryButtonVariant || 'link', [
+              { value: 'link', label: 'Text Link' },
+              { value: 'ghost', label: 'Ghost' },
+              { value: 'outline', label: 'Outline' }
+            ])}
+            {renderColorPicker('Secondary Text Color', 'secondaryButtonColor', widget.props.secondaryButtonColor || '#64748b')}
+            {renderColorPicker('Secondary Hover Color', 'secondaryButtonHoverColor', widget.props.secondaryButtonHoverColor || '#0f172a')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Consent & Messaging</h3>
+        {renderTextarea('Consent Text', 'consentText', widget.props.consentText || 'By subscribing you agree to receive emails from us. Unsubscribe anytime.')}
+        {renderColorPicker('Consent Text Color', 'consentTextColor', widget.props.consentTextColor || '#94a3b8')}
+        {renderTextarea('Success Message', 'successMessage', widget.props.successMessage || "You're in! Check your inbox for a confirmation email.")}
+        {renderColorPicker('Success Message Color', 'successMessageColor', widget.props.successMessageColor || '#15803d')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Trust Indicators</h3>
+        {renderSwitch('Show Stats Callout', 'showStats', showStats)}
+        {showStats && (
+          <div className="grid grid-cols-2 gap-3">
+            {renderTextInput('Stats Value', 'statsValue', widget.props.statsValue || '98%')}
+            {renderTextInput('Stats Label', 'statsLabel', widget.props.statsLabel || 'Satisfaction rate')}
+          </div>
+        )}
+        {showStats && renderColorPicker('Stats Accent Color', 'statsAccentColor', widget.props.statsAccentColor || '#22c55e')}
+        {renderSwitch('Show Logos', 'showLogos', showLogos)}
+        {showLogos && (
+          <>
+            {renderTextInput('Logos Title', 'logosTitle', widget.props.logosTitle || 'Trusted by top clinics')}
+            <div className="space-y-2">
+              <Label>Logo Labels (one per line)</Label>
+              <Textarea
+                rows={3}
+                value={logosValue}
+                onChange={(e) => handleLogosChange(e.target.value)}
+                placeholder={'SmileCo\nBright Dental\nOralCare+'}
+              />
+            </div>
+            {renderColorPicker('Logo Text Color', 'logoTextColor', widget.props.logoTextColor || '#475569')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Illustration</h3>
+        {renderSwitch('Show Illustration', 'showImage', showImage)}
+        {showImage && (
+          <>
+            {renderSelect('Image Position', 'imagePosition', widget.props.imagePosition || 'right', [
+              { value: 'left', label: 'Left' },
+              { value: 'right', label: 'Right' }
+            ])}
+            <ImageUpload
+              value={widget.props.imageUrl}
+              onChange={(url) => handleUpdate('imageUrl', url)}
+              label="Illustration Image"
+            />
+            {renderTextInput('Image Alt Text', 'imageAlt', widget.props.imageAlt || 'Newsletter illustration')}
+            {renderColorPicker('Image Background', 'imageBackground', widget.props.imageBackground || '#eef2ff')}
+            {renderTextInput('Image Border Radius', 'imageBorderRadius', widget.props.imageBorderRadius || '1rem')}
+            {renderTextInput('Image Height', 'imageHeight', widget.props.imageHeight || '280px')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
+  const renderContactInfoProperties = () => {
+    const contactItems = Array.isArray(widget.props.contactItems) ? widget.props.contactItems : [];
+    const socialPlatforms = ['facebook', 'instagram', 'twitter', 'linkedin', 'whatsapp'];
+    const socialLinks = typeof widget.props.socialLinks === 'object' && widget.props.socialLinks !== null
+      ? widget.props.socialLinks
+      : {};
+
+    const updateContactItem = (index: number, key: string, value: string) => {
+      const items = contactItems.length ? [...contactItems] : [];
+      items[index] = { ...items[index], [key]: value };
+      handleUpdate('contactItems', items);
+    };
+
+    const removeContactItem = (index: number) => {
+      const items = contactItems.filter((_, idx: number) => idx !== index);
+      handleUpdate('contactItems', items);
+    };
+
+    const addContactItem = () => {
+      handleUpdate('contactItems', [
+        ...contactItems,
+        {
+          icon: 'Phone',
+          label: 'New contact',
+          value: 'Details goes here',
+          helper: '',
+          href: ''
+        }
+      ]);
+    };
+
+    const toggleSocialPlatform = (platform: string, enabled: boolean) => {
+      const current = Array.isArray(widget.props.socialPlatforms) ? widget.props.socialPlatforms : [];
+      if (enabled && !current.includes(platform)) {
+        handleUpdate('socialPlatforms', [...current, platform]);
+      } else if (!enabled) {
+        handleUpdate('socialPlatforms', current.filter((item: string) => item !== platform));
+      }
+    };
+
+    const setSocialLink = (platform: string, value: string) => {
+      handleUpdate('socialLinks', {
+        ...socialLinks,
+        [platform]: value
+      });
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layout', widget.props.layout || 'cards', [
+            { value: 'list', label: 'Stacked List' },
+            { value: 'columns', label: 'Two Columns' },
+            { value: 'cards', label: 'Cards' }
+          ])}
+          {renderSelect('Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Columns (list/cards)', 'columns', widget.props.columns || '2', '1, 2, 3...')}
+          {renderTextInput('Item Gap', 'itemGap', widget.props.itemGap || '1rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Padding', 'padding', widget.props.padding || '2rem')}
+          {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+          {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.08)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.25rem')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px')}
+        </div>
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 20px 45px rgba(15,23,42,0.12)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Header</h3>
+        {renderTextInput('Heading', 'heading', widget.props.heading || 'Contact our care team')}
+        {renderTextarea('Subheading', 'subheading', widget.props.subheading || 'We respond within 1 business day')}
+        {renderColorPicker('Heading Color', 'headingColor', widget.props.headingColor || '#0f172a')}
+        {renderColorPicker('Subheading Color', 'subheadingColor', widget.props.subheadingColor || '#475569')}
+        {renderTextInput('Text Gap', 'textGap', widget.props.textGap || '1rem', 'Spacing between head/description blocks')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Contact Items</h3>
+        <div className="space-y-3">
+          {contactItems.map((item: any, idx: number) => (
+            <div key={idx} className="p-3 border rounded-md space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Item {idx + 1}</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeContactItem(idx)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label>Icon Name</Label>
+                <Input
+                  value={item?.icon || ''}
+                  onChange={(e) => updateContactItem(idx, 'icon', e.target.value)}
+                  placeholder="Phone, Mail, Home..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Label</Label>
+                <Input
+                  value={item?.label || ''}
+                  onChange={(e) => updateContactItem(idx, 'label', e.target.value)}
+                  placeholder="Call us"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Value</Label>
+                <Input
+                  value={item?.value || ''}
+                  onChange={(e) => updateContactItem(idx, 'value', e.target.value)}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Helper Text</Label>
+                <Input
+                  value={item?.helper || ''}
+                  onChange={(e) => updateContactItem(idx, 'helper', e.target.value)}
+                  placeholder="Mon-Fri 9am-6pm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Link (optional)</Label>
+                <Input
+                  value={item?.href || ''}
+                  onChange={(e) => updateContactItem(idx, 'href', e.target.value)}
+                  placeholder="tel:+15551234567"
+                />
+              </div>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={addContactItem} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Contact Item
+          </Button>
+        </div>
+        {renderSwitch('Show Icons', 'showIcons', widget.props.showIcons ?? true)}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Icon Color', 'iconColor', widget.props.iconColor || '#2563eb')}
+          {renderColorPicker('Icon Background', 'iconBackground', widget.props.iconBackground || 'rgba(37,99,235,0.08)')}
+        </div>
+        {renderTextInput('Icon Size', 'iconSize', widget.props.iconSize || '1.1rem')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Typography</h3>
+        {renderColorPicker('Primary Text Color', 'textColor', widget.props.textColor || '#0f172a')}
+        {renderColorPicker('Helper Text Color', 'helperColor', widget.props.helperColor || '#64748b')}
+        {renderTextInput('Font Size', 'fontSize', widget.props.fontSize || '1rem')}
+        {renderTextInput('Value Font Weight', 'valueFontWeight', widget.props.valueFontWeight || '600')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary CTA</h3>
+        {renderSwitch('Show CTA Button', 'showCTA', widget.props.showCTA ?? true)}
+        {widget.props.showCTA !== false && (
+          <>
+            {renderTextInput('CTA Text', 'ctaText', widget.props.ctaText || 'Book an appointment')}
+            {renderTextInput('CTA Link', 'ctaHref', widget.props.ctaHref || '#')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderSelect('CTA Variant', 'ctaVariant', widget.props.ctaVariant || 'solid', [
+                { value: 'solid', label: 'Solid' },
+                { value: 'outline', label: 'Outline' },
+                { value: 'ghost', label: 'Ghost' }
+              ])}
+              {renderTextInput('CTA Padding', 'ctaPadding', widget.props.ctaPadding || '0.85rem 1.5rem')}
+            </div>
+            {renderColorPicker('CTA Background', 'ctaBackground', widget.props.ctaBackground || '#2563eb')}
+            {renderColorPicker('CTA Text Color', 'ctaTextColor', widget.props.ctaTextColor || '#ffffff')}
+            {renderTextInput('CTA Border Width', 'ctaBorderWidth', widget.props.ctaBorderWidth || '0px')}
+            {renderColorPicker('CTA Border Color', 'ctaBorderColor', widget.props.ctaBorderColor || 'transparent')}
+            <div className="grid grid-cols-2 gap-3">
+              <IconPicker
+                value={widget.props.ctaIconName || 'ArrowRight'}
+                uploadedIcon={widget.props.ctaIconUpload}
+                onChange={(name, uploadedUrl) => {
+                  handleUpdateMultiple({
+                    ctaIconName: name,
+                    ctaIconUpload: uploadedUrl || ''
+                  });
+                }}
+                size="1rem"
+                color={widget.props.ctaTextColor || '#ffffff'}
+              />
+              {renderSelect('CTA Icon Position', 'ctaIconPosition', widget.props.ctaIconPosition || 'right', [
+                { value: 'left', label: 'Left' },
+                { value: 'right', label: 'Right' }
+              ])}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary CTA & Footnote</h3>
+        {renderSwitch('Show Secondary Link', 'showSecondaryCTA', widget.props.showSecondaryCTA ?? false)}
+        {widget.props.showSecondaryCTA && (
+          <>
+            {renderTextInput('Secondary Text', 'secondaryCTAText', widget.props.secondaryCTAText || 'Email our coordinators')}
+            {renderTextInput('Secondary Link', 'secondaryCTAHref', widget.props.secondaryCTAHref || '#')}
+            {renderColorPicker('Secondary Text Color', 'secondaryCTAColor', widget.props.secondaryCTAColor || '#2563eb')}
+          </>
+        )}
+        {renderTextarea('Footnote', 'footnote', widget.props.footnote || '')}
+        {renderColorPicker('Footnote Color', 'footnoteColor', widget.props.footnoteColor || '#94a3b8')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Social Profiles</h3>
+        {renderSwitch('Show Social Icons', 'showSocial', widget.props.showSocial ?? true)}
+        {widget.props.showSocial !== false && (
+          <>
+            {renderTextInput('Social Label', 'socialLabel', widget.props.socialLabel || 'Connect with us')}
+            {renderColorPicker('Social Icon Color', 'socialIconColor', widget.props.socialIconColor || '#2563eb')}
+            {renderColorPicker('Social Background', 'socialIconBackground', widget.props.socialIconBackground || 'rgba(37,99,235,0.08)')}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Platforms</Label>
+              {socialPlatforms.map((platform) => (
+                <div key={platform} className="space-y-2 border rounded-md p-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="capitalize">{platform}</Label>
+                    <Switch
+                      checked={Array.isArray(widget.props.socialPlatforms) ? widget.props.socialPlatforms.includes(platform) : false}
+                      onCheckedChange={(checked) => toggleSocialPlatform(platform, checked)}
+                    />
+                  </div>
+                  <Input
+                    value={socialLinks[platform] || ''}
+                    onChange={(e) => setSocialLink(platform, e.target.value)}
+                    placeholder={`https://${platform}.com/your-page`}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   // Media widgets properties
-  const renderGalleryProperties = () => (
-    <>
-      <div className="space-y-2">
-        <Label>Images</Label>
-        {widget.props.images?.map((image: string, idx: number) => (
-          <div key={idx} className="space-y-2">
-            <ImageUpload
-              value={image}
-              onChange={(url) => {
-                const newImages = [...widget.props.images];
-                newImages[idx] = url;
-                handleUpdate('images', newImages);
-              }}
-              label={`Image ${idx + 1}`}
-            />
-          </div>
-        ))}
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => handleUpdate('images', [...(widget.props.images || []), ''])}
-        >
-          Add Image
-        </Button>
-      </div>
-      {renderSlider('Columns', 'columns', widget.props.columns, 1, 6, 1)}
-      {renderTextInput('Gap', 'gap', widget.props.gap)}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius)}
-      {renderSelect('Aspect Ratio', 'aspectRatio', widget.props.aspectRatio, [
-        { value: 'auto', label: 'Auto' },
-        { value: '16/9', label: '16:9' },
-        { value: '4/3', label: '4:3' },
-        { value: '1/1', label: '1:1 Square' },
-        { value: '3/4', label: '3:4' },
-        { value: '9/16', label: '9:16' }
-      ])}
-      {renderSwitch('Enable Lightbox', 'lightbox', widget.props.lightbox)}
-      {renderSwitch('Show Captions', 'captions', widget.props.captions)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderGalleryProperties = () => {
+    const galleryItems = Array.isArray(widget.props.images) ? widget.props.images : [];
 
-  const renderCarouselProperties = () => (
-    <>
-      <div className="space-y-2">
-        <Label>Slides</Label>
-        {widget.props.slides?.map((slide: string, idx: number) => (
-          <div key={idx} className="space-y-2">
-            <ImageUpload
-              value={slide}
-              onChange={(url) => {
-                const newSlides = [...widget.props.slides];
-                newSlides[idx] = url;
-                handleUpdate('slides', newSlides);
+    const updateGalleryItem = (index: number, key: string, value: string) => {
+      const items = galleryItems.length ? [...galleryItems] : [];
+      const current = items[index];
+      const normalized = typeof current === 'object' && current !== null
+        ? { ...current }
+        : { src: typeof current === 'string' ? current : '' };
+      normalized[key] = value;
+      items[index] = normalized;
+      handleUpdate('images', items);
+    };
+
+    const removeGalleryItem = (index: number) => {
+      const items = galleryItems.filter((_, idx) => idx !== index);
+      handleUpdate('images', items);
+    };
+
+    const addGalleryItem = () => {
+      handleUpdate('images', [
+        ...galleryItems,
+        {
+          src: '',
+          alt: '',
+          title: '',
+          description: '',
+          badge: ''
+        }
+      ]);
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layout', widget.props.layout || 'grid', [
+            { value: 'grid', label: 'Grid' },
+            { value: 'masonry', label: 'Masonry' }
+          ])}
+          {renderTextInput('Columns', 'columns', widget.props.columns?.toString() || '3', '1-6')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Mobile Columns', 'mobileColumns', widget.props.mobileColumns?.toString() || '1', '1-3')}
+          {renderTextInput('Gap', 'gap', widget.props.gap || '1rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Row Gap', 'rowGap', widget.props.rowGap || widget.props.gap || '1rem')}
+          {renderTextInput('Padding', 'padding', widget.props.padding || '1.5rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+          {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1rem')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0px')}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'transparent')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 20px 35px rgba(15,23,42,0.08)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Images & Content</h3>
+        <div className="space-y-3">
+          {galleryItems.map((item: any, idx: number) => {
+            const src = typeof item === 'string' ? item : item?.src;
+            return (
+              <div key={idx} className="border rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Image {idx + 1}</Label>
+                  <Button variant="ghost" size="sm" onClick={() => removeGalleryItem(idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ImageUpload
+                  value={src}
+                  onChange={(url) => updateGalleryItem(idx, 'src', url)}
+                  label="Image"
+                />
+                <div className="space-y-2">
+                  <Label>Alt Text</Label>
+                  <Input
+                    value={item?.alt || ''}
+                    onChange={(e) => updateGalleryItem(idx, 'alt', e.target.value)}
+                    placeholder="Describe the image"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    value={item?.title || ''}
+                    onChange={(e) => updateGalleryItem(idx, 'title', e.target.value)}
+                    placeholder="Dental makeover"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={item?.description || ''}
+                    onChange={(e) => updateGalleryItem(idx, 'description', e.target.value)}
+                    rows={2}
+                    placeholder="Short supporting text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Badge</Label>
+                  <Input
+                    value={item?.badge || ''}
+                    onChange={(e) => updateGalleryItem(idx, 'badge', e.target.value)}
+                    placeholder="Before & After"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Link (optional)</Label>
+                  <Input
+                    value={item?.href || ''}
+                    onChange={(e) => updateGalleryItem(idx, 'href', e.target.value)}
+                    placeholder="https://example.com/case-study"
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <Button variant="outline" size="sm" onClick={addGalleryItem} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Gallery Item
+          </Button>
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Image Styling</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Image Border Radius', 'imageBorderRadius', widget.props.imageBorderRadius || '1rem')}
+          {renderTextInput('Image Border Width', 'imageBorderWidth', widget.props.imageBorderWidth || '0px')}
+        </div>
+        {renderColorPicker('Image Border Color', 'imageBorderColor', widget.props.imageBorderColor || 'transparent')}
+        {renderTextInput('Image Shadow', 'imageShadow', widget.props.imageShadow || '0 12px 25px rgba(15,23,42,0.12)')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Aspect Ratio', 'imageAspectRatio', widget.props.imageAspectRatio || 'auto', [
+            { value: 'auto', label: 'Auto' },
+            { value: '16/9', label: '16:9' },
+            { value: '4/3', label: '4:3' },
+            { value: '3/2', label: '3:2' },
+            { value: '1/1', label: '1:1' }
+          ])}
+          {renderTextInput('Fixed Height', 'imageHeight', widget.props.imageHeight || '', 'e.g., 280px')}
+        </div>
+        {renderSelect('Object Fit', 'objectFit', widget.props.objectFit || 'cover', [
+          { value: 'cover', label: 'Cover' },
+          { value: 'contain', label: 'Contain' },
+          { value: 'fill', label: 'Fill' },
+          { value: 'scale-down', label: 'Scale Down' }
+        ])}
+        {renderSelect('Hover Effect', 'hoverEffect', widget.props.hoverEffect || 'zoom', [
+          { value: 'none', label: 'None' },
+          { value: 'zoom', label: 'Zoom' },
+          { value: 'lift', label: 'Lift' },
+          { value: 'fade', label: 'Fade' },
+          { value: 'grayscale', label: 'Grayscale' }
+        ])}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Overlay & Captions</h3>
+        {renderSwitch('Show Overlay', 'showOverlay', widget.props.showOverlay ?? true)}
+        {widget.props.showOverlay !== false && (
+          <>
+            {renderColorPicker('Overlay Color', 'overlayColor', widget.props.overlayColor || 'rgba(15,23,42,0.45)')}
+            <IconPicker
+              value={widget.props.overlayIconName || 'Eye'}
+              uploadedIcon={widget.props.overlayIconUpload}
+              onChange={(name, uploadedUrl) => {
+                handleUpdateMultiple({
+                  overlayIconName: name,
+                  overlayIconUpload: uploadedUrl || ''
+                });
               }}
-              label={`Slide ${idx + 1}`}
+              size="1.1rem"
+              color="#ffffff"
             />
-          </div>
-        ))}
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => handleUpdate('slides', [...(widget.props.slides || []), ''])}
-        >
-          Add Slide
-        </Button>
-      </div>
-      {renderSwitch('Autoplay', 'autoplay', widget.props.autoplay)}
-      {renderSlider('Interval (ms)', 'interval', widget.props.interval, 1000, 10000, 500)}
-      {renderSwitch('Show Indicators', 'showIndicators', widget.props.showIndicators)}
-      {renderSwitch('Show Arrows', 'showArrows', widget.props.showArrows)}
-      {renderTextInput('Height', 'height', widget.props.height)}
-      {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius)}
-      {renderPositionAndSize()}
-    </>
-  );
+            {renderSwitch('Show Preview Icon', 'showPreviewIcon', widget.props.showPreviewIcon ?? true)}
+          </>
+        )}
+        {renderSwitch('Show Captions', 'showCaptions', widget.props.showCaptions ?? true)}
+        {widget.props.showCaptions !== false && (
+          <>
+            {renderSelect('Caption Alignment', 'captionAlignment', widget.props.captionAlignment || 'left', [
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Center' }
+            ])}
+            {renderColorPicker('Title Color', 'captionColor', widget.props.captionColor || '#0f172a')}
+            {renderColorPicker('Description Color', 'captionDescriptionColor', widget.props.captionDescriptionColor || '#475569')}
+            {renderSwitch('Show Badge', 'showBadges', widget.props.showBadges ?? true)}
+            {widget.props.showBadges !== false && (
+              <div className="grid grid-cols-2 gap-3">
+                {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(37,99,235,0.12)')}
+                {renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#2563eb')}
+              </div>
+            )}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Interactions</h3>
+        {renderSwitch('Enable Lightbox Preview', 'lightbox', widget.props.lightbox ?? true)}
+        {renderSwitch('Open Image Links in New Tab', 'openLinksInNewTab', widget.props.openLinksInNewTab ?? true)}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
+  const renderCarouselProperties = () => {
+    const slides = Array.isArray(widget.props.slides) ? widget.props.slides : [];
+
+    const updateSlide = (index: number, key: string, value: string) => {
+      const items = slides.length ? [...slides] : [];
+      const current = typeof items[index] === 'object' && items[index] !== null
+        ? { ...items[index] }
+        : { image: typeof items[index] === 'string' ? items[index] : '' };
+      current[key] = value;
+      items[index] = current;
+      handleUpdate('slides', items);
+    };
+
+    const removeSlide = (index: number) => {
+      const items = slides.filter((_, idx) => idx !== index);
+      handleUpdate('slides', items);
+    };
+
+    const addSlide = () => {
+      handleUpdate('slides', [
+        ...slides,
+        {
+          image: '',
+          alt: '',
+          headline: '',
+          subheadline: '',
+          description: '',
+          badge: '',
+          buttonText: '',
+          buttonHref: ''
+        }
+      ]);
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Height', 'height', widget.props.height || '420px')}
+          {renderTextInput('Slide Width (desktop)', 'slideWidth', widget.props.slideWidth || '70%')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Corner Radius', 'borderRadius', widget.props.borderRadius || '1.25rem')}
+          {renderTextInput('Inner Padding', 'padding', widget.props.padding || '0')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+          {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        {renderTextInput('Gap Between Slides', 'slideGap', widget.props.slideGap || '1.25rem')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Slides</h3>
+        <div className="space-y-3">
+          {slides.map((slide: any, idx: number) => (
+            <div key={idx} className="border rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Slide {idx + 1}</Label>
+                <Button variant="ghost" size="sm" onClick={() => removeSlide(idx)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <ImageUpload
+                value={slide?.image || (typeof slide === 'string' ? slide : '')}
+                onChange={(url) => updateSlide(idx, 'image', url)}
+                label="Background Image"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Alt Text</Label>
+                  <Input
+                    value={slide?.alt || ''}
+                    onChange={(e) => updateSlide(idx, 'alt', e.target.value)}
+                    placeholder="Describe the slide"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Badge</Label>
+                  <Input
+                    value={slide?.badge || ''}
+                    onChange={(e) => updateSlide(idx, 'badge', e.target.value)}
+                    placeholder="New treatment"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Headline</Label>
+                <Input
+                  value={slide?.headline || ''}
+                  onChange={(e) => updateSlide(idx, 'headline', e.target.value)}
+                  placeholder="Compassionate dentistry"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subheadline</Label>
+                <Input
+                  value={slide?.subheadline || ''}
+                  onChange={(e) => updateSlide(idx, 'subheadline', e.target.value)}
+                  placeholder="Ultra-modern studio"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={slide?.description || ''}
+                  onChange={(e) => updateSlide(idx, 'description', e.target.value)}
+                  rows={3}
+                  placeholder="Short supporting copy"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Button Text</Label>
+                  <Input
+                    value={slide?.buttonText || ''}
+                    onChange={(e) => updateSlide(idx, 'buttonText', e.target.value)}
+                    placeholder="Learn more"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Button Link</Label>
+                  <Input
+                    value={slide?.buttonHref || ''}
+                    onChange={(e) => updateSlide(idx, 'buttonHref', e.target.value)}
+                    placeholder="https://example.com"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={addSlide} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Slide
+          </Button>
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Content & Overlay</h3>
+        {renderSwitch('Show Overlay', 'showOverlay', widget.props.showOverlay ?? true)}
+        {widget.props.showOverlay !== false && (
+          <>
+            {renderColorPicker('Overlay Color', 'overlayColor', widget.props.overlayColor || 'rgba(0,0,0,0.35)')}
+            {renderTextInput('Overlay Blur', 'overlayBlur', widget.props.overlayBlur || '0px')}
+          </>
+        )}
+        {renderSwitch('Show Content', 'showContent', widget.props.showContent ?? true)}
+        {widget.props.showContent !== false && (
+          <>
+            {renderSelect('Content Alignment', 'contentAlignment', widget.props.contentAlignment || 'left', [
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Center' }
+            ])}
+            {renderColorPicker('Headline Color', 'headlineColor', widget.props.headlineColor || '#ffffff')}
+            {renderColorPicker('Body Color', 'bodyColor', widget.props.bodyColor || 'rgba(255,255,255,0.8)')}
+            {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(255,255,255,0.15)')}
+            {renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#ffffff')}
+            {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.65rem 1.5rem')}
+            {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#ffffff')}
+            {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#0f172a')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Navigation & Indicators</h3>
+        {renderSwitch('Show Arrows', 'showArrows', widget.props.showArrows ?? true)}
+        {widget.props.showArrows !== false && (
+          <>
+            {renderSelect('Arrow Position', 'arrowPosition', widget.props.arrowPosition || 'sides', [
+              { value: 'sides', label: 'Outside (sides)' },
+              { value: 'inside', label: 'Inside' }
+            ])}
+            {renderColorPicker('Arrow Background', 'arrowBackground', widget.props.arrowBackground || 'rgba(15,23,42,0.6)')}
+            {renderColorPicker('Arrow Color', 'arrowColor', widget.props.arrowColor || '#ffffff')}
+          </>
+        )}
+        {renderSwitch('Show Indicators', 'showIndicators', widget.props.showIndicators ?? true)}
+        {widget.props.showIndicators !== false && (
+          <>
+            {renderSelect('Indicator Style', 'indicatorStyle', widget.props.indicatorStyle || 'dots', [
+              { value: 'dots', label: 'Dots' },
+              { value: 'line', label: 'Line' }
+            ])}
+            {renderColorPicker('Indicator Color', 'indicatorColor', widget.props.indicatorColor || 'rgba(255,255,255,0.5)')}
+            {renderColorPicker('Active Indicator', 'indicatorActiveColor', widget.props.indicatorActiveColor || '#ffffff')}
+          </>
+        )}
+        {renderSwitch('Show Thumbnails', 'showThumbnails', widget.props.showThumbnails ?? false)}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Autoplay & Behavior</h3>
+        {renderSwitch('Autoplay', 'autoplay', widget.props.autoplay ?? true)}
+        {widget.props.autoplay !== false && (
+          <>
+            {renderTextInput('Autoplay Interval (ms)', 'interval', widget.props.interval?.toString() || '5000')}
+            {renderTextInput('Transition Duration (ms)', 'transitionDuration', widget.props.transitionDuration?.toString() || '600')}
+          </>
+        )}
+        {renderSwitch('Loop Slides', 'loop', widget.props.loop ?? true)}
+        {renderSwitch('Pause on Hover', 'pauseOnHover', widget.props.pauseOnHover ?? true)}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   const renderAudioPlayerProperties = () => (
     <>
@@ -2039,76 +3310,710 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
   );
 
   // Commerce widgets properties
-  const renderProductCardProperties = () => (
-    <>
-      {renderTextInput('Title', 'title', widget.props.title)}
-      {renderTextInput('Price', 'price', widget.props.price)}
-      {renderTextInput('Original Price', 'originalPrice', widget.props.originalPrice)}
-      <ImageUpload
-        value={widget.props.image}
-        onChange={(url) => handleUpdate('image', url)}
-        label="Product Image"
-      />
-      {renderSlider('Rating', 'rating', widget.props.rating || 0, 0, 5, 0.5)}
-      {renderTextInput('Badge Text', 'badge', widget.props.badge)}
-      {renderColorPicker('Badge Color', 'badgeColor', widget.props.badgeColor)}
-      {renderTextInput('Button Text', 'buttonText', widget.props.buttonText)}
-      {renderTextInput('Currency', 'currency', widget.props.currency)}
-      {renderPositionAndSize()}
-    </>
-  );
+  const renderProductCardProperties = () => {
+    const features = Array.isArray(widget.props.features) ? widget.props.features : [];
 
-  const renderPricingProperties = () => (
-    <>
-      {renderTextInput('Title', 'title', widget.props.title)}
-      {renderTextInput('Price', 'price', widget.props.price)}
-      {renderTextInput('Period', 'period', widget.props.period)}
-      <div className="space-y-2">
-        <Label>Features</Label>
-        {widget.props.features?.map((feature: string, idx: number) => (
-          <Input
-            key={idx}
-            value={feature}
-            onChange={(e) => {
-              const newFeatures = [...widget.props.features];
-              newFeatures[idx] = e.target.value;
-              handleUpdate('features', newFeatures);
-            }}
-            placeholder={`Feature ${idx + 1}`}
+    const updateFeature = (index: number, value: string) => {
+      const updated = [...features];
+      updated[index] = value;
+      handleUpdate('features', updated);
+    };
+
+    const removeFeature = (index: number) => {
+      handleUpdate('features', features.filter((_, idx) => idx !== index));
+    };
+
+    const addFeature = () => {
+      handleUpdate('features', [...features, 'Highlight a key benefit']);
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layoutVariant', widget.props.layoutVariant || 'vertical', [
+            { value: 'vertical', label: 'Vertical Card' },
+            { value: 'horizontal', label: 'Horizontal Split' }
+          ])}
+          {renderSelect('Text Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Card Padding', 'cardPadding', widget.props.cardPadding || '1.5rem')}
+          {renderTextInput('Content Gap', 'contentGap', widget.props.contentGap || '1.25rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Card Background', 'cardBackground', widget.props.cardBackground || '#ffffff')}
+          {renderTextInput('Background Gradient', 'cardBackgroundGradient', widget.props.cardBackgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.25rem')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px')}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.08)')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 25px 45px rgba(15,23,42,0.12)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Media & Badge</h3>
+        {renderSwitch('Show Image', 'showImage', widget.props.showImage ?? true)}
+        {widget.props.showImage !== false && (
+          <>
+            <ImageUpload
+              value={widget.props.image}
+              onChange={(url) => handleUpdate('image', url)}
+              label="Product Image"
+            />
+            {renderTextInput('Image Alt Text', 'imageAlt', widget.props.imageAlt || '')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Image Height', 'imageHeight', widget.props.imageHeight || '260px')}
+              {renderTextInput('Image Border Radius', 'imageBorderRadius', widget.props.imageBorderRadius || '1.25rem')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Image Background', 'imageBackground', widget.props.imageBackground || '#f1f5f9')}
+              {renderSelect('Object Fit', 'objectFit', widget.props.objectFit || 'cover', [
+                { value: 'cover', label: 'Cover' },
+                { value: 'contain', label: 'Contain' },
+                { value: 'fill', label: 'Fill' },
+                { value: 'scale-down', label: 'Scale Down' }
+              ])}
+            </div>
+            {renderTextInput('Media Width (horizontal layout)', 'mediaWidth', widget.props.mediaWidth || '320px')}
+          </>
+        )}
+        {renderSwitch('Show Badge', 'showBadge', widget.props.showBadge ?? true)}
+        {widget.props.showBadge !== false && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Badge Text', 'badge', widget.props.badge || 'Bestseller')}
+              {renderSelect('Badge Position', 'badgePosition', widget.props.badgePosition || 'top-left', [
+                { value: 'top-left', label: 'Top Left' },
+                { value: 'top-right', label: 'Top Right' }
+              ])}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(37,99,235,0.15)')}
+              {renderColorPicker('Badge Text Color', 'badgeTextColor', widget.props.badgeTextColor || '#1d4ed8')}
+            </div>
+          </>
+        )}
+        {renderSwitch('Show Favorite Icon', 'showFavoriteIcon', widget.props.showFavoriteIcon ?? true)}
+        {widget.props.showFavoriteIcon !== false && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Favorite Icon Color', 'favoriteIconColor', widget.props.favoriteIconColor || '#ef4444')}
+              {renderColorPicker('Favorite Icon Background', 'favoriteIconBackground', widget.props.favoriteIconBackground || '#ffffff')}
+            </div>
+            <div className="space-y-2 mt-2">
+              <Label>Favorite Icon</Label>
+              <IconPicker
+                value={widget.props.favoriteIconName || 'Heart'}
+                uploadedIcon={widget.props.favoriteIconUpload}
+                onChange={(name, uploadedUrl) => handleUpdateMultiple({
+                  favoriteIconName: name,
+                  favoriteIconUpload: uploadedUrl || ''
+                })}
+              />
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Content & Pricing</h3>
+        {renderTextInput('Title', 'title', widget.props.title)}
+        {renderTextInput('Subtitle', 'subtitle', widget.props.subtitle)}
+        {renderTextarea('Description', 'description', widget.props.description || '', 'Short supporting copy about this product')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Price', 'price', widget.props.price)}
+          {renderTextInput('Original Price', 'originalPrice', widget.props.originalPrice)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Currency Symbol', 'currency', widget.props.currency || '$')}
+          {renderSwitch('Show Currency Symbol', 'showCurrency', widget.props.showCurrency ?? true)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Price Suffix', 'priceSuffix', widget.props.priceSuffix || '')}
+          {renderTextInput('Price Label', 'priceLabel', widget.props.priceLabel || 'One-time payment')}
+        </div>
+        {renderSwitch('Show Discount Tag', 'showDiscount', widget.props.showDiscount ?? true)}
+        {widget.props.showDiscount !== false && (
+          <div className="grid grid-cols-2 gap-3">
+            {renderTextInput('Discount Text', 'discountText', widget.props.discountText || 'Save 25%')}
+            {renderColorPicker('Discount Text Color', 'discountColor', widget.props.discountColor || '#15803d')}
+          </div>
+        )}
+        {widget.props.showDiscount !== false && renderColorPicker('Discount Background', 'discountBackground', widget.props.discountBackground || 'rgba(34,197,94,0.15)')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Price Color', 'priceColor', widget.props.priceColor || '#0f172a')}
+          {renderColorPicker('Original Price Color', 'originalPriceColor', widget.props.originalPriceColor || '#94a3b8')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Title Color', 'titleColor', widget.props.titleColor || '#0f172a')}
+          {renderColorPicker('Subtitle Color', 'subtitleColor', widget.props.subtitleColor || '#2563eb')}
+        </div>
+        {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#475569')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Stock Status', 'stockStatus', widget.props.stockStatus || 'In stock · Ships in 24h')}
+          {renderColorPicker('Stock Color', 'stockColor', widget.props.stockColor || '#16a34a')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Shipping Text', 'shippingText', widget.props.shippingText || 'Free worldwide shipping')}
+          {renderColorPicker('Shipping Text Color', 'shippingColor', widget.props.shippingColor || '#2563eb')}
+        </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Rating & Social Proof</h3>
+        {renderSwitch('Show Rating', 'showRating', widget.props.showRating ?? true)}
+        {widget.props.showRating !== false && (
+          <>
+            {renderSlider('Rating', 'rating', widget.props.rating ?? 4.5, 0, 5, 0.1)}
+            {renderTextInput('Rating Count Label', 'ratingCountLabel', widget.props.ratingCountLabel || '128 reviews')}
+            {renderTextInput('Rating Caption', 'ratingLabel', widget.props.ratingLabel || 'Loved by patients worldwide')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Star Color', 'starColor', widget.props.starColor || '#facc15')}
+              {renderColorPicker('Rating Text Color', 'ratingColor', widget.props.ratingColor || '#475569')}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Features & Highlights</h3>
+        {renderSwitch('Show Features List', 'showFeatures', widget.props.showFeatures ?? true)}
+        {widget.props.showFeatures !== false && (
+          <>
+            <div className="space-y-2">
+              <Label>Feature Items</Label>
+              {features.map((feature: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={feature}
+                    onChange={(e) => updateFeature(idx, e.target.value)}
+                    placeholder={`Feature ${idx + 1}`}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeFeature(idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={addFeature} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Feature
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="space-y-2">
+                <Label>Feature Icon</Label>
+                <IconPicker
+                  value={widget.props.featureIconName || 'Check'}
+                  uploadedIcon={widget.props.featureIconUpload}
+                  onChange={(name, uploadedUrl) => handleUpdateMultiple({
+                    featureIconName: name,
+                    featureIconUpload: uploadedUrl || ''
+                  })}
+                />
+              </div>
+              {renderColorPicker('Feature Icon Color', 'featureIconColor', widget.props.featureIconColor || '#2563eb')}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Action</h3>
+        {renderTextInput('Button Text', 'buttonText', widget.props.buttonText)}
+        {renderTextInput('Button Link', 'buttonHref', widget.props.buttonHref || '#')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Button Variant', 'buttonVariant', widget.props.buttonVariant || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'outline', label: 'Outline' },
+            { value: 'ghost', label: 'Ghost' }
+          ])}
+          {renderSwitch('Full Width Button', 'buttonFullWidth', widget.props.buttonFullWidth ?? true)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+          {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+          {renderColorPicker('Button Hover Text', 'buttonHoverTextColor', widget.props.buttonHoverTextColor || '#ffffff')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.85rem 1.25rem')}
+          {renderTextInput('Button Border Radius', 'buttonBorderRadius', widget.props.buttonBorderRadius || '999px')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px')}
+          {renderColorPicker('Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || 'transparent')}
+        </div>
+        <div className="space-y-2">
+          <Label>Button Icon</Label>
+          <IconPicker
+            value={widget.props.ctaIconName || 'ShoppingCart'}
+            uploadedIcon={widget.props.ctaIconUpload}
+            onChange={(name, uploadedUrl) => handleUpdateMultiple({
+              ctaIconName: name,
+              ctaIconUpload: uploadedUrl || ''
+            })}
           />
-        ))}
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => handleUpdate('features', [...(widget.props.features || []), 'New Feature'])}
-        >
-          Add Feature
-        </Button>
-      </div>
-      {renderTextInput('Button Text', 'buttonText', widget.props.buttonText)}
-      {renderSwitch('Featured', 'featured', widget.props.featured)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderColorPicker('Accent Color', 'accentColor', widget.props.accentColor)}
-      {renderPositionAndSize()}
-    </>
-  );
+        </div>
+        {renderSelect('Icon Position', 'ctaIconPosition', widget.props.ctaIconPosition || 'right', [
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' }
+        ])}
 
-  const renderTestimonialProperties = () => (
-    <>
-      {renderTextarea('Quote', 'quote', widget.props.quote)}
-      {renderTextInput('Author', 'author', widget.props.author)}
-      {renderTextInput('Role', 'role', widget.props.role)}
-      <ImageUpload
-        value={widget.props.avatar}
-        onChange={(url) => handleUpdate('avatar', url)}
-        label="Avatar Image"
-      />
-      {renderSlider('Rating', 'rating', widget.props.rating || 0, 0, 5, 1)}
-      {renderColorPicker('Background', 'backgroundColor', widget.props.backgroundColor)}
-      {renderSwitch('Show Quote Icon', 'quoteIcon', widget.props.quoteIcon)}
-      {renderPositionAndSize()}
-    </>
-  );
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Action</h3>
+        {renderSwitch('Show Secondary Button', 'showSecondaryButton', widget.props.showSecondaryButton ?? true)}
+        {widget.props.showSecondaryButton !== false && (
+          <>
+            {renderTextInput('Secondary Button Text', 'secondaryButtonText', widget.props.secondaryButtonText || 'View details')}
+            {renderTextInput('Secondary Button Link', 'secondaryButtonHref', widget.props.secondaryButtonHref || '#')}
+            {renderSelect('Secondary Variant', 'secondaryButtonVariant', widget.props.secondaryButtonVariant || 'link', [
+              { value: 'link', label: 'Link' },
+              { value: 'ghost', label: 'Ghost' }
+            ])}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Secondary Text Color', 'secondaryButtonColor', widget.props.secondaryButtonColor || '#2563eb')}
+              {renderColorPicker('Secondary Hover Color', 'secondaryButtonHoverColor', widget.props.secondaryButtonHoverColor || '#1d4ed8')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Secondary Background', 'secondaryButtonBackground', widget.props.secondaryButtonBackground || 'rgba(37,99,235,0.08)')}
+              {renderColorPicker('Secondary Hover Background', 'secondaryButtonHoverBackground', widget.props.secondaryButtonHoverBackground || 'rgba(37,99,235,0.16)')}
+            </div>
+            {renderTextInput('Secondary Padding', 'secondaryButtonPadding', widget.props.secondaryButtonPadding || '0.75rem 1rem')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
+  const renderPricingProperties = () => {
+    const includedFeatures = Array.isArray(widget.props.features) ? widget.props.features : [];
+    const limitedFeatures = Array.isArray(widget.props.limitedFeatures) ? widget.props.limitedFeatures : [];
+
+    const updateFeature = (list: string[], index: number, value: string, key: 'features' | 'limitedFeatures') => {
+      const updated = [...list];
+      updated[index] = value;
+      handleUpdate(key, updated);
+    };
+
+    const addFeature = (key: 'features' | 'limitedFeatures', fallback: string) => {
+      const current = key === 'features' ? includedFeatures : limitedFeatures;
+      handleUpdate(key, [...current, fallback]);
+    };
+
+    const removeFeature = (key: 'features' | 'limitedFeatures', index: number) => {
+      const current = key === 'features' ? includedFeatures : limitedFeatures;
+      handleUpdate(key, current.filter((_, idx) => idx !== index));
+    };
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout Variant', 'layoutVariant', widget.props.layoutVariant || 'card', [
+            { value: 'card', label: 'Raised Card' },
+            { value: 'outline', label: 'Outline' },
+            { value: 'minimal', label: 'Minimal' }
+          ])}
+          {renderSelect('Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '420px')}
+          {renderTextInput('Padding', 'cardPadding', widget.props.cardPadding || '2rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#ffffff')}
+          {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.5rem')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '1px')}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'rgba(15,23,42,0.08)')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 25px 45px rgba(15,23,42,0.12)')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderSwitch('Show Accent Bar', 'showAccentBar', widget.props.showAccentBar ?? true)}
+          {renderSelect('Accent Position', 'accentPosition', widget.props.accentPosition || 'top', [
+            { value: 'top', label: 'Top' },
+            { value: 'left', label: 'Left' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Accent Color', 'accentColor', widget.props.accentColor || '#2563eb')}
+          {renderTextInput('Accent Thickness', 'accentThickness', widget.props.accentThickness || '4px')}
+        </div>
+        {renderSwitch('Featured Plan', 'featured', widget.props.featured ?? true)}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Header & Description</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Badge Text', 'badgeText', widget.props.badgeText || 'Most popular')}
+          {renderColorPicker('Badge Background', 'badgeBackground', widget.props.badgeBackground || 'rgba(37,99,235,0.12)')}
+        </div>
+        {renderColorPicker('Badge Text Color', 'badgeColor', widget.props.badgeColor || '#1d4ed8')}
+        {renderTextInput('Title', 'title', widget.props.title)}
+        {renderTextInput('Subtitle', 'subtitle', widget.props.subtitle)}
+        {renderTextarea('Description', 'description', widget.props.description || '', 'Describe what is included in this plan')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Title Color', 'titleColor', widget.props.titleColor || '#0f172a')}
+          {renderColorPicker('Subtitle Color', 'subtitleColor', widget.props.subtitleColor || '#2563eb')}
+        </div>
+        {renderColorPicker('Description Color', 'descriptionColor', widget.props.descriptionColor || '#475569')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Pricing</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Price', 'price', widget.props.price)}
+          {renderTextInput('Original Price', 'originalPrice', widget.props.originalPrice)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Currency Symbol', 'currency', widget.props.currency || '$')}
+          {renderSwitch('Show Currency', 'showCurrency', widget.props.showCurrency ?? true)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Price Suffix', 'priceSuffix', widget.props.priceSuffix || '/month')}
+          {renderSwitch('Show Original Price', 'showOriginalPrice', widget.props.showOriginalPrice ?? true)}
+        </div>
+        {renderTextInput('Price Label', 'priceLabel', widget.props.priceLabel || 'Billed monthly · Cancel anytime')}
+        {renderTextInput('Price Subtext', 'priceSubtext', widget.props.priceSubtext || 'Switch yearly to save 15%')}
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          {renderColorPicker('Price Color', 'priceColor', widget.props.priceColor || '#0f172a')}
+          {renderColorPicker('Suffix Color', 'priceSuffixColor', widget.props.priceSuffixColor || '#475569')}
+        </div>
+        {renderColorPicker('Original Price Color', 'originalPriceColor', widget.props.originalPriceColor || '#94a3b8')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Features</h3>
+        {renderSwitch('Show Features', 'showFeatures', widget.props.showFeatures ?? true)}
+        {widget.props.showFeatures !== false && (
+          <>
+            <div className="space-y-2">
+              <Label>Included Features</Label>
+              {includedFeatures.map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={feature}
+                    onChange={(e) => updateFeature(includedFeatures, idx, e.target.value, 'features')}
+                    placeholder={`Feature ${idx + 1}`}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeFeature('features', idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => addFeature('features', 'Premium support & concierge onboarding')} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Feature
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="space-y-2">
+                <Label>Feature Icon</Label>
+                <IconPicker
+                  value={widget.props.featureIconName || 'Check'}
+                  uploadedIcon={widget.props.featureIconUpload}
+                  onChange={(name, uploadedUrl) => handleUpdateMultiple({
+                    featureIconName: name,
+                    featureIconUpload: uploadedUrl || ''
+                  })}
+                />
+              </div>
+              {renderColorPicker('Feature Icon Color', 'featureIconColor', widget.props.featureIconColor || '#16a34a')}
+            </div>
+            <Separator className="my-4" />
+            <div className="space-y-2">
+              <Label>Limited / Unavailable Features</Label>
+              {limitedFeatures.map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={feature}
+                    onChange={(e) => updateFeature(limitedFeatures, idx, e.target.value, 'limitedFeatures')}
+                    placeholder={`Limited feature ${idx + 1}`}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeFeature('limitedFeatures', idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => addFeature('limitedFeatures', 'On-site training available on Enterprise tier')} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Limited Feature
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="space-y-2">
+                <Label>Limited Feature Icon</Label>
+                <IconPicker
+                  value={widget.props.limitedFeatureIconName || 'X'}
+                  uploadedIcon={widget.props.limitedFeatureIconUpload}
+                  onChange={(name, uploadedUrl) => handleUpdateMultiple({
+                    limitedFeatureIconName: name,
+                    limitedFeatureIconUpload: uploadedUrl || ''
+                  })}
+                />
+              </div>
+              {renderColorPicker('Limited Icon Color', 'limitedFeatureIconColor', widget.props.limitedFeatureIconColor || '#ef4444')}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Primary Action</h3>
+        {renderTextInput('Button Text', 'buttonText', widget.props.buttonText || 'Choose plan')}
+        {renderTextInput('Button Link', 'buttonHref', widget.props.buttonHref || '#')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Button Variant', 'buttonVariant', widget.props.buttonVariant || 'solid', [
+            { value: 'solid', label: 'Solid' },
+            { value: 'outline', label: 'Outline' },
+            { value: 'ghost', label: 'Ghost' }
+          ])}
+          {renderSwitch('Full Width Button', 'buttonFullWidth', widget.props.buttonFullWidth ?? true)}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Button Background', 'buttonBackground', widget.props.buttonBackground || '#2563eb')}
+          {renderColorPicker('Button Text Color', 'buttonTextColor', widget.props.buttonTextColor || '#ffffff')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Button Hover Background', 'buttonHoverBackground', widget.props.buttonHoverBackground || '#1d4ed8')}
+          {renderColorPicker('Button Hover Text', 'buttonHoverTextColor', widget.props.buttonHoverTextColor || '#ffffff')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Button Padding', 'buttonPadding', widget.props.buttonPadding || '0.85rem 1.5rem')}
+          {renderTextInput('Button Border Radius', 'buttonBorderRadius', widget.props.buttonBorderRadius || '999px')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Button Border Width', 'buttonBorderWidth', widget.props.buttonBorderWidth || '0px')}
+          {renderColorPicker('Button Border Color', 'buttonBorderColor', widget.props.buttonBorderColor || 'transparent')}
+        </div>
+        <div className="space-y-2">
+          <Label>Button Icon</Label>
+          <IconPicker
+            value={widget.props.ctaIconName || 'ArrowRight'}
+            uploadedIcon={widget.props.ctaIconUpload}
+            onChange={(name, uploadedUrl) => handleUpdateMultiple({
+              ctaIconName: name,
+              ctaIconUpload: uploadedUrl || ''
+            })}
+          />
+        </div>
+        {renderSelect('Icon Position', 'ctaIconPosition', widget.props.ctaIconPosition || 'right', [
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' }
+        ])}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Secondary Action</h3>
+        {renderSwitch('Show Secondary Button', 'showSecondaryButton', widget.props.showSecondaryButton ?? true)}
+        {widget.props.showSecondaryButton !== false && (
+          <>
+            {renderTextInput('Secondary Text', 'secondaryButtonText', widget.props.secondaryButtonText || 'Compare plans')}
+            {renderTextInput('Secondary Link', 'secondaryButtonHref', widget.props.secondaryButtonHref || '#')}
+            {renderSelect('Secondary Variant', 'secondaryButtonVariant', widget.props.secondaryButtonVariant || 'ghost', [
+              { value: 'ghost', label: 'Ghost' },
+              { value: 'link', label: 'Link' }
+            ])}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Secondary Text Color', 'secondaryButtonColor', widget.props.secondaryButtonColor || '#2563eb')}
+              {renderColorPicker('Secondary Hover Color', 'secondaryButtonHoverColor', widget.props.secondaryButtonHoverColor || '#1d4ed8')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Secondary Background', 'secondaryButtonBackground', widget.props.secondaryButtonBackground || 'rgba(37,99,235,0.08)')}
+              {renderColorPicker('Secondary Hover Background', 'secondaryButtonHoverBackground', widget.props.secondaryButtonHoverBackground || 'rgba(37,99,235,0.16)')}
+            </div>
+            {renderTextInput('Secondary Padding', 'secondaryButtonPadding', widget.props.secondaryButtonPadding || '0.75rem 1rem')}
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Trust & Notes</h3>
+        {renderSwitch('Show Guarantee', 'showGuarantee', widget.props.showGuarantee ?? true)}
+        {widget.props.showGuarantee !== false && (
+          <div className="space-y-2">
+            {renderTextInput('Guarantee Text', 'guaranteeText', widget.props.guaranteeText || '30-day money-back guarantee')}
+            {renderColorPicker('Guarantee Color', 'guaranteeColor', widget.props.guaranteeColor || '#15803d')}
+          </div>
+        )}
+        {renderSwitch('Show Footer Note', 'showFooterNote', widget.props.showFooterNote ?? true)}
+        {widget.props.showFooterNote !== false && renderTextarea('Footer Note', 'footerNote', widget.props.footerNote || 'Need a custom plan? Contact our coordinators.')}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
+  const renderTestimonialProperties = () => {
+    const logos = Array.isArray(widget.props.logos) ? widget.props.logos : [];
+
+    const updateLogo = (index: number, value: string) => {
+      const updated = [...logos];
+      updated[index] = value;
+      handleUpdate('logos', updated);
+    };
+
+    const addLogo = () => handleUpdate('logos', [...logos, 'SmileCo']);
+    const removeLogo = (index: number) => handleUpdate('logos', logos.filter((_, idx) => idx !== index));
+
+    return (
+      <>
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Layout & Container</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {renderSelect('Layout', 'layoutVariant', widget.props.layoutVariant || 'card', [
+            { value: 'card', label: 'Card' },
+            { value: 'minimal', label: 'Minimal' }
+          ])}
+          {renderSelect('Alignment', 'alignment', widget.props.alignment || 'left', [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' }
+          ])}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '640px')}
+          {renderTextInput('Padding', 'cardPadding', widget.props.cardPadding || '2.5rem')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Background Color', 'backgroundColor', widget.props.backgroundColor || '#0f172a')}
+          {renderTextInput('Background Gradient', 'backgroundGradient', widget.props.backgroundGradient || '', 'linear-gradient(...)')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {renderTextInput('Border Radius', 'borderRadius', widget.props.borderRadius || '1.75rem')}
+          {renderTextInput('Border Width', 'borderWidth', widget.props.borderWidth || '0px')}
+        </div>
+        {renderColorPicker('Border Color', 'borderColor', widget.props.borderColor || 'transparent')}
+        {renderTextInput('Box Shadow', 'boxShadow', widget.props.boxShadow || '0 35px 65px rgba(15,23,42,0.35)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Quote Content</h3>
+        {renderTextarea('Quote', 'quote', widget.props.quote || '“Our patients love the seamless experience we created with CairoDental.”')}
+        {renderTextInput('Highlight Text', 'highlightText', widget.props.highlightText || 'patients')}
+        <div className="grid grid-cols-2 gap-3">
+          {renderColorPicker('Quote Color', 'quoteColor', widget.props.quoteColor || '#ffffff')}
+          {renderColorPicker('Highlight Color', 'highlightColor', widget.props.highlightColor || '#fde047')}
+        </div>
+        {renderSlider('Quote Font Size', 'quoteSize', widget.props.quoteSize || 1.4, 1, 2.4, 0.1)}
+        {renderSlider('Quote Line Height', 'quoteLineHeight', widget.props.quoteLineHeight || 1.5, 0, 20, 0.1)}
+        {renderSwitch('Italicize Quote', 'quoteItalic', widget.props.quoteItalic ?? true)}
+        {renderSwitch('Show Quote Icon', 'showQuoteIcon', widget.props.showQuoteIcon ?? true)}
+        {widget.props.showQuoteIcon !== false && (
+          <div className="grid grid-cols-2 gap-3">
+            <IconPicker
+              value={widget.props.quoteIconName || 'MessageSquare'}
+              uploadedIcon={widget.props.quoteIconUpload}
+              onChange={(name, uploadedUrl) => handleUpdateMultiple({
+                quoteIconName: name,
+                quoteIconUpload: uploadedUrl || ''
+              })}
+            />
+            {renderColorPicker('Quote Icon Color', 'quoteIconColor', widget.props.quoteIconColor || '#0f172a')}
+          </div>
+        )}
+        {widget.props.showQuoteIcon !== false && renderColorPicker('Quote Icon Background', 'quoteIconBackground', widget.props.quoteIconBackground || '#fde68a')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Author & Avatar</h3>
+        {renderSwitch('Show Avatar', 'showAvatar', widget.props.showAvatar ?? true)}
+        {widget.props.showAvatar !== false && (
+          <>
+            <ImageUpload
+              value={widget.props.avatar}
+              onChange={(url) => handleUpdate('avatar', url)}
+              label="Author Avatar"
+            />
+            {renderSelect('Avatar Shape', 'avatarShape', widget.props.avatarShape || 'circle', [
+              { value: 'circle', label: 'Circle' },
+              { value: 'rounded', label: 'Rounded' }
+            ])}
+            {renderSelect('Avatar Size', 'avatarSize', widget.props.avatarSize || '64px', [
+              { value: '56px', label: 'Small' },
+              { value: '64px', label: 'Medium' },
+              { value: '72px', label: 'Large' }
+            ])}
+          </>
+        )}
+        {renderTextInput('Author Name', 'author', widget.props.author)}
+        {renderTextInput('Author Role', 'role', widget.props.role)}
+        {renderTextInput('Company / Location', 'company', widget.props.company)}
+        {renderColorPicker('Author Name Color', 'authorColor', widget.props.authorColor || '#ffffff')}
+        {renderColorPicker('Role Color', 'roleColor', widget.props.roleColor || 'rgba(255,255,255,0.7)')}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Rating & Metrics</h3>
+        {renderSwitch('Show Rating', 'showRating', widget.props.showRating ?? true)}
+        {widget.props.showRating !== false && (
+          <>
+            {renderSlider('Rating', 'rating', widget.props.rating ?? 5, 0, 5, 0.1)}
+            {renderTextInput('Rating Label', 'ratingLabel', widget.props.ratingLabel || 'Based on 180 patient stories')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Star Color', 'starColor', widget.props.starColor || '#facc15')}
+              {renderColorPicker('Rating Text Color', 'ratingColor', widget.props.ratingColor || 'rgba(255,255,255,0.85)')}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">CTA</h3>
+        {renderSwitch('Show CTA Button', 'showCTA', widget.props.showCTA ?? true)}
+        {widget.props.showCTA !== false && (
+          <>
+            {renderTextInput('Button Text', 'ctaText', widget.props.ctaText || 'Read full case study')}
+            {renderTextInput('Button Link', 'ctaHref', widget.props.ctaHref || '#')}
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Button Background', 'ctaBackground', widget.props.ctaBackground || '#fde047')}
+              {renderColorPicker('Button Text Color', 'ctaTextColor', widget.props.ctaTextColor || '#0f172a')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderColorPicker('Button Hover Background', 'ctaHoverBackground', widget.props.ctaHoverBackground || '#facc15')}
+              {renderColorPicker('Button Hover Text', 'ctaHoverTextColor', widget.props.ctaHoverTextColor || '#0f172a')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {renderTextInput('Button Padding', 'ctaPadding', widget.props.ctaPadding || '0.85rem 1.6rem')}
+              {renderTextInput('Button Border Radius', 'ctaBorderRadius', widget.props.ctaBorderRadius || '999px')}
+            </div>
+          </>
+        )}
+
+        <Separator className="my-4" />
+        <h3 className="text-sm font-semibold mb-3 text-blue-700">Logo Strip</h3>
+        {renderSwitch('Show Logos', 'showLogos', widget.props.showLogos ?? true)}
+        {widget.props.showLogos !== false && (
+          <>
+            <div className="space-y-2">
+              <Label>Logos</Label>
+              {logos.map((logo: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={logo}
+                    onChange={(e) => updateLogo(idx, e.target.value)}
+                    placeholder={`Logo ${idx + 1}`}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeLogo(idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={addLogo} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Logo
+              </Button>
+            </div>
+            {renderColorPicker('Logo Text Color', 'logoTextColor', widget.props.logoTextColor || 'rgba(255,255,255,0.6)')}
+          </>
+        )}
+
+        {renderPositionAndSize()}
+      </>
+    );
+  };
 
   // Special widgets properties
   const renderCountdownProperties = () => (
