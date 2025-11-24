@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Type, 
   Image as ImageIcon, 
@@ -232,6 +232,19 @@ const escapeSelector = (value: string): string => {
     return CSS.escape(value);
   }
   return value.replace(/[^a-zA-Z0-9_-]/g, (match) => `\\${match}`);
+};
+
+const formatPositionValue = (value: unknown, fallback?: string): string | undefined => {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return `${value}px`;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+  return fallback;
 };
 
 const parsePaddingShorthand = (value: unknown): { horizontal: number; vertical: number } => {
@@ -797,6 +810,8 @@ const widgetLibrary: WidgetDefinition[] = [
       linksAlignment: 'between',
       position: 'sticky',
       stickyOffset: '0px',
+        fixed: false,
+        zIndex: 70,
       showDivider: false,
       dividerColor: 'rgba(15,23,42,0.08)',
       borderBottom: '1px solid rgba(15,23,42,0.08)',
@@ -6381,6 +6396,16 @@ export default function WebsiteEditPage() {
             const hasLogoImage = Boolean(widget.props.logo);
             const linksAlignment = widget.props.linksAlignment || 'between';
             const backgroundGradient = (widget.props.backgroundGradient || '').trim();
+            const isFixedNavbar = Boolean(widget.props.fixed);
+            const stickyOffset = formatPositionValue(widget.props.stickyOffset, '0px');
+            const computedPosition = !isFixedNavbar && widget.props.position === 'sticky'
+              ? 'sticky'
+              : 'relative';
+            const computedTop = !isFixedNavbar && widget.props.position === 'sticky'
+              ? stickyOffset
+              : undefined;
+            const computedZIndex = widget.props.zIndex
+              ?? (isFixedNavbar ? 90 : widget.props.position === 'sticky' ? 60 : undefined);
             const justifyMap: Record<string, string> = {
               start: 'flex-start',
               center: 'center',
@@ -6405,20 +6430,9 @@ export default function WebsiteEditPage() {
               borderBottom: widget.props.showDivider
                 ? widget.props.borderBottom || `1px solid ${widget.props.dividerColor || 'rgba(15,23,42,0.08)'}`
                 : widget.props.borderBottom || 'none',
-              position: widget.props.position === 'fixed'
-                ? 'fixed'
-                : widget.props.position === 'sticky'
-                  ? 'sticky'
-                  : 'relative',
-              top: widget.props.position === 'sticky'
-                ? widget.props.stickyOffset || '0px'
-                : widget.props.position === 'fixed'
-                  ? '0px'
-                  : undefined,
-              left: widget.props.position === 'fixed' ? 0 : undefined,
-              right: widget.props.position === 'fixed' ? 0 : undefined,
-              width: widget.props.position === 'fixed' ? '100%' : undefined,
-              zIndex: widget.props.position === 'fixed' ? 60 : widget.props.position === 'sticky' ? 50 : undefined
+              position: computedPosition,
+              top: computedTop,
+              zIndex: computedZIndex
             });
 
             const innerClass = registerStyle('navbar-inner', {
@@ -11040,9 +11054,6 @@ export default function WebsiteEditPage() {
       <DialogContent className="max-w-[95vw] w-[1300px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Page Preview</DialogTitle>
-          <DialogDescription>
-            Preview shows a read-only snapshot of your current layout.
-          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[70vh] rounded-lg border bg-gray-100">
           {canvasWidgets.length === 0 ? (
@@ -11067,21 +11078,31 @@ export default function WebsiteEditPage() {
                   }}
                 />
               )}
-              {canvasWidgets.map((widget) => (
-                <div
-                  key={widget.id}
-                  className="absolute"
-                  style={{
-                    left: `${widget.props.x || 0}px`,
-                    top: `${widget.props.y || 0}px`,
-                    width: widget.props.width || 'auto',
-                    height: widget.props.height || 'auto',
-                    zIndex: 1
-                  }}
-                >
-                  {renderWidget(widget, false, false, 'preview')}
-                </div>
-              ))}
+                  {canvasWidgets.map((widget) => {
+                    const isFixedPreviewNavbar = widget.type === 'navbar' && widget.props.fixed;
+                    const wrapperPositionClass = isFixedPreviewNavbar ? 'fixed' : 'absolute';
+                    const leftValue = formatPositionValue(widget.props.x, '0px') || '0px';
+                    const topValue = formatPositionValue(widget.props.y, '0px') || '0px';
+                    const wrapperZIndex = isFixedPreviewNavbar
+                      ? (typeof widget.props.zIndex === 'number' ? widget.props.zIndex : parseFloat(widget.props.zIndex) || 90)
+                      : 1;
+
+                    return (
+                      <div
+                        key={widget.id}
+                        className={`${wrapperPositionClass}`}
+                        style={{
+                          left: leftValue,
+                          top: topValue,
+                          width: widget.props.width || 'auto',
+                          height: widget.props.height || 'auto',
+                          zIndex: wrapperZIndex
+                        }}
+                      >
+                        {renderWidget(widget, false, false, 'preview')}
+                      </div>
+                    );
+                  })}
             </div>
           )}
         </ScrollArea>

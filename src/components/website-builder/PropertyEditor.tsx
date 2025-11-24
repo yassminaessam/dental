@@ -1334,6 +1334,13 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
         {widget.props.position === 'sticky' && (
           renderTextInput('Sticky Offset', 'stickyOffset', widget.props.stickyOffset || '0px', 'e.g., 0px, 24px')
         )}
+        <div className="rounded-lg border border-blue-100 bg-blue-50/40 px-4 py-3 space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-blue-800">Fixed Position Control</div>
+          {renderSwitch('Keep Navbar Fixed', 'fixed', widget.props.fixed ?? false, 'Pins the navbar to the top while scrolling')}
+          {widget.props.fixed && (
+            renderTextInput('Z-Index', 'zIndex', widget.props.zIndex || '80', 'Higher values stack the navbar above other widgets')
+          )}
+        </div>
         {renderSwitch('Show Shadow', 'shadow', widget.props.shadow ?? true, 'Adds a drop shadow beneath the navbar')}
         {renderSwitch('Show Divider', 'showDivider', widget.props.showDivider || false, 'Adds a subtle divider under the navbar')}
         {widget.props.showDivider && renderColorPicker('Divider Color', 'dividerColor', widget.props.dividerColor || 'rgba(15,23,42,0.08)')}
