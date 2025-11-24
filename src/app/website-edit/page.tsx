@@ -227,6 +227,13 @@ const parseSizeValue = (value: unknown, fallback: number): number => {
   return fallback;
 };
 
+const escapeSelector = (value: string): string => {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+  return value.replace(/[^a-zA-Z0-9_-]/g, (match) => `\\${match}`);
+};
+
 const parsePaddingShorthand = (value: unknown): { horizontal: number; vertical: number } => {
   if (typeof value === 'number' && !Number.isNaN(value)) {
     return { horizontal: value * 2, vertical: value * 2 };
@@ -1837,9 +1844,56 @@ export default function WebsiteEditPage() {
   const [canvasSettings, setCanvasSettings] = React.useState<CanvasSettings>({ ...DEFAULT_CANVAS_SETTINGS });
   const [activePropertiesPanel, setActivePropertiesPanel] = React.useState<'canvas' | 'widget'>('canvas');
   const [canvasSettingsHydrated, setCanvasSettingsHydrated] = React.useState(false);
+  const editCanvasRef = React.useRef<HTMLDivElement | null>(null);
+  const previewCanvasRef = React.useRef<HTMLDivElement | null>(null);
   const handleCanvasSettingChange = <K extends keyof CanvasSettings>(key: K, value: CanvasSettings[K]) => {
     setCanvasSettings((prev) => ({ ...prev, [key]: value }));
   };
+
+  const scrollToAnchor = React.useCallback(
+    (href: string | undefined | null, mode: 'edit' | 'preview'): boolean => {
+      if (!href || !href.startsWith('#')) {
+        return false;
+      }
+      const anchorId = href.slice(1).trim();
+      if (!anchorId) {
+        return false;
+      }
+      const root = mode === 'preview' ? previewCanvasRef.current : editCanvasRef.current;
+      if (!root) {
+        return false;
+      }
+      const target = root.querySelector<HTMLElement>(`#${escapeSelector(anchorId)}`);
+      if (!target) {
+        return false;
+      }
+      target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      return true;
+    },
+    []
+  );
+
+  const handlePreviewAnchorNavigation = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as Element | null;
+      if (!target) {
+        return;
+      }
+      const link = target.closest('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!link) {
+        return;
+      }
+      const href = link.getAttribute('href');
+      if (!href) {
+        return;
+      }
+      const handled = scrollToAnchor(href, 'preview');
+      if (handled) {
+        event.preventDefault();
+      }
+    },
+    [scrollToAnchor]
+  );
   const canvasDimensions = React.useMemo(() => {
     if (!canvasWidgets.length) {
       return { width: 0, height: 0 };
@@ -10814,6 +10868,7 @@ export default function WebsiteEditPage() {
                 ) : (
                   <div 
                     className="canvas-container relative"
+                    ref={editCanvasRef}
                     style={editCanvasStyle}
                     onMouseMove={handleRepositionMove}
                     onMouseUp={handleRepositionEnd}
@@ -10997,6 +11052,8 @@ export default function WebsiteEditPage() {
           ) : (
             <div 
               className="relative mx-auto my-6"
+              ref={previewCanvasRef}
+              onClick={handlePreviewAnchorNavigation}
               style={previewCanvasStyle}
             >
               {canvasSettings.showGrid && (
