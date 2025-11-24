@@ -3882,7 +3882,7 @@ export default function WebsiteEditPage() {
 
   // Create columns for a section
   const createColumns = (count: number): Widget[] => {
-    return Array.from({ length: count }, (_, i) => ({
+    return Array.from({ length: count }, () => ({
       id: generateId(),
       type: 'column',
       props: { 
@@ -3919,8 +3919,8 @@ export default function WebsiteEditPage() {
     // Store the initial mouse position and widget position
     const startX = e.clientX;
     const startY = e.clientY;
-    const widgetX = widget.props.x || 0;
-    const widgetY = widget.props.y || 0;
+    const widgetX = typeof widget.props.x === 'number' ? widget.props.x : parseFloat(widget.props.x || '0') || 0;
+    const widgetY = typeof widget.props.y === 'number' ? widget.props.y : parseFloat(widget.props.y || '0') || 0;
     
     setDragStartPos({ x: startX, y: startY });
     setWidgetStartPos({ x: widgetX, y: widgetY });
@@ -4197,22 +4197,19 @@ export default function WebsiteEditPage() {
     const updateInWidgets = (widgets: Widget[]): Widget[] => {
       return widgets.map(w => {
         if (w.id === widgetId) {
-          // Special handling for section column count change
           if (w.type === 'section' && property === 'columns') {
             const newColumnCount = parseInt(value);
             const currentColumnCount = w.children?.length || 0;
             let newChildren = w.children || [];
-            
+
             if (newColumnCount > currentColumnCount) {
-              // Add columns
               const columnsToAdd = newColumnCount - currentColumnCount;
               const newColumns = createColumns(columnsToAdd);
               newChildren = [...newChildren, ...newColumns];
             } else if (newColumnCount < currentColumnCount) {
-              // Remove columns (only if they're empty)
               newChildren = newChildren.slice(0, newColumnCount);
             }
-            
+
             return { ...w, props: { ...w.props, [property]: value }, children: newChildren };
           }
           return { ...w, props: { ...w.props, [property]: value } };
@@ -5083,7 +5080,6 @@ export default function WebsiteEditPage() {
                 <div className="space-y-2">
                   {widget.children.map((child, idx) => (
                     <React.Fragment key={child.id}>
-                      {/* Drop zone before child */}
                       {!isPreview && (draggedWidget || draggedExistingWidget) && (
                         <div
                           className={`h-1 transition-all rounded ${
@@ -5106,7 +5102,6 @@ export default function WebsiteEditPage() {
                       
                       {renderWidget(child, true, mode === 'preview' ? false : true, mode)}
                       
-                      {/* Drop zone after last child */}
                       {!isPreview && idx === widget.children!.length - 1 && (draggedWidget || draggedExistingWidget) && (
                         <div
                           className={`h-1 transition-all rounded ${
@@ -10745,7 +10740,7 @@ export default function WebsiteEditPage() {
 
           {/* RIGHT PANEL - Properties */}
           <div
-            className={`border-l bg-white overflow-hidden flex flex-col transition-all duration-300 ${
+            className={`border-l bg-white overflow-hidden flex flex-col min-h-0 transition-all duration-300 ${
               isPropertiesPanelCollapsed ? 'w-14' : 'w-80'
             }`}
           >
@@ -10753,7 +10748,7 @@ export default function WebsiteEditPage() {
               <Tabs
                 value={activePropertiesPanel}
                 onValueChange={(val) => setActivePropertiesPanel(val as 'canvas' | 'widget')}
-                className="flex-1 flex flex-col"
+                className="flex-1 flex flex-col min-h-0"
               >
                 <div className="p-4 border-b bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
                   <div className="flex items-center justify-between">
@@ -10777,12 +10772,12 @@ export default function WebsiteEditPage() {
                     <TabsTrigger value="widget">Widget</TabsTrigger>
                   </TabsList>
                 </div>
-                <TabsContent value="canvas" className="flex-1 focus-visible:outline-none">
+                <TabsContent value="canvas" className="flex-1 min-h-0 focus-visible:outline-none">
                   <ScrollArea className="h-full">
                     <CanvasPropertiesPanel />
                   </ScrollArea>
                 </TabsContent>
-                <TabsContent value="widget" className="flex-1 focus-visible:outline-none">
+                <TabsContent value="widget" className="flex-1 min-h-0 focus-visible:outline-none">
                   <ScrollArea className="h-full">
                     {selectedWidget ? (
                       <div className="p-4">

@@ -576,7 +576,6 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
             Adding/removing columns will preserve existing content where possible
           </p>
         </div>
-        
         {renderSelect('Column Gap', 'columnGap', widget.props.columnGap || '1rem', [
           { value: '0', label: 'No Gap' },
           { value: '0.5rem', label: 'Small (0.5rem)' },
@@ -585,6 +584,7 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
           { value: '2rem', label: 'Extra Large (2rem)' },
           { value: '3rem', label: 'Huge (3rem)' }
         ])}
+        
         {renderTextInput('Padding', 'padding', widget.props.padding, '1rem, 2rem, 3rem...')}
         {renderTextInput('Margin', 'margin', widget.props.margin || '0', '0, 1rem 0, 2rem auto...')}
         {renderTextInput('Max Width', 'maxWidth', widget.props.maxWidth || '100%', '100%, 1200px, 80%...')}
