@@ -3688,10 +3688,31 @@ export default function WebsiteEditPage() {
     });
   };
 
+  const templateNeedsNormalization = (widgets: Widget[]): boolean => {
+    return widgets.every((widget) => {
+      const position = widget.props?.y;
+      if (typeof position === 'number') {
+        return Number.isNaN(position);
+      }
+      if (typeof position === 'string') {
+        const trimmed = position.trim().toLowerCase();
+        if (!trimmed) {
+          return true;
+        }
+        if (trimmed === 'auto') {
+          return true;
+        }
+        const parsed = parseFloat(trimmed);
+        return Number.isNaN(parsed);
+      }
+      return position === null || position === undefined;
+    });
+  };
+
   // Apply template to canvas
   const applyTemplate = (template: TemplateDefinition) => {
     const clonedWidgets = template.widgets.map((widget) => cloneWidgetWithNewIds(widget));
-    const arrangedWidgets = template.id === 'template1'
+    const arrangedWidgets = templateNeedsNormalization(clonedWidgets)
       ? normalizeTemplateSections(clonedWidgets)
       : clonedWidgets;
 
@@ -4177,7 +4198,7 @@ export default function WebsiteEditPage() {
     // Handle moving existing widget
     else if (draggedExistingWidget) {
       // Remove widget from its current location
-      let widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
+      const widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
       
       // Add widget to new location
       if (dropTargetIndex !== null) {
@@ -4405,7 +4426,7 @@ export default function WebsiteEditPage() {
     // Handle moving existing widget
     else if (draggedExistingWidget) {
       // Remove widget from its current location
-      let widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
+      const widgetsWithoutDragged = removeWidgetById(canvasWidgets, draggedExistingWidget.id);
       
       // Add widget to container at specific position
       updatedWidgets = insertWidgetInSection(widgetsWithoutDragged, containerId, draggedExistingWidget, insertIndex);
