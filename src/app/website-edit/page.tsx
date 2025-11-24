@@ -12,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Type, 
@@ -134,6 +137,50 @@ import { normalizeNavLinks } from "@/lib/website-builder";
 
 type StyleValue = string | number | null | undefined;
 
+type CanvasSettings = {
+  backgroundColor: string;
+  backgroundGradient: string;
+  padding: string;
+  borderRadius: string;
+  borderWidth: string;
+  borderStyle: string;
+  borderColor: string;
+  shadow: string;
+  showGrid: boolean;
+  gridColor: string;
+  gridSize: number;
+  extraWidthPadding: number;
+  extraHeightPadding: number;
+  minWidth: string;
+  minHeight: string;
+  maxWidth: string;
+  maxHeight: string;
+  align: 'left' | 'center';
+};
+
+const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
+  backgroundColor: '#ffffff',
+  backgroundGradient: '',
+  padding: '2rem',
+  borderRadius: '24px',
+  borderWidth: '1px',
+  borderStyle: 'solid',
+  borderColor: 'rgba(15,23,42,0.08)',
+  shadow: '0 35px 80px rgba(15,23,42,0.08)',
+  showGrid: false,
+  gridColor: 'rgba(15,23,42,0.25)',
+  gridSize: 40,
+  extraWidthPadding: 200,
+  extraHeightPadding: 200,
+  minWidth: '1200px',
+  minHeight: '1000px',
+  maxWidth: '1600px',
+  maxHeight: '2000px',
+  align: 'center'
+};
+
+const CANVAS_SETTINGS_STORAGE_KEY = 'websiteBuilderCanvasSettings';
+
 const camelToKebab = (value: string) =>
   value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 
@@ -170,6 +217,34 @@ const parseSizeValue = (value: unknown, fallback: number): number => {
     if (!Number.isNaN(numeric)) return numeric;
   }
   return fallback;
+};
+
+const parsePaddingShorthand = (value: unknown): { horizontal: number; vertical: number } => {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return { horizontal: value * 2, vertical: value * 2 };
+  }
+
+  if (typeof value !== 'string') {
+    return { horizontal: 0, vertical: 0 };
+  }
+
+  const tokens = value.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return { horizontal: 0, vertical: 0 };
+  }
+
+  const values = tokens.map((token) => parseSizeValue(token, 0));
+
+  switch (values.length) {
+    case 1:
+      return { horizontal: values[0] * 2, vertical: values[0] * 2 };
+    case 2:
+      return { horizontal: values[1] * 2, vertical: values[0] * 2 };
+    case 3:
+      return { horizontal: values[1] * 2, vertical: values[0] + values[2] };
+    default:
+      return { horizontal: values[1] + values[3], vertical: values[0] + values[2] };
+  }
 };
 
 const getWidgetHeight = (widget: Widget): number => {
@@ -1750,6 +1825,12 @@ export default function WebsiteEditPage() {
   const [activeMainTab, setActiveMainTab] = React.useState<'widgets' | 'templates'>('widgets');
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [accordionState, setAccordionState] = React.useState<Record<string, boolean>>({});
+  const [canvasSettings, setCanvasSettings] = React.useState<CanvasSettings>({ ...DEFAULT_CANVAS_SETTINGS });
+  const [activePropertiesPanel, setActivePropertiesPanel] = React.useState<'canvas' | 'widget'>('canvas');
+  const [canvasSettingsHydrated, setCanvasSettingsHydrated] = React.useState(false);
+  const handleCanvasSettingChange = <K extends keyof CanvasSettings>(key: K, value: CanvasSettings[K]) => {
+    setCanvasSettings((prev) => ({ ...prev, [key]: value }));
+  };
   const canvasDimensions = React.useMemo(() => {
     if (!canvasWidgets.length) {
       return { width: 1200, height: 1000 };
@@ -1775,8 +1856,57 @@ export default function WebsiteEditPage() {
     };
   }, [canvasWidgets]);
 
-  const canvasWidth = Math.max(canvasDimensions.width + 200, 1200);
-  const canvasHeight = Math.max(canvasDimensions.height + 200, 1000);
+  const minCanvasWidth = parseSizeValue(canvasSettings.minWidth || '1200', 1200);
+  const minCanvasHeight = parseSizeValue(canvasSettings.minHeight || '1000', 1000);
+  const maxCanvasWidth = canvasSettings.maxWidth
+    ? parseSizeValue(canvasSettings.maxWidth, Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
+  const maxCanvasHeight = canvasSettings.maxHeight
+    ? parseSizeValue(canvasSettings.maxHeight, Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
+  const extraWidthPadding = typeof canvasSettings.extraWidthPadding === 'number'
+    ? canvasSettings.extraWidthPadding
+    : parseFloat(String(canvasSettings.extraWidthPadding)) || 0;
+  const extraHeightPadding = typeof canvasSettings.extraHeightPadding === 'number'
+    ? canvasSettings.extraHeightPadding
+    : parseFloat(String(canvasSettings.extraHeightPadding)) || 0;
+  const paddingTotals = parsePaddingShorthand(canvasSettings.padding);
+
+  const rawCanvasWidth = canvasDimensions.width + extraWidthPadding + paddingTotals.horizontal;
+  const rawCanvasHeight = canvasDimensions.height + extraHeightPadding + paddingTotals.vertical;
+
+  const canvasWidth = Math.min(Math.max(rawCanvasWidth, minCanvasWidth), maxCanvasWidth);
+  const canvasHeight = Math.min(Math.max(rawCanvasHeight, minCanvasHeight), maxCanvasHeight);
+  const canvasBackground = canvasSettings.backgroundGradient || canvasSettings.backgroundColor || '#ffffff';
+  const baseCanvasStyle: React.CSSProperties = {
+    minHeight: `${canvasHeight}px`,
+    width: `${canvasWidth}px`,
+    padding: canvasSettings.padding || '2rem',
+    borderRadius: canvasSettings.borderRadius || '24px',
+    borderWidth: canvasSettings.borderWidth || '0px',
+    borderStyle: canvasSettings.borderStyle || 'solid',
+    borderColor: canvasSettings.borderColor || 'transparent',
+    boxShadow: canvasSettings.shadow || 'none',
+    background: canvasBackground,
+    margin: canvasSettings.align === 'center' ? '0 auto' : '0',
+    position: 'relative',
+    transition: 'box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease',
+  };
+  const editCanvasStyle: React.CSSProperties = {
+    ...baseCanvasStyle,
+    userSelect: isDraggingPosition ? 'none' : 'auto'
+  };
+  const previewCanvasStyle: React.CSSProperties = {
+    ...baseCanvasStyle,
+    userSelect: 'auto'
+  };
+  const canvasGridSize = Math.max(4, canvasSettings.gridSize || 40);
+  const canvasGridColor = canvasSettings.gridColor || 'rgba(15,23,42,0.25)';
+  const propertyPanelDescription = activePropertiesPanel === 'canvas'
+    ? 'Adjust the canvas background, spacing, and helper guides.'
+    : selectedWidget
+      ? 'Customize the selected widget.'
+      : 'Select a widget to edit.';
 
   type TemplateDefinition = {
     id: string;
@@ -1784,6 +1914,7 @@ export default function WebsiteEditPage() {
     description: string;
     thumbnail: string;
     widgets: Widget[];
+    canvasSettings?: CanvasSettings;
   };
 
   // Dental Clinic Landing Page Templates
@@ -2335,7 +2466,8 @@ export default function WebsiteEditPage() {
           },
           children: []
         }
-      ]
+      ],
+      canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
     },
     {
       id: 'template2',
@@ -2865,7 +2997,8 @@ export default function WebsiteEditPage() {
           },
           children: []
         }
-      ]
+      ],
+      canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
     },
     {
       id: 'template3',
@@ -3518,7 +3651,8 @@ export default function WebsiteEditPage() {
           },
           children: []
         }
-      ]
+      ],
+      canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
     }
   ];
 
@@ -3553,6 +3687,7 @@ export default function WebsiteEditPage() {
       : clonedWidgets;
 
     setCanvasWidgets(arrangedWidgets);
+    setCanvasSettings(template.canvasSettings ? { ...DEFAULT_CANVAS_SETTINGS, ...template.canvasSettings } : { ...DEFAULT_CANVAS_SETTINGS });
     setSelectedWidget(null);
     addToHistory(arrangedWidgets);
     toast({
@@ -3604,6 +3739,7 @@ export default function WebsiteEditPage() {
     const updatedTemplate = {
       ...template,
       widgets: cloneWidgetsForStorage(orderedWidgets),
+      canvasSettings,
     };
 
     setTemplates((prev) => prev.map((t) => (t.id === templateId ? updatedTemplate : t)));
@@ -3630,8 +3766,19 @@ export default function WebsiteEditPage() {
       }
     } catch (error) {
       console.error('Failed to load saved templates', error);
+    }
+
+    try {
+      const storedCanvas = window.localStorage.getItem(CANVAS_SETTINGS_STORAGE_KEY);
+      if (storedCanvas) {
+        const parsedCanvas = JSON.parse(storedCanvas);
+        setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...parsedCanvas });
+      }
+    } catch (error) {
+      console.error('Failed to load canvas settings', error);
     } finally {
       setTemplatesHydrated(true);
+      setCanvasSettingsHydrated(true);
     }
   }, []);
 
@@ -3646,6 +3793,18 @@ export default function WebsiteEditPage() {
       console.error('Failed to persist templates', error);
     }
   }, [templates, templatesHydrated]);
+
+  React.useEffect(() => {
+    if (!canvasSettingsHydrated || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(CANVAS_SETTINGS_STORAGE_KEY, JSON.stringify(canvasSettings));
+    } catch (error) {
+      console.error('Failed to persist canvas settings', error);
+    }
+  }, [canvasSettings, canvasSettingsHydrated]);
 
   // Add global style for grab cursor
   React.useEffect(() => {
@@ -10058,6 +10217,209 @@ export default function WebsiteEditPage() {
     );
   };
 
+  const CanvasPropertiesPanel = () => {
+    const renderColorField = (label: string, key: 'backgroundColor' | 'borderColor' | 'gridColor') => {
+      const value = (canvasSettings[key] as string) || '#ffffff';
+      return (
+        <div className="space-y-2">
+          <Label>{label}</Label>
+          <div className="flex gap-2">
+            <Input
+              type="color"
+              value={value}
+              onChange={(e) => handleCanvasSettingChange(key, e.target.value)}
+              className="h-10 w-14 p-1"
+            />
+            <Input
+              value={value}
+              onChange={(e) => handleCanvasSettingChange(key, e.target.value)}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const renderSliderControl = (
+      label: string,
+      key: 'extraWidthPadding' | 'extraHeightPadding' | 'gridSize',
+      min: number,
+      max: number,
+      step: number,
+      unit: string = 'px'
+    ) => {
+      const rawValue = Number(canvasSettings[key]);
+      const value = Number.isFinite(rawValue) ? rawValue : min;
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>{label}</Label>
+            <span className="text-xs text-muted-foreground">{Math.round(value)}{unit}</span>
+          </div>
+          <Slider
+            value={[value]}
+            min={min}
+            max={max}
+            step={step}
+            onValueChange={([val]) => handleCanvasSettingChange(key, val)}
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6 p-4">
+        <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+          <h3 className="font-semibold text-sm text-blue-900">Canvas Controls</h3>
+          <p className="text-xs text-blue-700 mt-1">
+            Configure the overall layout, spacing, and helper grid that wrap all widgets on the canvas.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="font-semibold text-sm text-gray-700">Layout</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Alignment</Label>
+              <Select
+                value={canvasSettings.align}
+                onValueChange={(val) => handleCanvasSettingChange('align', val as CanvasSettings['align'])}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select alignment" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="left">Left</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Padding</Label>
+              <Input
+                value={canvasSettings.padding}
+                onChange={(e) => handleCanvasSettingChange('padding', e.target.value)}
+                placeholder="e.g., 2rem"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Min Width</Label>
+              <Input
+                value={canvasSettings.minWidth}
+                onChange={(e) => handleCanvasSettingChange('minWidth', e.target.value)}
+                placeholder="1200px"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Width</Label>
+              <Input
+                value={canvasSettings.maxWidth}
+                onChange={(e) => handleCanvasSettingChange('maxWidth', e.target.value)}
+                placeholder="1600px"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Min Height</Label>
+              <Input
+                value={canvasSettings.minHeight}
+                onChange={(e) => handleCanvasSettingChange('minHeight', e.target.value)}
+                placeholder="1000px"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Height</Label>
+              <Input
+                value={canvasSettings.maxHeight}
+                onChange={(e) => handleCanvasSettingChange('maxHeight', e.target.value)}
+                placeholder="2000px"
+              />
+            </div>
+          </div>
+          {renderSliderControl('Horizontal Padding Buffer', 'extraWidthPadding', 0, 600, 10)}
+          {renderSliderControl('Vertical Padding Buffer', 'extraHeightPadding', 0, 600, 10)}
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="font-semibold text-sm text-gray-700">Visual Style</h4>
+          {renderColorField('Background Color', 'backgroundColor')}
+          <div className="space-y-2">
+            <Label>Background Gradient</Label>
+            <Input
+              value={canvasSettings.backgroundGradient}
+              onChange={(e) => handleCanvasSettingChange('backgroundGradient', e.target.value)}
+              placeholder="linear-gradient(...)"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Border Radius</Label>
+              <Input
+                value={canvasSettings.borderRadius}
+                onChange={(e) => handleCanvasSettingChange('borderRadius', e.target.value)}
+                placeholder="24px"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Border Width</Label>
+              <Input
+                value={canvasSettings.borderWidth}
+                onChange={(e) => handleCanvasSettingChange('borderWidth', e.target.value)}
+                placeholder="1px"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Border Style</Label>
+            <Select
+              value={canvasSettings.borderStyle}
+              onValueChange={(val) => handleCanvasSettingChange('borderStyle', val)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="solid" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="solid">Solid</SelectItem>
+                <SelectItem value="dashed">Dashed</SelectItem>
+                <SelectItem value="dotted">Dotted</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {renderColorField('Border Color', 'borderColor')}
+          <div className="space-y-2">
+            <Label>Shadow</Label>
+            <Input
+              value={canvasSettings.shadow}
+              onChange={(e) => handleCanvasSettingChange('shadow', e.target.value)}
+              placeholder="CSS box-shadow value"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="font-semibold text-sm text-gray-700">Grid Overlay</h4>
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+            <div>
+              <Label>Show Grid</Label>
+              <p className="text-xs text-muted-foreground">Helpful for spacing while editing</p>
+            </div>
+            <Switch
+              checked={canvasSettings.showGrid}
+              onCheckedChange={(checked) => handleCanvasSettingChange('showGrid', checked)}
+            />
+          </div>
+          {canvasSettings.showGrid && (
+            <div className="space-y-4">
+              {renderSliderControl('Grid Size', 'gridSize', 10, 160, 5)}
+              {renderColorField('Grid Color', 'gridColor')}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
     <DashboardLayout>
@@ -10299,16 +10661,23 @@ export default function WebsiteEditPage() {
                   </div>
                 ) : (
                   <div 
-                    className="canvas-container bg-white shadow-lg rounded-lg relative" 
-                    style={{ 
-                      minHeight: `${canvasHeight}px`,
-                      width: `${canvasWidth}px`,
-                      userSelect: isDraggingPosition ? 'none' : 'auto'
-                    }}
+                    className="canvas-container relative"
+                    style={editCanvasStyle}
                     onMouseMove={handleRepositionMove}
                     onMouseUp={handleRepositionEnd}
                     onMouseLeave={handleRepositionEnd}
                   >
+                    {canvasSettings.showGrid && (
+                      <div
+                        className="pointer-events-none absolute inset-0 rounded-[inherit]"
+                        style={{
+                          backgroundImage: `linear-gradient(90deg, ${canvasGridColor} 1px, transparent 1px), linear-gradient(0deg, ${canvasGridColor} 1px, transparent 1px)`,
+                          backgroundSize: `${canvasGridSize}px ${canvasGridSize}px`,
+                          opacity: 0.25,
+                          zIndex: 0
+                        }}
+                      />
+                    )}
                     {canvasWidgets.map((widget) => (
                       <div
                         key={widget.id}
@@ -10324,7 +10693,8 @@ export default function WebsiteEditPage() {
                           height: widget.props.height || 'auto',
                           userSelect: 'none',
                           cursor: isDraggingPosition && repositioningWidget?.id === widget.id ? 'grabbing' : 'grab',
-                          transition: isDraggingPosition && repositioningWidget?.id === widget.id ? 'none' : 'box-shadow 0.2s'
+                          transition: isDraggingPosition && repositioningWidget?.id === widget.id ? 'none' : 'box-shadow 0.2s',
+                          zIndex: 1
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -10380,45 +10750,62 @@ export default function WebsiteEditPage() {
             }`}
           >
             {!isPropertiesPanelCollapsed ? (
-              <>
-                <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-purple-50 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-lg mb-1 text-gray-900">Properties</h2>
-                    <p className="text-sm text-gray-600">
-                      {selectedWidget ? 'Customize the selected widget' : 'Select a widget to edit'}
-                    </p>
+              <Tabs
+                value={activePropertiesPanel}
+                onValueChange={(val) => setActivePropertiesPanel(val as 'canvas' | 'widget')}
+                className="flex-1 flex flex-col"
+              >
+                <div className="p-4 border-b bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="font-bold text-lg mb-1 text-gray-900">Properties</h2>
+                      <p className="text-sm text-gray-600">
+                        {propertyPanelDescription}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsPropertiesPanelCollapsed(true)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsPropertiesPanelCollapsed(true)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <TabsList className="mt-4 grid grid-cols-2">
+                    <TabsTrigger value="canvas">Canvas</TabsTrigger>
+                    <TabsTrigger value="widget">Widget</TabsTrigger>
+                  </TabsList>
                 </div>
-                <ScrollArea className="flex-1">
-                  {selectedWidget ? (
-                    <div className="p-4">
-                      <PropertyEditor
-                        widget={selectedWidget}
-                        onUpdate={handleUpdateProperty}
-                        onUpdateMultiple={handleUpdateProperties}
-                        onDelete={handleDeleteWidget}
-                        onDuplicate={handleDuplicateWidget}
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center text-gray-500">
-                      <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <Settings className="h-10 w-10 text-gray-400" />
+                <TabsContent value="canvas" className="flex-1 focus-visible:outline-none">
+                  <ScrollArea className="h-full">
+                    <CanvasPropertiesPanel />
+                  </ScrollArea>
+                </TabsContent>
+                <TabsContent value="widget" className="flex-1 focus-visible:outline-none">
+                  <ScrollArea className="h-full">
+                    {selectedWidget ? (
+                      <div className="p-4">
+                        <PropertyEditor
+                          widget={selectedWidget}
+                          onUpdate={handleUpdateProperty}
+                          onUpdateMultiple={handleUpdateProperties}
+                          onDelete={handleDeleteWidget}
+                          onDuplicate={handleDuplicateWidget}
+                        />
                       </div>
-                      <h3 className="font-semibold text-gray-700 mb-2">No Widget Selected</h3>
-                      <p className="text-sm">Click on a widget in the canvas to edit its properties</p>
-                    </div>
-                  )}
-                </ScrollArea>
-              </>
+                    ) : (
+                      <div className="p-8 text-center text-gray-500">
+                        <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                          <Settings className="h-10 w-10 text-gray-400" />
+                        </div>
+                        <h3 className="font-semibold text-gray-700 mb-2">No Widget Selected</h3>
+                        <p className="text-sm">Click on a widget in the canvas to edit its properties</p>
+                      </div>
+                    )}
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
             ) : (
               <div className="flex flex-col items-center py-4 gap-4">
                 <Button
@@ -10457,12 +10844,20 @@ export default function WebsiteEditPage() {
             </div>
           ) : (
             <div 
-              className="relative mx-auto my-6 rounded-2xl bg-white shadow-2xl"
-              style={{
-                width: `${canvasWidth}px`,
-                minHeight: `${canvasHeight}px`
-              }}
+              className="relative mx-auto my-6"
+              style={previewCanvasStyle}
             >
+              {canvasSettings.showGrid && (
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-[inherit]"
+                  style={{
+                    backgroundImage: `linear-gradient(90deg, ${canvasGridColor} 1px, transparent 1px), linear-gradient(0deg, ${canvasGridColor} 1px, transparent 1px)`,
+                    backgroundSize: `${canvasGridSize}px ${canvasGridSize}px`,
+                    opacity: 0.25,
+                    zIndex: 0
+                  }}
+                />
+              )}
               {canvasWidgets.map((widget) => (
                 <div
                   key={widget.id}
@@ -10471,7 +10866,8 @@ export default function WebsiteEditPage() {
                     left: `${widget.props.x || 0}px`,
                     top: `${widget.props.y || 0}px`,
                     width: widget.props.width || 'auto',
-                    height: widget.props.height || 'auto'
+                    height: widget.props.height || 'auto',
+                    zIndex: 1
                   }}
                 >
                   {renderWidget(widget, false, false, 'preview')}
