@@ -1208,6 +1208,8 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
             Width is automatically managed by the parent section's grid layout.
           </p>
         </div>
+
+        {renderPositionAndSize()}
       </>
     );
   };
