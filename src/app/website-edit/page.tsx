@@ -158,6 +158,12 @@ type CanvasSettings = {
   align: 'left' | 'center';
 };
 
+type BuilderStatePayload = {
+  templates: TemplateDefinition[];
+  canvasWidgets: Widget[];
+  canvasSettings: CanvasSettings;
+};
+
 const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
   backgroundColor: '#ffffff',
   backgroundGradient: '',
@@ -180,6 +186,8 @@ const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
 };
 
 const CANVAS_SETTINGS_STORAGE_KEY = 'websiteBuilderCanvasSettings';
+const BUILDER_STATE_STORAGE_KEY = 'websiteBuilderState';
+const BUILDER_STATE_API_PATH = '/api/website-builder/state';
 
 const camelToKebab = (value: string) =>
   value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
@@ -1812,6 +1820,7 @@ export default function WebsiteEditPage() {
   const [selectedWidget, setSelectedWidget] = React.useState<Widget | null>(null);
   const [history, setHistory] = React.useState<Widget[][]>([[]]);
   const [historyIndex, setHistoryIndex] = React.useState(0);
+  const [isPersistingState, setIsPersistingState] = React.useState(false);
   const [draggedWidget, setDraggedWidget] = React.useState<WidgetDefinition | null>(null);
   const [draggedExistingWidget, setDraggedExistingWidget] = React.useState<Widget | null>(null);
   const [dropTargetSection, setDropTargetSection] = React.useState<string | null>(null);
@@ -3710,7 +3719,7 @@ export default function WebsiteEditPage() {
     });
   };
 
-  const handleSaveTemplate = (templateId: string) => {
+  const handleSaveTemplate = async (templateId: string) => {
     if (editingTemplateId !== templateId) {
       toast({
         title: "Cannot Save",
@@ -3742,13 +3751,26 @@ export default function WebsiteEditPage() {
       canvasSettings,
     };
 
-    setTemplates((prev) => prev.map((t) => (t.id === templateId ? updatedTemplate : t)));
+    const nextTemplates = templates.map((t) => (t.id === templateId ? updatedTemplate : t));
+
+    setTemplates(nextTemplates);
     setEditingTemplateId(null);
 
-    toast({
-      title: "Template Saved",
-      description: `${template.name} has been updated`,
-    });
+    try {
+      await saveBuilderState({ templates: nextTemplates });
+      toast({
+        title: "Template Saved",
+        description: `${template.name} has been updated`,
+      });
+    } catch (error) {
+      console.error('Failed to persist template to database', error);
+      const description = error instanceof Error ? error.message : 'Failed to save template. Please try again.';
+      toast({
+        title: "Save Failed",
+        description,
+        variant: "destructive",
+      });
+    }
   };
 
   React.useEffect(() => {
@@ -3756,55 +3778,116 @@ export default function WebsiteEditPage() {
       return;
     }
 
-    try {
-      const stored = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setTemplates(parsed as TemplateDefinition[]);
+    let isMounted = true;
+
+    const applyLoadedWidgets = (widgets: Widget[]) => {
+      const ordered = sortWidgetsByPosition(widgets);
+      setCanvasWidgets(ordered);
+      setHistory([ordered]);
+      setHistoryIndex(0);
+    };
+
+    const loadFromLocal = () => {
+      if (!isMounted) return;
+
+      try {
+        const storedState = window.localStorage.getItem(BUILDER_STATE_STORAGE_KEY);
+        if (storedState) {
+          const parsed = JSON.parse(storedState) as Partial<BuilderStatePayload>;
+          if (Array.isArray(parsed.templates)) {
+            setTemplates(parsed.templates as TemplateDefinition[]);
+          }
+          if (Array.isArray(parsed.canvasWidgets)) {
+            applyLoadedWidgets(parsed.canvasWidgets as Widget[]);
+          }
+          if (parsed.canvasSettings) {
+            setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...parsed.canvasSettings });
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to load builder state from local storage', error);
+      }
+
+      try {
+        const storedTemplates = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
+        if (storedTemplates) {
+          const parsedTemplates = JSON.parse(storedTemplates);
+          if (Array.isArray(parsedTemplates)) {
+            setTemplates(parsedTemplates as TemplateDefinition[]);
+          }
+        }
+
+        const storedCanvas = window.localStorage.getItem(CANVAS_SETTINGS_STORAGE_KEY);
+        if (storedCanvas) {
+          const parsedCanvas = JSON.parse(storedCanvas);
+          setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...parsedCanvas });
+        }
+      } catch (error) {
+        console.error('Failed to load legacy builder state', error);
+      }
+    };
+
+    const hydrate = async () => {
+      try {
+        const response = await fetch(BUILDER_STATE_API_PATH, { cache: 'no-store', credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('Failed to fetch builder state');
+        }
+        const payload = await response.json();
+        const data = payload?.data as Partial<BuilderStatePayload> | null;
+
+        if (!isMounted) return;
+
+        if (data) {
+          if (Array.isArray(data.templates)) {
+            setTemplates(data.templates as TemplateDefinition[]);
+          }
+          if (Array.isArray(data.canvasWidgets)) {
+            applyLoadedWidgets(data.canvasWidgets as Widget[]);
+          }
+          if (data.canvasSettings) {
+            setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...data.canvasSettings });
+          }
+          return;
+        }
+
+        loadFromLocal();
+      } catch (error) {
+        console.error('Failed to hydrate builder state from API', error);
+        loadFromLocal();
+      } finally {
+        if (isMounted) {
+          setTemplatesHydrated(true);
+          setCanvasSettingsHydrated(true);
         }
       }
-    } catch (error) {
-      console.error('Failed to load saved templates', error);
-    }
+    };
 
-    try {
-      const storedCanvas = window.localStorage.getItem(CANVAS_SETTINGS_STORAGE_KEY);
-      if (storedCanvas) {
-        const parsedCanvas = JSON.parse(storedCanvas);
-        setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...parsedCanvas });
-      }
-    } catch (error) {
-      console.error('Failed to load canvas settings', error);
-    } finally {
-      setTemplatesHydrated(true);
-      setCanvasSettingsHydrated(true);
-    }
+    hydrate();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   React.useEffect(() => {
-    if (!templatesHydrated || typeof window === 'undefined') {
+    if (!templatesHydrated || !canvasSettingsHydrated || typeof window === 'undefined') {
       return;
     }
 
-    try {
-      window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
-    } catch (error) {
-      console.error('Failed to persist templates', error);
-    }
-  }, [templates, templatesHydrated]);
-
-  React.useEffect(() => {
-    if (!canvasSettingsHydrated || typeof window === 'undefined') {
-      return;
-    }
+    const payload: BuilderStatePayload = {
+      templates,
+      canvasWidgets,
+      canvasSettings,
+    };
 
     try {
-      window.localStorage.setItem(CANVAS_SETTINGS_STORAGE_KEY, JSON.stringify(canvasSettings));
+      window.localStorage.setItem(BUILDER_STATE_STORAGE_KEY, JSON.stringify(payload));
     } catch (error) {
-      console.error('Failed to persist canvas settings', error);
+      console.error('Failed to cache builder state locally', error);
     }
-  }, [canvasSettings, canvasSettingsHydrated]);
+  }, [templates, canvasWidgets, canvasSettings, templatesHydrated, canvasSettingsHydrated]);
 
   // Add global style for grab cursor
   React.useEffect(() => {
@@ -3867,6 +3950,42 @@ export default function WebsiteEditPage() {
       props: { ...widget.props },
       children: widget.children ? cloneWidgetsForStorage(widget.children) : []
     }));
+
+  const saveBuilderState = React.useCallback(async (overrides?: Partial<BuilderStatePayload>) => {
+    const payload: BuilderStatePayload = {
+      templates: overrides?.templates ?? templates,
+      canvasWidgets: cloneWidgetsForStorage(overrides?.canvasWidgets ?? sortWidgetsByPosition(canvasWidgets)),
+      canvasSettings: overrides?.canvasSettings ?? canvasSettings
+    };
+
+    const response = await fetch(BUILDER_STATE_API_PATH, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to save builder state';
+      try {
+        const errorData = await response.json();
+        if (errorData?.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (error) {
+        console.error('Failed to parse builder state save error', error);
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(BUILDER_STATE_STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('Failed to persist builder state locally', error);
+      }
+    }
+  }, [templates, canvasWidgets, canvasSettings]);
 
   // Order widgets by their vertical position so template saves mirror visual layout
   const sortWidgetsByPosition = (widgets: Widget[]): Widget[] =>
@@ -4309,18 +4428,27 @@ export default function WebsiteEditPage() {
 
   // Save page
   const handleSave = async () => {
+    if (isPersistingState) {
+      return;
+    }
+
+    setIsPersistingState(true);
     try {
-      // TODO: Implement API call to save the page
+      await saveBuilderState();
       toast({
         title: "Page Saved",
         description: "Your website has been saved successfully."
       });
     } catch (error) {
+      console.error('Failed to save builder state', error);
+      const description = error instanceof Error ? error.message : 'Failed to save the page. Please try again.';
       toast({
         title: "Save Failed",
-        description: "Failed to save the page. Please try again.",
+        description,
         variant: "destructive"
       });
+    } finally {
+      setIsPersistingState(false);
     }
   };
 
@@ -10450,9 +10578,9 @@ export default function WebsiteEditPage() {
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
-            <Button onClick={handleSave} size="sm">
+            <Button onClick={handleSave} size="sm" disabled={isPersistingState}>
               <Save className="h-4 w-4 mr-2" />
-              Save Page
+              {isPersistingState ? 'Saving...' : 'Save Page'}
             </Button>
           </div>
         </div>
