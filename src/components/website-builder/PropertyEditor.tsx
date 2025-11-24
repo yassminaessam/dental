@@ -1441,6 +1441,41 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
     </>
   );
 
+  const renderAnchorProperties = () => {
+    const scrollMarginValue = typeof widget.props.scrollMargin === 'number'
+      ? widget.props.scrollMargin
+      : 120;
+
+    const sanitizeAnchorId = (value: string) =>
+      value
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-_]/g, '')
+        .toLowerCase();
+
+    return (
+      <>
+        <div className="space-y-2">
+          <Label>Anchor ID</Label>
+          <Input
+            value={widget.props.anchorId || ''}
+            onChange={(e) => handleUpdate('anchorId', sanitizeAnchorId(e.target.value))}
+            placeholder="e.g., services, contact"
+          />
+          <p className="text-xs text-muted-foreground">
+            Use this ID in links like <code className="font-mono text-[11px]">#services</code> to scroll here.
+          </p>
+        </div>
+        {renderTextInput('Label (optional)', 'label', widget.props.label || '', 'Helper label for this anchor')}
+        {renderTextarea('Helper Text', 'helperText', widget.props.helperText || '', 'Shown only in the editor to explain this anchor')}
+        {renderSwitch('Show Label On Published Page', 'showLabel', widget.props.showLabel ?? false, 'Display an anchor badge on the live site')}
+        {renderColorPicker('Indicator Color', 'indicatorColor', widget.props.indicatorColor || '#2563eb')}
+        {renderSlider('Scroll Margin Top', 'scrollMargin', scrollMarginValue, 0, 300, 5, 'px')}
+        {renderPositionAndSize()}
+      </>
+    );
+  };
+
   // Data Display widgets properties
   const renderTableProperties = () => {
     const headers: string[] = Array.isArray(widget.props.headers) ? widget.props.headers : [];
@@ -4202,6 +4237,7 @@ export function PropertyEditor({ widget, onUpdate, onUpdateMultiple, onDelete, o
         {widget.type === 'navbar' && renderNavbarProperties()}
         {widget.type === 'footer' && renderFooterProperties()}
         {widget.type === 'breadcrumb' && renderBreadcrumbProperties()}
+        {widget.type === 'anchor' && renderAnchorProperties()}
         
         {/* Data Display widgets */}
         {widget.type === 'table' && renderTableProperties()}

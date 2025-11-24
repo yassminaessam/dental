@@ -35,7 +35,8 @@ export type WidgetType =
   | 'weather'
   | 'socialShare'
   | 'rating'
-  | 'timeline';
+  | 'timeline'
+  | 'anchor';
 
 export interface Widget {
   id: string;

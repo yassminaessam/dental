@@ -28,7 +28,6 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Code,
   Save,
   Undo,
   Redo,
@@ -123,7 +122,8 @@ import {
   Package,
   Percent,
   Hash,
-  AtSign
+  AtSign,
+  Anchor as AnchorIcon
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -161,6 +161,65 @@ const buildCssBlock = (className: string, styles: Record<string, StyleValue>) =>
   }
 
   return `.${className} { ${cssBody} }`;
+};
+
+const parseSizeValue = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && !Number.isNaN(value)) return value;
+  if (typeof value === 'string') {
+    const numeric = parseFloat(value.replace(/[^0-9.]/g, ''));
+    if (!Number.isNaN(numeric)) return numeric;
+  }
+  return fallback;
+};
+
+const getWidgetHeight = (widget: Widget): number => {
+  const rawHeight = widget.props?.height;
+
+  if (typeof rawHeight === 'number') {
+    return rawHeight;
+  }
+
+  if (typeof rawHeight === 'string') {
+    const parsed = parseFloat(rawHeight);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+
+  switch (widget.type) {
+    case 'heading':
+      return 120;
+    case 'text':
+      return 160;
+    case 'image':
+      return 240;
+    case 'stats':
+      return 220;
+    case 'newsletter':
+      return 360;
+    case 'testimonial':
+      return 320;
+    case 'carousel':
+      return 420;
+    case 'gallery':
+      return 360;
+    case 'pricing':
+      return 380;
+    case 'productCard':
+      return 380;
+    case 'contactInfo':
+      return 320;
+    case 'navbar':
+      return 80;
+    case 'footer':
+      return 150;
+    case 'section':
+      return 520;
+    case 'anchor':
+      return 40;
+    default:
+      return 200;
+  }
 };
 
 // Available widgets library
@@ -670,6 +729,22 @@ const widgetLibrary: WidgetDefinition[] = [
       secondaryActionLink: '#contact',
       socialPlatforms: ['facebook', 'instagram'],
       showSocialIcons: false
+    }
+  },
+  {
+    type: 'anchor',
+    label: 'Anchor Target',
+    icon: AnchorIcon,
+    category: 'navigation',
+    defaultProps: {
+      anchorId: 'section-anchor',
+      label: 'Section Anchor',
+      helperText: 'Drop near a section to create a scroll target.',
+      showLabel: false,
+      indicatorColor: '#2563eb',
+      scrollMargin: 120,
+      width: '100%',
+      height: '0px'
     }
   },
   {
@@ -1667,6 +1742,7 @@ export default function WebsiteEditPage() {
   const [dropTargetSection, setDropTargetSection] = React.useState<string | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = React.useState<number | null>(null);
   const [isWidgetPanelCollapsed, setIsWidgetPanelCollapsed] = React.useState(false);
+  const [isPropertiesPanelCollapsed, setIsPropertiesPanelCollapsed] = React.useState(false);
   const [isDraggingPosition, setIsDraggingPosition] = React.useState(false);
   const [repositioningWidget, setRepositioningWidget] = React.useState<Widget | null>(null);
   const [dragStartPos, setDragStartPos] = React.useState({ x: 0, y: 0 });
@@ -1674,6 +1750,33 @@ export default function WebsiteEditPage() {
   const [activeMainTab, setActiveMainTab] = React.useState<'widgets' | 'templates'>('widgets');
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [accordionState, setAccordionState] = React.useState<Record<string, boolean>>({});
+  const canvasDimensions = React.useMemo(() => {
+    if (!canvasWidgets.length) {
+      return { width: 1200, height: 1000 };
+    }
+
+    let maxX = 0;
+    let maxY = 0;
+
+    canvasWidgets.forEach((widget) => {
+      const widgetWidth = parseSizeValue(widget.props?.width, 400);
+      const fallbackHeight = getWidgetHeight(widget);
+      const widgetHeight = parseSizeValue(widget.props?.height, fallbackHeight);
+      const widgetX = parseSizeValue(widget.props?.x, 0);
+      const widgetY = parseSizeValue(widget.props?.y, 0);
+
+      maxX = Math.max(maxX, widgetX + widgetWidth);
+      maxY = Math.max(maxY, widgetY + widgetHeight);
+    });
+
+    return {
+      width: Math.max(maxX, 600),
+      height: Math.max(maxY, 600)
+    };
+  }, [canvasWidgets]);
+
+  const canvasWidth = Math.max(canvasDimensions.width + 200, 1200);
+  const canvasHeight = Math.max(canvasDimensions.height + 200, 1000);
 
   type TemplateDefinition = {
     id: string;
@@ -3424,32 +3527,6 @@ export default function WebsiteEditPage() {
   const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
   const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
 
-  const getWidgetHeight = (widget: Widget): number => {
-    const rawHeight = widget.props?.height;
-
-    if (typeof rawHeight === 'number') {
-      return rawHeight;
-    }
-
-    if (typeof rawHeight === 'string') {
-      const parsed = parseFloat(rawHeight);
-      if (!Number.isNaN(parsed)) {
-        return parsed;
-      }
-    }
-
-    switch (widget.type) {
-      case 'navbar':
-        return 80;
-      case 'footer':
-        return 150;
-      case 'section':
-        return 400;
-      default:
-        return 200;
-    }
-  };
-
   const normalizeTemplateSections = (widgets: Widget[]): Widget[] => {
     let currentY = 0;
 
@@ -3522,9 +3599,11 @@ export default function WebsiteEditPage() {
       return;
     }
 
+    const orderedWidgets = sortWidgetsByPosition(canvasWidgets);
+
     const updatedTemplate = {
       ...template,
-      widgets: cloneWidgetsForStorage(canvasWidgets),
+      widgets: cloneWidgetsForStorage(orderedWidgets),
     };
 
     setTemplates((prev) => prev.map((t) => (t.id === templateId ? updatedTemplate : t)));
@@ -3629,6 +3708,10 @@ export default function WebsiteEditPage() {
       props: { ...widget.props },
       children: widget.children ? cloneWidgetsForStorage(widget.children) : []
     }));
+
+  // Order widgets by their vertical position so template saves mirror visual layout
+  const sortWidgetsByPosition = (widgets: Widget[]): Widget[] =>
+    [...widgets].sort((a, b) => ((a.props?.y ?? 0) - (b.props?.y ?? 0)));
 
   // Calculate next widget position (staggered to avoid overlap)
   const getNextPosition = () => {
@@ -3752,7 +3835,8 @@ export default function WebsiteEditPage() {
     if (draggedWidget) {
       const position = getNextPosition();
       const defaultSize = {
-        width: draggedWidget.type === 'section' ? '800px' :
+        width: draggedWidget.type === 'anchor' ? '100%' :
+               draggedWidget.type === 'section' ? '800px' :
                draggedWidget.type === 'button' ? '150px' :
                draggedWidget.type === 'heading' ? '400px' :
                draggedWidget.type === 'text' ? '500px' :
@@ -3767,7 +3851,8 @@ export default function WebsiteEditPage() {
                draggedWidget.type === 'card' ? '350px' :
                draggedWidget.type === 'alert' ? '600px' :
                '300px',
-        height: draggedWidget.type === 'section' ? '400px' :
+        height: draggedWidget.type === 'anchor' ? '0px' :
+                draggedWidget.type === 'section' ? '400px' :
                 draggedWidget.type === 'button' ? '50px' :
                 draggedWidget.type === 'heading' ? '60px' :
                 draggedWidget.type === 'text' ? 'auto' :
@@ -4904,6 +4989,50 @@ export default function WebsiteEditPage() {
             });
 
             return <hr className={dividerClass} />;
+          })()}
+          {widget.type === 'anchor' && (() => {
+            const rawAnchorId = (widget.props.anchorId || '').trim();
+            const anchorId = rawAnchorId || widget.id;
+            const showLabel = widget.props.showLabel ?? false;
+            const indicatorColor = widget.props.indicatorColor || '#2563eb';
+            const scrollMarginValue = typeof widget.props.scrollMargin === 'number'
+              ? widget.props.scrollMargin
+              : parseFloat(widget.props.scrollMargin) || 0;
+            const anchorMinHeight = !isPreview ? '32px' : (showLabel ? '32px' : '0px');
+
+            const anchorClass = registerStyle('anchor-target', {
+              scrollMarginTop: `${scrollMarginValue}px`,
+              minHeight: anchorMinHeight
+            });
+
+            return (
+              <div
+                id={anchorId}
+                className={`${anchorClass} relative flex items-start`}
+                style={{ minHeight: anchorMinHeight }}
+              >
+                {(!isPreview || showLabel) && (
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold shadow-sm border"
+                    style={{
+                      color: indicatorColor,
+                      borderColor: indicatorColor,
+                      backgroundColor: 'rgba(37, 99, 235, 0.08)'
+                    }}
+                  >
+                    <AnchorIcon className="h-3.5 w-3.5" />
+                    <span className="font-medium">
+                      {widget.props.label || `Anchor: #${anchorId}`}
+                    </span>
+                  </div>
+                )}
+                {!isPreview && widget.props.helperText && (
+                  <p className="ml-3 text-xs text-muted-foreground max-w-sm">
+                    {widget.props.helperText}
+                  </p>
+                )}
+              </div>
+            );
           })()}
           {widget.type === 'card' && (() => {
             const imageSrc = widget.props.image;
@@ -9964,10 +10093,6 @@ export default function WebsiteEditPage() {
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
-            <Button variant="outline" size="sm">
-              <Code className="h-4 w-4 mr-2" />
-              View Code
-            </Button>
             <Button onClick={handleSave} size="sm">
               <Save className="h-4 w-4 mr-2" />
               Save Page
@@ -10155,7 +10280,7 @@ export default function WebsiteEditPage() {
           <div className="flex-1 overflow-auto bg-gray-100">
             <ScrollArea className="h-full">
               <div
-                className="min-h-full p-8"
+                className="min-h-full p-8 overflow-auto"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => setSelectedWidget(null)}
@@ -10176,8 +10301,8 @@ export default function WebsiteEditPage() {
                   <div 
                     className="canvas-container bg-white shadow-lg rounded-lg relative" 
                     style={{ 
-                      minHeight: '1000px', 
-                      width: '1200px',
+                      minHeight: `${canvasHeight}px`,
+                      width: `${canvasWidth}px`,
                       userSelect: isDraggingPosition ? 'none' : 'auto'
                     }}
                     onMouseMove={handleRepositionMove}
@@ -10249,35 +10374,69 @@ export default function WebsiteEditPage() {
           </div>
 
           {/* RIGHT PANEL - Properties */}
-          <div className="w-80 border-l bg-white overflow-hidden flex flex-col">
-            <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-purple-50">
-              <h2 className="font-bold text-lg mb-1 text-gray-900">Properties</h2>
-              <p className="text-sm text-gray-600">
-                {selectedWidget ? 'Customize the selected widget' : 'Select a widget to edit'}
-              </p>
-            </div>
-            
-            <ScrollArea className="flex-1">
-              {selectedWidget ? (
-                <div className="p-4">
-                  <PropertyEditor
-                    widget={selectedWidget}
-                    onUpdate={handleUpdateProperty}
-                    onUpdateMultiple={handleUpdateProperties}
-                    onDelete={handleDeleteWidget}
-                    onDuplicate={handleDuplicateWidget}
-                  />
-                </div>
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                    <Settings className="h-10 w-10 text-gray-400" />
+          <div
+            className={`border-l bg-white overflow-hidden flex flex-col transition-all duration-300 ${
+              isPropertiesPanelCollapsed ? 'w-14' : 'w-80'
+            }`}
+          >
+            {!isPropertiesPanelCollapsed ? (
+              <>
+                <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-purple-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-bold text-lg mb-1 text-gray-900">Properties</h2>
+                    <p className="text-sm text-gray-600">
+                      {selectedWidget ? 'Customize the selected widget' : 'Select a widget to edit'}
+                    </p>
                   </div>
-                  <h3 className="font-semibold text-gray-700 mb-2">No Widget Selected</h3>
-                  <p className="text-sm">Click on a widget in the canvas to edit its properties</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsPropertiesPanelCollapsed(true)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </ScrollArea>
+                <ScrollArea className="flex-1">
+                  {selectedWidget ? (
+                    <div className="p-4">
+                      <PropertyEditor
+                        widget={selectedWidget}
+                        onUpdate={handleUpdateProperty}
+                        onUpdateMultiple={handleUpdateProperties}
+                        onDelete={handleDeleteWidget}
+                        onDuplicate={handleDuplicateWidget}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-500">
+                      <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <Settings className="h-10 w-10 text-gray-400" />
+                      </div>
+                      <h3 className="font-semibold text-gray-700 mb-2">No Widget Selected</h3>
+                      <p className="text-sm">Click on a widget in the canvas to edit its properties</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </>
+            ) : (
+              <div className="flex flex-col items-center py-4 gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsPropertiesPanelCollapsed(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex flex-col items-center gap-3 text-gray-500">
+                  <Settings className="h-5 w-5" />
+                </div>
+                <div className="text-xs text-gray-400 transform -rotate-90 whitespace-nowrap mt-8">
+                  Properties
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -10297,7 +10456,13 @@ export default function WebsiteEditPage() {
               Add widgets to see a preview.
             </div>
           ) : (
-            <div className="relative mx-auto my-6 w-[1200px] min-h-[900px] rounded-2xl bg-white shadow-2xl">
+            <div 
+              className="relative mx-auto my-6 rounded-2xl bg-white shadow-2xl"
+              style={{
+                width: `${canvasWidth}px`,
+                minHeight: `${canvasHeight}px`
+              }}
+            >
               {canvasWidgets.map((widget) => (
                 <div
                   key={widget.id}
