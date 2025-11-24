@@ -1842,26 +1842,34 @@ export default function WebsiteEditPage() {
   };
   const canvasDimensions = React.useMemo(() => {
     if (!canvasWidgets.length) {
-      return { width: 1200, height: 1000 };
+      return { width: 0, height: 0 };
     }
 
     let maxX = 0;
     let maxY = 0;
 
-    canvasWidgets.forEach((widget) => {
-      const widgetWidth = parseSizeValue(widget.props?.width, 400);
-      const fallbackHeight = getWidgetHeight(widget);
-      const widgetHeight = parseSizeValue(widget.props?.height, fallbackHeight);
-      const widgetX = parseSizeValue(widget.props?.x, 0);
-      const widgetY = parseSizeValue(widget.props?.y, 0);
+    const trackWidgetBounds = (widgets: Widget[]) => {
+      widgets.forEach((widget) => {
+        const widgetWidth = parseSizeValue(widget.props?.width, 400);
+        const fallbackHeight = getWidgetHeight(widget);
+        const widgetHeight = parseSizeValue(widget.props?.height, fallbackHeight);
+        const widgetX = parseSizeValue(widget.props?.x, 0);
+        const widgetY = parseSizeValue(widget.props?.y, 0);
 
-      maxX = Math.max(maxX, widgetX + widgetWidth);
-      maxY = Math.max(maxY, widgetY + widgetHeight);
-    });
+        maxX = Math.max(maxX, widgetX + widgetWidth);
+        maxY = Math.max(maxY, widgetY + widgetHeight);
+
+        if (Array.isArray(widget.children) && widget.children.length) {
+          trackWidgetBounds(widget.children);
+        }
+      });
+    };
+
+    trackWidgetBounds(canvasWidgets);
 
     return {
-      width: Math.max(maxX, 600),
-      height: Math.max(maxY, 600)
+      width: maxX,
+      height: maxY
     };
   }, [canvasWidgets]);
 
