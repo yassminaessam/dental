@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import type { Patient } from '@/lib/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PatientComboboxProps {
   patients: Patient[];
@@ -41,11 +42,43 @@ export function PatientCombobox({
   className,
 }: PatientComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const { isRTL } = useLanguage();
+
+  const normalizePhoneNumber = React.useCallback((phone?: string | null) => (
+    phone ? phone.replace(/\D/g, '') : ''
+  ), []);
 
   const selectedPatient = React.useMemo(
     () => patients.find((p) => p.id === value),
     [patients, value]
   );
+
+  const filteredPatients = React.useMemo(() => {
+    const lower = searchTerm.toLowerCase().trim();
+    const digits = searchTerm.replace(/\D/g, '');
+
+    if (!lower && !digits) return patients;
+
+    return patients.filter((patient) => {
+      const fullName = `${patient.name} ${patient.lastName ?? ''}`.toLowerCase();
+      const email = (patient.email ?? '').toLowerCase();
+      const patientId = (patient.id ?? '').toLowerCase();
+      const phone = patient.phone ?? '';
+      const normalizedPhone = normalizePhoneNumber(phone);
+
+      const matchesText =
+        fullName.includes(lower) ||
+        email.includes(lower) ||
+        patientId.includes(lower);
+
+      const matchesPhone = digits
+        ? normalizedPhone.includes(digits)
+        : phone.toLowerCase().includes(lower);
+
+      return matchesText || matchesPhone;
+    });
+  }, [patients, searchTerm, normalizePhoneNumber]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -62,8 +95,16 @@ export function PatientCombobox({
           )}
         >
           {selectedPatient ? (
-            <span className="truncate">
-              {selectedPatient.name} - {selectedPatient.phone}
+            <span className="truncate flex items-center gap-2">
+              <span>{selectedPatient.name}</span>
+              {selectedPatient.phone && (
+                <span
+                  dir="ltr"
+                  className={cn('inline-flex min-w-[80px]', isRTL && 'text-left')}
+                >
+                  {selectedPatient.phone}
+                </span>
+              )}
             </span>
           ) : (
             placeholder
@@ -73,14 +114,22 @@ export function PatientCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[300px] sm:w-[400px] p-0" align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} className="h-9" />
+          <div className="relative px-2 pt-2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <CommandInput
+              placeholder={searchPlaceholder}
+              className="h-9 pl-10"
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+          </div>
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
-              {patients.map((patient) => (
+              {filteredPatients.map((patient) => (
                 <CommandItem
                   key={patient.id}
-                  value={`${patient.name} ${patient.phone}`}
+                  value={`${patient.name} ${patient.lastName ?? ''} ${patient.phone ?? ''} ${patient.email ?? ''}`}
                   onSelect={() => {
                     onValueChange(patient.id);
                     setOpen(false);
@@ -95,9 +144,14 @@ export function PatientCombobox({
                   />
                   <div className="flex flex-col gap-0.5">
                     <span className="font-medium">{patient.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {patient.phone}
-                    </span>
+                    {patient.phone && (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        dir="ltr"
+                      >
+                        {patient.phone}
+                      </span>
+                    )}
                   </div>
                 </CommandItem>
               ))}

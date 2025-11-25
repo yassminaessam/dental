@@ -31,6 +31,8 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { listDocuments } from '@/lib/data-client';
 import type { InsuranceProvider } from '@/app/insurance/page';
+import type { Patient } from '@/lib/types';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // Schema will be constructed inside the component to use translations
@@ -46,8 +48,11 @@ type ClaimFormData = {
 
 interface NewClaimDialogProps {
   onSave: (data: {
-    patient: string; // patient name
-    insurance: string; // provider name
+    patientId: string;
+    patientName: string;
+    patientPhone?: string;
+    insuranceId: string;
+    insuranceName: string;
     procedure: string;
     procedureCode?: string;
     amount: string; // numeric string
@@ -68,7 +73,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
   // Only need id and name to populate the select
-  const [patients, setPatients] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [patients, setPatients] = React.useState<Patient[]>([]);
   const [providers, setProviders] = React.useState<InsuranceProvider[]>([]);
 
   const form = useForm<ClaimFormData>({
@@ -93,7 +98,12 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
             
             const providerData = await listDocuments<InsuranceProvider>('insurance-providers');
             
-            setPatients(patientData.map((p: any) => ({ id: p.id, name: p.name })));
+            setPatients(
+              patientData.map((p: any) => ({
+                ...p,
+                dob: p.dob ? new Date(p.dob) : new Date(),
+              })) as Patient[]
+            );
             setProviders(providerData);
         }
     }
@@ -101,9 +111,19 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
   }, [open]);
 
   const onSubmit = (data: ClaimFormData) => {
-    const patientName = patients.find(p => p.id === data.patient)?.name;
-    const providerName = providers.find(p => p.id === data.insurance)?.name;
-    onSave({ ...data, patient: patientName ?? '', insurance: providerName ?? '' });
+    const selectedPatient = patients.find(p => p.id === data.patient);
+    const selectedProvider = providers.find(p => p.id === data.insurance);
+    onSave({
+      patientId: selectedPatient?.id ?? data.patient,
+      patientName: selectedPatient?.name ?? '',
+      patientPhone: selectedPatient?.phone,
+      insuranceId: selectedProvider?.id ?? data.insurance,
+      insuranceName: selectedProvider?.name ?? '',
+      procedure: data.procedure,
+      procedureCode: data.procedureCode,
+      amount: data.amount,
+      submitDate: data.submitDate,
+    });
     form.reset();
     setOpen(false);
   };
@@ -132,20 +152,14 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('common.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('patients.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <PatientCombobox
+                      patients={patients}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder={t('patients.select_patient')}
+                      searchPlaceholder={t('appointments.search_patient_placeholder') || 'Search by name or phone...'}
+                      emptyMessage={t('patients.no_patient_found') || 'No patient found.'}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -158,7 +172,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                     <FormLabel>{t('patients.insurance_provider')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className={cn(isRTL ? 'justify-end text-right' : 'text-left')}>
                           <SelectValue placeholder={t('insurance.select_provider')} />
                         </SelectTrigger>
                       </FormControl>

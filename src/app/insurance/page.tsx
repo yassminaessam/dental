@@ -58,6 +58,7 @@ export type Claim = {
   id: string;
   patient: string;
   patientId: string;
+  patientPhone?: string | null;
   insurance: string;
   procedure: string;
   procedureCode: string;
@@ -68,6 +69,18 @@ export type Claim = {
   submitDate: string;
 };
 
+type NewClaimInput = {
+  patientId: string;
+  patientName: string;
+  patientPhone?: string;
+  insuranceId: string;
+  insuranceName: string;
+  procedure: string;
+  procedureCode?: string;
+  amount: string;
+  submitDate: Date;
+};
+
 export type InsuranceProvider = {
     id: string;
     name: string;
@@ -75,6 +88,15 @@ export type InsuranceProvider = {
     email?: string;
     address?: string;
 }
+
+const normalizePhoneNumber = (value?: string | null) =>
+  value ? value.replace(/\D/g, '') : '';
+
+const extractPhoneFromText = (value?: string | null) => {
+  if (!value) return '';
+  const match = value.match(/(\+?\d[\d\s-]{5,})/);
+  return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+};
 
 export default function InsurancePage() {
   const { t, isRTL, language } = useLanguage();
@@ -88,19 +110,33 @@ export default function InsurancePage() {
   const [providerToEdit, setProviderToEdit] = React.useState<InsuranceProvider | null>(null);
   const [providerToDelete, setProviderToDelete] = React.useState<InsuranceProvider | null>(null);
   const [providerSearchTerm, setProviderSearchTerm] = React.useState('');
+  const [patientDirectory, setPatientDirectory] = React.useState<Record<string, { phone?: string }>>({});
 
   const { toast } = useToast();
 
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const [claimsData, providersData] = await Promise.all([
+        const [claimsData, providersData, patientsResponse] = await Promise.all([
           listDocuments<Claim>('insurance-claims'),
           listDocuments<InsuranceProvider>('insurance-providers'),
+          fetch('/api/patients')
         ]);
         setClaims(claimsData);
         setProviders(providersData);
+
+        if (patientsResponse.ok) {
+          const { patients: patientData } = await patientsResponse.json();
+          const directory = (patientData ?? []).reduce((acc: Record<string, { phone?: string }>, patient: any) => {
+            acc[patient.id] = { phone: patient.phone };
+            return acc;
+          }, {});
+          setPatientDirectory(directory);
+        } else {
+          throw new Error('Failed to fetch patients');
+        }
       } catch (error) {
+        console.error('[InsurancePage] fetchData error', error);
         toast({ title: t('insurance.toast.error_fetching'), variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -125,15 +161,16 @@ export default function InsurancePage() {
     ];
   }, [claims, t, language]);
 
-  const handleSaveClaim = async (data: any) => {
+  const handleSaveClaim = async (data: NewClaimInput) => {
     try {
       const newClaim: Claim = {
         id: `CLM-${Date.now()}`,
-        patient: data.patient,
-        patientId: 'DC' + Math.floor(100000000 + Math.random() * 900000000),
-        insurance: data.insurance,
+        patient: data.patientName,
+        patientId: data.patientId,
+        patientPhone: data.patientPhone ?? null,
+        insurance: data.insuranceName,
         procedure: data.procedure,
-        procedureCode: data.procedureCode,
+        procedureCode: data.procedureCode ?? '',
         amount: `EGP ${parseFloat(data.amount).toFixed(2)}`,
         approvedAmount: null,
         status: 'Processing',
@@ -190,6 +227,17 @@ export default function InsurancePage() {
   toast({ title: t('insurance.toast.downloading_claim'), description: t('insurance.toast.downloading_claim_desc') });
   }
 
+  const getClaimPhone = React.useCallback(
+    (claim: Claim) => {
+      if (claim.patientPhone) return claim.patientPhone;
+      if (claim.patientId && patientDirectory[claim.patientId]?.phone) {
+        return patientDirectory[claim.patientId]?.phone ?? '';
+      }
+      return extractPhoneFromText(claim.patient);
+    },
+    [patientDirectory]
+  );
+
   const handleStatusChange = async (claimId: string, newStatus: Claim['status']) => {
     try {
       await updateDocument('insurance-claims', claimId, { status: newStatus });
@@ -205,16 +253,44 @@ export default function InsurancePage() {
   };
 
   const filteredClaims = React.useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const numericSearchTerm = searchTerm.replace(/\D/g, '');
+    const hasTextSearch = lowercasedTerm.length > 0;
+    const hasNumericSearch = numericSearchTerm.length > 0;
+
     return claims
-      .filter(claim =>
-        claim.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        claim.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        claim.procedure.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .filter(claim =>
+      .filter((claim) => {
+        if (!hasTextSearch && !hasNumericSearch) return true;
+
+        const matchesPatient = claim.patient.toLowerCase().includes(lowercasedTerm);
+        const matchesClaimId = claim.id.toLowerCase().includes(lowercasedTerm);
+        const matchesProcedure = claim.procedure.toLowerCase().includes(lowercasedTerm);
+        const matchesProcedureCode = (claim.procedureCode || '').toLowerCase().includes(lowercasedTerm);
+        const matchesInsurance = claim.insurance.toLowerCase().includes(lowercasedTerm);
+        const matchesAmount = (claim.amount || '').toLowerCase().includes(lowercasedTerm);
+        const matchesStatus = claim.status.toLowerCase().includes(lowercasedTerm);
+
+        const phoneValue = getClaimPhone(claim);
+        const normalizedPhone = normalizePhoneNumber(phoneValue);
+        const matchesPhone = hasNumericSearch
+          ? normalizedPhone.includes(numericSearchTerm)
+          : phoneValue.toLowerCase().includes(lowercasedTerm);
+
+        return (
+          matchesPatient ||
+          matchesClaimId ||
+          matchesProcedure ||
+          matchesProcedureCode ||
+          matchesInsurance ||
+          matchesAmount ||
+          matchesStatus ||
+          matchesPhone
+        );
+      })
+      .filter((claim) =>
         statusFilter === 'all' || claim.status.toLowerCase() === statusFilter
       );
-  }, [claims, searchTerm, statusFilter]);
+  }, [claims, getClaimPhone, searchTerm, statusFilter]);
 
   const filteredProviders = React.useMemo(() => {
     return providers.filter(provider => provider.name.toLowerCase().includes(providerSearchTerm.toLowerCase()));
@@ -395,6 +471,7 @@ export default function InsurancePage() {
                     <TableRow>
             <TableHead>{t('insurance.claim_id')}</TableHead>
             <TableHead>{t('insurance.patient')}</TableHead>
+            <TableHead className="text-left" dir="ltr">{t('common.phone')}</TableHead>
             <TableHead>{t('insurance.insurance')}</TableHead>
             <TableHead>{t('insurance.procedure')}</TableHead>
             <TableHead>{t('insurance.amount')}</TableHead>
@@ -405,7 +482,7 @@ export default function InsurancePage() {
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredClaims.length > 0 ? (
                       filteredClaims.map((claim) => (
                         <TableRow key={claim.id}>
@@ -415,6 +492,9 @@ export default function InsurancePage() {
                           <TableCell>
                             <div className="font-medium">{claim.patient}</div>
                             <div className="text-xs text-muted-foreground">{claim.patientId}</div>
+                          </TableCell>
+                          <TableCell className="text-left" dir="ltr">
+                            {getClaimPhone(claim) || t('common.na')}
                           </TableCell>
                           <TableCell>{claim.insurance}</TableCell>
                           <TableCell>
@@ -481,7 +561,7 @@ export default function InsurancePage() {
                       ))
                     ) : (
                       <TableRow>
-        <TableCell colSpan={8} className="h-24 text-center">
+        <TableCell colSpan={9} className="h-24 text-center">
           {t('insurance.no_claims_found')}
                         </TableCell>
                       </TableRow>
@@ -534,7 +614,7 @@ export default function InsurancePage() {
                       filteredProviders.map((provider) => (
                         <TableRow key={provider.id}>
                           <TableCell className="font-medium">{provider.name}</TableCell>
-                          <TableCell>{provider.phone || t('common.na')}</TableCell>
+                          <TableCell dir="ltr">{provider.phone || t('common.na')}</TableCell>
                           <TableCell>{provider.email || t('common.na')}</TableCell>
                           <TableCell>{provider.address || t('common.na')}</TableCell>
                           <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>

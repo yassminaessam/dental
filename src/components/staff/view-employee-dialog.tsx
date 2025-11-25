@@ -40,7 +40,9 @@ export function ViewEmployeeDialog({ staffMember, open, onOpenChange }: ViewEmpl
             </div>
             <div>
               <h4 className="font-semibold">{t('staff.phone')}</h4>
-              <p className="text-muted-foreground">{staffMember.phone}</p>
+              <p className="text-muted-foreground" dir="ltr">
+                {staffMember.phone || t('common.na')}
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

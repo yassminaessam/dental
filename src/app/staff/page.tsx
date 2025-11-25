@@ -59,6 +59,9 @@ const staffRoles = [
   { name: "Manager", color: "bg-red-100 text-red-800" },
 ];
 
+const normalizePhoneNumber = (value?: string | null) =>
+  value ? value.replace(/\D/g, '') : '';
+
 export default function StaffPage() {
   const [staff, setStaff] = React.useState<StaffMember[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -199,13 +202,37 @@ export default function StaffPage() {
   };
 
   const filteredStaff = React.useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return staff.filter(member =>
-      member.name.toLowerCase().includes(lowercasedTerm) ||
-      member.role.toLowerCase().includes(lowercasedTerm) ||
-      member.email.toLowerCase().includes(lowercasedTerm) ||
-      member.phone.includes(lowercasedTerm)
-    );
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const numericSearchTerm = searchTerm.replace(/\D/g, '');
+    const hasTextSearch = lowercasedTerm.length > 0;
+    const hasNumericSearch = numericSearchTerm.length > 0;
+
+    return staff.filter((member) => {
+      if (!hasTextSearch && !hasNumericSearch) return true;
+
+      const matchesName = member.name.toLowerCase().includes(lowercasedTerm);
+      const matchesRole = member.role.toLowerCase().includes(lowercasedTerm);
+      const matchesEmail = (member.email || '').toLowerCase().includes(lowercasedTerm);
+      const matchesSchedule = (member.schedule || '').toLowerCase().includes(lowercasedTerm);
+      const matchesSalary = (member.salary || '').toLowerCase().includes(lowercasedTerm);
+      const matchesStatus = (member.status || '').toLowerCase().includes(lowercasedTerm);
+
+      const phoneValue = member.phone || '';
+      const normalizedPhone = normalizePhoneNumber(phoneValue);
+      const matchesPhone = hasNumericSearch
+        ? normalizedPhone.includes(numericSearchTerm)
+        : phoneValue.toLowerCase().includes(lowercasedTerm);
+
+      return (
+        matchesName ||
+        matchesRole ||
+        matchesEmail ||
+        matchesSchedule ||
+        matchesSalary ||
+        matchesStatus ||
+        matchesPhone
+      );
+    });
   }, [staff, searchTerm]);
 
 
@@ -389,8 +416,15 @@ export default function StaffPage() {
                           </TableCell>
                           <TableCell>{t(`roles.${member.role.toLowerCase()}`) || member.role}</TableCell>
                           <TableCell>
-                            <div>{member.email}</div>
-                            <div className="text-xs text-muted-foreground">{member.phone}</div>
+                            <div>{member.email || t('common.na')}</div>
+                            <div className="text-xs text-muted-foreground">
+                              <span
+                                dir="ltr"
+                                className={cn('inline-flex', isRTL && 'text-left')}
+                              >
+                                {member.phone || t('common.na')}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell>{member.schedule}</TableCell>
                           <TableCell>{member.salary}</TableCell>

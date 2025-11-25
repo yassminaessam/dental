@@ -71,6 +71,18 @@ export type { Appointment } from '@/lib/types';
 const sortAppointments = (entries: Appointment[]): Appointment[] =>
   entries.slice().sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
 
+const normalizePhoneNumber = (value?: string | null) =>
+  value ? value.replace(/\D/g, '') : '';
+
+const extractPhoneFromText = (value?: string | null) => {
+  if (!value) return '';
+  const match = value.match(/(\+?\d[\d\s-]{5,})/);
+  return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+};
+
+const getAppointmentPhone = (appointment: Appointment) =>
+  (appointment.patientPhone && appointment.patientPhone.trim()) || extractPhoneFromText(appointment.patient);
+
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -159,12 +171,32 @@ export default function AppointmentsPage() {
   };
 
   const filteredAppointments = React.useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const numericSearchTerm = searchTerm.replace(/\D/g, '');
+
     return appointments
-      .filter(appointment =>
-        appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.type.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      .filter(appointment => {
+        const matchesPatient = appointment.patient.toLowerCase().includes(lowercasedTerm);
+        const matchesDoctor = appointment.doctor.toLowerCase().includes(lowercasedTerm);
+        const matchesType = appointment.type.toLowerCase().includes(lowercasedTerm);
+        const matchesStatus = appointment.status.toLowerCase().includes(lowercasedTerm);
+        const patientEmail = appointment.patientEmail?.toLowerCase() ?? '';
+        const matchesEmail = patientEmail.includes(lowercasedTerm);
+        const appointmentPhone = getAppointmentPhone(appointment);
+        const normalizedPhone = normalizePhoneNumber(appointmentPhone);
+        const matchesPhone = numericSearchTerm
+          ? normalizedPhone.includes(numericSearchTerm)
+          : appointmentPhone.toLowerCase().includes(lowercasedTerm);
+
+        return (
+          matchesPatient ||
+          matchesDoctor ||
+          matchesType ||
+          matchesStatus ||
+          matchesEmail ||
+          matchesPhone
+        );
+      })
       .filter(appointment =>
         statusFilter === 'all' || appointment.status.toLowerCase() === statusFilter
       );
@@ -362,6 +394,12 @@ export default function AppointmentsPage() {
                               <div>
                                 <span className="font-medium">{t('appointments.type')}:</span> {appt.type}
                               </div>
+                              <div className="col-span-2">
+                                <span className="font-medium">{t('common.phone')}:</span>{' '}
+                                <span dir="ltr" className="inline-block">
+                                  {getAppointmentPhone(appt) || t('common.na')}
+                                </span>
+                              </div>
                               <div>
                                 <span className="font-medium">{t('appointments.duration')}:</span> {appt.duration}
                               </div>
@@ -406,6 +444,7 @@ export default function AppointmentsPage() {
                         <TableRow>
                           <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.date')} &amp; {t('appointments.time')}</TableHead>
                           <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('common.patient')}</TableHead>
+                          <TableHead className="whitespace-nowrap text-left" dir="ltr">{t('common.phone')}</TableHead>
                           <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.doctor')}</TableHead>
                           <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.type')}</TableHead>
                           <TableHead className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{t('appointments.duration')}</TableHead>
@@ -415,12 +454,15 @@ export default function AppointmentsPage() {
                       </TableHeader>
                       <TableBody>
                         {loading ? (
-                          <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                          <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                         ) : filteredAppointments.length > 0 ? (
                           filteredAppointments.map(appt => (
                             <TableRow key={appt.id}>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.dateTime.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.patient}</TableCell>
+                              <TableCell className="whitespace-nowrap text-left" dir="ltr">
+                                {getAppointmentPhone(appt) || t('common.na')}
+                              </TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.doctor}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.type}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.duration}</TableCell>
@@ -478,7 +520,7 @@ export default function AppointmentsPage() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={7} className="h-24 text-center">
+                            <TableCell colSpan={8} className="h-24 text-center">
                               <div className="flex flex-col items-center justify-center">
                                 <Calendar className="h-12 w-12 text-muted-foreground mb-2" />
                                 <h3 className="text-sm font-semibold">{t('appointments.no_appointments_found')}</h3>

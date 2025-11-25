@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useLanguage } from '@/contexts/LanguageContext';
 interface Doctor {
   id: string;
   name: string;
@@ -47,6 +48,7 @@ export function DoctorCombobox({
   className,
 }: DoctorComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const { isRTL } = useLanguage();
 
   const selectedDoctor = React.useMemo(
     () => doctors.find((d) => d.id === value),
@@ -68,10 +70,19 @@ export function DoctorCombobox({
           )}
         >
           {selectedDoctor ? (
-            <span className="truncate">
-              {selectedDoctor.name}
-              {selectedDoctor.specialization && ` - ${selectedDoctor.specialization}`}
-              {selectedDoctor.phone && ` - ${selectedDoctor.phone}`}
+            <span className="truncate flex items-center gap-2">
+              <span>
+                {selectedDoctor.name}
+                {selectedDoctor.specialization && ` - ${selectedDoctor.specialization}`}
+              </span>
+              {selectedDoctor.phone && (
+                <span
+                  dir="ltr"
+                  className={cn('inline-flex min-w-[80px]', isRTL && 'text-left')}
+                >
+                  {selectedDoctor.phone}
+                </span>
+              )}
             </span>
           ) : (
             placeholder
@@ -110,7 +121,11 @@ export function DoctorCombobox({
                           <span>{doctor.specialization}</span>
                         </div>
                       )}
-                      {doctor.phone && <div>{doctor.phone}</div>}
+                      {doctor.phone && (
+                        <div dir="ltr" className="inline-flex">
+                          {doctor.phone}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CommandItem>

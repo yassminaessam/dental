@@ -86,6 +86,9 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
+const normalizePhoneNumber = (value?: string | null) =>
+  value ? value.replace(/\D/g, '') : '';
+
 export default function PatientsPage() {
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -208,16 +211,19 @@ export default function PatientsPage() {
   };
 
   const filteredPatients = React.useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const numericSearchTerm = searchTerm.replace(/\D/g, '');
     return patients
       .filter(patient => {
-        return (
-          patient.name.toLowerCase().includes(lowercasedTerm) ||
-          patient.email.toLowerCase().includes(lowercasedTerm) ||
-          patient.phone.includes(lowercasedTerm)
-        );
+        const matchesName = patient.name.toLowerCase().includes(lowercasedTerm);
+        const matchesEmail = patient.email.toLowerCase().includes(lowercasedTerm);
+        const phoneValue = patient.phone ?? '';
+        const matchesPhone = numericSearchTerm
+          ? normalizePhoneNumber(phoneValue).includes(numericSearchTerm)
+          : phoneValue.toLowerCase().includes(lowercasedTerm);
+        return matchesName || matchesEmail || matchesPhone;
       })
-      .filter(patient => 
+      .filter(patient =>
         statusFilter === 'all' || patient.status.toLowerCase() === statusFilter
       );
   }, [patients, searchTerm, statusFilter]);
@@ -380,7 +386,14 @@ export default function PatientsPage() {
 
                         <div className="grid gap-2 pt-3 text-sm">
                           <MobileCardField label={t('patients.email')} value={patient.email} />
-                          <MobileCardField label={t('common.phone')} value={patient.phone || t('common.na')} />
+                          <MobileCardField
+                            label={t('common.phone')}
+                            value={
+                              <span dir="ltr" className={isRTL ? 'inline-block text-left' : undefined}>
+                                {patient.phone || t('common.na')}
+                              </span>
+                            }
+                          />
                           <MobileCardField label={t('patients.date_of_birth')} value={format(patient.dob, 'PPP')} />
                           <MobileCardField label={t('patients.address')} value={patient.address || t('common.na')} className={isRTL ? 'items-start text-right' : 'items-start text-left'} />
                           <MobileCardField
@@ -444,7 +457,7 @@ export default function PatientsPage() {
                     <TableRow>
                       <TableHead className="whitespace-nowrap">{t('common.patient')}</TableHead>
                         <TableHead className="whitespace-nowrap">{t('patients.email')}</TableHead>
-                        <TableHead className="whitespace-nowrap">{t('common.phone')}</TableHead>
+                        <TableHead className="whitespace-nowrap" dir={isRTL ? 'ltr' : undefined}>{t('common.phone')}</TableHead>
                         <TableHead className="whitespace-nowrap">{t('patients.date_of_birth')}</TableHead>
                         <TableHead className="whitespace-nowrap">{t('patients.address')}</TableHead>
                         <TableHead className="whitespace-nowrap">{t('patients.emergency_contact')}</TableHead>
@@ -470,7 +483,12 @@ export default function PatientsPage() {
                               </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">{patient.email}</TableCell>
-                            <TableCell className="whitespace-nowrap">{patient.phone || t('common.na')}</TableCell>
+                            <TableCell
+                              className={cn("whitespace-nowrap", isRTL && "text-left")}
+                              dir={isRTL ? 'ltr' : undefined}
+                            >
+                              {patient.phone || t('common.na')}
+                            </TableCell>
                             <TableCell className="whitespace-nowrap">{format(patient.dob, 'PPP')}</TableCell>
                             <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || t('common.na')}</TableCell>
                             <TableCell className="whitespace-nowrap">

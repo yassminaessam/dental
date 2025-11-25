@@ -40,6 +40,9 @@ export function ViewClaimDialog({ claim, open, onOpenChange }: ViewClaimDialogPr
                 <h4 className="font-semibold">{t('common.patient')}</h4>
                 <p className="text-muted-foreground">{claim.patient}</p>
                 <p className="text-xs text-muted-foreground">{claim.patientId}</p>
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  {t('common.phone')}: {claim.patientPhone || t('common.na')}
+                </p>
             </div>
              <div>
                 <h4 className="font-semibold">{t('patients.insurance_provider')}</h4>

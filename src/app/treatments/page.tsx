@@ -88,12 +88,22 @@ const deserializeAppointment = (record: AppointmentRecord): Appointment => ({
   rejectedAt: record.rejectedAt ? new Date(record.rejectedAt) : undefined,
 });
 
+const normalizePhoneNumber = (value?: string | null) =>
+  value ? value.replace(/\D/g, '') : '';
+
+const extractPhoneFromText = (value?: string | null) => {
+  if (!value) return '';
+  const match = value.match(/(\+?\d[\d\s-]{5,})/);
+  return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+};
+
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = React.useState<Treatment[]>([]);
   const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [patientDirectory, setPatientDirectory] = React.useState<Record<string, { phone?: string }>>({});
   const { toast } = useToast();
   const [treatmentToView, setTreatmentToView] = React.useState<Treatment | null>(null);
   const [treatmentToEdit, setTreatmentToEdit] = React.useState<Treatment | null>(null);
@@ -133,6 +143,25 @@ export default function TreatmentsPage() {
         description: t('treatments.toast.error_fetching_appointments'),
         variant: 'destructive',
       });
+    }
+
+    try {
+      const patientsResponse = await fetch('/api/patients');
+      if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
+      const { patients: patientData } = await patientsResponse.json();
+      const directory: Record<string, { phone?: string }> = {};
+      (patientData ?? []).forEach((patient: any) => {
+        directory[patient.id] = { phone: patient.phone };
+      });
+      setPatientDirectory(directory);
+    } catch (error) {
+      console.error('[TreatmentsPage] refreshData patients error', error);
+      setPatientDirectory({});
+      toast({
+        title: t('common.error'),
+        description: t('patients.error_fetching_description'),
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -141,6 +170,16 @@ export default function TreatmentsPage() {
   React.useEffect(() => {
     void refreshData();
   }, [refreshData]);
+
+  const getTreatmentPhone = React.useCallback(
+    (treatment: Treatment) => {
+      if (treatment.patientId && patientDirectory[treatment.patientId]?.phone) {
+        return patientDirectory[treatment.patientId]?.phone ?? '';
+      }
+      return extractPhoneFromText(treatment.patient);
+    },
+    [patientDirectory]
+  );
 
   const treatmentsWithAppointmentDetails = React.useMemo(() => {
     const appointmentMap = new Map(allAppointments.map((appointment) => [appointment.id, appointment]));
@@ -323,14 +362,52 @@ export default function TreatmentsPage() {
   }, [refreshData, treatmentToDelete, t, toast]);
 
   const filteredTreatments = React.useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const numericSearchTerm = searchTerm.replace(/\D/g, '');
+    const hasTextSearch = lowercasedTerm.length > 0;
+    const hasNumericSearch = numericSearchTerm.length > 0;
+
     return treatmentsWithAppointmentDetails
       .filter((treatment) => {
-        const patientMatch = treatment.patient.toLowerCase().includes(searchTerm.toLowerCase());
-        const procedureMatch = treatment.procedure.toLowerCase().includes(searchTerm.toLowerCase());
-        return patientMatch || procedureMatch;
+        if (!hasTextSearch && !hasNumericSearch) {
+          return true;
+        }
+
+        const matchesPatient = treatment.patient.toLowerCase().includes(lowercasedTerm);
+        const matchesProcedure = treatment.procedure.toLowerCase().includes(lowercasedTerm);
+        const matchesDoctor = treatment.doctor.toLowerCase().includes(lowercasedTerm);
+        const matchesStatus = treatment.status.toLowerCase().includes(lowercasedTerm);
+        const matchesCost = (treatment.cost || '').toString().toLowerCase().includes(lowercasedTerm);
+
+        const phoneValue = getTreatmentPhone(treatment);
+        const normalizedPhone = normalizePhoneNumber(phoneValue);
+        const matchesPhone = hasNumericSearch
+          ? normalizedPhone.includes(numericSearchTerm)
+          : phoneValue.toLowerCase().includes(lowercasedTerm);
+
+        const matchesAppointment = (treatment.appointments ?? []).some((appt) => {
+          const dateString = format(new Date(appt.date), 'PPP').toLowerCase();
+          const timeString = (appt.time || '').toLowerCase();
+          const statusString = (appt.status || '').toLowerCase();
+          return (
+            dateString.includes(lowercasedTerm) ||
+            timeString.includes(lowercasedTerm) ||
+            statusString.includes(lowercasedTerm)
+          );
+        });
+
+        return (
+          matchesPatient ||
+          matchesProcedure ||
+          matchesDoctor ||
+          matchesStatus ||
+          matchesCost ||
+          matchesPhone ||
+          matchesAppointment
+        );
       })
       .filter((treatment) => statusFilter === 'all' || treatment.status.toLowerCase().replace(' ', '_') === statusFilter);
-  }, [treatmentsWithAppointmentDetails, searchTerm, statusFilter]);
+  }, [treatmentsWithAppointmentDetails, searchTerm, statusFilter, getTreatmentPhone]);
 
   return (
     <DashboardLayout>
@@ -450,6 +527,7 @@ export default function TreatmentsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.patient')}</TableHead>
+                      <TableHead className="text-left" dir="ltr">{t('common.phone')}</TableHead>
                       <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('treatments.procedure')}</TableHead>
                       <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.doctor')}</TableHead>
                       <TableHead className={cn(isRTL ? 'text-right' : 'text-left')}>{t('common.cost')}</TableHead>
@@ -459,11 +537,14 @@ export default function TreatmentsPage() {
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                     ) : filteredTreatments.length > 0 ? (
                       filteredTreatments.map((treatment) => (
                         <TableRow key={treatment.id}>
                           <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.patient}</TableCell>
+                          <TableCell className="text-left" dir="ltr">
+                            {getTreatmentPhone(treatment) || t('common.na')}
+                          </TableCell>
                           <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.procedure}</TableCell>
                           <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.doctor}</TableCell>
                           <TableCell className={cn(isRTL ? 'text-right' : 'text-left')}>{treatment.cost}</TableCell>
@@ -526,7 +607,7 @@ export default function TreatmentsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
               {t('table.no_records_found')}
                         </TableCell>
                       </TableRow>
