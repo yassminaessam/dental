@@ -1900,6 +1900,9 @@ export default function WebsiteEditPage() {
     setCanvasSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const sortWidgetsByPosition = (widgets: Widget[]): Widget[] =>
+    [...widgets].sort((a, b) => ((a.props?.y ?? 0) - (b.props?.y ?? 0)));
+
   const scrollToAnchor = React.useCallback(
     (href: string | undefined | null, mode: 'edit' | 'preview'): boolean => {
       if (!href || !href.startsWith('#')) {
@@ -2614,6 +2617,80 @@ export default function WebsiteEditPage() {
     [allowedTemplateIdsRef, initialTemplatesRef]
   );
 
+  const persistDefaultTemplates = React.useCallback((map: Record<string, TemplateDefinition>) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const serialized = JSON.stringify(map);
+      window.localStorage.setItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY, serialized);
+    } catch (error) {
+      console.warn('Failed to persist default templates', error);
+    }
+  }, []);
+
+  const persistCaptureFlags = React.useCallback((flags: Record<string, boolean>) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const serialized = JSON.stringify(flags);
+      window.localStorage.setItem(DEFAULT_TEMPLATE_CAPTURE_KEY, serialized);
+    } catch (error) {
+      console.warn('Failed to persist default template capture flags', error);
+    }
+  }, []);
+
+  const hydrateDefaultTemplates = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, TemplateDefinition>;
+        const normalized: Record<string, TemplateDefinition> = {};
+        Object.entries(parsed).forEach(([id, template]) => {
+          normalized[id] = createTemplateSnapshot(template);
+        });
+        templateDefaultsRef.current = normalized;
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate default templates from storage', error);
+    }
+
+    const fallbackMap: Record<string, TemplateDefinition> = {};
+    initialTemplatesRef.current.forEach((template) => {
+      fallbackMap[template.id] = createTemplateSnapshot(template);
+    });
+    templateDefaultsRef.current = fallbackMap;
+    persistDefaultTemplates(fallbackMap);
+  }, [initialTemplatesRef, persistDefaultTemplates]);
+
+  const hydrateCaptureFlags = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_CAPTURE_KEY);
+      if (stored) {
+        templateDefaultCaptureFlagsRef.current = JSON.parse(stored) as Record<string, boolean>;
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate default template capture flags', error);
+    }
+
+    const fallbackFlags: Record<string, boolean> = {};
+    initialTemplatesRef.current.forEach((template) => {
+      fallbackFlags[template.id] = true;
+    });
+    templateDefaultCaptureFlagsRef.current = fallbackFlags;
+    persistCaptureFlags(fallbackFlags);
+  }, [initialTemplatesRef, persistCaptureFlags]);
+
   const normalizeTemplateSections = (widgets: Widget[]): Widget[] => {
     let currentY = 0;
 
@@ -2684,6 +2761,43 @@ export default function WebsiteEditPage() {
     });
   };
 
+
+  const saveBuilderState = React.useCallback(async (overrides?: Partial<BuilderStatePayload>) => {
+    const payload: BuilderStatePayload = {
+      templates: overrides?.templates ?? templates,
+      canvasWidgets: cloneWidgetsForStorage(overrides?.canvasWidgets ?? sortWidgetsByPosition(canvasWidgets)),
+      canvasSettings: overrides?.canvasSettings ?? canvasSettings,
+      defaultTemplates: cloneTemplateMap(templateDefaultsRef.current)
+    };
+
+    const response = await fetch(BUILDER_STATE_API_PATH, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to save builder state';
+      try {
+        const errorData = await response.json();
+        if (errorData?.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (error) {
+        console.error('Failed to parse builder state save error', error);
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(BUILDER_STATE_STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('Failed to persist builder state locally', error);
+      }
+    }
+  }, [templates, canvasWidgets, canvasSettings]);
   const handleSaveTemplate = async (templateId: string) => {
     if (editingTemplateId !== templateId) {
       toast({
@@ -2891,72 +3005,6 @@ export default function WebsiteEditPage() {
     };
   }, [filterAllowedTemplates, persistDefaultTemplates, persistCaptureFlags]);
 
-  const persistDefaultTemplates = React.useCallback((map: Record<string, TemplateDefinition>) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    try {
-      const serialized = JSON.stringify(map);
-      window.localStorage.setItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY, serialized);
-    } catch (error) {
-      console.warn('Failed to persist default templates', error);
-    }
-  }, []);
-
-  const persistCaptureFlags = React.useCallback((flags: Record<string, boolean>) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    try {
-      const serialized = JSON.stringify(flags);
-      window.localStorage.setItem(DEFAULT_TEMPLATE_CAPTURE_KEY, serialized);
-    } catch (error) {
-      console.warn('Failed to persist default template capture flags', error);
-    }
-  }, []);
-
-  const hydrateDefaultTemplates = React.useCallback(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Record<string, TemplateDefinition>;
-        const normalized: Record<string, TemplateDefinition> = {};
-        Object.entries(parsed).forEach(([id, template]) => {
-          normalized[id] = createTemplateSnapshot(template);
-        });
-        templateDefaultsRef.current = normalized;
-        return;
-      }
-    } catch (error) {
-      console.warn('Failed to hydrate default templates from storage', error);
-    }
-
-    const fallbackMap: Record<string, TemplateDefinition> = {};
-    initialTemplatesRef.current.forEach((template) => {
-      fallbackMap[template.id] = createTemplateSnapshot(template);
-    });
-    templateDefaultsRef.current = fallbackMap;
-    persistDefaultTemplates(fallbackMap);
-  }, [persistDefaultTemplates]);
-
-  const hydrateCaptureFlags = React.useCallback(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    try {
-      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_CAPTURE_KEY);
-      if (stored) {
-        templateDefaultCaptureFlagsRef.current = JSON.parse(stored) as Record<string, boolean>;
-      }
-    } catch (error) {
-      console.warn('Failed to hydrate default template capture flags', error);
-    }
-  }, []);
-
   React.useEffect(() => {
     if (!templateDefaultsLoadedRef.current) {
       hydrateDefaultTemplates();
@@ -2965,7 +3013,7 @@ export default function WebsiteEditPage() {
     }
   }, [hydrateDefaultTemplates, hydrateCaptureFlags]);
 
-  React.useEffect(() => {
+  const ensureDefaultTemplatesCaptured = React.useCallback(() => {
     if (!templatesHydrated || !templateDefaultsLoadedRef.current) {
       return;
     }
@@ -2989,6 +3037,10 @@ export default function WebsiteEditPage() {
     persistCaptureFlags(updatedFlags);
     void saveBuilderState();
   }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags, saveBuilderState]);
+
+  React.useEffect(() => {
+    ensureDefaultTemplatesCaptured();
+  }, [ensureDefaultTemplatesCaptured]);
 
   React.useEffect(() => {
     if (!templatesHydrated || !canvasSettingsHydrated || typeof window === 'undefined') {
@@ -3063,47 +3115,6 @@ export default function WebsiteEditPage() {
     id: generateId(),
     children: widget.children?.map((child) => cloneWidgetWithNewIds(child)) || []
   });
-
-  const saveBuilderState = React.useCallback(async (overrides?: Partial<BuilderStatePayload>) => {
-    const payload: BuilderStatePayload = {
-      templates: overrides?.templates ?? templates,
-      canvasWidgets: cloneWidgetsForStorage(overrides?.canvasWidgets ?? sortWidgetsByPosition(canvasWidgets)),
-      canvasSettings: overrides?.canvasSettings ?? canvasSettings,
-      defaultTemplates: cloneTemplateMap(templateDefaultsRef.current)
-    };
-
-    const response = await fetch(BUILDER_STATE_API_PATH, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      let errorMessage = 'Failed to save builder state';
-      try {
-        const errorData = await response.json();
-        if (errorData?.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (error) {
-        console.error('Failed to parse builder state save error', error);
-      }
-      throw new Error(errorMessage);
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(BUILDER_STATE_STORAGE_KEY, JSON.stringify(payload));
-      } catch (error) {
-        console.warn('Failed to persist builder state locally', error);
-      }
-    }
-  }, [templates, canvasWidgets, canvasSettings]);
-
-  // Order widgets by their vertical position so template saves mirror visual layout
-  const sortWidgetsByPosition = (widgets: Widget[]): Widget[] =>
-    [...widgets].sort((a, b) => ((a.props?.y ?? 0) - (b.props?.y ?? 0)));
 
   // Calculate next widget position (staggered to avoid overlap)
   const getNextPosition = () => {
