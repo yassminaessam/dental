@@ -146,37 +146,72 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     [t]
   );
 
+  const fetchClinicalImagesForPatient = React.useCallback(async (currentPatient: Patient) => {
+    const query = new URLSearchParams();
+    if (currentPatient.id) {
+      query.set('patientId', currentPatient.id);
+    }
+
+    const url = `/api/clinical-images${query.toString() ? `?${query.toString()}` : ''}`;
+
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch clinical images (${response.status})`);
+      }
+      const payload = await response.json();
+      if (Array.isArray(payload.images)) {
+        return payload.images as any[];
+      }
+    } catch (error) {
+      console.error('Failed to load clinical images via API, falling back to legacy store', error);
+    }
+
+    try {
+      const legacy = await listCollection('clinical-images');
+      return (legacy as any[]).filter((img) => {
+        if (img.patientId && currentPatient.id) {
+          return img.patientId === currentPatient.id;
+        }
+        return img.patient === currentPatient.name;
+      });
+    } catch (fallbackError) {
+      console.error('Failed to load legacy clinical images', fallbackError);
+      return [];
+    }
+  }, []);
+
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const onOpenChange = externalOnOpenChange || setInternalOpen;
 
-  const fetchPatientHistory = async () => {
+  const fetchPatientHistory = React.useCallback(async () => {
     if (!patient) return;
-    
+
     setLoading(true);
     try {
       const [
         appointments,
         treatments,
         medicalRecords,
-        clinicalImages,
         invoices,
         insuranceClaims,
         toothImageLinks,
         messages,
         prescriptions,
-        referrals
+        referrals,
+        clinicalImages
       ] = await Promise.all([
         listCollection('appointments'),
         listCollection('treatments'),
         listCollection('medical-records'),
-        listCollection('clinical-images'),
         listCollection('invoices'),
         listCollection('insurance-claims'),
         listCollection('tooth-image-links'),
         listCollection('messages'),
         listCollection('prescriptions'),
-        listCollection('referrals')
+        listCollection('referrals'),
+        fetchClinicalImagesForPatient(patient)
       ]);
 
       // Filter data by patient
@@ -184,7 +219,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
         appointments: (appointments as any[]).filter((apt: any) => apt.patient === patient.name),
         treatments: (treatments as any[]).filter((t: any) => t.patient === patient.name),
         medicalRecords: (medicalRecords as any[]).filter((r: any) => r.patient === patient.name),
-        clinicalImages: (clinicalImages as any[]).filter((img: any) => img.patient === patient.name),
+        clinicalImages: clinicalImages as any[],
         invoices: (invoices as any[]).filter((inv: any) => inv.patientId === patient.id || inv.patient === patient.name),
         insuranceClaims: (insuranceClaims as any[]).filter((claim: any) => claim.patientId === patient.id || claim.patient === patient.name),
         toothImageLinks: (toothImageLinks as any[]).filter((link: any) => link.patient === patient.name),
@@ -204,13 +239,13 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     } finally {
       setLoading(false);
     }
-  };
+  }, [patient, fetchClinicalImagesForPatient, t, toast]);
 
   React.useEffect(() => {
     if (open && patient) {
       fetchPatientHistory();
     }
-  }, [open, patient]);
+  }, [open, patient, fetchPatientHistory]);
 
   const getPatientStats = () => {
     if (!historyData) return null;
