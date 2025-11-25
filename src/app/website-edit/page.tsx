@@ -164,6 +164,30 @@ type BuilderStatePayload = {
   canvasSettings: CanvasSettings;
 };
 
+type TemplateDefinition = {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+  widgets: Widget[];
+  canvasSettings?: CanvasSettings;
+};
+
+const cloneWidgetsForStorage = (widgets: Widget[]): Widget[] =>
+  widgets.map((widget) => ({
+    ...widget,
+    props: { ...widget.props },
+    children: widget.children ? cloneWidgetsForStorage(widget.children) : []
+  }));
+
+const createTemplateSnapshot = (template: TemplateDefinition): TemplateDefinition => ({
+  ...template,
+  widgets: cloneWidgetsForStorage(template.widgets),
+  canvasSettings: template.canvasSettings
+    ? { ...DEFAULT_CANVAS_SETTINGS, ...template.canvasSettings }
+    : { ...DEFAULT_CANVAS_SETTINGS }
+});
+
 const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
   backgroundColor: '#ffffff',
   backgroundGradient: '',
@@ -187,6 +211,8 @@ const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
 
 const CANVAS_SETTINGS_STORAGE_KEY = 'websiteBuilderCanvasSettings';
 const BUILDER_STATE_STORAGE_KEY = 'websiteBuilderState';
+const DEFAULT_TEMPLATE_SNAPSHOT_KEY = 'websiteBuilderDefaultTemplates';
+const DEFAULT_TEMPLATE_CAPTURE_KEY = 'websiteBuilderDefaultTemplatesCaptured';
 const BUILDER_STATE_API_PATH = '/api/website-builder/state';
 
 const camelToKebab = (value: string) =>
@@ -1994,18 +2020,9 @@ export default function WebsiteEditPage() {
       ? 'Customize the selected widget.'
       : 'Select a widget to edit.';
 
-  type TemplateDefinition = {
-    id: string;
-    name: string;
-    description: string;
-    thumbnail: string;
-    widgets: Widget[];
-    canvasSettings?: CanvasSettings;
-  };
-
   // Dental Clinic Landing Page Templates
-  const initialTemplates: TemplateDefinition[] = [
-    {
+  const initialTemplates = React.useMemo<TemplateDefinition[]>(() => {
+    const template1: TemplateDefinition = {
       id: 'template1',
       name: 'Modern Dental Clinic',
       description: 'Clean and professional design with appointment booking',
@@ -2554,1198 +2571,39 @@ export default function WebsiteEditPage() {
         }
       ],
       canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
-    },
-    {
-      id: 'template2',
-      name: 'Family Dental Care',
-      description: 'Warm and welcoming design for family-oriented practice',
-      thumbnail: '👨‍👩‍👧‍👦',
-      widgets: [
-        // Header
-        {
-          id: '',
-          type: 'navbar',
-          props: {
-            logo: '',
-            logoText: 'Family Dental',
-            links: [
-              { label: 'Home', href: '#home' },
-              { label: 'Services', href: '#services' },
-              { label: 'Our Team', href: '#team' },
-              { label: 'Kids Zone', href: '#kids' },
-              { label: 'Contact', href: '#contact' }
-            ],
-            backgroundColor: '#10b981',
-            color: '#ffffff',
-            x: 0,
-            y: 0,
-            width: '100%',
-            height: '80px'
-          },
-          children: []
-        },
-        // Hero Section
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#ecfdf5',
-            padding: '3rem',
-            x: 0,
-            y: 80,
-            width: '100%',
-            height: '500px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Caring for Your Family\'s Smiles',
-                level: 'h1',
-                fontSize: '2.75rem',
-                color: '#059669',
-                textAlign: 'center',
-                x: 200,
-                y: 80
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'From kids to grandparents, we provide gentle and comprehensive dental care for the whole family.',
-                fontSize: '1.25rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                x: 150,
-                y: 180
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Book Family Appointment',
-                backgroundColor: '#10b981',
-                color: '#ffffff',
-                fontSize: '1.125rem',
-                padding: '1rem 2rem',
-                borderRadius: '9999px',
-                x: 420,
-                y: 280
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'icon',
-              props: {
-                name: 'Heart',
-                size: '2rem',
-                color: '#ef4444',
-                x: 400,
-                y: 380
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Trusted by 5000+ Families',
-                fontSize: '1rem',
-                color: '#059669',
-                fontWeight: 'bold',
-                x: 450,
-                y: 385
-              },
-              children: []
-            }
-          ]
-        },
-        // Services for Families
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 580,
-            width: '100%',
-            height: '550px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Complete Family Dental Care',
-                level: 'h2',
-                fontSize: '2.25rem',
-                color: '#047857',
-                textAlign: 'center',
-                x: 350,
-                y: 20
-              },
-              children: []
-            },
-            // Kids Service Card
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Kids Dentistry',
-                content: 'Fun, gentle care with toys, games, and rewards to make dental visits enjoyable',
-                backgroundColor: '#fef3c7',
-                borderRadius: '1rem',
-                padding: '2rem',
-                x: 50,
-                y: 120,
-                width: '350px',
-                height: '180px'
-              },
-              children: []
-            },
-            // Teen Service Card
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Teen Orthodontics',
-                content: 'Braces and Invisalign options for confident smiles during the school years',
-                backgroundColor: '#dbeafe',
-                borderRadius: '1rem',
-                padding: '2rem',
-                x: 425,
-                y: 120,
-                width: '350px',
-                height: '180px'
-              },
-              children: []
-            },
-            // Adult Service Card
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Adult Care',
-                content: 'Comprehensive dental services including cosmetic and restorative treatments',
-                backgroundColor: '#fce7f3',
-                borderRadius: '1rem',
-                padding: '2rem',
-                x: 800,
-                y: 120,
-                width: '350px',
-                height: '180px'
-              },
-              children: []
-            },
-            // Senior Service Card
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Senior Dental Care',
-                content: 'Specialized care for dentures, implants, and age-related dental needs',
-                backgroundColor: '#e0e7ff',
-                borderRadius: '1rem',
-                padding: '2rem',
-                x: 240,
-                y: 320,
-                width: '350px',
-                height: '180px'
-              },
-              children: []
-            },
-            // Prevention Card
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Preventive Care',
-                content: 'Regular checkups, cleanings, and fluoride treatments for the whole family',
-                backgroundColor: '#dcfce7',
-                borderRadius: '1rem',
-                padding: '2rem',
-                x: 615,
-                y: 320,
-                width: '350px',
-                height: '180px'
-              },
-              children: []
-            }
-          ]
-        },
-        // Our Team
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#f9fafb',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 1130,
-            width: '100%',
-            height: '450px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Meet Our Friendly Team',
-                level: 'h2',
-                fontSize: '2.25rem',
-                color: '#047857',
-                textAlign: 'center',
-                x: 380,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Experienced professionals who love working with families',
-                fontSize: '1.125rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                x: 300,
-                y: 80
-              },
-              children: []
-            },
-            // Team member cards
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. Sarah Johnson',
-                content: 'Pediatric Specialist - 15 years making kids smile',
-                backgroundColor: '#ffffff',
-                borderRadius: '0.5rem',
-                x: 100,
-                y: 150,
-                width: '300px',
-                height: '220px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. Michael Chen',
-                content: 'Family Dentist - Expert in gentle, compassionate care',
-                backgroundColor: '#ffffff',
-                borderRadius: '0.5rem',
-                x: 450,
-                y: 150,
-                width: '300px',
-                height: '220px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. Lisa Martinez',
-                content: 'Orthodontist - Creating beautiful smiles for teens',
-                backgroundColor: '#ffffff',
-                borderRadius: '0.5rem',
-                x: 800,
-                y: 150,
-                width: '300px',
-                height: '220px'
-              },
-              children: []
-            }
-          ]
-        },
-        // Kids Zone Section
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#fef3c7',
-            padding: '3rem 2rem',
-            x: 0,
-            y: 1580,
-            width: '100%',
-            height: '350px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: '🎈 Kids Love Our Office! 🎈',
-                level: 'h2',
-                fontSize: '2rem',
-                color: '#d97706',
-                textAlign: 'center',
-                x: 380,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'list',
-              props: {
-                items: ['Play area with toys and games', 'TV screens in treatment rooms', 'Prize box after visits', 'Gentle, kid-friendly approach'],
-                ordered: false,
-                fontSize: '1.125rem',
-                color: '#92400e',
-                x: 400,
-                y: 100
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Schedule Kids Appointment',
-                backgroundColor: '#f59e0b',
-                color: '#ffffff',
-                fontSize: '1.125rem',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '0.5rem',
-                x: 420,
-                y: 250
-              },
-              children: []
-            }
-          ]
-        },
-        // Testimonials
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 1930,
-            width: '100%',
-            height: '400px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Happy Families',
-                level: 'h2',
-                fontSize: '2.25rem',
-                color: '#047857',
-                textAlign: 'center',
-                x: 450,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'My kids actually ask when they can go back to the dentist! The staff is amazing.',
-                author: 'Jennifer Smith',
-                rating: 5,
-                backgroundColor: '#ecfdf5',
-                x: 100,
-                y: 120,
-                width: '320px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'Three generations of our family come here. We wouldn\'t go anywhere else!',
-                author: 'Robert Johnson',
-                rating: 5,
-                backgroundColor: '#ecfdf5',
-                x: 440,
-                y: 120,
-                width: '320px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'The team makes everyone feel comfortable, from toddlers to grandparents.',
-                author: 'Maria Garcia',
-                rating: 5,
-                backgroundColor: '#ecfdf5',
-                x: 780,
-                y: 120,
-                width: '320px'
-              },
-              children: []
-            }
-          ]
-        },
-        // Contact & Hours
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#047857',
-            padding: '3rem 2rem',
-            x: 0,
-            y: 2330,
-            width: '100%',
-            height: '350px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Visit Us Today!',
-                level: 'h2',
-                fontSize: '2rem',
-                color: '#ffffff',
-                textAlign: 'center',
-                x: 450,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'contactInfo',
-              props: {
-                phone: 'Call: (555) 123-4567',
-                email: 'smile@familydental.com',
-                address: '456 Oak Street, Family Plaza, Cairo',
-                backgroundColor: 'transparent',
-                color: '#ffffff',
-                x: 380,
-                y: 100
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Hours: Mon-Fri 8am-6pm, Sat 9am-2pm',
-                fontSize: '1.125rem',
-                color: '#d1fae5',
-                textAlign: 'center',
-                x: 380,
-                y: 200
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Get Directions',
-                backgroundColor: '#ffffff',
-                color: '#047857',
-                fontSize: '1rem',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '0.5rem',
-                x: 470,
-                y: 260
-              },
-              children: []
-            }
-          ]
-        },
-        // Footer
-        {
-          id: '',
-          type: 'footer',
-          props: {
-            copyright: '© 2024 Family Dental Care. Smiles for All Ages.',
-            links: ['Privacy', 'Insurance', 'FAQs', 'Careers'],
-            backgroundColor: '#064e3b',
-            color: '#a7f3d0',
-            x: 0,
-            y: 2680,
-            width: '100%',
-            height: '120px'
-          },
-          children: []
-        }
-      ],
-      canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
-    },
-    {
-      id: 'template3',
-      name: 'Premium Dental Studio',
-      description: 'Luxurious design for high-end dental practice',
-      thumbnail: '✨',
-      widgets: [
-        // Elegant Header
-        {
-          id: '',
-          type: 'navbar',
-          props: {
-            logo: '',
-            logoText: 'Premium Dental Studio',
-            links: [
-              { label: 'Services', href: '#services' },
-              { label: 'Technology', href: '#technology' },
-              { label: 'Our Experts', href: '#experts' },
-              { label: 'Gallery', href: '#gallery' },
-              { label: 'VIP Booking', href: '#vip' }
-            ],
-            backgroundColor: '#1f2937',
-            color: '#f9fafb',
-            x: 0,
-            y: 0,
-            width: '100%',
-            height: '90px'
-          },
-          children: []
-        },
-        // Luxury Hero
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#111827',
-            backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '5rem 2rem',
-            x: 0,
-            y: 90,
-            width: '100%',
-            height: '600px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Experience Premium Dental Excellence',
-                level: 'h1',
-                fontSize: '3.5rem',
-                color: '#ffffff',
-                textAlign: 'center',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                x: 100,
-                y: 150
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Where artistry meets advanced dentistry',
-                fontSize: '1.5rem',
-                color: '#e5e7eb',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                x: 300,
-                y: 250
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Schedule VIP Consultation',
-                backgroundColor: '#fbbf24',
-                color: '#1f2937',
-                fontSize: '1.25rem',
-                padding: '1.25rem 3rem',
-                borderRadius: '9999px',
-                fontWeight: 'bold',
-                x: 400,
-                y: 350
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'icon',
-              props: {
-                name: 'Star',
-                size: '2rem',
-                color: '#fbbf24',
-                x: 550,
-                y: 450
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: '5-Star Rated Clinic',
-                fontSize: '1rem',
-                color: '#fbbf24',
-                fontWeight: 'bold',
-                x: 470,
-                y: 490
-              },
-              children: []
-            }
-          ]
-        },
-        // Excellence Statistics
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 690,
-            width: '100%',
-            height: '350px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Setting the Standard in Dental Excellence',
-                level: 'h2',
-                fontSize: '2rem',
-                color: '#1f2937',
-                textAlign: 'center',
-                x: 250,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'stats',
-              props: {
-                value: '15+',
-                label: 'Years of Excellence',
-                icon: 'award',
-                color: '#7c3aed',
-                x: 100,
-                y: 120
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'stats',
-              props: {
-                value: '5000+',
-                label: 'VIP Patients',
-                icon: 'users',
-                color: '#7c3aed',
-                x: 350,
-                y: 120
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'stats',
-              props: {
-                value: '100%',
-                label: 'Satisfaction',
-                icon: 'star',
-                color: '#7c3aed',
-                x: 600,
-                y: 120
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'stats',
-              props: {
-                value: '50+',
-                label: 'Awards Won',
-                icon: 'trophy',
-                color: '#7c3aed',
-                x: 850,
-                y: 120
-              },
-              children: []
-            }
-          ]
-        },
-        // Premium Services
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#f9fafb',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 1040,
-            width: '100%',
-            height: '650px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Exclusive Services',
-                level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
-                textAlign: 'center',
-                x: 400,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Bespoke dental solutions tailored to your unique needs',
-                fontSize: '1.25rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                x: 280,
-                y: 80
-              },
-              children: []
-            },
-            // Premium Service Cards
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Smile Design Studio',
-                content: 'Digital smile makeover with 3D visualization and custom veneers',
-                backgroundColor: '#faf5ff',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(124, 58, 237, 0.1)',
-                x: 50,
-                y: 150,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Same-Day Crowns',
-                content: 'CEREC technology for crowns in a single appointment',
-                backgroundColor: '#fef3c7',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(251, 191, 36, 0.1)',
-                x: 425,
-                y: 150,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Laser Dentistry',
-                content: 'Pain-free procedures with advanced laser technology',
-                backgroundColor: '#ffe4e6',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(244, 63, 94, 0.1)',
-                x: 800,
-                y: 150,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'VIP Concierge Service',
-                content: 'Personal treatment coordinator and priority scheduling',
-                backgroundColor: '#ecfdf5',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.1)',
-                x: 50,
-                y: 380,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Spa Dentistry',
-                content: 'Relaxing atmosphere with massage chairs and aromatherapy',
-                backgroundColor: '#fce7f3',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(236, 72, 153, 0.1)',
-                x: 425,
-                y: 380,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Executive Dental Care',
-                content: 'After-hours appointments for busy professionals',
-                backgroundColor: '#e0e7ff',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                boxShadow: '0 10px 25px rgba(99, 102, 241, 0.1)',
-                x: 800,
-                y: 380,
-                width: '350px',
-                height: '200px'
-              },
-              children: []
-            }
-          ]
-        },
-        // Technology Section
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#111827',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 1690,
-            width: '100%',
-            height: '450px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'State-of-the-Art Technology',
-                level: 'h2',
-                fontSize: '2.5rem',
-                color: '#ffffff',
-                textAlign: 'center',
-                x: 300,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'list',
-              props: {
-                items: ['Digital X-rays with 90% less radiation', '3D CT Scanning for precise diagnostics', 'Intraoral cameras for detailed imaging', 'CEREC same-day crown technology', 'Laser technology for pain-free procedures', 'Digital impression system - no messy molds'],
-                ordered: false,
-                fontSize: '1.125rem',
-                color: '#d1d5db',
-                x: 350,
-                y: 120
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Explore Our Technology',
-                backgroundColor: '#7c3aed',
-                color: '#ffffff',
-                fontSize: '1.125rem',
-                padding: '1rem 2rem',
-                borderRadius: '0.5rem',
-                x: 430,
-                y: 350
-              },
-              children: []
-            }
-          ]
-        },
-        // Expert Team
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#ffffff',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 2140,
-            width: '100%',
-            height: '500px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'World-Class Dental Experts',
-                level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
-                textAlign: 'center',
-                x: 330,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Internationally trained specialists committed to excellence',
-                fontSize: '1.125rem',
-                color: '#6b7280',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                x: 280,
-                y: 80
-              },
-              children: []
-            },
-            // Expert Cards
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. Alexander Sterling',
-                content: 'Cosmetic Specialist - Harvard trained with 20+ years experience',
-                backgroundColor: '#faf5ff',
-                borderRadius: '0.5rem',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                x: 100,
-                y: 150,
-                width: '320px',
-                height: '250px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. Victoria Laurent',
-                content: 'Implant Specialist - European certified implantologist',
-                backgroundColor: '#fef3c7',
-                borderRadius: '0.5rem',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                x: 440,
-                y: 150,
-                width: '320px',
-                height: '250px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'card',
-              props: {
-                title: 'Dr. James Mitchell',
-                content: 'Orthodontics Expert - Invisalign Diamond Provider',
-                backgroundColor: '#ecfdf5',
-                borderRadius: '0.5rem',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                x: 780,
-                y: 150,
-                width: '320px',
-                height: '250px'
-              },
-              children: []
-            }
-          ]
-        },
-        // Testimonials
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#f9fafb',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 2640,
-            width: '100%',
-            height: '450px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Client Success Stories',
-                level: 'h2',
-                fontSize: '2.5rem',
-                color: '#1f2937',
-                textAlign: 'center',
-                x: 380,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'The level of care and attention to detail is unmatched. Truly a premium experience.',
-                author: 'CEO, Fortune 500 Company',
-                rating: 5,
-                backgroundColor: '#ffffff',
-                x: 100,
-                y: 120,
-                width: '340px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'From the moment you walk in, you know you\'re in the best hands possible.',
-                author: 'International Model',
-                rating: 5,
-                backgroundColor: '#ffffff',
-                x: 460,
-                y: 120,
-                width: '340px'
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'testimonial',
-              props: {
-                quote: 'They transformed my smile and my confidence. Worth every penny.',
-                author: 'TV Personality',
-                rating: 5,
-                backgroundColor: '#ffffff',
-                x: 820,
-                y: 120,
-                width: '340px'
-              },
-              children: []
-            }
-          ]
-        },
-        // VIP Contact
-        {
-          id: '',
-          type: 'section',
-          props: {
-            backgroundColor: '#7c3aed',
-            padding: '4rem 2rem',
-            x: 0,
-            y: 3090,
-            width: '100%',
-            height: '400px'
-          },
-          children: [
-            {
-              id: '',
-              type: 'heading',
-              props: {
-                text: 'Begin Your Premium Dental Journey',
-                level: 'h2',
-                fontSize: '2.5rem',
-                color: '#ffffff',
-                textAlign: 'center',
-                x: 250,
-                y: 20
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'text',
-              props: {
-                text: 'Private consultations available by appointment only',
-                fontSize: '1.25rem',
-                color: '#e9d5ff',
-                textAlign: 'center',
-                x: 320,
-                y: 90
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'contactInfo',
-              props: {
-                phone: 'VIP Line: +20 100 VIP CARE',
-                email: 'concierge@premiumdental.com',
-                address: 'Zamalek Tower, Floor 25, Cairo',
-                backgroundColor: 'transparent',
-                color: '#ffffff',
-                x: 380,
-                y: 150
-              },
-              children: []
-            },
-            {
-              id: '',
-              type: 'button',
-              props: {
-                text: 'Request VIP Consultation',
-                backgroundColor: '#fbbf24',
-                color: '#1f2937',
-                fontSize: '1.25rem',
-                padding: '1.25rem 3rem',
-                borderRadius: '9999px',
-                fontWeight: 'bold',
-                boxShadow: '0 20px 25px rgba(251, 191, 36, 0.25)',
-                x: 400,
-                y: 260
-              },
-              children: []
-            }
-          ]
-        },
-        // Luxury Footer
-        {
-          id: '',
-          type: 'footer',
-          props: {
-            copyright: '© 2024 Premium Dental Studio. Excellence Redefined.',
-            links: ['Privacy', 'Terms', 'VIP Program', 'Careers', 'Contact'],
-            backgroundColor: '#111827',
-            color: '#9ca3af',
-            x: 0,
-            y: 3490,
-            width: '100%',
-            height: '150px'
-          },
-          children: []
-        }
-      ],
-      canvasSettings: { ...DEFAULT_CANVAS_SETTINGS }
-    }
-  ];
+    };
+
+    return [template1];
+  }, []);
+
 
   const TEMPLATE_STORAGE_KEY = 'websiteBuilderTemplates';
-  const [templates, setTemplates] = React.useState<TemplateDefinition[]>(initialTemplates);
+  const [templates, setTemplates] = React.useState<TemplateDefinition[]>(() =>
+    initialTemplates.map((template) => createTemplateSnapshot(template))
+  );
   const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
   const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
+
+  const templateDefaultsRef = React.useRef<Record<string, TemplateDefinition>>({});
+  const templateDefaultsLoadedRef = React.useRef(false);
+  const templateDefaultCaptureFlagsRef = React.useRef<Record<string, boolean>>({});
+  const initialTemplatesRef = React.useRef(
+    initialTemplates.map((template) => createTemplateSnapshot(template))
+  );
+  const allowedTemplateIdsRef = React.useRef(
+    new Set(initialTemplatesRef.current.map((template) => template.id))
+  );
+
+  const filterAllowedTemplates = React.useCallback(
+    (list: TemplateDefinition[]): TemplateDefinition[] => {
+      const filtered = list.filter((template) => allowedTemplateIdsRef.current.has(template.id));
+      if (filtered.length) {
+        return filtered;
+      }
+      return initialTemplatesRef.current.map((template) => createTemplateSnapshot(template));
+    },
+    [allowedTemplateIdsRef, initialTemplatesRef]
+  );
 
   const normalizeTemplateSections = (widgets: Widget[]): Widget[] => {
     let currentY = 0;
@@ -3871,6 +2729,33 @@ export default function WebsiteEditPage() {
     }
   };
 
+  const handleSetDefaultTemplate = (templateId: string) => {
+    const defaultTemplate = templateDefaultsRef.current[templateId];
+    if (!defaultTemplate) {
+      const fallback = initialTemplatesRef.current.find((t) => t.id === templateId);
+      if (fallback) {
+        templateDefaultsRef.current[templateId] = createTemplateSnapshot(fallback);
+        persistDefaultTemplates(templateDefaultsRef.current);
+        persistCaptureFlags(templateDefaultCaptureFlagsRef.current);
+        return handleSetDefaultTemplate(templateId);
+      }
+      toast({
+        title: "Default Template Missing",
+        description: "Unable to locate the saved default layout for this template.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const restoredTemplate = createTemplateSnapshot(defaultTemplate);
+    applyTemplate(restoredTemplate);
+    setEditingTemplateId(templateId);
+    toast({
+      title: "Template Reset",
+      description: `${defaultTemplate.name} default layout loaded. Save to retain changes.`,
+    });
+  };
+
   React.useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -3893,7 +2778,7 @@ export default function WebsiteEditPage() {
         if (storedState) {
           const parsed = JSON.parse(storedState) as Partial<BuilderStatePayload>;
           if (Array.isArray(parsed.templates)) {
-            setTemplates(parsed.templates as TemplateDefinition[]);
+            setTemplates(filterAllowedTemplates(parsed.templates as TemplateDefinition[]));
           }
           if (Array.isArray(parsed.canvasWidgets)) {
             applyLoadedWidgets(parsed.canvasWidgets as Widget[]);
@@ -3912,7 +2797,7 @@ export default function WebsiteEditPage() {
         if (storedTemplates) {
           const parsedTemplates = JSON.parse(storedTemplates);
           if (Array.isArray(parsedTemplates)) {
-            setTemplates(parsedTemplates as TemplateDefinition[]);
+            setTemplates(filterAllowedTemplates(parsedTemplates as TemplateDefinition[]));
           }
         }
 
@@ -3939,7 +2824,7 @@ export default function WebsiteEditPage() {
 
         if (data) {
           if (Array.isArray(data.templates)) {
-            setTemplates(data.templates as TemplateDefinition[]);
+            setTemplates(filterAllowedTemplates(data.templates as TemplateDefinition[]));
           }
           if (Array.isArray(data.canvasWidgets)) {
             applyLoadedWidgets(data.canvasWidgets as Widget[]);
@@ -3967,7 +2852,105 @@ export default function WebsiteEditPage() {
     return () => {
       isMounted = false;
     };
+  }, [filterAllowedTemplates]);
+
+  const persistDefaultTemplates = React.useCallback((map: Record<string, TemplateDefinition>) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const serialized = JSON.stringify(map);
+      window.localStorage.setItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY, serialized);
+    } catch (error) {
+      console.warn('Failed to persist default templates', error);
+    }
   }, []);
+
+  const persistCaptureFlags = React.useCallback((flags: Record<string, boolean>) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const serialized = JSON.stringify(flags);
+      window.localStorage.setItem(DEFAULT_TEMPLATE_CAPTURE_KEY, serialized);
+    } catch (error) {
+      console.warn('Failed to persist default template capture flags', error);
+    }
+  }, []);
+
+  const hydrateDefaultTemplates = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_SNAPSHOT_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, TemplateDefinition>;
+        const normalized: Record<string, TemplateDefinition> = {};
+        Object.entries(parsed).forEach(([id, template]) => {
+          normalized[id] = createTemplateSnapshot(template);
+        });
+        templateDefaultsRef.current = normalized;
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate default templates from storage', error);
+    }
+
+    const fallbackMap: Record<string, TemplateDefinition> = {};
+    initialTemplatesRef.current.forEach((template) => {
+      fallbackMap[template.id] = createTemplateSnapshot(template);
+    });
+    templateDefaultsRef.current = fallbackMap;
+    persistDefaultTemplates(fallbackMap);
+  }, [persistDefaultTemplates]);
+
+  const hydrateCaptureFlags = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(DEFAULT_TEMPLATE_CAPTURE_KEY);
+      if (stored) {
+        templateDefaultCaptureFlagsRef.current = JSON.parse(stored) as Record<string, boolean>;
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate default template capture flags', error);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!templateDefaultsLoadedRef.current) {
+      hydrateDefaultTemplates();
+      hydrateCaptureFlags();
+      templateDefaultsLoadedRef.current = true;
+    }
+  }, [hydrateDefaultTemplates, hydrateCaptureFlags]);
+
+  React.useEffect(() => {
+    if (!templatesHydrated || !templateDefaultsLoadedRef.current) {
+      return;
+    }
+
+    const uncaptured = templates.filter((template) => !templateDefaultCaptureFlagsRef.current[template.id]);
+    if (!uncaptured.length) {
+      return;
+    }
+
+    const updatedMap = { ...templateDefaultsRef.current };
+    const updatedFlags = { ...templateDefaultCaptureFlagsRef.current };
+
+    uncaptured.forEach((template) => {
+      updatedMap[template.id] = createTemplateSnapshot(template);
+      updatedFlags[template.id] = true;
+    });
+
+    templateDefaultsRef.current = updatedMap;
+    templateDefaultCaptureFlagsRef.current = updatedFlags;
+    persistDefaultTemplates(updatedMap);
+    persistCaptureFlags(updatedFlags);
+  }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags]);
 
   React.useEffect(() => {
     if (!templatesHydrated || !canvasSettingsHydrated || typeof window === 'undefined') {
@@ -4041,13 +3024,6 @@ export default function WebsiteEditPage() {
     id: generateId(),
     children: widget.children?.map((child) => cloneWidgetWithNewIds(child)) || []
   });
-
-  const cloneWidgetsForStorage = (widgets: Widget[]): Widget[] =>
-    widgets.map((widget) => ({
-      ...widget,
-      props: { ...widget.props },
-      children: widget.children ? cloneWidgetsForStorage(widget.children) : []
-    }));
 
   const saveBuilderState = React.useCallback(async (overrides?: Partial<BuilderStatePayload>) => {
     const payload: BuilderStatePayload = {
@@ -10814,6 +9790,13 @@ export default function WebsiteEditPage() {
                                 disabled={editingTemplateId !== template.id}
                               >
                                 Save Template
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleSetDefaultTemplate(template.id)}
+                              >
+                                Default Template
                               </Button>
                             </div>
                             {editingTemplateId === template.id && (
