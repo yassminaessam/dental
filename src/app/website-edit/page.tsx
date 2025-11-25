@@ -1900,8 +1900,10 @@ export default function WebsiteEditPage() {
     setCanvasSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const sortWidgetsByPosition = (widgets: Widget[]): Widget[] =>
-    [...widgets].sort((a, b) => ((a.props?.y ?? 0) - (b.props?.y ?? 0)));
+  const sortWidgetsByPosition = React.useCallback(
+    (widgets: Widget[]): Widget[] => [...widgets].sort((a, b) => ((a.props?.y ?? 0) - (b.props?.y ?? 0))),
+    []
+  );
 
   const scrollToAnchor = React.useCallback(
     (href: string | undefined | null, mode: 'edit' | 'preview'): boolean => {
@@ -2596,12 +2598,12 @@ export default function WebsiteEditPage() {
   const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
   const [templatesHydrated, setTemplatesHydrated] = React.useState(false);
 
-  const templateDefaultsRef = React.useRef<Record<string, TemplateDefinition>>({});
-  const templateDefaultsLoadedRef = React.useRef(false);
-  const templateDefaultCaptureFlagsRef = React.useRef<Record<string, boolean>>({});
   const initialTemplatesRef = React.useRef(
     initialTemplates.map((template) => createTemplateSnapshot(template))
   );
+  const templateDefaultsRef = React.useRef<Record<string, TemplateDefinition>>({});
+  const templateDefaultsLoadedRef = React.useRef(false);
+  const templateDefaultCaptureFlagsRef = React.useRef<Record<string, boolean>>({});
   const allowedTemplateIdsRef = React.useRef(
     new Set(initialTemplatesRef.current.map((template) => template.id))
   );
@@ -2767,7 +2769,7 @@ export default function WebsiteEditPage() {
       templates: overrides?.templates ?? templates,
       canvasWidgets: cloneWidgetsForStorage(overrides?.canvasWidgets ?? sortWidgetsByPosition(canvasWidgets)),
       canvasSettings: overrides?.canvasSettings ?? canvasSettings,
-      defaultTemplates: cloneTemplateMap(templateDefaultsRef.current)
+      defaultTemplates: overrides?.defaultTemplates ?? cloneTemplateMap(templateDefaultsRef.current)
     };
 
     const response = await fetch(BUILDER_STATE_API_PATH, {
@@ -2797,7 +2799,7 @@ export default function WebsiteEditPage() {
         console.warn('Failed to persist builder state locally', error);
       }
     }
-  }, [templates, canvasWidgets, canvasSettings]);
+  }, [templates, canvasWidgets, canvasSettings, sortWidgetsByPosition]);
   const handleSaveTemplate = async (templateId: string) => {
     if (editingTemplateId !== templateId) {
       toast({
@@ -2857,7 +2859,9 @@ export default function WebsiteEditPage() {
     if (!defaultTemplate) {
       const fallback = initialTemplatesRef.current.find((t) => t.id === templateId);
       if (fallback) {
-        templateDefaultsRef.current[templateId] = createTemplateSnapshot(fallback);
+        const snapshot = createTemplateSnapshot(fallback);
+        templateDefaultsRef.current[templateId] = snapshot;
+        templateDefaultCaptureFlagsRef.current[templateId] = true;
         persistDefaultTemplates(templateDefaultsRef.current);
         persistCaptureFlags(templateDefaultCaptureFlagsRef.current);
         return handleSetDefaultTemplate(templateId);
@@ -3003,7 +3007,7 @@ export default function WebsiteEditPage() {
     return () => {
       isMounted = false;
     };
-  }, [filterAllowedTemplates, persistDefaultTemplates, persistCaptureFlags]);
+  }, [filterAllowedTemplates, sortWidgetsByPosition, persistDefaultTemplates, persistCaptureFlags]);
 
   React.useEffect(() => {
     if (!templateDefaultsLoadedRef.current) {
@@ -3012,35 +3016,6 @@ export default function WebsiteEditPage() {
       templateDefaultsLoadedRef.current = true;
     }
   }, [hydrateDefaultTemplates, hydrateCaptureFlags]);
-
-  const ensureDefaultTemplatesCaptured = React.useCallback(() => {
-    if (!templatesHydrated || !templateDefaultsLoadedRef.current) {
-      return;
-    }
-
-    const uncaptured = templates.filter((template) => !templateDefaultCaptureFlagsRef.current[template.id]);
-    if (!uncaptured.length) {
-      return;
-    }
-
-    const updatedMap = { ...templateDefaultsRef.current };
-    const updatedFlags = { ...templateDefaultCaptureFlagsRef.current };
-
-    uncaptured.forEach((template) => {
-      updatedMap[template.id] = createTemplateSnapshot(template);
-      updatedFlags[template.id] = true;
-    });
-
-    templateDefaultsRef.current = updatedMap;
-    templateDefaultCaptureFlagsRef.current = updatedFlags;
-    persistDefaultTemplates(updatedMap);
-    persistCaptureFlags(updatedFlags);
-    void saveBuilderState();
-  }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags, saveBuilderState]);
-
-  React.useEffect(() => {
-    ensureDefaultTemplatesCaptured();
-  }, [ensureDefaultTemplatesCaptured]);
 
   React.useEffect(() => {
     if (!templatesHydrated || !canvasSettingsHydrated || typeof window === 'undefined') {
@@ -3084,6 +3059,35 @@ export default function WebsiteEditPage() {
       document.head.removeChild(style);
     };
   }, []);
+
+  const ensureDefaultTemplatesCaptured = React.useCallback(() => {
+    if (!templatesHydrated || !templateDefaultsLoadedRef.current) {
+      return;
+    }
+
+    const uncaptured = templates.filter((template) => !templateDefaultCaptureFlagsRef.current[template.id]);
+    if (!uncaptured.length) {
+      return;
+    }
+
+    const updatedMap = { ...templateDefaultsRef.current };
+    const updatedFlags = { ...templateDefaultCaptureFlagsRef.current };
+
+    uncaptured.forEach((template) => {
+      updatedMap[template.id] = createTemplateSnapshot(template);
+      updatedFlags[template.id] = true;
+    });
+
+    templateDefaultsRef.current = updatedMap;
+    templateDefaultCaptureFlagsRef.current = updatedFlags;
+    persistDefaultTemplates(updatedMap);
+    persistCaptureFlags(updatedFlags);
+    void saveBuilderState({ defaultTemplates: updatedMap });
+  }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags, saveBuilderState]);
+
+  React.useEffect(() => {
+    ensureDefaultTemplatesCaptured();
+  }, [ensureDefaultTemplatesCaptured]);
 
   // Add global mouseup handler for drag end
   React.useEffect(() => {
