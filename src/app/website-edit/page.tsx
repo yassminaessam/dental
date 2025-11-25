@@ -162,6 +162,7 @@ type BuilderStatePayload = {
   templates: TemplateDefinition[];
   canvasWidgets: Widget[];
   canvasSettings: CanvasSettings;
+  defaultTemplates?: Record<string, TemplateDefinition>;
 };
 
 type TemplateDefinition = {
@@ -187,6 +188,14 @@ const createTemplateSnapshot = (template: TemplateDefinition): TemplateDefinitio
     ? { ...DEFAULT_CANVAS_SETTINGS, ...template.canvasSettings }
     : { ...DEFAULT_CANVAS_SETTINGS }
 });
+
+const cloneTemplateMap = (map: Record<string, TemplateDefinition>): Record<string, TemplateDefinition> => {
+  const result: Record<string, TemplateDefinition> = {};
+  Object.entries(map).forEach(([id, template]) => {
+    result[id] = createTemplateSnapshot(template);
+  });
+  return result;
+};
 
 const DEFAULT_CANVAS_SETTINGS: CanvasSettings = {
   backgroundColor: '#ffffff',
@@ -2786,6 +2795,20 @@ export default function WebsiteEditPage() {
           if (parsed.canvasSettings) {
             setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...parsed.canvasSettings });
           }
+          if (parsed.defaultTemplates && typeof parsed.defaultTemplates === 'object') {
+            const normalizedMap: Record<string, TemplateDefinition> = {};
+            Object.entries(parsed.defaultTemplates).forEach(([id, template]) => {
+              normalizedMap[id] = createTemplateSnapshot(template as TemplateDefinition);
+            });
+            templateDefaultsRef.current = normalizedMap;
+            const flags: Record<string, boolean> = {};
+            Object.keys(normalizedMap).forEach((id) => {
+              flags[id] = true;
+            });
+            templateDefaultCaptureFlagsRef.current = flags;
+            persistDefaultTemplates(normalizedMap);
+            persistCaptureFlags(flags);
+          }
           return;
         }
       } catch (error) {
@@ -2832,6 +2855,20 @@ export default function WebsiteEditPage() {
           if (data.canvasSettings) {
             setCanvasSettings({ ...DEFAULT_CANVAS_SETTINGS, ...data.canvasSettings });
           }
+          if (data.defaultTemplates && typeof data.defaultTemplates === 'object') {
+            const normalizedMap: Record<string, TemplateDefinition> = {};
+            Object.entries(data.defaultTemplates).forEach(([id, template]) => {
+              normalizedMap[id] = createTemplateSnapshot(template as TemplateDefinition);
+            });
+            templateDefaultsRef.current = normalizedMap;
+            const flags: Record<string, boolean> = {};
+            Object.keys(normalizedMap).forEach((id) => {
+              flags[id] = true;
+            });
+            templateDefaultCaptureFlagsRef.current = flags;
+            persistDefaultTemplates(normalizedMap);
+            persistCaptureFlags(flags);
+          }
           return;
         }
 
@@ -2852,7 +2889,7 @@ export default function WebsiteEditPage() {
     return () => {
       isMounted = false;
     };
-  }, [filterAllowedTemplates]);
+  }, [filterAllowedTemplates, persistDefaultTemplates, persistCaptureFlags]);
 
   const persistDefaultTemplates = React.useCallback((map: Record<string, TemplateDefinition>) => {
     if (typeof window === 'undefined') {
@@ -2950,7 +2987,8 @@ export default function WebsiteEditPage() {
     templateDefaultCaptureFlagsRef.current = updatedFlags;
     persistDefaultTemplates(updatedMap);
     persistCaptureFlags(updatedFlags);
-  }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags]);
+    void saveBuilderState();
+  }, [templatesHydrated, templates, persistDefaultTemplates, persistCaptureFlags, saveBuilderState]);
 
   React.useEffect(() => {
     if (!templatesHydrated || !canvasSettingsHydrated || typeof window === 'undefined') {
@@ -2961,6 +2999,7 @@ export default function WebsiteEditPage() {
       templates,
       canvasWidgets,
       canvasSettings,
+      defaultTemplates: cloneTemplateMap(templateDefaultsRef.current),
     };
 
     try {
@@ -3029,7 +3068,8 @@ export default function WebsiteEditPage() {
     const payload: BuilderStatePayload = {
       templates: overrides?.templates ?? templates,
       canvasWidgets: cloneWidgetsForStorage(overrides?.canvasWidgets ?? sortWidgetsByPosition(canvasWidgets)),
-      canvasSettings: overrides?.canvasSettings ?? canvasSettings
+      canvasSettings: overrides?.canvasSettings ?? canvasSettings,
+      defaultTemplates: cloneTemplateMap(templateDefaultsRef.current)
     };
 
     const response = await fetch(BUILDER_STATE_API_PATH, {

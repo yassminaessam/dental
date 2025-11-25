@@ -8,6 +8,7 @@ type BuilderStatePayload = {
   templates: unknown[];
   canvasWidgets: unknown[];
   canvasSettings: Record<string, unknown>;
+  defaultTemplates?: Record<string, unknown>;
 };
 
 export async function GET() {
@@ -34,10 +35,14 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { templates, canvasWidgets, canvasSettings } = body as Partial<BuilderStatePayload>;
+    const { templates, canvasWidgets, canvasSettings, defaultTemplates } = body as Partial<BuilderStatePayload>;
 
     if (!Array.isArray(templates) || !Array.isArray(canvasWidgets) || typeof canvasSettings !== 'object' || canvasSettings === null) {
       return NextResponse.json({ error: 'Invalid builder state payload' }, { status: 400 });
+    }
+
+    if (defaultTemplates !== undefined && (typeof defaultTemplates !== 'object' || defaultTemplates === null)) {
+      return NextResponse.json({ error: 'Invalid default templates payload' }, { status: 400 });
     }
 
     await prisma.collectionDoc.upsert({
@@ -47,11 +52,11 @@ export async function PUT(request: Request) {
           id: DOCUMENT_ID,
         },
       },
-      update: { data: { templates, canvasWidgets, canvasSettings } },
+      update: { data: { templates, canvasWidgets, canvasSettings, defaultTemplates: defaultTemplates ?? null } },
       create: {
         collection: COLLECTION,
         id: DOCUMENT_ID,
-        data: { templates, canvasWidgets, canvasSettings },
+        data: { templates, canvasWidgets, canvasSettings, defaultTemplates: defaultTemplates ?? null },
       },
     });
 
