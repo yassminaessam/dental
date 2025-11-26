@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import type { Patient } from '@/app/patients/page';
 import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 
 interface ViewPatientDialogProps {
   patient: Patient | null;
@@ -64,7 +64,11 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
               </div>
               <div className="space-y-2">
                 <h5 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">{t('patients.phone')}</h5>
-                <p className="font-medium text-foreground bg-background/50 p-3 rounded-lg border border-border/20">{patient.phone}</p>
+                <p className="font-medium text-foreground bg-background/50 p-3 rounded-lg border border-border/20">
+                  <span dir="ltr" className={cn(isRTL ? 'inline-block text-left' : undefined)}>
+                    {patient.phone || t('common.na')}
+                  </span>
+                </p>
               </div>
               <div className="space-y-2">
                 <h5 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">{t('patients.date_of_birth')}</h5>
@@ -90,7 +94,11 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
                 </div>
                 <div>
         <h5 className="font-medium text-muted-foreground">{t('patients.ec_phone')}</h5>
-        <p>{patient.ecPhone || t('common.na')}</p>
+        <p>
+          <span dir="ltr" className={cn(isRTL ? 'inline-block text-left' : undefined)}>
+            {patient.ecPhone || t('common.na')}
+          </span>
+        </p>
                 </div>
                 <div>
         <h5 className="font-medium text-muted-foreground">{t('patients.relationship')}</h5>

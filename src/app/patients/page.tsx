@@ -402,8 +402,13 @@ export default function PatientsPage() {
                               <span className={cn('flex flex-col', isRTL ? 'text-right' : 'text-left')}>
                                 <span>{patient.ecName || t('common.na')}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {patient.ecPhone || t('common.na')}{' '}
-                                  {patient.ecRelationship ? `(${patient.ecRelationship})` : ''}
+                                  <span
+                                    dir="ltr"
+                                    className={cn(isRTL ? 'inline-block text-left' : undefined)}
+                                  >
+                                    {patient.ecPhone || t('common.na')}
+                                  </span>
+                                  {patient.ecRelationship ? ` (${patient.ecRelationship})` : ''}
                                 </span>
                               </span>
                             }
@@ -493,7 +498,12 @@ export default function PatientsPage() {
                             <TableCell className="whitespace-nowrap max-w-xs truncate">{patient.address || t('common.na')}</TableCell>
                             <TableCell className="whitespace-nowrap">
                               <div>{patient.ecName || t('common.na')}</div>
-                              <div className="text-xs text-muted-foreground">{patient.ecPhone || t('common.na')} {patient.ecRelationship ? `(${patient.ecRelationship})` : ''}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span dir="ltr" className={cn(isRTL ? 'inline-block text-left' : undefined)}>
+                                  {patient.ecPhone || t('common.na')}
+                                </span>
+                                {patient.ecRelationship ? ` (${patient.ecRelationship})` : ''}
+                              </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">{patient.insuranceProvider || t('common.na')}</TableCell>
                             <TableCell className="whitespace-nowrap">{patient.policyNumber || t('common.na')}</TableCell>

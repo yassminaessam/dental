@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatEGP } from '@/lib/currency';
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -49,9 +48,9 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, MoreHorizontal, Plus, ShoppingCart, AlertTriangle, CheckCircle2, Clock, Truck } from "lucide-react";
+import { MoreHorizontal, Plus, ShoppingCart, AlertTriangle, CheckCircle2, Clock, Truck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { collection, getDocs, addDocument as addDoc, deleteDocument, doc, updateDocument, db } from "@/services/firestore";
+import { listDocuments, setDocument, updateDocument, deleteDocument } from "@/lib/data-client";
 
 interface PurchaseOrderItem {
   itemId: string;
@@ -91,6 +90,11 @@ interface Supplier {
   paymentTerms: string;
 }
 
+type PurchaseOrderPayload = Omit<PurchaseOrder, 'id'> & { id?: string; supplierId?: string };
+
+const getToday = () => new Date().toISOString().split('T')[0];
+const getFutureDate = (days = 7) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
 export default function PurchaseOrdersPage() {
   const { t, language } = useLanguage();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -103,42 +107,38 @@ export default function PurchaseOrdersPage() {
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [orderItems, setOrderItems] = useState<PurchaseOrderItem[]>([]);
   const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedItemQuantity, setSelectedItemQuantity] = useState(1);
+  const [selectedItemPrice, setSelectedItemPrice] = useState("");
+  const [newOrderDate, setNewOrderDate] = useState(getToday());
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(getFutureDate());
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const orderTotal = useMemo(() => {
+    return orderItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0), 0);
+  }, [orderItems]);
+  const availableInventoryItems = useMemo(() => {
+    if (!selectedSupplier) return inventoryItems;
+    const supplierName = suppliers.find((supplier) => supplier.id === selectedSupplier)?.name;
+    if (!supplierName) return inventoryItems;
+    return inventoryItems.filter((item) => item.supplier === supplierName);
+  }, [inventoryItems, selectedSupplier, suppliers]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  useEffect(() => {
-    filterOrders();
-  }, [purchaseOrders, searchTerm, statusFilter]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      // Fetch purchase orders
-      const ordersSnapshot = await getDocs(collection(db, "purchase-orders"));
-      const ordersData = ordersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as PurchaseOrder[];
+      const [ordersData, inventoryData, suppliersData] = await Promise.all([
+        listDocuments<PurchaseOrder>("purchase-orders"),
+        listDocuments<InventoryItem>("inventory"),
+        listDocuments<Supplier>("suppliers"),
+      ]);
+
       setPurchaseOrders(ordersData);
-
-      // Fetch inventory items
-      const inventorySnapshot = await getDocs(collection(db, "inventory"));
-      const inventoryData = inventorySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as InventoryItem[];
       setInventoryItems(inventoryData);
-
-      // Fetch suppliers
-      const suppliersSnapshot = await getDocs(collection(db, "suppliers"));
-      const suppliersData = suppliersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Supplier[];
       setSuppliers(suppliersData);
 
-      // Find low stock items
       const lowStock = inventoryData.filter(item => item.stock <= item.min);
       setLowStockItems(lowStock);
     } catch (error) {
@@ -149,15 +149,16 @@ export default function PurchaseOrdersPage() {
         variant: "destructive",
       });
     }
-  };
+  }, [t]);
 
-  const filterOrders = () => {
+  useEffect(() => {
     let filtered = purchaseOrders;
 
     if (searchTerm) {
+      const normalized = searchTerm.toLowerCase();
       filtered = filtered.filter(order =>
-        order.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase())
+        order.supplier.toLowerCase().includes(normalized) ||
+        order.id.toLowerCase().includes(normalized)
       );
     }
 
@@ -166,6 +167,152 @@ export default function PurchaseOrdersPage() {
     }
 
     setFilteredOrders(filtered);
+  }, [purchaseOrders, searchTerm, statusFilter]);
+
+  const resetNewOrderForm = () => {
+    setSelectedSupplier("");
+    setOrderItems([]);
+    setSelectedItemId("");
+    setSelectedItemQuantity(1);
+    setSelectedItemPrice("");
+    setNewOrderDate(getToday());
+    setExpectedDeliveryDate(getFutureDate());
+    setIsSubmittingOrder(false);
+  };
+
+  const openNewOrderDialog = () => {
+    resetNewOrderForm();
+    setIsNewOrderDialogOpen(true);
+  };
+
+  const handleAddItem = () => {
+    if (!selectedItemId) {
+      toast({
+        title: t('common.error'),
+        description: 'Please select an item to add.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const inventoryItem = inventoryItems.find((item) => item.id === selectedItemId);
+    if (!inventoryItem) {
+      toast({
+        title: t('common.error'),
+        description: 'Selected item is no longer available.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const parsedUnitCost = inventoryItem.unitCost
+      ? parseFloat(String(inventoryItem.unitCost).replace(/[^\d.]/g, ''))
+      : 0;
+    const unitPriceValue = selectedItemPrice
+      ? parseFloat(selectedItemPrice)
+      : parsedUnitCost;
+    const quantityValue = Math.max(1, Number(selectedItemQuantity) || 1);
+
+    setOrderItems((prev) => {
+      const existingIndex = prev.findIndex((item) => item.itemId === selectedItemId);
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + quantityValue,
+          unitPrice: unitPriceValue,
+        };
+        return updated;
+      }
+      return [
+        ...prev,
+        {
+          itemId: selectedItemId,
+          description: inventoryItem.name,
+          quantity: quantityValue,
+          unitPrice: unitPriceValue,
+        },
+      ];
+    });
+
+    setSelectedItemId("");
+    setSelectedItemQuantity(1);
+    setSelectedItemPrice("");
+  };
+
+  const handleOrderItemChange = (itemId: string, field: 'quantity' | 'unitPrice', value: number) => {
+    setOrderItems((prev) =>
+      prev.map((item) =>
+        item.itemId === itemId
+          ? {
+              ...item,
+              [field]: field === 'quantity' ? Math.max(1, Math.floor(value) || 1) : Math.max(0, value || 0),
+            }
+          : item
+      )
+    );
+  };
+
+  const handleRemoveOrderItem = (itemId: string) => {
+    setOrderItems((prev) => prev.filter((item) => item.itemId !== itemId));
+  };
+
+  const handleCreateOrder = async () => {
+    if (!selectedSupplier) {
+      toast({
+        title: t('common.error'),
+        description: 'Please select a supplier.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!orderItems.length) {
+      toast({
+        title: t('common.error'),
+        description: 'Add at least one item to the order.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const supplierRecord = suppliers.find((supplier) => supplier.id === selectedSupplier);
+    const orderId = `PO-${Date.now()}`;
+    const payload: PurchaseOrderPayload = {
+      id: orderId,
+      supplier: supplierRecord?.name || selectedSupplier,
+      supplierId: selectedSupplier,
+      orderDate: newOrderDate || getToday(),
+      deliveryDate: expectedDeliveryDate || getFutureDate(),
+      total: formatEGP(orderTotal, true, language),
+      status: 'Pending' as const,
+      items: orderItems.map((item) => ({
+        ...item,
+        unitPrice: Number(item.unitPrice) || 0,
+        quantity: Number(item.quantity) || 0,
+      })),
+    };
+
+    try {
+      setIsSubmittingOrder(true);
+      await setDocument('purchase-orders', orderId, payload);
+      toast({
+        title: t('suppliers.toast.po_created') || t('common.success'),
+        description: t('suppliers.toast.po_created_desc') || 'Purchase order created successfully.',
+      });
+      resetNewOrderForm();
+      setIsNewOrderDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        title: t('common.error'),
+        description: t('suppliers.toast.error_updating') || 'Failed to create purchase order.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingOrder(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -194,7 +341,9 @@ export default function PurchaseOrdersPage() {
       const unitPrice = parseFloat(item.unitCost.replace(/[^\d.]/g, ''));
       const total = orderQuantity * unitPrice;
 
-      const newOrder = {
+      const orderId = `PO-${Date.now()}`;
+      const newOrder: PurchaseOrderPayload = {
+        id: orderId,
         supplier: item.supplier,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -208,7 +357,7 @@ export default function PurchaseOrdersPage() {
         }]
       };
 
-      await addDoc("purchase-orders", newOrder as any);
+      await setDocument('purchase-orders', orderId, newOrder);
       fetchData();
       toast({
         title: t('suppliers.toast.quick_order_created'),
@@ -226,7 +375,7 @@ export default function PurchaseOrdersPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDocument("purchase-orders", orderId, { status: newStatus } as any);
+      await updateDocument<PurchaseOrder>("purchase-orders", orderId, { status: newStatus as PurchaseOrder['status'] });
       fetchData();
       toast({
         title: t('suppliers.toast.status_updated'),
@@ -285,7 +434,7 @@ export default function PurchaseOrdersPage() {
                 {t('suppliers.purchase_order_subtitle')}
               </p>
             </div>
-            <Button onClick={() => setIsNewOrderDialogOpen(true)}>
+            <Button onClick={openNewOrderDialog}>
               <Plus className="mr-2 h-4 w-4" />
               {t('purchase_orders.new_order')}
             </Button>
@@ -432,6 +581,184 @@ export default function PurchaseOrdersPage() {
       </div>
     </div>
       </main>
+
+      <Dialog
+        open={isNewOrderDialogOpen}
+        onOpenChange={(open) => {
+          setIsNewOrderDialogOpen(open);
+          if (!open) {
+            resetNewOrderForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t('purchase_orders.new_order')}</DialogTitle>
+            <DialogDescription>
+              Create a detailed purchase order with supplier items.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {t('suppliers.supplier')} *
+                </label>
+                <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('suppliers.select_supplier')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('suppliers.order_date')}</label>
+                <Input
+                  type="date"
+                  value={newOrderDate}
+                  onChange={(event) => setNewOrderDate(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('suppliers.expected_delivery')}</label>
+                <Input
+                  type="date"
+                  value={expectedDeliveryDate}
+                  onChange={(event) => setExpectedDeliveryDate(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('suppliers.total')}</label>
+                <Input value={formatEGP(orderTotal, true, language)} disabled />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto]">
+                <Select
+                  value={selectedItemId}
+                  onValueChange={(value) => {
+                    setSelectedItemId(value);
+                    const inventoryItem = inventoryItems.find((item) => item.id === value);
+                    if (inventoryItem?.unitCost) {
+                      const parsed = parseFloat(String(inventoryItem.unitCost).replace(/[^\d.]/g, ''));
+                      if (!Number.isNaN(parsed)) {
+                        setSelectedItemPrice(parsed.toString());
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('inventory.select_item')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableInventoryItems.map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name} {item.stock !== undefined && `(${item.stock})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  value={selectedItemQuantity}
+                  onChange={(event) => setSelectedItemQuantity(Number(event.target.value) || 1)}
+                  placeholder="Qty"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={selectedItemPrice}
+                  onChange={(event) => setSelectedItemPrice(event.target.value)}
+                  placeholder="Unit price"
+                />
+                <Button type="button" onClick={handleAddItem}>
+                  {t('inventory.add_item')}
+                </Button>
+              </div>
+
+              <div className="rounded-lg border">
+                {orderItems.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No items added yet.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('inventory.item')}</TableHead>
+                        <TableHead>{t('suppliers.quantity')}</TableHead>
+                        <TableHead>{t('suppliers.unit_price')}</TableHead>
+                        <TableHead>{t('suppliers.total')}</TableHead>
+                        <TableHead className="text-right">{t('table.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orderItems.map((item) => (
+                        <TableRow key={item.itemId}>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={(event) =>
+                                handleOrderItemChange(item.itemId, 'quantity', Number(event.target.value))
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              value={item.unitPrice}
+                              onChange={(event) =>
+                                handleOrderItemChange(item.itemId, 'unitPrice', parseFloat(event.target.value))
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>{formatEGP(item.quantity * item.unitPrice, true, language)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" onClick={() => handleRemoveOrderItem(item.itemId)}>
+                              {t('common.remove')}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+              <div>
+                <p className="text-sm text-muted-foreground">{t('suppliers.total')}</p>
+                <p className="text-xl font-semibold">{formatEGP(orderTotal, true, language)}</p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewOrderDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleCreateOrder} disabled={isSubmittingOrder}>
+              {isSubmittingOrder ? t('common.please_wait') : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
