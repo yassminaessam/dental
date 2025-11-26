@@ -29,7 +29,6 @@ import { SupplyChainIntegration } from "@/components/dashboard/supply-chain-inte
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ScheduleAppointmentDialog } from "@/components/dashboard/schedule-appointment-dialog";
 import { AddPatientDialog } from "@/components/dashboard/add-patient-dialog";
-import KpiSuggestions from "@/components/dashboard/kpi-suggestions";
 import PendingAppointmentsManager from "@/components/dashboard/pending-appointments-manager";
 import { StaffOnly } from "@/components/auth/ProtectedRoute";
 import { useToast } from '@/hooks/use-toast';
@@ -270,7 +269,6 @@ export default function DashboardPage() {
             setStatsRefreshKey(prev => prev + 1);
           }} />
           <SupplyChainIntegration />
-          <KpiSuggestions />
         </main>
       </DashboardLayout>
     </StaffOnly>
