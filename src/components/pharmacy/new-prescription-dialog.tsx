@@ -49,9 +49,21 @@ const prescriptionSchema = z.object({
 
 type PrescriptionFormData = z.infer<typeof prescriptionSchema>;
 
-type NewPrescriptionPayload = PrescriptionFormData & { patient?: string; doctor?: string; medication?: string; strength?: string };
+export type NewPrescriptionPayload = {
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  medicationId?: string;
+  medicationName: string;
+  strength?: string;
+  dosage?: string;
+  instructions?: string;
+  refills: number;
+  date: Date;
+};
 interface NewPrescriptionDialogProps {
-  onSave: (data: NewPrescriptionPayload) => void;
+  onSave: (data: NewPrescriptionPayload) => void | Promise<void>;
   medications: Medication[];
 }
 
@@ -65,8 +77,13 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
   const form = useForm<PrescriptionFormData>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
-      date: new Date(),
+      patient: '',
+      doctor: '',
+      medication: '',
+      dosage: '',
+      instructions: '',
       refills: 0,
+      date: new Date(),
     }
   });
 
@@ -99,16 +116,30 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
     }
   }, [open]);
 
-  const onSubmit = (data: PrescriptionFormData) => {
-    const patientName = patients.find(p => p.id === data.patient)?.name;
-    const doctorName = doctors.find(d => d.id === data.doctor)?.name;
+  const onSubmit = async (data: PrescriptionFormData) => {
+    const patientRecord = patients.find(p => p.id === data.patient);
+    const doctorRecord = doctors.find(d => d.id === data.doctor);
     const medicationDetails = medications.find(m => m.id === data.medication);
-    onSave({ 
-      ...data, 
-      patient: patientName ?? '', 
-      doctor: doctorName ?? '', 
-      medication: medicationDetails?.name ?? '',
+
+    if (!data.patient || !patientRecord) {
+      return;
+    }
+    if (!data.doctor || !doctorRecord) {
+      return;
+    }
+
+    await onSave({
+      patientId: data.patient,
+      patientName: patientRecord.name,
+      doctorId: data.doctor,
+      doctorName: doctorRecord.name,
+      medicationId: data.medication,
+      medicationName: medicationDetails?.name ?? '',
       strength: medicationDetails?.strength ?? '',
+      dosage: data.dosage,
+      instructions: data.instructions,
+      refills: data.refills,
+      date: data.date,
     });
     form.reset();
     setOpen(false);
@@ -183,7 +214,7 @@ export function NewPrescriptionDialog({ onSave, medications }: NewPrescriptionDi
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('pharmacy.medication')} *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={t('pharmacy.select_medication')} />

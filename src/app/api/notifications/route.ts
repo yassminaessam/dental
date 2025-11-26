@@ -7,15 +7,35 @@ export async function GET(request: NextRequest) {
     // Temporary cast to ensure access to Notification model even if TS types lag behind
     const db = prisma as unknown as { notification: any };
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    
+    const rawUserId = searchParams.get('userId');
+
+    const userId = rawUserId && rawUserId !== 'undefined' && rawUserId !== 'null'
+      ? rawUserId
+      : null;
+
+    const emptyPayload = {
+      notifications: [] as any[],
+      totalCount: 0,
+      unreadCount: 0,
+      hasMore: false,
+    };
+
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      // Instead of erroring and spamming the console, gracefully return empty data.
+      return NextResponse.json(emptyPayload, { status: 200 });
     }
 
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const parsedLimit = Number.parseInt(searchParams.get('limit') ?? '', 10);
+    const parsedOffset = Number.parseInt(searchParams.get('offset') ?? '', 10);
+
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(parsedLimit, 100)
+      : 50;
+
+    const offset = Number.isFinite(parsedOffset) && parsedOffset >= 0
+      ? parsedOffset
+      : 0;
 
     const where: any = { userId };
     if (unreadOnly) {

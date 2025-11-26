@@ -61,7 +61,11 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' });
 
   const InvoiceContent = () => (
-     <div id={`printable-invoice-${invoice.id}`}>
+     <div
+      id={`printable-invoice-${invoice.id}`}
+      className="px-4 sm:px-10 py-6"
+      style={{ paddingInline: '1.5rem' }}
+    >
         <DialogHeader>
     <DialogTitle className="text-2xl flex items-center justify-between">
       <span>{t('billing.invoice')} {invoice.id}</span>
@@ -78,7 +82,11 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
       <h4 className="font-semibold text-muted-foreground">{t('billing.bill_to')}</h4>
             <p>{invoice.patient}</p>
       <p>{t('patients.patient_id')}: {invoice.patientId}</p>
-      {patient?.phone && <p>{t('common.phone')}: {patient.phone}</p>}
+      {patient?.phone && (
+        <p>
+          {t('common.phone')}: <span dir="ltr" className="font-mono tracking-tight">{patient.phone}</span>
+        </p>
+      )}
         </div>
     <div className="text-right">
       <h4 className="font-semibold text-muted-foreground">{t('billing.issue_date')}</h4>
@@ -147,7 +155,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl px-0">
         <InvoiceContent />
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={handlePrint}>

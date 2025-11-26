@@ -31,8 +31,9 @@ import { cn } from '../../lib/utils';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { InventoryItem } from '../../app/inventory/page';
-import type { Supplier } from '../../app/suppliers/page';
+import type { Supplier, PurchaseOrder } from '../../app/suppliers/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCallback } from 'react';
 
 const orderItemSchema = z.object({
   itemId: z.string().min(1, 'suppliers.validation.item_required'),
@@ -58,18 +59,63 @@ interface NewPurchaseOrderDialogProps {
   inventoryItems: InventoryItem[];
   suppliers: Supplier[];
   onAddItem: () => void;
+  initialOrder?: PurchaseOrder | null;
+  mode?: 'create' | 'edit';
+  title?: string;
+  submitLabel?: string;
 }
 
-export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupplierId, inventoryItems, suppliers, onAddItem }: NewPurchaseOrderDialogProps) {
-  const { t, isRTL } = useLanguage();
+const parseDate = (value?: string | Date | null) => {
+  if (!value) return undefined;
+  if (value instanceof Date) return value;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+export function NewPurchaseOrderDialog({
+  onSave,
+  open,
+  onOpenChange,
+  initialSupplierId,
+  inventoryItems,
+  suppliers,
+  onAddItem,
+  initialOrder = null,
+  mode = 'create',
+  title,
+  submitLabel,
+}: NewPurchaseOrderDialogProps) {
+  const { t, isRTL, language } = useLanguage();
   const [orderDateOpen, setOrderDateOpen] = React.useState(false);
+  const [deliveryDateOpen, setDeliveryDateOpen] = React.useState(false);
+
+  const computeDefaultValues = useCallback((): PurchaseOrderFormData => {
+    if (mode === 'edit' && initialOrder) {
+      const supplierId = suppliers.find((s) => s.name === initialOrder.supplier)?.id ?? initialSupplierId ?? '';
+      return {
+        supplier: supplierId,
+        orderDate: parseDate(initialOrder.orderDate) ?? new Date(),
+        deliveryDate: parseDate(initialOrder.deliveryDate ?? undefined),
+        notes: '',
+        items: initialOrder.items?.length ? initialOrder.items.map((item) => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })) : [{ itemId: '', quantity: 1, unitPrice: 0 }],
+      };
+    }
+    return {
+      supplier: initialSupplierId ?? '',
+      orderDate: new Date(),
+      deliveryDate: undefined,
+      notes: '',
+      items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
+    };
+  }, [initialOrder, initialSupplierId, mode, suppliers]);
+
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
-    defaultValues: {
-      supplier: initialSupplierId,
-      orderDate: new Date(),
-      items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
-    },
+    defaultValues: computeDefaultValues(),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -78,12 +124,8 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
   });
   
   React.useEffect(() => {
-    form.reset({
-      supplier: initialSupplierId,
-      orderDate: new Date(),
-      items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
-    });
-  }, [initialSupplierId, form]);
+    form.reset(computeDefaultValues());
+  }, [computeDefaultValues, form]);
 
   const onSubmit = (data: PurchaseOrderFormData) => {
     const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
@@ -92,16 +134,24 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
         description: inventoryItems.find(inv => inv.id === item.itemId)?.name || 'Unknown Item'
     }));
 
-    onSave({ ...data, supplier: supplierName, items: itemsWithDesc });
+    onSave({ ...data, supplier: supplierName, items: itemsWithDesc, id: initialOrder?.id });
     form.reset();
     onOpenChange(false);
   };
+
+  const dialogTitle = title ?? (mode === 'edit'
+    ? (language === 'ar' ? 'تعديل أمر الشراء' : 'Edit Purchase Order')
+    : t('suppliers.new_purchase_order'));
+
+  const submitText = submitLabel ?? (mode === 'edit'
+    ? (language === 'ar' ? 'حفظ التعديلات' : 'Save Changes')
+    : t('suppliers.create_purchase_order'));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
-          <DialogTitle>{t('suppliers.new_purchase_order')}</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
             {t('suppliers.create_purchase_order_description')}
           </DialogDescription>
@@ -162,6 +212,37 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
                     </Popover>
                     <FormMessage>
                       {form.formState.errors.orderDate?.message && t(String(form.formState.errors.orderDate.message))}
+                    </FormMessage>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deliveryDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t('suppliers.expected_delivery')}</FormLabel>
+                    <Popover open={deliveryDateOpen} onOpenChange={setDeliveryDateOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            <CalendarIcon className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_a_date')}</span>}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={field.value} onSelect={(date) => {
+                          field.onChange(date)
+                          setDeliveryDateOpen(false)
+                        }} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage>
+                      {form.formState.errors.deliveryDate?.message && t(String(form.formState.errors.deliveryDate.message))}
                     </FormMessage>
                   </FormItem>
                 )}
@@ -278,7 +359,7 @@ export function NewPurchaseOrderDialog({ onSave, open, onOpenChange, initialSupp
             />
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-                <Button type="submit">{t('suppliers.create_purchase_order')}</Button>
+                <Button type="submit">{submitText}</Button>
             </DialogFooter>
           </form>
         </Form>

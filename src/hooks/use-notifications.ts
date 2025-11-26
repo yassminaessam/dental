@@ -29,21 +29,40 @@ export function useNotifications(userId: string | undefined) {
 
   // Fetch notifications from database
   const fetchNotifications = useCallback(async () => {
-    if (!userId) {
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      setNotifications([]);
+      setUnreadCount(0);
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`/api/notifications?userId=${userId}&unreadOnly=false&limit=50`);
+      const params = new URLSearchParams({
+        userId,
+        unreadOnly: 'false',
+        limit: '50',
+      });
+
+      const response = await fetch(`/api/notifications?${params.toString()}`, {
+        cache: 'no-store',
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
+        const payload = await response.json().catch(() => ({}));
+        const message =
+          (payload && (payload.error || payload.message)) ||
+          `Failed to fetch notifications (status ${response.status})`;
+        console.warn('Notifications request failed', {
+          status: response.status,
+          message,
+        });
+        setError(message);
+        return;
       }
 
       const data = await response.json();
-      setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      setNotifications(data.notifications ?? []);
+      setUnreadCount(data.unreadCount ?? 0);
       setError(null);
     } catch (err) {
       console.error('Error fetching notifications:', err);

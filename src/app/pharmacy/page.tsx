@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatEGP } from '@/lib/currency';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,10 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
+import { DispenseMedicationDialog } from '@/components/pharmacy/dispense-medication-dialog';
 import { listDocuments, setDocument, deleteDocument, updateDocument } from '@/lib/data-client';
+import type { NewPrescriptionPayload } from '@/components/pharmacy/new-prescription-dialog';
+import type { Patient, StaffMember } from '@/lib/types';
 
 export type Medication = {
   id: string;
@@ -87,15 +91,24 @@ export type Medication = {
 
 export type Prescription = {
   id: string;
+  patientId?: string;
   patient: string;
+  doctorId?: string;
   medication: string;
+  medicationId?: string;
   strength: string;
   dosage: string;
+  instructions?: string;
   duration: string;
   refills: number;
   doctor: string;
   date: string;
   status: 'Active' | 'Completed';
+  invoiceId?: string;
+  treatmentId?: string;
+  dispensedAt?: string;
+  dispensedQuantity?: number;
+  totalAmount?: number;
 };
 
 // Minimal inventory type used on this page
@@ -124,17 +137,6 @@ type MedicationInput = {
   expiryDate?: Date | string;
 };
 
-type NewPrescriptionPayload = {
-  patient: string;
-  medication: string;
-  strength?: string;
-  dosage?: string;
-  instructions?: string;
-  refills: number;
-  doctor: string;
-  date: Date | string;
-};
-
 const iconMap = {
   Pill,
   AlertTriangle,
@@ -144,9 +146,22 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
+const resolveMedicationStatus = (stock: number): Medication['status'] => {
+  if (stock <= 0) return 'Out of Stock';
+  if (stock <= 20) return 'Low Stock';
+  return 'In Stock';
+};
+
+const parseCurrencyValue = (value: string): number => {
+  if (!value) return 0;
+  const numeric = parseFloat(value.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
 
 export default function PharmacyPage() {
   const { t, language, isRTL } = useLanguage();
+  const { user } = useAuth();
     const [medications, setMedications] = React.useState<Medication[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [medicationToEdit, setMedicationToEdit] = React.useState<Medication | null>(null);
@@ -156,9 +171,14 @@ export default function PharmacyPage() {
     
     const [prescriptions, setPrescriptions] = React.useState<Prescription[]>([]);
     const [prescriptionToView, setPrescriptionToView] = React.useState<Prescription | null>(null);
+    const [prescriptionToDispense, setPrescriptionToDispense] = React.useState<Prescription | null>(null);
+    const [medicationForDispense, setMedicationForDispense] = React.useState<Medication | null>(null);
+    const [isDispenseLoading, setIsDispenseLoading] = React.useState(false);
     const [prescriptionSearchTerm, setPrescriptionSearchTerm] = React.useState('');
     const [prescriptionStatusFilter, setPrescriptionStatusFilter] = React.useState('all');
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
+  const [patientsDirectory, setPatientsDirectory] = React.useState<Patient[]>([]);
+  const [doctorsDirectory, setDoctorsDirectory] = React.useState<StaffMember[]>([]);
     
     const { toast } = useToast();
     
@@ -181,6 +201,65 @@ export default function PharmacyPage() {
         }
         fetchData();
   }, [toast, t]);
+
+  React.useEffect(() => {
+    async function fetchDirectories() {
+      try {
+        const res = await fetch('/api/patients');
+        if (res.ok) {
+          const data = await res.json();
+          setPatientsDirectory(Array.isArray(data?.patients) ? data.patients : []);
+        }
+      } catch (error) {
+        console.error('[PharmacyPage] fetch patients error', error);
+      }
+
+      try {
+        const res = await fetch('/api/doctors');
+        if (res.ok) {
+          const data = await res.json();
+          setDoctorsDirectory(Array.isArray(data?.doctors) ? data.doctors : []);
+        }
+      } catch (error) {
+        console.error('[PharmacyPage] fetch doctors error', error);
+      }
+    }
+
+    fetchDirectories();
+  }, []);
+
+  const findPatientRecord = React.useCallback(
+    (id?: string, displayName?: string) => {
+      if (id) {
+        const byId = patientsDirectory.find((patient) => patient.id === id);
+        if (byId) return byId;
+      }
+      if (displayName) {
+        const target = displayName.trim().toLowerCase();
+        return patientsDirectory.find((patient) => {
+          const fullName = `${patient.name} ${patient.lastName ?? ''}`.trim().toLowerCase();
+          return fullName === target || patient.name.trim().toLowerCase() === target;
+        });
+      }
+      return undefined;
+    },
+    [patientsDirectory]
+  );
+
+  const findDoctorRecord = React.useCallback(
+    (id?: string, displayName?: string) => {
+      if (id) {
+        const byId = doctorsDirectory.find((doctor) => doctor.id === id);
+        if (byId) return byId;
+      }
+      if (displayName) {
+        const target = displayName.trim().toLowerCase();
+        return doctorsDirectory.find((doctor) => doctor.name.trim().toLowerCase() === target);
+      }
+      return undefined;
+    },
+    [doctorsDirectory]
+  );
 
     const medicationCategories = React.useMemo(() => {
         return [...new Set(medications.map((i) => i.category))];
@@ -231,6 +310,155 @@ export default function PharmacyPage() {
          toast({ title: t('pharmacy.toast.error_adding'), variant: 'destructive'});
       }
     };
+
+  const openDispenseDialog = React.useCallback((record: Prescription) => {
+    const medicationMatch = medications.find((med) => (
+      med.id === record.medicationId || med.name.trim().toLowerCase() === record.medication.trim().toLowerCase()
+    ));
+
+    if (!medicationMatch) {
+      toast({ title: t('common.error'), description: t('pharmacy.toast.error_dispensing'), variant: 'destructive' });
+      return;
+    }
+
+    setPrescriptionToDispense(record);
+    setMedicationForDispense(medicationMatch);
+  }, [medications, t, toast]);
+
+  const handleDispenseMedication = React.useCallback(async (input: { quantity: number; unitPrice?: number; notes?: string }) => {
+    if (!prescriptionToDispense || !medicationForDispense) return;
+
+    const currentStock = medicationForDispense.stock;
+    if (input.quantity <= 0 || input.quantity > currentStock) {
+      toast({ title: t('common.error'), description: t('inventory.validation.transfer_quantity_max', { max: currentStock }), variant: 'destructive' });
+      return;
+    }
+
+    const patientRecord = findPatientRecord(prescriptionToDispense.patientId, prescriptionToDispense.patient);
+    if (!patientRecord) {
+      toast({ title: t('common.error'), description: t('pharmacy.toast.missing_patient'), variant: 'destructive' });
+      return;
+    }
+
+    const doctorRecord = findDoctorRecord(prescriptionToDispense.doctorId, prescriptionToDispense.doctor);
+    if (!doctorRecord) {
+      toast({ title: t('common.error'), description: t('pharmacy.toast.missing_doctor'), variant: 'destructive' });
+      return;
+    }
+
+    const parsedUnitPrice = input.unitPrice ?? parseCurrencyValue(medicationForDispense.unitPrice);
+    const unitPrice = Number(parsedUnitPrice.toFixed(2));
+    const totalAmount = unitPrice * input.quantity;
+    const patientName = `${patientRecord.name} ${patientRecord.lastName ?? ''}`.trim() || prescriptionToDispense.patient;
+
+    setIsDispenseLoading(true);
+
+    try {
+      const treatmentResponse = await fetch('/api/treatments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patientRecord.id,
+          patientName,
+          doctorId: doctorRecord.id,
+          doctorName: doctorRecord.name,
+          procedure: `${medicationForDispense.name} - Pharmacy Dispense`,
+          cost: formatEGP(totalAmount, true, language),
+          notes: input.notes ?? `Prescription ${prescriptionToDispense.id}`,
+          appointments: [],
+        }),
+      });
+
+      if (!treatmentResponse.ok) {
+        throw new Error('Failed to create treatment');
+      }
+
+      const treatmentPayload = await treatmentResponse.json().catch(() => ({}));
+      const treatmentId: string | undefined = treatmentPayload?.treatment?.id;
+
+      const invoiceResponse = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number: `INV-RX-${Date.now()}`,
+          patientId: patientRecord.id,
+          treatmentId,
+          date: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'Sent',
+          notes: input.notes ?? `Prescription ${prescriptionToDispense.id}`,
+          items: [
+            {
+              description: `${medicationForDispense.name} (${prescriptionToDispense.dosage || t('common.na')})`,
+              quantity: input.quantity,
+              unitPrice,
+            },
+          ],
+        }),
+      });
+
+      if (!invoiceResponse.ok) {
+        throw new Error('Failed to create invoice');
+      }
+
+      const invoicePayload = await invoiceResponse.json().catch(() => ({}));
+      const invoiceId: string | undefined = invoicePayload?.invoice?.id;
+
+      const nextStock = currentStock - input.quantity;
+      const updatedMedication: Medication = {
+        ...medicationForDispense,
+        stock: nextStock,
+        status: resolveMedicationStatus(nextStock),
+      };
+
+      await updateDocument('medications', medicationForDispense.id, updatedMedication);
+      setMedications((prev) => prev.map((med) => (med.id === updatedMedication.id ? updatedMedication : med)));
+
+      await setDocument('pharmacy-dispensing', `DISP-${Date.now()}`, {
+        prescriptionId: prescriptionToDispense.id,
+        patientId: patientRecord.id,
+        patient: patientName,
+        doctorId: doctorRecord.id,
+        doctor: doctorRecord.name,
+        medicationId: medicationForDispense.id,
+        medication: medicationForDispense.name,
+        quantity: input.quantity,
+        unitPrice,
+        total: totalAmount,
+        invoiceId,
+        treatmentId,
+        notes: input.notes ?? '',
+        dispensedAt: new Date().toISOString(),
+        dispensedBy: user ? `${user.firstName} ${user.lastName}`.trim() : 'System',
+      });
+
+      const updatedPrescription: Prescription = {
+        ...prescriptionToDispense,
+        status: 'Completed',
+        invoiceId,
+        treatmentId,
+        dispensedAt: new Date().toISOString(),
+        dispensedQuantity: input.quantity,
+        totalAmount,
+      };
+
+      await updateDocument('prescriptions', prescriptionToDispense.id, updatedPrescription);
+      setPrescriptions((prev) => prev.map((record) => (record.id === updatedPrescription.id ? updatedPrescription : record)));
+
+      toast({
+        title: t('pharmacy.toast.dispensed'),
+        description: t('pharmacy.toast.dispensed_desc', { name: medicationForDispense.name, patient: patientName }),
+      });
+
+      setPrescriptionToDispense(null);
+      setMedicationForDispense(null);
+    } catch (error) {
+      console.error('[PharmacyPage] dispense error', error);
+      toast({ title: t('common.error'), description: t('pharmacy.toast.error_dispensing'), variant: 'destructive' });
+    } finally {
+      setIsDispenseLoading(false);
+    }
+  }, [findDoctorRecord, findPatientRecord, formatEGP, language, medicationForDispense, prescriptionToDispense, t, toast, user]);
 
     const handleUpdateMedication = async (updatedMedication: Medication) => {
       try {
@@ -345,13 +573,17 @@ export default function PharmacyPage() {
         try {
             const newPrescription: Prescription = {
               id: `RX-${Date.now()}`,
-              patient: data.patient,
-        medication: data.medication,
+              patientId: data.patientId,
+              patient: data.patientName,
+        doctorId: data.doctorId,
+        doctor: data.doctorName,
+        medicationId: data.medicationId,
+        medication: data.medicationName,
         strength: data.strength ?? '',
-        dosage: data.instructions ?? '',
+        dosage: data.dosage ?? '',
+        instructions: data.instructions ?? '',
               duration: 'As directed',
               refills: data.refills,
-              doctor: data.doctor,
         date: new Date(data.date).toLocaleDateString(),
               status: 'Active',
             };
@@ -755,6 +987,12 @@ export default function PharmacyPage() {
                                   {t('common.view')}
                                 </DropdownMenuItem>
                                 {record.status === 'Active' && (
+                                  <DropdownMenuItem onClick={() => openDispenseDialog(record)}>
+                                    <PillBottle className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('pharmacy.actions.dispense')}
+                                  </DropdownMenuItem>
+                                )}
+                                {record.status === 'Active' && (
                                   <DropdownMenuItem>
                                     <Send className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.send_to_patient')}
@@ -812,6 +1050,20 @@ export default function PharmacyPage() {
           onOpenChange={(isOpen) => !isOpen && setMedicationToEdit(null)}
         />
       )}
+
+      <DispenseMedicationDialog
+        prescription={prescriptionToDispense}
+        medication={medicationForDispense}
+        open={!!prescriptionToDispense}
+        isSubmitting={isDispenseLoading}
+        onOpenChange={(isOpen) => {
+          if (!isOpen && !isDispenseLoading) {
+            setPrescriptionToDispense(null);
+            setMedicationForDispense(null);
+          }
+        }}
+        onConfirm={handleDispenseMedication}
+      />
 
       <AlertDialog open={!!medicationToDelete} onOpenChange={(isOpen) => !isOpen && setMedicationToDelete(null)}>
         <AlertDialogContent>

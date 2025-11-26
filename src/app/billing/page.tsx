@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import { createRoot } from 'react-dom/client';
 // Migrated from direct server getCollection to client data layer listDocuments
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -342,6 +341,22 @@ export default function BillingPage() {
     }
   };
 
+  const resolvePatientRecord = React.useCallback((invoice: Invoice) => {
+    if (invoice.patientId) {
+      const byId = patients.find((patient) => patient.id === invoice.patientId);
+      if (byId) return byId;
+    }
+
+    const normalizedDisplayName = invoice.patient?.trim().toLowerCase();
+    if (!normalizedDisplayName) return undefined;
+
+    return patients.find((patient) => {
+      const firstNameMatch = patient.name?.trim().toLowerCase() === normalizedDisplayName;
+      const fullName = `${patient.name ?? ''} ${patient.lastName ?? ''}`.trim().toLowerCase();
+      return firstNameMatch || fullName === normalizedDisplayName;
+    });
+  }, [patients]);
+
   const handleBulkCreateInvoicesFromCompletedTreatments = async () => {
     try {
       const unbilledTreatments = treatments.filter(t => 
@@ -497,58 +512,161 @@ export default function BillingPage() {
     }
   };
 
-  const handlePrintInvoice = (invoiceId: string) => {
-    const invoice = invoices.find(inv => inv.id === invoiceId);
-    if (invoice && typeof window !== 'undefined') {
-        const printWindow = window.open('', '', 'height=800,width=800');
-        if (printWindow) {
-            const printableContent = document.querySelector(`#view-invoice-${invoice.id}`);
-            
-            const styles = Array.from(document.styleSheets)
-                .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
-                .join('');
+  const buildInvoicePrintHtml = React.useCallback((invoice: Invoice) => {
+    const patientRecord = resolvePatientRecord(invoice);
+    const currencyFormatter = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' });
+    const amountDue = invoice.totalAmount - invoice.amountPaid;
+    const direction = isRTL ? 'rtl' : 'ltr';
+    const itemsRows = invoice.items.map((item) => `
+      <tr>
+        <td>${item.description}</td>
+        <td>${item.quantity}</td>
+        <td>${currencyFormatter.format(item.unitPrice)}</td>
+        <td>${currencyFormatter.format(item.quantity * item.unitPrice)}</td>
+      </tr>
+    `).join('');
 
-            const tailwindStyles = `<style>${Array.from(document.querySelectorAll('style')).map(s => s.innerHTML).join('')}</style>`;
-            
-            printWindow.document.write('<html><head><title>Print Invoice</title>');
-            printWindow.document.write(styles);
-            printWindow.document.write(tailwindStyles);
-            printWindow.document.write('</head><body class="bg-white">');
-            if (printableContent) {
-                printWindow.document.write(printableContent.innerHTML);
-            } else {
-                // Fallback for when the dialog isn't rendered
-                const dialog = document.createElement('div');
-                const viewDialog = React.createElement(ViewInvoiceDialog, { invoice, open: true, onOpenChange: () => {} });
-                const root = createRoot(dialog);
-                root.render(viewDialog);
-                // Give React a tick to render into the container before reading HTML
-                // Note: printing happens after this function returns; innerHTML is captured synchronously after render enqueues.
-                printWindow.document.write(dialog.innerHTML);
-                // Cleanup
-                root.unmount();
-            }
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 500);
-        }
-    }
-  };
+    const phoneMarkup = patientRecord?.phone
+      ? `<span dir="ltr" style="font-family: 'IBM Plex Mono', 'Cairo', monospace; letter-spacing: 0.02em;">${patientRecord.phone}</span>`
+      : '';
+
+    return `<!DOCTYPE html>
+<html lang="${language}" dir="${direction}">
+<head>
+  <meta charset="utf-8" />
+  <title>${t('billing.print_invoice')} - ${invoice.id}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 56px; background: #f8fafc; color: #0f172a; }
+    .invoice-shell { background: #ffffff; border-radius: 20px; padding: 32px 40px; box-shadow: 0 20px 60px rgba(15,23,42,0.12); }
+    .invoice-header { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+    .invoice-header h1 { font-size: 24px; margin: 0; }
+    .clinic-name { font-size: 14px; color: #64748b; }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 32px; }
+    .meta-card { padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .meta-card h4 { margin: 0 0 8px; font-size: 14px; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 14px; }
+    thead { background: #f1f5f9; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: ${isRTL ? 'right' : 'left'}; }
+    th:last-child, td:last-child { text-align: ${isRTL ? 'left' : 'right'}; }
+    th:nth-child(3), td:nth-child(3) { text-align: ${isRTL ? 'left' : 'right'}; }
+    th:nth-child(2), td:nth-child(2) { text-align: center; }
+    .summary { margin-top: 32px; margin-${isRTL ? 'right' : 'left'}: auto; width: 320px; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; }
+    .summary-row.total { font-weight: 700; font-size: 18px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="invoice-shell">
+    <div class="invoice-header">
+      <div>
+        <h1>${t('billing.invoice')} ${invoice.id}</h1>
+        <p class="clinic-name">${t('dashboard.clinic_name')}</p>
+      </div>
+      <div style="text-align:${isRTL ? 'left' : 'right'};">
+        <p><strong>${t('billing.issue_date')}:</strong> ${invoice.issueDate || t('common.na')}</p>
+        <p><strong>${t('billing.due_date')}:</strong> ${invoice.dueDate || t('common.na')}</p>
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <h4>${t('billing.bill_to')}</h4>
+        <p>${invoice.patient}</p>
+        <p>${t('patients.patient_id')}: ${invoice.patientId || t('common.na')}</p>
+        ${patientRecord?.phone ? `<p>${t('common.phone')}: ${phoneMarkup}</p>` : ''}
+      </div>
+      <div class="meta-card">
+        <h4>${t('common.created_by')}</h4>
+        <p>${invoice.createdBy || t('common.na')}</p>
+        <p><strong>${t('common.created_at')}:</strong> ${invoice.createdAt || t('common.na')}</p>
+        <p><strong>${t('common.last_modified_by')}:</strong> ${invoice.lastModifiedBy || t('common.na')}</p>
+        <p><strong>${t('common.last_modified_at')}:</strong> ${invoice.lastModifiedAt || t('common.na')}</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>${t('billing.service_product')}</th>
+          <th>${t('billing.quantity')}</th>
+          <th>${t('billing.unit_price')}</th>
+          <th>${t('common.total')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <div class="summary-row">
+        <span>${t('billing.subtotal')}</span>
+        <span>${currencyFormatter.format(invoice.totalAmount)}</span>
+      </div>
+      <div class="summary-row">
+        <span>${t('billing.amount_paid')}</span>
+        <span>${currencyFormatter.format(invoice.amountPaid)}</span>
+      </div>
+      <div class="summary-row total">
+        <span>${t('billing.amount_due')}</span>
+        <span>${currencyFormatter.format(amountDue)}</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  }, [resolvePatientRecord, language, isRTL, t]);
+
+  const handlePrintInvoice = React.useCallback((invoiceId: string) => {
+    if (typeof window === 'undefined') return;
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (!invoice) return;
+    const printWindow = window.open('', '_blank', 'width=900,height=1100');
+    if (!printWindow) return;
+    const html = buildInvoicePrintHtml(invoice);
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
+  }, [buildInvoicePrintHtml, invoices]);
 
   const filteredInvoices = React.useMemo(() => {
     if (!searchTerm) return invoices;
     
     const lowerSearchTerm = searchTerm.toLowerCase();
+    const normalizedPhoneSearch = lowerSearchTerm.replace(/[^\d]/g, '');
     return invoices.filter(invoice => {
       const patientName = invoice.patient?.toLowerCase() || '';
       const invoiceId = invoice.id?.toLowerCase() || '';
-      return patientName.includes(lowerSearchTerm) || invoiceId.includes(lowerSearchTerm);
+      const patientRecord = resolvePatientRecord(invoice);
+      const patientPhoneRaw = patientRecord?.phone ?? '';
+      const phoneDigits = patientPhoneRaw.replace(/[^\d]/g, '');
+      const withoutCountry = phoneDigits.replace(/^20/, '');
+      const localVariant = withoutCountry.startsWith('0') ? withoutCountry : withoutCountry ? `0${withoutCountry}` : '';
+      const variants = [phoneDigits, withoutCountry, localVariant].filter(Boolean) as string[];
+
+      const normalizedSearchWithoutCountry = normalizedPhoneSearch.replace(/^20/, '');
+      const normalizedSearchWithoutLeadingZero = normalizedPhoneSearch.replace(/^0+/, '');
+
+      const phoneMatches = normalizedPhoneSearch.length > 0 && variants.some((value) => {
+        const normalizedValue = value;
+        return (
+          normalizedValue.includes(normalizedPhoneSearch) ||
+          normalizedValue.includes(normalizedSearchWithoutCountry) ||
+          normalizedValue.includes(normalizedSearchWithoutLeadingZero)
+        );
+      });
+
+      return patientName.includes(lowerSearchTerm)
+        || invoiceId.includes(lowerSearchTerm)
+        || phoneMatches;
     });
-  }, [invoices, searchTerm]);
+  }, [invoices, resolvePatientRecord, searchTerm]);
 
   return (
     <DashboardLayout>
@@ -763,12 +881,19 @@ export default function BillingPage() {
                     <TableRow><TableCell colSpan={10} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
-                    const patient = patients.find(p => p.name === invoice.patient);
+                    const patient = resolvePatientRecord(invoice);
+                    const phoneCell = patient?.phone ? (
+                      <span dir="ltr" className="font-mono tracking-tight text-sm">
+                        {patient.phone}
+                      </span>
+                    ) : (
+                      t('common.na')
+                    );
                     return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.id}</TableCell>
                       <TableCell>{invoice.patient}</TableCell>
-                      <TableCell>{patient?.phone || t('common.na')}</TableCell>
+                      <TableCell>{phoneCell}</TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>{formatEGP(invoice.totalAmount, true, language)}</TableCell>
@@ -852,16 +977,6 @@ export default function BillingPage() {
           onSave={handleRecordPayment}
         />
       )}
-      
-      <div className="sr-only">
-        {invoices.map(invoice => (
-            <div key={`print-${invoice.id}`} id={`view-invoice-${invoice.id}`}>
-                <ViewInvoiceDialog invoice={invoice} open={false} onOpenChange={() => {}} patients={patients} />
-            </div>
-        ))}
-      </div>
-
-
       <ViewInvoiceDialog
         invoice={invoiceToView}
         open={!!invoiceToView}

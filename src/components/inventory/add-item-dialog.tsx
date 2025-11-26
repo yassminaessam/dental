@@ -80,8 +80,19 @@ export function AddItemDialog({ onSave, open, onOpenChange, showTrigger = true }
   }, [open]);
 
   const onSubmit = (data: ItemFormData) => {
-    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
-    onSave({...data, supplier: supplierName});
+    const supplierId = data.supplier || undefined;
+    const supplierName = supplierId ? suppliers.find(s => s.id === supplierId)?.name : undefined;
+    onSave({
+      name: data.name,
+      category: data.category,
+      supplier: supplierName ?? '',
+      supplierName: supplierName ?? '',
+      supplierId,
+      stock: data.stock,
+      unitCost: data.unitCost,
+      location: data.location,
+      expires: data.expires,
+    });
     form.reset();
     onOpenChange(false);
   };

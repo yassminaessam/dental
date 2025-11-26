@@ -74,10 +74,11 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
 
   React.useEffect(() => {
     if (item && suppliers.length > 0) {
+      const selectedSupplierId = item.supplierId ?? suppliers.find(s => s.name === item.supplier)?.id ?? '';
       form.reset({
         name: item.name,
         category: item.category,
-        supplier: suppliers.find(s => s.name === item.supplier)?.id,
+        supplier: selectedSupplierId,
         stock: item.stock,
         unitCost: parseFloat(item.unitCost.replace(/[^0-9.-]+/g,"")),
         location: item.location,
@@ -88,12 +89,14 @@ export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDia
   }, [item, form, suppliers]);
 
   const onSubmit = (data: ItemFormData) => {
-    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
+    const supplierId = data.supplier || item.supplierId || undefined;
+    const supplierName = supplierId ? suppliers.find(s => s.id === supplierId)?.name : undefined;
     const updatedItem: InventoryItem = {
       ...item,
       name: data.name,
       category: data.category || item.category,
       supplier: supplierName || item.supplier,
+      supplierId,
       stock: data.stock,
       status: data.stock < item.min ? 'Low Stock' : 'Normal',
       unitCost: `EGP ${data.unitCost.toFixed(2)}`,

@@ -70,6 +70,7 @@ import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-or
 import { InventoryItem } from '../inventory/page';
 import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AddItemDialog } from '@/components/inventory/add-item-dialog';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export type Supplier = {
   id: string;
@@ -100,6 +101,22 @@ export type PurchaseOrder = {
   items: PurchaseOrderItem[];
 };
 
+const ARABIC_TO_ENGLISH_DIGITS: Record<string, string> = {
+  '٠': '0',
+  '١': '1',
+  '٢': '2',
+  '٣': '3',
+  '٤': '4',
+  '٥': '5',
+  '٦': '6',
+  '٧': '7',
+  '٨': '8',
+  '٩': '9'
+};
+
+const normalizeDigits = (value: string): string =>
+  value.replace(/[٠-٩]/g, (digit) => ARABIC_TO_ENGLISH_DIGITS[digit] ?? digit);
+
 
 const iconMap = {
   Building2,
@@ -112,6 +129,8 @@ type IconKey = keyof typeof iconMap;
 
 export default function SuppliersPage() {
   const { t, language, isRTL } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<'suppliers' | 'purchase-orders' | 'receiving'>('suppliers');
@@ -123,6 +142,8 @@ export default function SuppliersPage() {
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>([]);
   const [poToView, setPoToView] = React.useState<PurchaseOrder | null>(null);
+  const [poToEdit, setPoToEdit] = React.useState<PurchaseOrder | null>(null);
+  const [poToDelete, setPoToDelete] = React.useState<PurchaseOrder | null>(null);
   const [poSearchTerm, setPoSearchTerm] = React.useState('');
   const [poStatusFilter, setPoStatusFilter] = React.useState('all');
   
@@ -153,6 +174,33 @@ export default function SuppliersPage() {
     }
     fetchData();
   }, [toast]);
+
+  React.useEffect(() => {
+    const shouldOpenDialog = searchParams.get('openNewPo');
+    if (!shouldOpenDialog || suppliers.length === 0) {
+      return;
+    }
+
+    const supplierNameParam = searchParams.get('supplierName');
+    const supplierIdParam = searchParams.get('supplierId');
+    const matchedSupplier = supplierIdParam
+      ? suppliers.find((supplier) => supplier.id === supplierIdParam)
+      : supplierNameParam
+        ? suppliers.find((supplier) => supplier.name.toLowerCase() === supplierNameParam.toLowerCase())
+        : undefined;
+
+    setNewPoSupplier(matchedSupplier?.id ?? supplierIdParam ?? undefined);
+    setActiveTab('purchase-orders');
+    setIsNewPoOpen(true);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('openNewPo');
+    params.delete('supplierName');
+    params.delete('inventoryItemId');
+    params.delete('supplierId');
+    const next = params.toString();
+    router.replace(next ? `/suppliers?${next}` : '/suppliers', { scroll: false });
+  }, [searchParams, suppliers, router]);
   
   const supplierCategories = React.useMemo(() => {
     return [...new Set(suppliers.map((s) => s.category))];
@@ -164,11 +212,14 @@ export default function SuppliersPage() {
     const totalPOValue = purchaseOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
     const topRatedSuppliers = suppliers.filter(s => s.rating >= 4.5).length;
     
-    const currencyFormatter = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
+    const englishDigitsAmount = formatEGP(totalPOValue, false, 'en');
+    const totalPoValueLabel = language === 'ar'
+      ? `${englishDigitsAmount} جم`
+      : `EGP ${englishDigitsAmount}`;
     return [
       { title: t('suppliers.total_suppliers'), value: totalSuppliers, icon: "Building2", description: t('suppliers.all_active_suppliers'), cardStyle: 'metric-card-blue' },
       { title: t('suppliers.pending_pos'), value: pendingPOs, icon: "FileText", description: t('suppliers.orders_awaiting_shipment'), cardStyle: 'metric-card-orange' },
-      { title: t('suppliers.total_po_value'), value: currencyFormatter.format(totalPOValue), icon: "DollarSign", description: t('suppliers.value_of_all_orders'), cardStyle: 'metric-card-green' },
+      { title: t('suppliers.total_po_value'), value: totalPoValueLabel, icon: "DollarSign", description: t('suppliers.value_of_all_orders'), cardStyle: 'metric-card-green' },
       { title: t('suppliers.top_rated'), value: `${topRatedSuppliers} ${t('suppliers.suppliers')}`, icon: "Star", description: t('suppliers.rating_4_5_or_higher'), cardStyle: 'metric-card-purple' },
     ];
   }, [suppliers, purchaseOrders, language, t]);
@@ -190,6 +241,14 @@ export default function SuppliersPage() {
       averageOrderValue: totalOrders > 0 ? totalValue / totalOrders : 0
     };
   }, [purchaseOrders]);
+
+  const formatPurchaseOrderTotal = React.useCallback((total: string) => {
+    const normalized = normalizeDigits(total ?? '');
+    const numericPortion = normalized.replace(/[^0-9.,-]+/g, '').trim();
+    const fallback = '0.00';
+    const symbol = language === 'ar' ? 'جم' : 'EGP';
+    return `${numericPortion || fallback} ${symbol}`;
+  }, [language]);
 
   const createQuickPurchaseOrder = async (supplier: Supplier) => {
     try {
@@ -383,6 +442,49 @@ export default function SuppliersPage() {
     }
   };
 
+  const handleUpdatePurchaseOrder = async (data: any) => {
+    const targetId = data?.id ?? poToEdit?.id;
+    if (!targetId) return;
+    try {
+      const total = data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
+      const updatedOrder: PurchaseOrder = {
+        id: targetId,
+        supplier: data.supplier,
+        orderDate: data.orderDate ? new Date(data.orderDate).toLocaleDateString() : (poToEdit?.orderDate ?? ''),
+        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
+        total: `$${total.toFixed(2)}`,
+        status: purchaseOrders.find((po) => po.id === targetId)?.status ?? 'Pending',
+        items: data.items,
+      };
+      await updateDocument('purchase-orders', targetId, {
+        supplier: updatedOrder.supplier,
+        orderDate: updatedOrder.orderDate,
+        deliveryDate: updatedOrder.deliveryDate,
+        total: updatedOrder.total,
+        status: updatedOrder.status,
+        items: updatedOrder.items,
+      });
+      setPurchaseOrders((prev) => prev.map((po) => (po.id === targetId ? updatedOrder : po)));
+      setPoToEdit(null);
+      toast({ title: language === 'ar' ? 'تم تحديث أمر الشراء' : 'Purchase order updated' });
+    } catch (e) {
+      toast({ title: language === 'ar' ? 'فشل تحديث أمر الشراء' : 'Failed to update purchase order', variant: 'destructive' });
+    }
+  };
+
+  const handleDeletePurchaseOrder = async () => {
+    if (!poToDelete) return;
+    try {
+      await deleteDocument('purchase-orders', poToDelete.id);
+      setPurchaseOrders((prev) => prev.filter((po) => po.id !== poToDelete.id));
+      toast({ title: language === 'ar' ? 'تم حذف أمر الشراء' : 'Purchase order deleted' });
+    } catch (e) {
+      toast({ title: language === 'ar' ? 'فشل حذف أمر الشراء' : 'Failed to delete purchase order', variant: 'destructive' });
+    } finally {
+      setPoToDelete(null);
+    }
+  };
+
   const openNewPoDialog = (supplierId?: string) => {
     setNewPoSupplier(supplierId);
     setIsNewPoOpen(true);
@@ -400,14 +502,23 @@ export default function SuppliersPage() {
   }, [suppliers, supplierSearchTerm, categoryFilter]);
 
   const filteredPurchaseOrders = React.useMemo(() => {
+    const normalizedSearch = poSearchTerm.toLowerCase();
+    const normalizedStatus = poStatusFilter.toLowerCase();
+
     return purchaseOrders
-      .filter(po =>
-        po.supplier.toLowerCase().includes(poSearchTerm.toLowerCase()) ||
-        po.id.toLowerCase().includes(poSearchTerm.toLowerCase())
-      )
-      .filter(po =>
-        poStatusFilter === 'all' || po.status.toLowerCase() === poStatusFilter
-      );
+      .filter((po) => {
+        const supplierName = (po.supplier ?? '').toLowerCase();
+        const poId = (po.id ?? '').toLowerCase();
+        return (
+          supplierName.includes(normalizedSearch) ||
+          poId.includes(normalizedSearch)
+        );
+      })
+      .filter((po) => {
+        if (normalizedStatus === 'all') return true;
+        const status = (po.status ?? '').toLowerCase();
+        return status === normalizedStatus;
+      });
   }, [purchaseOrders, poSearchTerm, poStatusFilter]);
 
   const receivingOrders = React.useMemo(() => {
@@ -751,7 +862,7 @@ export default function SuppliersPage() {
                           <TableCell>{po.supplier}</TableCell>
                           <TableCell>{po.orderDate}</TableCell>
                           <TableCell>{po.deliveryDate || 'N/A'}</TableCell>
-                          <TableCell>{po.total}</TableCell>
+                          <TableCell>{formatPurchaseOrderTotal(po.total)}</TableCell>
                           <TableCell>
                              <Badge
                               variant={
@@ -782,6 +893,14 @@ export default function SuppliersPage() {
                                   <DropdownMenuItem onClick={() => setPoToView(po)}>
                                     <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                   {t('table.view_details')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPoToEdit(po)}>
+                                    <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                    {t('table.edit')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPoToDelete(po)} className="text-destructive">
+                                    <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                    {t('table.delete')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handlePoStatusChange(po.id, 'Shipped')}>
@@ -881,6 +1000,21 @@ export default function SuppliersPage() {
         onAddItem={() => setIsAddItemOpen(true)}
       />
 
+      <NewPurchaseOrderDialog
+        key={poToEdit?.id ?? 'edit-po'}
+        open={!!poToEdit}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setPoToEdit(null);
+        }}
+        onSave={handleUpdatePurchaseOrder}
+        initialSupplierId={poToEdit ? suppliers.find((s) => s.name === poToEdit.supplier)?.id : undefined}
+        inventoryItems={inventory}
+        suppliers={suppliers}
+        onAddItem={() => setIsAddItemOpen(true)}
+        initialOrder={poToEdit}
+        mode="edit"
+      />
+
       <AddItemDialog onSave={handleSaveItem} open={isAddItemOpen} onOpenChange={setIsAddItemOpen} showTrigger={false} />
       
       {supplierToEdit && (
@@ -903,6 +1037,23 @@ export default function SuppliersPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSupplier}>{t('common.delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!poToDelete} onOpenChange={(isOpen) => !isOpen && setPoToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ar' ? 'هل أنت متأكد من حذف أمر الشراء هذا؟' : 'Are you sure you want to delete this purchase order?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePurchaseOrder} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('common.delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

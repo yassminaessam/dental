@@ -46,6 +46,7 @@ import {
   Box,
   Boxes,
   PackageCheck,
+  PillBottle,
 } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
 import {
@@ -56,6 +57,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
+import { TransferToPharmacyDialog, type TransferFormData } from '@/components/inventory/transfer-to-pharmacy-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +72,7 @@ import { useToast } from '@/hooks/use-toast';
 // Use client-side data client for all CRUD to avoid server-only imports in client components
 import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 export type InventoryItem = {
   id: string;
@@ -82,19 +85,43 @@ export type InventoryItem = {
   status: 'Normal' | 'Low Stock' | 'Out of Stock';
   unitCost: string;
   supplier: string;
+  supplierId?: string;
+  supplierName?: string;
   location: string;
   notes?: string;
 };
 
+type SupplierSummary = {
+  id: string;
+  name: string;
+};
+
+type PharmacyMedication = {
+  id: string;
+  name: string;
+  fullName: string;
+  strength: string;
+  form: string;
+  category: string;
+  stock: number;
+  unitPrice: string;
+  expiryDate: string;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+};
+
 export default function InventoryPage() {
   const { t, language, isRTL } = useLanguage();
+  const router = useRouter();
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const currencyFmt = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 });
   const numberFmt = new Intl.NumberFormat(locale);
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
+  const [suppliers, setSuppliers] = React.useState<SupplierSummary[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
+  const [itemToTransfer, setItemToTransfer] = React.useState<InventoryItem | null>(null);
+  const [isTransferLoading, setIsTransferLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = React.useState(false);
@@ -103,8 +130,12 @@ export default function InventoryPage() {
   React.useEffect(() => {
     async function fetchInventory() {
         try {
-            const data = await listDocuments<InventoryItem>('inventory');
-            setInventory(data);
+            const [inventoryData, supplierData] = await Promise.all([
+              listDocuments<InventoryItem>('inventory'),
+              listDocuments<SupplierSummary>('suppliers'),
+            ]);
+            setInventory(inventoryData);
+            setSuppliers(supplierData);
         } catch (error) {
             toast({ title: t('inventory.toast.error_fetching'), variant: 'destructive'});
         } finally {
@@ -113,6 +144,41 @@ export default function InventoryPage() {
     }
     fetchInventory();
   }, [toast, t]);
+
+  const supplierNameMap = React.useMemo(() => {
+    return suppliers.reduce<Record<string, string>>((acc, supplier) => {
+      acc[supplier.id] = supplier.name;
+      return acc;
+    }, {});
+  }, [suppliers]);
+
+  const missingSupplierLabel = React.useMemo(() => language === 'ar' ? 'غير محدد' : 'Unassigned', [language]);
+
+  const getSupplierDisplayName = React.useCallback((item: InventoryItem) => {
+    const direct = typeof item.supplier === 'string' && item.supplier.trim().length > 0 ? item.supplier.trim() : '';
+    const fromId = item.supplierId ? supplierNameMap[item.supplierId] : undefined;
+    const legacy = typeof item.supplierName === 'string' && item.supplierName.trim().length > 0 ? item.supplierName.trim() : '';
+    return direct || fromId || legacy || missingSupplierLabel;
+  }, [supplierNameMap, missingSupplierLabel]);
+
+  const parseUnitCostValue = React.useCallback((value?: string) => {
+    if (!value) return 0;
+    const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, []);
+
+  const resolveInventoryStatus = React.useCallback((stock: number, min?: number) => {
+    if (stock <= 0) return 'Out of Stock';
+    const threshold = min ?? 10;
+    if (stock < threshold) return 'Low Stock';
+    return 'Normal';
+  }, []);
+
+  const resolveMedicationStatus = React.useCallback((stock: number) => {
+    if (stock <= 0) return 'Out of Stock';
+    if (stock <= 20) return 'Low Stock';
+    return 'In Stock';
+  }, []);
 
   const inventoryCategories = React.useMemo(() => {
     return [...new Set(inventory.map((i) => i.category))];
@@ -139,6 +205,11 @@ export default function InventoryPage() {
 
   const handleSaveItem = async (data: any) => {
     try {
+        const supplierId = data.supplierId && data.supplierId.length > 0 ? data.supplierId : undefined;
+        let supplierName = data.supplierName ?? data.supplier ?? '';
+        if (supplierId && (!supplierName || supplierName === supplierId)) {
+          supplierName = supplierNameMap[supplierId] ?? supplierName;
+        }
         const newItem: InventoryItem = {
           id: `INV-${Date.now()}`,
           name: data.name,
@@ -149,7 +220,8 @@ export default function InventoryPage() {
           max: 50,
           status: data.stock < 10 ? 'Low Stock' : 'Normal',
           unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
-          supplier: data.supplier,
+          supplier: supplierName,
+          supplierId,
           location: data.location,
         };
         await setDocument('inventory', newItem.id, newItem);
@@ -162,6 +234,87 @@ export default function InventoryPage() {
         toast({ title: t('inventory.toast.error_adding'), variant: 'destructive'});
     }
   };
+
+  const handleTransferToPharmacy = React.useCallback(async (transferData: TransferFormData) => {
+    if (!itemToTransfer) return;
+    const availableStock = itemToTransfer.stock ?? 0;
+    if (availableStock <= 0 || transferData.quantity > availableStock) {
+      toast({
+        title: t('inventory.transfer_error_title'),
+        description: t('inventory.transfer_insufficient_stock'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsTransferLoading(true);
+    try {
+      const remainingStock = availableStock - transferData.quantity;
+      const updatedInventoryItem: InventoryItem = {
+        ...itemToTransfer,
+        stock: remainingStock,
+        status: resolveInventoryStatus(remainingStock, itemToTransfer.min),
+      };
+
+      await updateDocument('inventory', itemToTransfer.id, updatedInventoryItem);
+      setInventory(prev => prev.map(inv => (inv.id === itemToTransfer.id ? updatedInventoryItem : inv)));
+
+      const medications = await listDocuments<PharmacyMedication>('medications');
+      const normalizedName = itemToTransfer.name.trim().toLowerCase();
+      const existingMedication = medications.find(med => med.name.trim().toLowerCase() === normalizedName);
+
+      const unitPriceValue = typeof transferData.unitPrice === 'number'
+        ? transferData.unitPrice
+        : parseUnitCostValue(itemToTransfer.unitCost);
+      const formattedUnitPrice = formatEGP(unitPriceValue || 0, true, language);
+      const expirySource = itemToTransfer.expires && itemToTransfer.expires !== 'N/A'
+        ? itemToTransfer.expires
+        : existingMedication?.expiryDate ?? 'N/A';
+
+      if (existingMedication) {
+        const updatedMedication: PharmacyMedication = {
+          ...existingMedication,
+          stock: existingMedication.stock + transferData.quantity,
+          unitPrice: formattedUnitPrice,
+          expiryDate: expirySource,
+          status: resolveMedicationStatus(existingMedication.stock + transferData.quantity),
+        };
+        await updateDocument('medications', existingMedication.id, updatedMedication);
+      } else {
+        const newMedication: PharmacyMedication = {
+          id: `MED-${Date.now()}`,
+          name: itemToTransfer.name,
+          fullName: itemToTransfer.name,
+          strength: '',
+          form: '',
+          category: itemToTransfer.category ?? 'Medications',
+          stock: transferData.quantity,
+          unitPrice: formattedUnitPrice,
+          expiryDate: expirySource,
+          status: resolveMedicationStatus(transferData.quantity),
+        };
+        await setDocument('medications', newMedication.id, newMedication);
+      }
+
+      toast({
+        title: t('inventory.transfer_success_title'),
+        description: t('inventory.transfer_success_description', {
+          name: itemToTransfer.name,
+          quantity: transferData.quantity,
+        }),
+      });
+      setItemToTransfer(null);
+    } catch (error) {
+      console.error('Transfer to pharmacy failed', error);
+      toast({
+        title: t('inventory.transfer_error_title'),
+        description: t('inventory.transfer_error_description'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTransferLoading(false);
+    }
+  }, [itemToTransfer, language, parseUnitCostValue, resolveInventoryStatus, resolveMedicationStatus, t, toast]);
 
   const handleUpdateItem = async (updatedItem: InventoryItem) => {
     try {
@@ -206,9 +359,10 @@ export default function InventoryPage() {
       const orderQuantity = item.max - item.stock;
       const unitPrice = parseFloat(item.unitCost.replace(/[^\d.]/g, ''));
       const total = orderQuantity * unitPrice;
+      const supplierLabel = getSupplierDisplayName(item);
 
       const newPurchaseOrder = {
-        supplier: item.supplier,
+        supplier: supplierLabel,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         total: formatEGP(total, true, language),
@@ -238,6 +392,19 @@ export default function InventoryPage() {
   const createQuickPurchaseOrder = async (item: InventoryItem) => {
     await handleRestock(item);
   };
+
+  const handleManualOrderRedirect = React.useCallback((item: InventoryItem) => {
+    const params = new URLSearchParams();
+    params.set('openNewPo', '1');
+    const supplierLabel = getSupplierDisplayName(item);
+    if (supplierLabel && supplierLabel !== missingSupplierLabel) {
+      params.set('supplierName', supplierLabel);
+    } else if (item.supplierId) {
+      params.set('supplierId', item.supplierId);
+    }
+    params.set('inventoryItemId', item.id);
+    router.push(`/suppliers?${params.toString()}`);
+  }, [getSupplierDisplayName, missingSupplierLabel, router]);
 
   const filteredInventory = React.useMemo(() => {
     return inventory
@@ -369,7 +536,7 @@ export default function InventoryPage() {
         {t('inventory.stock')}: {numberFmt.format(item.stock)} / {t('inventory.min')}: {numberFmt.format(item.min)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-        {t('inventory.supplier')}: {item.supplier}
+	{t('inventory.supplier')}: {getSupplierDisplayName(item)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -381,8 +548,12 @@ export default function InventoryPage() {
                     <ShoppingCart className="mr-2 h-4 w-4" />
         {t('inventory.quick_order')}
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleRestock(item)}>
-                    <Plus className="mr-2 h-4 w-4" />
+			  <Button
+			    variant="destructive"
+			    size="sm"
+			    onClick={() => handleManualOrderRedirect(item)}
+			  >
+			    <Plus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
         {t('inventory.manual_order')}
                   </Button>
                 </div>
@@ -492,7 +663,7 @@ export default function InventoryPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{item.unitCost}</TableCell>
-                      <TableCell>{item.supplier}</TableCell>
+                      <TableCell>{getSupplierDisplayName(item)}</TableCell>
                       <TableCell>{item.location}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -513,6 +684,13 @@ export default function InventoryPage() {
                                 {t('inventory.quick_order')}
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={() => setItemToTransfer(item)}
+                              disabled={(item.stock ?? 0) <= 0}
+                            >
+                              <PillBottle className="mr-2 h-4 w-4" />
+                              {t('inventory.transfer_to_pharmacy')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toast({
                               title: t('inventory.supplier_info'),
                               description: t('inventory.supplier_contact_desc')
@@ -550,6 +728,18 @@ export default function InventoryPage() {
           onOpenChange={(isOpen) => !isOpen && setItemToEdit(null)}
         />
       )}
+
+      <TransferToPharmacyDialog
+        itemName={itemToTransfer?.name}
+        availableQuantity={itemToTransfer?.stock ?? 0}
+        defaultUnitPrice={itemToTransfer ? parseUnitCostValue(itemToTransfer.unitCost) : undefined}
+        open={!!itemToTransfer}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setItemToTransfer(null);
+        }}
+        onConfirm={handleTransferToPharmacy}
+        isSubmitting={isTransferLoading}
+      />
 
       <AlertDialog open={!!itemToDelete} onOpenChange={(isOpen) => !isOpen && setItemToDelete(null)}>
         <AlertDialogContent>
