@@ -390,7 +390,14 @@ export default function ReferralsPage() {
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
                 <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
-                  <Table>
+                  <Table
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    className={cn(
+                      isRTL
+                        ? 'text-right [&_th]:text-right [&_td]:text-right'
+                        : 'text-left [&_th]:text-left [&_td]:text-left'
+                    )}
+                  >
                     <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
                       <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
                         <TableHead className="font-bold text-foreground">{t('referrals.patient')}</TableHead>
@@ -466,13 +473,13 @@ export default function ReferralsPage() {
                             {referral.apptDate && <div className="text-xs text-muted-foreground">{referral.apptDate}</div>}
                           </TableCell>
                           <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
-                            <div className="flex items-center justify-end gap-2">
+                            <div className={cn('flex items-center gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                               <Button variant="outline" size="sm" onClick={() => setReferralToView(referral)}>
-                                <Eye className="mr-2 h-3 w-3" />
+                                <Eye className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
                 {t('referrals.actions.view')}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleFollowUp(referral)}>
-                                <Send className="mr-2 h-3 w-3" />
+                                <Send className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
                 {t('referrals.actions.follow_up')}
                               </Button>
                             </div>
@@ -542,7 +549,14 @@ export default function ReferralsPage() {
                 </CardHeader>
                 <CardContent className="p-0 sm:p-6">
                     <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
-                      <Table>
+                      <Table
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        className={cn(
+                          isRTL
+                            ? 'text-right [&_th]:text-right [&_td]:text-right'
+                            : 'text-left [&_th]:text-left [&_td]:text-left'
+                        )}
+                      >
                         <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
                             <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
                               <TableHead className="font-bold text-foreground">{t('referrals.specialist')}</TableHead>
@@ -583,9 +597,15 @@ export default function ReferralsPage() {
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSpecialistToEdit(specialist)}><Pencil className="mr-2 h-4 w-4" />{t('referrals.edit')}</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setSpecialistToDelete(specialist)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />{t('referrals.delete')}</DropdownMenuItem>
+                                                <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
+                          <DropdownMenuItem onClick={() => setSpecialistToEdit(specialist)}>
+                            <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {t('referrals.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSpecialistToDelete(specialist)} className="text-destructive">
+                            <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                            {t('referrals.delete')}
+                          </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

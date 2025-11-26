@@ -71,7 +71,7 @@ function TabSync({ onTab }: { onTab: (value: string) => void }) {
 
 export default function PatientPortalPage() {
   const { toast } = useToast();
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('messages');
   const router = useRouter();
@@ -240,7 +240,7 @@ export default function PatientPortalPage() {
 
   return (
     <DashboardLayout>
-      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative">
+      <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Sync tab from URL */}
         <Suspense fallback={null}>
           <TabSync onTab={setActiveTab} />
@@ -410,16 +410,31 @@ export default function PatientPortalPage() {
               <CardHeader className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <CardTitle>{t('patient_portal.section.patient_messages')}</CardTitle>
                 <div className="relative w-full md:w-auto">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search
+                    className={cn(
+                      "absolute top-2.5 h-4 w-4 text-muted-foreground",
+                      isRTL ? 'right-2.5' : 'left-2.5'
+                    )}
+                  />
                   <Input
                     type="search"
                     placeholder={t('patient_portal.search_messages')}
-                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                    className={cn(
+                      "w-full rounded-lg bg-background md:w-[200px] lg:w-[336px]",
+                      isRTL ? 'pr-8 pl-2 text-right' : 'pl-8 pr-2'
+                    )}
                   />
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[150px]">{t('patient_portal.table.patient')}</TableHead>
@@ -428,7 +443,7 @@ export default function PatientPortalPage() {
                       <TableHead>{t('patient_portal.table.priority')}</TableHead>
                       <TableHead>{t('patient_portal.table.date')}</TableHead>
                       <TableHead>{t('patient_portal.table.status')}</TableHead>
-                      <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('patient_portal.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -468,14 +483,14 @@ export default function PatientPortalPage() {
                                 <span>{message.status === 'Unread' ? t('patient_portal.message_status.unread') : t('patient_portal.message_status.sent')}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                            <div className={cn('flex items-center gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                               <Button variant="outline" size="sm" onClick={() => setSelectedMessage(message)}>
-                                <Eye className="mr-2 h-3 w-3" />
+                                <Eye className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
                                 {t('patient_portal.actions.view')}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleReply(message)}>
-                                <Reply className="mr-2 h-3 w-3" />
+                                <Reply className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
                                 {t('patient_portal.actions.reply')}
                               </Button>
                             </div>
@@ -500,14 +515,21 @@ export default function PatientPortalPage() {
                   <CardTitle>{t('patient_portal.section.pending_requests')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  <Table
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    className={cn(
+                      isRTL
+                        ? 'text-right [&_th]:text-right [&_td]:text-right'
+                        : 'text-left [&_th]:text-left [&_td]:text-left'
+                    )}
+                  >
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t('patient_portal.table.patient')}</TableHead>
                         <TableHead>{t('patient_portal.table.doctor')}</TableHead>
                         <TableHead>{t('patient_portal.table.requested_date')}</TableHead>
                         <TableHead>{t('patient_portal.table.type')}</TableHead>
-                        <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
+                        <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('patient_portal.table.actions')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -520,13 +542,13 @@ export default function PatientPortalPage() {
                             <TableCell>{request.doctor}</TableCell>
                             <TableCell>{request.dateTime.toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</TableCell>
                             <TableCell>{request.type}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
+                            <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                              <div className={cn('flex gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                                 <Button variant="outline" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Confirmed')}>
-                                  <Check className="mr-2 h-4 w-4" /> {t('patient_portal.actions.approve')}
+                                  <Check className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('patient_portal.actions.approve')}
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => handleRequestStatusChange(request.id, 'Cancelled')}>
-                                  <X className="mr-2 h-4 w-4" /> {t('patient_portal.actions.decline')}
+                                  <X className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('patient_portal.actions.decline')}
                                 </Button>
                               </div>
                             </TableCell>
@@ -551,14 +573,21 @@ export default function PatientPortalPage() {
                     <CardDescription>{t('patient_portal.section.portal_users_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    <Table
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className={cn(
+                        isRTL
+                          ? 'text-right [&_th]:text-right [&_td]:text-right'
+                          : 'text-left [&_th]:text-left [&_td]:text-left'
+                      )}
+                    >
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t('patient_portal.table.patient')}</TableHead>
                                 <TableHead>{t('patient_portal.table.email')}</TableHead>
                                 <TableHead>{t('patient_portal.table.last_login')}</TableHead>
                                 <TableHead>{t('patient_portal.table.status')}</TableHead>
-                                <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
+                                <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('patient_portal.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -572,13 +601,13 @@ export default function PatientPortalPage() {
                                     <TableCell>
                                         <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>{user.status === 'Active' ? t('patient_portal.user_status.active') : t('patient_portal.user_status.deactivated')}</Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
+                                    <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                                        <div className={cn('flex gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                                             <Button variant="outline" size="sm" onClick={() => handleUserStatusChange(user.id)}>
                                                 {user.status === 'Active' ? t('patient_portal.actions.deactivate') : t('patient_portal.actions.activate')}
                                             </Button>
                                             <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.name)}>
-                                                <KeyRound className="mr-2 h-4 w-4" /> {t('patient_portal.actions.reset_password')}
+                                                <KeyRound className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('patient_portal.actions.reset_password')}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -596,14 +625,21 @@ export default function PatientPortalPage() {
                     <CardDescription>{t('patient_portal.section.shared_documents_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    <Table
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className={cn(
+                        isRTL
+                          ? 'text-right [&_th]:text-right [&_td]:text-right'
+                          : 'text-left [&_th]:text-left [&_td]:text-left'
+                      )}
+                    >
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t('patient_portal.table.document_name')}</TableHead>
                                 <TableHead>{t('patient_portal.table.patient')}</TableHead>
                                 <TableHead>{t('patient_portal.table.shared_on')}</TableHead>
                                 <TableHead>{t('patient_portal.table.type')}</TableHead>
-                                <TableHead className="text-right">{t('patient_portal.table.actions')}</TableHead>
+                                <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('patient_portal.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -617,13 +653,13 @@ export default function PatientPortalPage() {
                                     <TableCell>
                                         <Badge variant="secondary">{doc.type === 'Treatment Plan' ? t('patient_portal.document_type.treatment_plan') : doc.type === 'Invoice' ? t('patient_portal.document_type.invoice') : t('patient_portal.document_type.lab_result')}</Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
+                                    <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                                        <div className={cn('flex gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                                             <Button variant="outline" size="sm">
-                                                <Eye className="mr-2 h-4 w-4" /> {t('patient_portal.actions.view_document')}
+                                                <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('patient_portal.actions.view_document')}
                                             </Button>
                                             <Button variant="destructive" size="sm" onClick={() => handleRevokeDocument(doc.id)}>
-                                                <Trash2 className="mr-2 h-4 w-4" /> {t('patient_portal.actions.revoke_access')}
+                                                <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('patient_portal.actions.revoke_access')}
                                             </Button>
                                         </div>
                                     </TableCell>

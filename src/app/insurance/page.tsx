@@ -466,7 +466,14 @@ export default function InsurancePage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
             <TableHead>{t('insurance.claim_id')}</TableHead>
@@ -537,7 +544,7 @@ export default function InsurancePage() {
                                   <span className="sr-only">{t('table.actions')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                                 <DropdownMenuItem onClick={() => setClaimToView(claim)}>
                                   <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('insurance.view_details')}
                                 </DropdownMenuItem>
@@ -597,7 +604,14 @@ export default function InsurancePage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
           <TableHead>{t('insurance.provider_name')}</TableHead>
@@ -624,7 +638,7 @@ export default function InsurancePage() {
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent>
+                              <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                                 <DropdownMenuItem onClick={() => setProviderToEdit(provider)}>
                                   <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('table.edit')}
