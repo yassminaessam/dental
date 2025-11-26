@@ -54,6 +54,8 @@ export type Invoice = {
   id: string;
   patient: string;
   patientId: string;
+  patientNameSnapshot?: string;
+  patientPhoneSnapshot?: string;
   issueDate: string;
   dueDate: string;
   totalAmount: number;
@@ -119,24 +121,41 @@ export default function BillingPage() {
             const updatedInvoices = invoiceData.map((invoice: any) => {
               const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
               let status = invoice.status;
-              
-              // Update status to Overdue if needed
+
               if (dueDate && dueDate < today && invoice.status === 'Unpaid' && invoice.amountPaid < invoice.totalAmount) {
                 status = 'Overdue' as const;
               }
-              
-              // Find patient name from patients array
-              const patient = mappedPatients.find((p: any) => p.id === invoice.patientId);
-              const patientName = patient ? `${patient.name} ${patient.lastName}` : 'Unknown Patient';
-              
+
+              const patientMatchById = invoice.patientId
+                ? mappedPatients.find((p: any) => p.id === invoice.patientId)
+                : undefined;
+
+              const normalizedSnapshotName = invoice.patientNameSnapshot?.trim().toLowerCase();
+              const patientMatchBySnapshot = !patientMatchById && normalizedSnapshotName
+                ? mappedPatients.find((p: any) => {
+                    const fullName = `${p.name ?? ''} ${p.lastName ?? ''}`.trim().toLowerCase();
+                    return fullName === normalizedSnapshotName || p.name?.trim().toLowerCase() === normalizedSnapshotName;
+                  })
+                : undefined;
+
+              const patient = patientMatchById ?? patientMatchBySnapshot;
+              const patientFullName = patient
+                ? `${patient.name ?? ''} ${patient.lastName ?? ''}`.trim() || patient.name
+                : invoice.patientNameSnapshot || t('patients.patient');
+              const effectivePatientId = patient?.id ?? (patientMatchById ? invoice.patientId : patientMatchBySnapshot?.id) ?? invoice.patientId ?? '';
+              const phoneSnapshot = patient?.phone ?? invoice.patientPhoneSnapshot ?? undefined;
+
               return {
                 ...invoice,
+                patientId: effectivePatientId,
+                patientNameSnapshot: invoice.patientNameSnapshot ?? patientFullName,
+                patientPhoneSnapshot: phoneSnapshot,
                 status,
-                patient: patientName,
+                patient: patientFullName,
                 issueDate: invoice.date ? new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
                 dueDate: dueDate ? dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
                 totalAmount: Number(invoice.amount) || 0,
-                amountPaid: 0, // Can be updated from payment records if needed
+                amountPaid: 0,
                 items: invoice.items || [],
                 createdAt: invoice.createdAt ? new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
               };
@@ -198,6 +217,8 @@ export default function BillingPage() {
           body: JSON.stringify({
             number: `INV-${Date.now()}`,
             patientId: data.patientId,
+            patientNameSnapshot: data.patientNameSnapshot ?? data.patient,
+            patientPhoneSnapshot: data.patientPhoneSnapshot,
             treatmentId: data.treatmentId,
             date: new Date(data.issueDate),
             dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
@@ -220,8 +241,10 @@ export default function BillingPage() {
         // Map API response to UI format
         const newInvoice: Invoice = {
           id: invoice.id,
-          patient: data.patient,
+          patient: invoice.patientNameSnapshot || data.patient,
           patientId: invoice.patientId || data.patientId,
+          patientNameSnapshot: invoice.patientNameSnapshot || data.patientNameSnapshot || data.patient,
+          patientPhoneSnapshot: invoice.patientPhoneSnapshot || data.patientPhoneSnapshot,
           issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
           dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
           totalAmount: invoice.amount,
@@ -291,6 +314,8 @@ export default function BillingPage() {
         body: JSON.stringify({
           number: `INV-${Date.now()}`,
           patientId: patient.id,
+          patientNameSnapshot: `${patient.name} ${patient.lastName ?? ''}`.trim(),
+          patientPhoneSnapshot: patient.phone,
           treatmentId: treatmentId,
           date: new Date(),
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -312,8 +337,10 @@ export default function BillingPage() {
 
       const newInvoice: Invoice = {
         id: invoice.id,
-        patient: treatment.patient,
+        patient: invoice.patientNameSnapshot || `${patient.name} ${patient.lastName ?? ''}`.trim() || treatment.patient,
         patientId: patient.id,
+        patientNameSnapshot: invoice.patientNameSnapshot || `${patient.name} ${patient.lastName ?? ''}`.trim(),
+        patientPhoneSnapshot: invoice.patientPhoneSnapshot || patient.phone,
         issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
         dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
         totalAmount: invoice.amount,
@@ -347,7 +374,7 @@ export default function BillingPage() {
       if (byId) return byId;
     }
 
-    const normalizedDisplayName = invoice.patient?.trim().toLowerCase();
+    const normalizedDisplayName = (invoice.patientNameSnapshot ?? invoice.patient)?.trim().toLowerCase();
     if (!normalizedDisplayName) return undefined;
 
     return patients.find((patient) => {
@@ -526,8 +553,9 @@ export default function BillingPage() {
       </tr>
     `).join('');
 
-    const phoneMarkup = patientRecord?.phone
-      ? `<span dir="ltr" style="font-family: 'IBM Plex Mono', 'Cairo', monospace; letter-spacing: 0.02em;">${patientRecord.phone}</span>`
+    const resolvedPhone = patientRecord?.phone ?? invoice.patientPhoneSnapshot ?? '';
+    const phoneMarkup = resolvedPhone
+      ? `<span dir="ltr" style="font-family: 'IBM Plex Mono', 'Cairo', monospace; letter-spacing: 0.02em;">${resolvedPhone}</span>`
       : '';
 
     return `<!DOCTYPE html>
@@ -574,7 +602,7 @@ export default function BillingPage() {
         <h4>${t('billing.bill_to')}</h4>
         <p>${invoice.patient}</p>
         <p>${t('patients.patient_id')}: ${invoice.patientId || t('common.na')}</p>
-        ${patientRecord?.phone ? `<p>${t('common.phone')}: ${phoneMarkup}</p>` : ''}
+        ${resolvedPhone ? `<p>${t('common.phone')}: ${phoneMarkup}</p>` : ''}
       </div>
       <div class="meta-card">
         <h4>${t('common.created_by')}</h4>
@@ -644,7 +672,7 @@ export default function BillingPage() {
       const patientName = invoice.patient?.toLowerCase() || '';
       const invoiceId = invoice.id?.toLowerCase() || '';
       const patientRecord = resolvePatientRecord(invoice);
-      const patientPhoneRaw = patientRecord?.phone ?? '';
+      const patientPhoneRaw = patientRecord?.phone ?? invoice.patientPhoneSnapshot ?? '';
       const phoneDigits = patientPhoneRaw.replace(/[^\d]/g, '');
       const withoutCountry = phoneDigits.replace(/^20/, '');
       const localVariant = withoutCountry.startsWith('0') ? withoutCountry : withoutCountry ? `0${withoutCountry}` : '';
@@ -882,9 +910,10 @@ export default function BillingPage() {
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
                     const patient = resolvePatientRecord(invoice);
-                    const phoneCell = patient?.phone ? (
+                    const resolvedPhone = patient?.phone ?? invoice.patientPhoneSnapshot;
+                    const phoneCell = resolvedPhone ? (
                       <span dir="ltr" className="font-mono tracking-tight text-sm">
-                        {patient.phone}
+                        {resolvedPhone}
                       </span>
                     ) : (
                       t('common.na')

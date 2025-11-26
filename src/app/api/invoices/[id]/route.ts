@@ -17,6 +17,8 @@ const parsePatchPayload = async (request: Request, id: string): Promise<InvoiceU
   return {
     id,
     patientId: body.patientId,
+    patientNameSnapshot: body.patientNameSnapshot,
+    patientPhoneSnapshot: body.patientPhoneSnapshot,
     treatmentId: body.treatmentId,
     dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
     status: body.status,

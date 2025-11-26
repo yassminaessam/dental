@@ -309,6 +309,8 @@ model Invoice {
   number      String        @unique
   patientId   String?
   patient     Patient?      @relation(fields: [patientId], references: [id])
+  patientNameSnapshot String?
+  patientPhoneSnapshot String?
   treatmentId String?
   treatment   Treatment?    @relation(fields: [treatmentId], references: [id])
   date        DateTime

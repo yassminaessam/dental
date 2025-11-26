@@ -57,7 +57,10 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   }
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
-  const patient = patients.find(p => p.name === invoice.patient);
+  const patient = patients.find(p => p.id === invoice.patientId)
+    || patients.find(p => `${p.name} ${p.lastName ?? ''}`.trim() === invoice.patient)
+    || null;
+  const resolvedPhone = patient?.phone ?? invoice.patientPhoneSnapshot ?? null;
   const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' });
 
   const InvoiceContent = () => (
@@ -82,9 +85,9 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
       <h4 className="font-semibold text-muted-foreground">{t('billing.bill_to')}</h4>
             <p>{invoice.patient}</p>
       <p>{t('patients.patient_id')}: {invoice.patientId}</p>
-      {patient?.phone && (
+      {resolvedPhone && (
         <p>
-          {t('common.phone')}: <span dir="ltr" className="font-mono tracking-tight">{patient.phone}</span>
+          {t('common.phone')}: <span dir="ltr" className="font-mono tracking-tight">{resolvedPhone}</span>
         </p>
       )}
         </div>

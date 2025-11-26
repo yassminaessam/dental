@@ -66,14 +66,25 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
 
   const onSubmit = (data: InvoiceFormData) => {
     const patientDetails = patients.find(p => p.id === data.patient);
+
+    if (!patientDetails) {
+      form.setError('patient', { type: 'manual', message: t('validation.patient_required') });
+      return;
+    }
+
     const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+    const patientFullName = `${patientDetails.name} ${patientDetails.lastName ?? ''}`.trim() || patientDetails.name;
+    const patientPhone = patientDetails.phone?.trim() || undefined;
+
     onSave({
-  patient: patientDetails?.name || t('patients.patient'),
-  patientId: patientDetails?.id || t('common.na'),
-  issueDate: data.issueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
-  dueDate: data.dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
-        totalAmount,
-        items: data.items,
+      patient: patientFullName,
+      patientId: patientDetails.id,
+      patientNameSnapshot: patientFullName,
+      patientPhoneSnapshot: patientPhone,
+      issueDate: data.issueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+      dueDate: data.dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+      totalAmount,
+      items: data.items,
     });
     form.reset();
     setOpen(false);

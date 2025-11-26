@@ -382,6 +382,8 @@ export default function PharmacyPage() {
         body: JSON.stringify({
           number: `INV-RX-${Date.now()}`,
           patientId: patientRecord.id,
+          patientNameSnapshot: patientName,
+          patientPhoneSnapshot: patientRecord.phone,
           treatmentId,
           date: new Date().toISOString(),
           dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),

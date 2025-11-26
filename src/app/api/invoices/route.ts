@@ -9,6 +9,8 @@ const parseCreatePayload = async (request: Request): Promise<InvoiceCreateInput>
   return {
     number: String(body.number),
     patientId: body.patientId || undefined,
+    patientNameSnapshot: typeof body.patientNameSnapshot === 'string' ? body.patientNameSnapshot : undefined,
+    patientPhoneSnapshot: typeof body.patientPhoneSnapshot === 'string' ? body.patientPhoneSnapshot : undefined,
     treatmentId: body.treatmentId || undefined,
     date: new Date(body.date),
     dueDate: body.dueDate ? new Date(body.dueDate) : undefined,

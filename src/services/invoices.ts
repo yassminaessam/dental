@@ -11,6 +11,8 @@ export interface InvoiceItemInput {
 export interface InvoiceCreateInput {
   number: string; // external invoice number e.g. INV-2025-001
   patientId?: string;
+  patientNameSnapshot?: string | null;
+  patientPhoneSnapshot?: string | null;
   treatmentId?: string;
   date: Date;
   dueDate?: Date;
@@ -36,6 +38,8 @@ export interface Invoice {
   id: string;
   number: string;
   patientId?: string;
+  patientNameSnapshot?: string | null;
+  patientPhoneSnapshot?: string | null;
   treatmentId?: string;
   date: Date;
   dueDate?: Date;
@@ -52,6 +56,8 @@ function mapRow(row: any): Invoice {
     id: row.id,
     number: row.number,
     patientId: row.patientId ?? undefined,
+    patientNameSnapshot: row.patientNameSnapshot ?? undefined,
+    patientPhoneSnapshot: row.patientPhoneSnapshot ?? undefined,
     treatmentId: row.treatmentId ?? undefined,
     date: row.date,
     dueDate: row.dueDate ?? undefined,
@@ -86,6 +92,8 @@ async function create(input: InvoiceCreateInput): Promise<Invoice> {
     data: {
       number: input.number,
       patientId: input.patientId ?? null,
+      patientNameSnapshot: input.patientNameSnapshot ?? null,
+      patientPhoneSnapshot: input.patientPhoneSnapshot ?? null,
       treatmentId: input.treatmentId ?? null,
       date: input.date,
       dueDate: input.dueDate ?? null,
@@ -130,6 +138,8 @@ async function update(input: InvoiceUpdateInput): Promise<Invoice> {
     where: { id: input.id },
     data: {
       patientId: input.patientId ?? existing.patientId,
+      patientNameSnapshot: input.patientNameSnapshot ?? existing.patientNameSnapshot,
+      patientPhoneSnapshot: input.patientPhoneSnapshot ?? existing.patientPhoneSnapshot,
       treatmentId: input.treatmentId ?? existing.treatmentId,
       dueDate: input.dueDate ?? existing.dueDate,
       status: input.status ?? existing.status,
@@ -149,6 +159,8 @@ async function patch(id: string, data: Partial<InvoiceUpdateInput>): Promise<Inv
     where: { id },
     data: {
       patientId: data.patientId ?? existing.patientId,
+      patientNameSnapshot: data.patientNameSnapshot ?? existing.patientNameSnapshot,
+      patientPhoneSnapshot: data.patientPhoneSnapshot ?? existing.patientPhoneSnapshot,
       treatmentId: data.treatmentId ?? existing.treatmentId,
       dueDate: data.dueDate ?? existing.dueDate,
       status: data.status ?? existing.status,
