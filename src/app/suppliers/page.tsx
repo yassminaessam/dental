@@ -690,11 +690,19 @@ export default function SuppliersPage() {
         <CardTitle>{t('purchase_orders.title')}</CardTitle>
                  <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search
+                      className={cn(
+                        "absolute top-2.5 h-4 w-4 text-muted-foreground",
+                        isRTL ? 'right-2.5' : 'left-2.5'
+                      )}
+                    />
                     <Input
                       type="search"
             placeholder={t('purchase_orders.search_placeholder')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      className={cn(
+                        "w-full rounded-lg bg-background lg:w-[336px]",
+                        isRTL ? 'pr-8 pl-2 text-right' : 'pl-8 pr-2'
+                      )}
                       value={poSearchTerm}
                       onChange={(e) => setPoSearchTerm(e.target.value)}
                     />
@@ -714,7 +722,14 @@ export default function SuppliersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
             <TableHead>{t('suppliers.po_number')}</TableHead>
@@ -723,7 +738,7 @@ export default function SuppliersPage() {
             <TableHead>{t('suppliers.expected_delivery')}</TableHead>
             <TableHead>{t('suppliers.total')}</TableHead>
             <TableHead>{t('common.status')}</TableHead>
-            <TableHead className="text-right">{t('table.actions')}</TableHead>
+            <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -749,13 +764,13 @@ export default function SuppliersPage() {
                                 po.status === 'Shipped' && 'bg-blue-100 text-blue-800'
                               )}
                             >
-                               {po.status === 'Pending' && <Clock className="mr-1 h-3 w-3" />}
-                               {po.status === 'Shipped' && <TruckIcon className="mr-1 h-3 w-3" />}
-                               {po.status === 'Delivered' && <CheckCircle2 className="mr-1 h-3 w-3" />}
+                               {po.status === 'Pending' && <Clock className={cn("h-3 w-3", isRTL ? 'ml-1' : 'mr-1')} />}
+                               {po.status === 'Shipped' && <TruckIcon className={cn("h-3 w-3", isRTL ? 'ml-1' : 'mr-1')} />}
+                               {po.status === 'Delivered' && <CheckCircle2 className={cn("h-3 w-3", isRTL ? 'ml-1' : 'mr-1')} />}
                  {po.status === 'Pending' ? t('common.pending') : po.status === 'Shipped' ? t('suppliers.status.shipped') : po.status === 'Delivered' ? t('suppliers.status.delivered') : t('suppliers.status.cancelled')}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon">
@@ -763,9 +778,9 @@ export default function SuppliersPage() {
                   <span className="sr-only">{t('table.actions')}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                                   <DropdownMenuItem onClick={() => setPoToView(po)}>
-                                    <Eye className="mr-2 h-4 w-4" />
+                                    <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                   {t('table.view_details')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
@@ -804,13 +819,20 @@ export default function SuppliersPage() {
                     </p>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    <Table
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className={cn(
+                        isRTL
+                          ? 'text-right [&_th]:text-right [&_td]:text-right'
+                          : 'text-left [&_th]:text-left [&_td]:text-left'
+                      )}
+                    >
                         <TableHeader>
                             <TableRow>
                 <TableHead>{t('suppliers.po_number')}</TableHead>
                 <TableHead>{t('suppliers.supplier')}</TableHead>
                 <TableHead>{t('suppliers.expected_delivery')}</TableHead>
-                <TableHead className="text-right">{t('table.actions')}</TableHead>
+                <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -820,9 +842,14 @@ export default function SuppliersPage() {
                                         <TableCell className="font-medium">{order.id}</TableCell>
                                         <TableCell>{order.supplier}</TableCell>
                                         <TableCell>{order.deliveryDate || 'N/A'}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" onClick={() => handleReceiveOrder(order)}>
-                                                <Check className="mr-2 h-4 w-4" />
+                                        <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => handleReceiveOrder(order)}
+                                              className={cn('inline-flex items-center', isRTL ? 'flex-row-reverse' : 'flex-row')}
+                                            >
+                                                <Check className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                         {t('suppliers.receive_items')}
                                             </Button>
                                         </TableCell>
