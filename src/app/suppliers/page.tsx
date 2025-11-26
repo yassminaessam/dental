@@ -127,7 +127,7 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
-export default function SuppliersPage() {
+function SuppliersPageContent() {
   const { t, language, isRTL } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1065,5 +1065,22 @@ export default function SuppliersPage() {
       />
 
     </DashboardLayout>
+  );
+}
+
+function SuppliersPageLoading() {
+  return (
+    <div className="flex h-full w-full items-center justify-center py-20 text-muted-foreground">
+      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+      Loading suppliers...
+    </div>
+  );
+}
+
+export default function SuppliersPage() {
+  return (
+    <React.Suspense fallback={<SuppliersPageLoading />}>
+      <SuppliersPageContent />
+    </React.Suspense>
   );
 }
