@@ -123,10 +123,6 @@ export default function PurchaseOrdersPage() {
     return inventoryItems.filter((item) => item.supplier === supplierName);
   }, [inventoryItems, selectedSupplier, suppliers]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const fetchData = useCallback(async () => {
     try {
       const [ordersData, inventoryData, suppliersData] = await Promise.all([
@@ -150,6 +146,10 @@ export default function PurchaseOrdersPage() {
       });
     }
   }, [t]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     let filtered = purchaseOrders;
