@@ -442,7 +442,14 @@ export default function FinancialPage() {
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('common.date')}</TableHead>
