@@ -526,11 +526,19 @@ export default function SuppliersPage() {
         <CardTitle>{t('suppliers.supplier_directory')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search
+                      className={cn(
+                        "absolute top-2.5 h-4 w-4 text-muted-foreground",
+                        isRTL ? 'right-2.5' : 'left-2.5'
+                      )}
+                    />
                     <Input
                       type="search"
             placeholder={t('suppliers.search_suppliers')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      className={cn(
+                        "w-full rounded-lg bg-background lg:w-[336px]",
+                        isRTL ? 'pr-8 pl-2 text-right' : 'pl-8 pr-2'
+                      )}
                       value={supplierSearchTerm}
                       onChange={(e) => setSupplierSearchTerm(e.target.value)}
                     />
@@ -551,7 +559,14 @@ export default function SuppliersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
             <TableHead>{t('suppliers.supplier')}</TableHead>
@@ -560,7 +575,7 @@ export default function SuppliersPage() {
             <TableHead>{t('suppliers.performance')}</TableHead>
             <TableHead>{t('suppliers.rating')}</TableHead>
             <TableHead>{t('common.status')}</TableHead>
-            <TableHead className="text-right">{t('table.actions')}</TableHead>
+            <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -630,7 +645,7 @@ export default function SuppliersPage() {
                 {supplier.status === 'active' ? t('common.active') : t('common.inactive')}
                             </Badge>
                           </TableCell>
-                           <TableCell className="text-right">
+                           <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
@@ -640,15 +655,15 @@ export default function SuppliersPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => createQuickPurchaseOrder(supplier)}>
-                                        <ShoppingCart className="mr-2 h-4 w-4" />
+                                        <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                     {t('suppliers.quick_order')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setSupplierToEdit(supplier)}>
-                                        <Pencil className="mr-2 h-4 w-4" />
+                                        <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                     {t('table.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setSupplierToDelete(supplier)} className="text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                     {t('table.delete')}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>

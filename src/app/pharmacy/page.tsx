@@ -499,11 +499,19 @@ export default function PharmacyPage() {
                 <CardTitle>{t('pharmacy.medication_inventory')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search
+                      className={cn(
+                        "absolute top-2.5 h-4 w-4 text-muted-foreground",
+                        isRTL ? 'right-2.5' : 'left-2.5'
+                      )}
+                    />
                     <Input
                       type="search"
                       placeholder={t('pharmacy.search_medications')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      className={cn(
+                        "w-full rounded-lg bg-background lg:w-[336px]",
+                        isRTL ? 'pr-8 pl-2 text-right' : 'pl-8 pr-2'
+                      )}
                       value={medicationSearchTerm}
                       onChange={(e) => setMedicationSearchTerm(e.target.value)}
                     />
@@ -524,7 +532,14 @@ export default function PharmacyPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('pharmacy.medication')}</TableHead>
@@ -534,7 +549,7 @@ export default function PharmacyPage() {
                       <TableHead>{t('pharmacy.unit_price')}</TableHead>
                       <TableHead>{t('pharmacy.expiry_date')}</TableHead>
                       <TableHead>{t('common.status')}</TableHead>
-                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -575,7 +590,7 @@ export default function PharmacyPage() {
                               {item.status === 'Out of Stock' && t('pharmacy.status.out_of_stock')}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -583,30 +598,30 @@ export default function PharmacyPage() {
                                   <span className="sr-only">{t('common.actions')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                                 <DropdownMenuItem onClick={() => setMedicationToEdit(item)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
+                                  <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('common.edit')}
                                 </DropdownMenuItem>
                                 {(item.status === 'Low Stock' || item.status === 'Out of Stock') && (
                                   <DropdownMenuItem onClick={() => createMedicationPurchaseOrder(item)}>
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.reorder')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem onClick={() => syncWithInventory(item)}>
-                                  <Package className="mr-2 h-4 w-4" />
+                                  <Package className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('pharmacy.actions.add_to_inventory')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => toast({
                                   title: t('pharmacy.toast.prescription_history'),
                                   description: t('pharmacy.toast.prescription_history_desc', { name: item.name })
                                 })}>
-                                  <ClipboardList className="mr-2 h-4 w-4" />
+                                  <ClipboardList className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('pharmacy.actions.prescription_history')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setMedicationToDelete(item)} className="text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('common.delete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -632,11 +647,19 @@ export default function PharmacyPage() {
                 <CardTitle>{t('pharmacy.prescription_records')}</CardTitle>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search
+                      className={cn(
+                        "absolute top-2.5 h-4 w-4 text-muted-foreground",
+                        isRTL ? 'right-2.5' : 'left-2.5'
+                      )}
+                    />
                     <Input
                       type="search"
                       placeholder={t('pharmacy.search_prescriptions')}
-                      className="w-full rounded-lg bg-background pl-8 lg:w-[336px]"
+                      className={cn(
+                        "w-full rounded-lg bg-background lg:w-[336px]",
+                        isRTL ? 'pr-8 pl-2 text-right' : 'pl-8 pr-2'
+                      )}
                       value={prescriptionSearchTerm}
                       onChange={e => setPrescriptionSearchTerm(e.target.value)}
                     />
@@ -654,7 +677,14 @@ export default function PharmacyPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('pharmacy.prescription_id')}</TableHead>
@@ -664,7 +694,7 @@ export default function PharmacyPage() {
                       <TableHead>{t('common.doctor')}</TableHead>
                       <TableHead>{t('common.date')}</TableHead>
                       <TableHead>{t('common.status')}</TableHead>
-                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -705,11 +735,13 @@ export default function PharmacyPage() {
                                     record.status === 'Completed' && 'bg-green-100 text-green-800 border-transparent'
                                 )}
                             >
-                                {record.status === 'Active' ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle2 className="mr-1 h-3 w-3" />}
+                                {record.status === 'Active'
+                                  ? <Clock className={cn("h-3 w-3", isRTL ? 'ml-1' : 'mr-1')} />
+                                  : <CheckCircle2 className={cn("h-3 w-3", isRTL ? 'ml-1' : 'mr-1')} />}
                                 {record.status}
                             </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -717,24 +749,24 @@ export default function PharmacyPage() {
                                   <span className="sr-only">{t('common.actions')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                                 <DropdownMenuItem onClick={() => setPrescriptionToView(record)}>
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('common.view')}
                                 </DropdownMenuItem>
                                 {record.status === 'Active' && (
                                   <DropdownMenuItem>
-                                    <Send className="mr-2 h-4 w-4" />
+                                    <Send className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.send_to_patient')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem>
-                                  <Download className="mr-2 h-4 w-4" />
+                                  <Download className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('pharmacy.actions.download_pdf')}
                                 </DropdownMenuItem>
                                 {record.status === 'Active' && (
                                   <DropdownMenuItem>
-                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    <CheckCircle2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.mark_as_completed')}
                                   </DropdownMenuItem>
                                 )}
