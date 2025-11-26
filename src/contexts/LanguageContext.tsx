@@ -213,6 +213,7 @@ const translations: Translations = {
     'nav.settings': 'Settings',
     'nav.website_edit': 'Website Edit',
   'nav.help': 'Help',
+  'common.day': 'day',
     // Navigation descriptions (en)
     'nav.dashboard_desc': 'Clinic overview & key metrics',
     'nav.patients_desc': 'Patient directory & records',
@@ -2765,6 +2766,7 @@ const translations: Translations = {
     'nav.settings': 'الإعدادات',
     'nav.website_edit': 'تحرير الموقع',
   'nav.help': 'مساعدة',
+  'common.day': 'يوم',
     // Navigation descriptions (ar)
     'nav.dashboard_desc': 'نظرة عامة على العيادة والمؤشرات الرئيسية',
     'nav.patients_desc': 'دليل المرضى والسجلات',

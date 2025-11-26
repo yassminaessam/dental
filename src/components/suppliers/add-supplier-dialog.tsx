@@ -34,7 +34,12 @@ const supplierSchema = z.object({
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
 
-const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
+const supplierPaymentTerms = [
+  { value: 'Due on receipt', labelKey: 'suppliers.payment_terms.due_on_receipt', appendDay: false },
+  { value: 'Net 15', labelKey: 'suppliers.payment_terms.net15', appendDay: true },
+  { value: 'Net 30', labelKey: 'suppliers.payment_terms.net30', appendDay: true },
+  { value: 'Net 60', labelKey: 'suppliers.payment_terms.net60', appendDay: true },
+];
 
 interface AddSupplierDialogProps {
   onSave: (data: any) => void;
@@ -160,11 +165,17 @@ export function AddSupplierDialog({ onSave }: AddSupplierDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {supplierPaymentTerms.map((term) => (
-                          <SelectItem key={term} value={term}>
-                            {term}
-                          </SelectItem>
-                        ))}
+                        {supplierPaymentTerms.map((term) => {
+                          const baseLabel = t(term.labelKey) || term.value;
+                          const displayLabel = term.appendDay
+                            ? `${baseLabel} ${t('common.day')}`
+                            : baseLabel;
+                          return (
+                            <SelectItem key={term.value} value={term.value}>
+                              {displayLabel}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </FormItem>
