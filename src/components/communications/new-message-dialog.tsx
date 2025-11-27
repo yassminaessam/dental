@@ -130,6 +130,7 @@ export function NewMessageDialog({
       ...data, 
       patient: patientDetails?.name || 'Unknown Patient',
       patientEmail: patientDetails?.email || '',
+      patientPhone: patientDetails?.phone || '',
       type: 'Email' 
     });
     form.reset();

@@ -2,6 +2,7 @@
 export type Message = {
   id: string;
   patient: string;
+  patientPhone?: string | null;
   type: 'SMS' | 'Email';
   content: string;
   subContent: string | null;

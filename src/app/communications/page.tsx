@@ -28,12 +28,13 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2, Send, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { Mail, MessageSquare as MessageSquareIcon, CheckCircle2, Clock, Pencil, Trash2, Loader2, Send, Sparkles, TrendingUp, Zap, Search as SearchIcon } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
 import { NewMessageDialog } from "@/components/communications/new-message-dialog";
 import { NewTemplateDialog, Template } from "@/components/communications/new-template-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { listDocuments, setDocument, deleteDocument } from '@/lib/data-client';
 import type { Message } from '@/lib/types';
@@ -44,6 +45,7 @@ export default function CommunicationsPage() {
   const [templates, setTemplates] = React.useState<Template[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
   const getStatusLabel = React.useCallback((status: string) => {
@@ -65,10 +67,14 @@ export default function CommunicationsPage() {
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const [messageData, templateData] = await Promise.all([
-          listDocuments<Message>('messages'),
+        const [messageDataRaw, templateData] = await Promise.all([
+          listDocuments<any>('messages'),
           listDocuments<Template>('templates'),
         ]);
+        const messageData: Message[] = messageDataRaw.map((message: any) => ({
+          ...message,
+          patientPhone: message.patientPhone ?? message.patient_phone ?? message.phone ?? null,
+        }));
         setMessages(messageData);
         setTemplates(templateData);
       } catch (error) {
@@ -94,6 +100,23 @@ export default function CommunicationsPage() {
       { title: t('communications.automations'), value: 0, description: t('communications.automated_workflows') }
     ];
   }, [messages, templates, t]);
+
+  const filteredMessages = React.useMemo(() => {
+    if (!searchTerm.trim()) return messages;
+    const normalized = searchTerm.trim().toLowerCase();
+    const digitQuery = searchTerm.replace(/[^\d]/g, '');
+    return messages.filter((message) => {
+      const patientMatch = message.patient?.toLowerCase().includes(normalized);
+      const typeMatch = message.type?.toLowerCase().includes(normalized);
+      const statusMatch = message.status?.toLowerCase().includes(normalized);
+      const subjectMatch = message.subject?.toLowerCase().includes(normalized);
+      const contentMatch = message.content?.toLowerCase().includes(normalized)
+        || message.subContent?.toLowerCase().includes(normalized);
+      const phoneDigits = (message.patientPhone ?? '').replace(/[^\d]/g, '');
+      const phoneMatch = digitQuery.length > 0 && phoneDigits.includes(digitQuery);
+      return patientMatch || typeMatch || statusMatch || subjectMatch || contentMatch || phoneMatch;
+    });
+  }, [messages, searchTerm]);
   
   const handleSendMessage = async (data: any) => {
     try {
@@ -126,6 +149,7 @@ export default function CommunicationsPage() {
       const newMessage: Message = {
         id: `MSG-${Date.now()}`,
         patient: data.patient,
+        patientPhone: data.patientPhone ?? null,
         type: 'Email',
         status: 'Delivered',
         sent: new Date().toISOString(),
@@ -320,7 +344,7 @@ export default function CommunicationsPage() {
           <TabsContent value="history" className="mt-0">
             <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
               <CardHeader className="p-4 sm:p-6 border-b-2 border-muted/30">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                       <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -329,7 +353,23 @@ export default function CommunicationsPage() {
                       {t('communications.recent_messages')}
                     </CardTitle>
                   </div>
-                  <Badge variant="outline" className="font-bold">{messages.length} {t('communications.messages')}</Badge>
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:gap-4 w-full md:w-auto">
+                    <Badge variant="outline" className="font-bold justify-center min-w-[120px]">
+                      {filteredMessages.length}/{messages.length} {t('communications.messages')}
+                    </Badge>
+                    <div className="relative w-full sm:w-72">
+                      <SearchIcon className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        placeholder={language === 'ar' ? 'ابحث في الرسائل...' : 'Search messages...'}
+                        className={cn(
+                          'pl-9 pr-3',
+                          isRTL && 'text-right pr-9 pl-3'
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
@@ -340,8 +380,8 @@ export default function CommunicationsPage() {
                       <div className="flex items-center justify-center h-32">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                       </div>
-                    ) : messages.length > 0 ? (
-                      messages.map((message) => (
+                    ) : filteredMessages.length > 0 ? (
+                      filteredMessages.map((message) => (
                         <Card key={message.id} className="group relative overflow-hidden border-2 border-muted hover:border-blue-300 dark:hover:border-blue-700 p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
                           <div className="relative z-10">
@@ -371,6 +411,14 @@ export default function CommunicationsPage() {
                                 <span className="font-bold text-muted-foreground">{t('communications.content')}:</span>{' '}
                                 <span className="font-medium">{message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content}</span>
                               </div>
+                              <div className="p-3 rounded-lg bg-muted/30 backdrop-blur-sm" dir="ltr">
+                                <span className="font-bold text-muted-foreground">{t('common.phone')}:</span>{' '}
+                                <span className="font-medium">
+                                  {message.patientPhone ? (
+                                    <span className="font-mono tracking-tight">{message.patientPhone}</span>
+                                  ) : t('common.na')}
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <Clock className="h-3 w-3" />
                                 <span className="font-medium">{new Date(message.sent).toLocaleDateString()}</span>
@@ -398,10 +446,18 @@ export default function CommunicationsPage() {
                 <div className="hidden sm:block">
                   {/* Desktop Table View */}
                   <div className="rounded-xl border-2 border-muted/50 overflow-hidden">
-                    <Table>
+                    <Table
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className={cn(
+                        isRTL
+                          ? 'text-right [&_th]:text-right [&_td]:text-right'
+                          : 'text-left [&_th]:text-left [&_td]:text-left'
+                      )}
+                    >
                       <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30">
                         <TableRow className="hover:bg-transparent border-b-2 border-muted/50">
                           <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.patient')}</TableHead>
+                          <TableHead className="whitespace-nowrap font-bold text-foreground">{t('common.phone')}</TableHead>
                           <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.type')}</TableHead>
                           <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.content')}</TableHead>
                           <TableHead className="whitespace-nowrap font-bold text-foreground">{t('communications.status')}</TableHead>
@@ -410,11 +466,20 @@ export default function CommunicationsPage() {
                       </TableHeader>
                     <TableBody>
                       {loading ? (
-                        <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
-                      ) : messages.length > 0 ? (
-                        messages.map((message: any) => (
+                        <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                      ) : filteredMessages.length > 0 ? (
+                        filteredMessages.map((message: any) => (
                           <TableRow key={message.id} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/30 dark:hover:from-blue-950/20 dark:hover:to-purple-950/10 transition-all duration-300">
                             <TableCell className="font-bold whitespace-nowrap">{message.patient}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {message.patientPhone ? (
+                                <span dir="ltr" className="font-mono text-sm tracking-tight">
+                                  {message.patientPhone}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">{t('common.na')}</span>
+                              )}
+                            </TableCell>
                             <TableCell className="whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {message.type === "SMS" ? (
@@ -458,7 +523,7 @@ export default function CommunicationsPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={5} className="h-48 text-center">
+                          <TableCell colSpan={6} className="h-48 text-center">
                             <div className="flex flex-col items-center justify-center gap-4">
                               <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                                 <MessageSquareIcon className="h-12 w-12 text-blue-500" />
