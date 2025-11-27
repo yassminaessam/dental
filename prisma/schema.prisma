@@ -316,6 +316,7 @@ model Invoice {
   date        DateTime
   dueDate     DateTime?
   amount      Decimal        @db.Decimal(12,2)
+  amountPaid  Decimal        @db.Decimal(12,2) @default(0)
   status      InvoiceStatus  @default(Draft)
   notes       String?
   createdAt   DateTime       @default(now())

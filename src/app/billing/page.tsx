@@ -121,8 +121,15 @@ export default function BillingPage() {
             const updatedInvoices = invoiceData.map((invoice: any) => {
               const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
               let status = invoice.status;
+              const totalAmount = Number(invoice.amount) || 0;
+              const rawAmountPaid = Number(
+                invoice.amountPaid ?? (invoice.status === 'Paid' ? invoice.amount : 0)
+              );
+              const normalizedAmountPaid = Number.isFinite(rawAmountPaid)
+                ? Math.min(Math.max(rawAmountPaid, 0), totalAmount)
+                : 0;
 
-              if (dueDate && dueDate < today && invoice.status === 'Unpaid' && invoice.amountPaid < invoice.totalAmount) {
+              if (dueDate && dueDate < today && invoice.status === 'Unpaid' && normalizedAmountPaid < totalAmount) {
                 status = 'Overdue' as const;
               }
 
@@ -154,8 +161,8 @@ export default function BillingPage() {
                 patient: patientFullName,
                 issueDate: invoice.date ? new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
                 dueDate: dueDate ? dueDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
-                totalAmount: Number(invoice.amount) || 0,
-                amountPaid: 0,
+                totalAmount,
+                amountPaid: normalizedAmountPaid,
                 items: invoice.items || [],
                 createdAt: invoice.createdAt ? new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
               };
@@ -237,6 +244,8 @@ export default function BillingPage() {
         }
 
         const { invoice } = await response.json();
+        const totalAmount = Number(invoice.amount) || 0;
+        const amountPaid = Number(invoice.amountPaid ?? 0);
         
         // Map API response to UI format
         const newInvoice: Invoice = {
@@ -247,9 +256,9 @@ export default function BillingPage() {
           patientPhoneSnapshot: invoice.patientPhoneSnapshot || data.patientPhoneSnapshot,
           issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
           dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
-          totalAmount: invoice.amount,
-          amountPaid: 0,
-          status: 'Unpaid',
+          totalAmount,
+          amountPaid,
+          status: (invoice.status as Invoice['status']) ?? 'Unpaid',
           items: invoice.items.map((item: any) => ({
             id: item.id,
             description: item.description,
@@ -334,6 +343,8 @@ export default function BillingPage() {
       }
 
       const { invoice } = await response.json();
+      const totalAmount = Number(invoice.amount) || 0;
+      const amountPaid = Number(invoice.amountPaid ?? 0);
 
       const newInvoice: Invoice = {
         id: invoice.id,
@@ -343,9 +354,9 @@ export default function BillingPage() {
         patientPhoneSnapshot: invoice.patientPhoneSnapshot || patient.phone,
         issueDate: new Date(invoice.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
         dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
-        totalAmount: invoice.amount,
-        amountPaid: 0,
-        status: 'Unpaid',
+        totalAmount,
+        amountPaid,
+        status: (invoice.status as Invoice['status']) ?? 'Unpaid',
         treatmentId: treatmentId,
         items: invoice.items.map((item: any) => ({
           id: item.id,
@@ -444,6 +455,7 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: newStatus,
+          amountPaid: newAmountPaid,
           notes: `Insurance credit applied: ${claimId}`,
         }),
       });
@@ -486,6 +498,7 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: newStatus,
+          amountPaid: newAmountPaid,
           notes: invoiceToUpdate.notes 
             ? `${invoiceToUpdate.notes}\nPayment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`
             : `Payment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`,

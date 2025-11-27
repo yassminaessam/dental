@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import { InvoicesService, type InvoiceCreateInput } from '@/services/invoices';
+import { syncInvoiceTransaction } from '@/services/transactions.server';
+
+const parseAmount = (value: unknown): number | undefined => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : undefined;
+};
 
 const parseCreatePayload = async (request: Request): Promise<InvoiceCreateInput> => {
   const body = await request.json();
   if (!body?.number || !body?.date || !Array.isArray(body?.items)) {
     throw new Error('Missing required invoice fields.');
   }
+  const amountPaid = parseAmount(body.amountPaid);
   return {
     number: String(body.number),
     patientId: body.patientId || undefined,
@@ -16,6 +23,7 @@ const parseCreatePayload = async (request: Request): Promise<InvoiceCreateInput>
     dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
     status: body.status,
     notes: body.notes,
+    amountPaid: amountPaid ?? 0,
     items: body.items.map((it: any) => ({
       description: String(it.description),
       quantity: Number(it.quantity),
@@ -38,6 +46,11 @@ export async function POST(request: Request) {
   try {
     const payload = await parseCreatePayload(request);
     const invoice = await InvoicesService.create(payload);
+    try {
+      await syncInvoiceTransaction(invoice);
+    } catch (error) {
+      console.error('[api/invoices] transaction sync error', error);
+    }
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error: any) {
     console.error('[api/invoices] POST error', error);

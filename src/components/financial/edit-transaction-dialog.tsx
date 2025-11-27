@@ -29,7 +29,6 @@ import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { listDocuments } from '@/lib/data-client';
 import { Patient } from '@/app/patients/page';
 import type { Transaction } from '@/app/financial/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -91,12 +90,25 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
     if (transaction) {
       const transactionDate = new Date(transaction.date);
       const patientId = patients.find(p => p.name === transaction.patient)?.id || '';
+      const rawAmount = (() => {
+        if (typeof transaction.amount === 'string') {
+          const cleaned = transaction.amount.replace(/[^0-9.-]+/g, '');
+          if (cleaned.length) return cleaned;
+        }
+        if (typeof transaction.amount === 'number') {
+          return transaction.amount.toString();
+        }
+        if (typeof transaction.amountValue === 'number') {
+          return transaction.amountValue.toString();
+        }
+        return '';
+      })();
       form.reset({
         date: isValid(transactionDate) ? transactionDate : new Date(),
-        amount: transaction.amount.replace(/[^0-9.-]+/g, ''),
+        amount: rawAmount,
         description: transaction.description,
         category: transaction.category,
-        paymentMethod: transaction.paymentMethod,
+        paymentMethod: transaction.paymentMethod ?? '',
         type: transaction.type,
         patient: patientId,
       });
@@ -106,6 +118,17 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
 
   const onSubmit = (data: TransactionFormData) => {
     const patientName = patients.find(p => p.id === data.patient)?.name;
+    const numericAmount = (() => {
+      const parsed = parseFloat(String(data.amount ?? '0').replace(/[^0-9.-]+/g, ''));
+      return Number.isFinite(parsed) ? parsed : 0;
+    })();
+    const formattedAmount = `EGP ${numericAmount.toFixed(2)}`;
+    const inferredTotal = typeof transaction.totalAmount === 'number' && Number.isFinite(transaction.totalAmount)
+      ? transaction.totalAmount
+      : numericAmount;
+    const outstandingAmount = transaction.status === 'Pending'
+      ? Math.max(inferredTotal - numericAmount, 0)
+      : 0;
     const updatedTransaction: Transaction = {
       ...transaction,
       date: new Date(data.date),
@@ -114,7 +137,10 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
       category: data.category,
       paymentMethod: data.paymentMethod,
       patient: patientName,
-      amount: `EGP ${parseFloat(data.amount as string).toFixed(2)}`,
+      amount: formattedAmount,
+      amountValue: numericAmount,
+      totalAmount: inferredTotal,
+      outstandingAmount,
     };
     onSave(updatedTransaction);
     onOpenChange(false);

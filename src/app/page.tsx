@@ -36,6 +36,39 @@ import type { AppointmentCreateInput } from '@/services/appointments.types';
 import type { Patient } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+type SimplifiedTransaction = {
+  date: Date;
+  type: 'Revenue' | 'Expense';
+  amountValue: number;
+  sourceType?: string;
+};
+
+type UnknownRecord = Record<string, any>;
+
+const sanitizeAmountValue = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const parseDateValue = (value: unknown): Date => {
+  if (value instanceof Date && Number.isFinite(value.getTime())) {
+    return value;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return new Date();
+};
+
 export default function DashboardPage() {
     const { user, isLoading, isAuthenticated } = useAuth();
     const router = useRouter();
@@ -58,47 +91,93 @@ export default function DashboardPage() {
     React.useEffect(() => {
         async function fetchData() {
             try {
-              const [transactionsResponse, appointmentsResponse] = await Promise.all([
+              const [transactionsResponse, purchaseOrdersResponse, appointmentsResponse] = await Promise.all([
                 fetch('/api/collections/transactions'),
+                fetch('/api/collections/purchase-orders'),
                 fetch('/api/appointments'),
               ]);
 
               if (!transactionsResponse.ok) {
                 throw new Error('Failed to load transactions');
               }
+              if (!purchaseOrdersResponse.ok) {
+                throw new Error('Failed to load purchase orders');
+              }
               if (!appointmentsResponse.ok) {
                 throw new Error('Failed to load appointments');
               }
 
               const transactionsJson = await transactionsResponse.json();
+              const purchaseOrdersJson = await purchaseOrdersResponse.json();
               const appointmentsJson = await appointmentsResponse.json();
 
-              const transactions = (transactionsJson.items ?? []) as Array<Record<string, unknown>>;
+              const transactions = (transactionsJson.items ?? []) as UnknownRecord[];
+              const purchaseOrders = (purchaseOrdersJson.items ?? []) as UnknownRecord[];
               // ✅ Appointments already come from Neon database via /api/appointments
-              const appointments = (appointmentsJson.appointments ?? []) as Array<Record<string, unknown>>;
+              const appointments = (appointmentsJson.appointments ?? []) as UnknownRecord[];
 
-            // Process revenue data for chart
-            const monthlyFinancials: Record<string, { revenue: number, expenses: number }> = {};
-            transactions.forEach((raw) => {
-              const date = raw.date ? new Date(raw.date as string) : new Date();
-              const amountField = typeof raw.amount === 'string' ? raw.amount : String(raw.amount ?? '0');
-              const typeField = raw.type === 'Expense' ? 'Expense' : 'Revenue';
-              const month = date.toLocaleString('default', { month: 'short' });
-                if (!monthlyFinancials[month]) {
-                    monthlyFinancials[month] = { revenue: 0, expenses: 0 };
-                }
-              const amount = parseFloat(amountField.replace(/[^0-9.-]+/g,""));
-              if (typeField === 'Revenue') {
-                    monthlyFinancials[month].revenue += amount;
-                } else {
-                    monthlyFinancials[month].expenses += amount;
-                }
+            const manualTransactions = transactions
+              .map<SimplifiedTransaction>((raw) => {
+                const amountValue = sanitizeAmountValue(raw.amountValue ?? raw.amount);
+                const type: 'Revenue' | 'Expense' = raw.type === 'Expense' ? 'Expense' : 'Revenue';
+                const sourceType = typeof raw.sourceType === 'string' ? raw.sourceType : undefined;
+                return {
+                  date: parseDateValue(raw.date),
+                  type,
+                  amountValue,
+                  sourceType,
+                };
+              })
+              .filter((entry) => entry.amountValue > 0 && entry.sourceType !== 'purchase-order');
+
+            const purchaseOrderTransactions = purchaseOrders
+              .map<SimplifiedTransaction>((po) => {
+                const totalAmount = sanitizeAmountValue(po.total ?? po.amount ?? 0);
+                const status = typeof po.status === 'string' ? po.status.toLowerCase() : '';
+                const isDelivered = status === 'delivered' || status === 'received' || status === 'completed';
+                const effectiveDate = parseDateValue(po.deliveryDate ?? po.orderDate ?? new Date());
+                return {
+                  date: effectiveDate,
+                  type: 'Expense',
+                  amountValue: isDelivered ? totalAmount : 0,
+                };
+              })
+              .filter((entry) => entry.amountValue > 0);
+
+            const combinedTransactions = [...manualTransactions, ...purchaseOrderTransactions]
+              .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+            const monthFormatterLocale = language === 'ar' ? 'ar-EG' : 'en-US';
+            const monthlyFinancials = new Map<string, { label: string; revenue: number; expenses: number }>();
+
+            combinedTransactions.forEach(({ date, type, amountValue }) => {
+              if (!Number.isFinite(amountValue) || amountValue <= 0) {
+                return;
+              }
+              const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+              if (!monthlyFinancials.has(key)) {
+                monthlyFinancials.set(key, {
+                  label: date.toLocaleString(monthFormatterLocale, { month: 'short' }),
+                  revenue: 0,
+                  expenses: 0,
+                });
+              }
+              const entry = monthlyFinancials.get(key)!;
+              if (type === 'Revenue') {
+                entry.revenue += amountValue;
+              } else {
+                entry.expenses += amountValue;
+              }
             });
-            const chartData = Object.keys(monthlyFinancials).map(month => ({
-                month,
-                revenue: monthlyFinancials[month].revenue,
-                expenses: monthlyFinancials[month].expenses
-            }));
+
+            const chartData = Array.from(monthlyFinancials.entries())
+              .sort(([a], [b]) => (a > b ? 1 : -1))
+              .map(([, value]) => ({
+                month: value.label,
+                revenue: Number(value.revenue.toFixed(2)),
+                expenses: Number(value.expenses.toFixed(2)),
+              }));
+
             setRevenueData(chartData);
 
             // Process appointment types
@@ -120,7 +199,7 @@ export default function DashboardPage() {
             }
         }
         fetchData();
-    }, []);
+    }, [language]);
 
     const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
         try {

@@ -68,10 +68,27 @@ export type Transaction = {
   description: string;
   category: string;
   type: 'Revenue' | 'Expense';
-  amount: string;
-  paymentMethod: string;
+  amount: string | number;
+  amountValue?: number;
+  totalAmount?: number;
+  outstandingAmount?: number;
+  paymentMethod?: string;
   status: 'Completed' | 'Pending';
   patient?: string;
+  patientId?: string;
+  sourceId?: string;
+  sourceType?: string;
+  metadata?: Record<string, unknown> | null;
+  auto?: boolean;
+};
+
+type PurchaseOrderRecord = {
+  id: string;
+  supplier?: string;
+  total?: string | number;
+  status?: string;
+  orderDate?: string;
+  deliveryDate?: string | null;
 };
 
 const iconMap = {
@@ -82,6 +99,37 @@ const iconMap = {
 };
 
 type IconKey = keyof typeof iconMap;
+
+const sanitizeAmountValue = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.-]+/g, '');
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const extractOutstandingFromMetadata = (metadata: unknown): number | undefined => {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+  const meta = metadata as Record<string, unknown>;
+  if (typeof meta.outstandingAmount === 'number') return meta.outstandingAmount;
+  if (typeof meta.outstandingAmount === 'string') return sanitizeAmountValue(meta.outstandingAmount);
+  if (typeof meta.remainingBalance === 'number') return meta.remainingBalance;
+  if (typeof meta.remainingBalance === 'string') return sanitizeAmountValue(meta.remainingBalance);
+  return undefined;
+};
+
+const parseTransactionDate = (value: unknown): Date => {
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+  return new Date();
+};
 
 export default function FinancialPage() {
   const { t, isRTL, language } = useLanguage();
@@ -94,53 +142,185 @@ export default function FinancialPage() {
   const [transactionToEdit, setTransactionToEdit] = React.useState<Transaction | null>(null);
   const [transactionToDelete, setTransactionToDelete] = React.useState<Transaction | null>(null);
 
+  const purchaseOrderLabel = React.useMemo(() => (language === 'ar' ? 'أمر شراء' : 'Purchase Order'), [language]);
+  const purchaseOrderPaymentLabel = purchaseOrderLabel;
+
+  const sortTransactionsDescending = React.useCallback((list: Transaction[]) => {
+    return [...list].sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, []);
+
+  const extractAmountValue = React.useCallback((transaction: Transaction): number => {
+    if (transaction.amountValue !== undefined) {
+      return sanitizeAmountValue(transaction.amountValue);
+    }
+    return sanitizeAmountValue(transaction.amount);
+  }, []);
+
+  const resolveOutstandingValue = React.useCallback((transaction: Transaction): number => {
+    if (transaction.outstandingAmount !== undefined) {
+      return sanitizeAmountValue(transaction.outstandingAmount);
+    }
+    const metaOutstanding = extractOutstandingFromMetadata(transaction.metadata);
+    if (metaOutstanding !== undefined) {
+      return sanitizeAmountValue(metaOutstanding);
+    }
+    if (transaction.status === 'Pending' && transaction.totalAmount !== undefined) {
+      const total = sanitizeAmountValue(transaction.totalAmount);
+      const collected = extractAmountValue(transaction);
+      return Math.max(total - collected, 0);
+    }
+    return 0;
+  }, [extractAmountValue]);
+
+  const buildPurchaseOrderTransactions = React.useCallback((records: PurchaseOrderRecord[]): Transaction[] => {
+    return records.map((po) => {
+      const totalAmount = sanitizeAmountValue(po.total ?? 0);
+      const isDelivered = (po.status ?? '').toLowerCase() === 'delivered';
+      const collectedAmount = isDelivered ? totalAmount : 0;
+      const outstandingAmount = Math.max(totalAmount - collectedAmount, 0);
+      const descriptionParts = [purchaseOrderLabel, po.id, po.supplier ? `- ${po.supplier}` : ''].filter(Boolean);
+      const description = descriptionParts.join(' ');
+      return {
+        id: po.id,
+        date: parseTransactionDate(po.deliveryDate ?? po.orderDate ?? new Date()),
+        description,
+        category: 'Supplies',
+        type: 'Expense',
+        amount: formatEGP(totalAmount, true, language),
+        amountValue: collectedAmount,
+        totalAmount,
+        outstandingAmount,
+        paymentMethod: purchaseOrderPaymentLabel,
+        status: isDelivered ? 'Completed' : 'Pending',
+        patient: po.supplier,
+        sourceId: po.id,
+        sourceType: 'purchase-order',
+        metadata: {
+          supplier: po.supplier,
+          status: po.status,
+          orderDate: po.orderDate,
+          deliveryDate: po.deliveryDate,
+        },
+        auto: true,
+      } as Transaction;
+    });
+  }, [language, purchaseOrderLabel, purchaseOrderPaymentLabel]);
+
+  const recomputeChartData = React.useCallback((data: Transaction[]) => {
+    const monthlyData: Record<string, { revenue: number; expenses: number; profit: number }> = {};
+    data.forEach((transaction) => {
+      if (!isValid(transaction.date)) return;
+      const monthKey = format(transaction.date, 'yyyy-MM');
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { revenue: 0, expenses: 0, profit: 0 };
+      }
+      const numericAmount = extractAmountValue(transaction);
+      if (transaction.type === 'Revenue') {
+        monthlyData[monthKey].revenue += numericAmount;
+      } else {
+        monthlyData[monthKey].expenses += numericAmount;
+      }
+      monthlyData[monthKey].profit = monthlyData[monthKey].revenue - monthlyData[monthKey].expenses;
+    });
+
+    const sortedChartData = Object.keys(monthlyData)
+      .sort()
+      .map((month) => ({
+        month: format(new Date(`${month}-02`), 'MMM'),
+        ...monthlyData[month],
+      }));
+    setChartData(sortedChartData);
+  }, [extractAmountValue]);
+
 
   React.useEffect(() => {
+    let isActive = true;
+
     async function fetchTransactions() {
       try {
-  // Fetch transactions via REST data client (was getCollection during Firestore era)
-  const data = await listDocuments<any>('transactions');
-        const parsedData = data.map(t => ({ ...t, date: new Date(t.date) }));
-        setTransactions(parsedData);
+        setLoading(true);
+        await fetch('/api/transactions/sync-invoices', { method: 'POST' }).catch(() => undefined);
+        const [transactionsData, purchaseOrdersData] = await Promise.all([
+          listDocuments<any>('transactions'),
+          listDocuments<any>('purchase-orders'),
+        ]);
+        if (!isActive) return;
 
-        // Process data for charts
-        const monthlyData: Record<string, { revenue: number, expenses: number, profit: number }> = {};
-        parsedData.forEach(t => {
-            if (isValid(t.date)) {
-                const month = format(t.date, 'yyyy-MM');
-                if (!monthlyData[month]) {
-                    monthlyData[month] = { revenue: 0, expenses: 0, profit: 0 };
-                }
-                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
-                if (t.type === 'Revenue') {
-                    monthlyData[month].revenue += amount;
-                } else {
-                    monthlyData[month].expenses += amount;
-                }
-                monthlyData[month].profit = monthlyData[month].revenue - monthlyData[month].expenses;
-            }
-        });
-
-        const sortedChartData = Object.keys(monthlyData).sort().map(month => ({
-            month: format(new Date(month + '-02'), 'MMM'),
-            ...monthlyData[month]
+        const parsedPurchaseOrders: PurchaseOrderRecord[] = purchaseOrdersData.map((po: any) => ({
+          id: String(po.id ?? `PO-${Date.now()}`),
+          supplier: po.supplier ?? po.vendor ?? po.name ?? '',
+          total: po.total ?? po.amount ?? 0,
+          status: po.status ?? 'Pending',
+          orderDate: po.orderDate ?? po.date ?? undefined,
+          deliveryDate: po.deliveryDate ?? null,
         }));
-        setChartData(sortedChartData);
 
+        const manualTransactions = transactionsData
+          .map((t: any) => {
+            const date = parseTransactionDate(t.date);
+            const amountValue = sanitizeAmountValue(t.amountValue ?? t.amount);
+            const outstandingSource = t.outstandingAmount ?? extractOutstandingFromMetadata(t.metadata);
+            const normalizedTotal = sanitizeAmountValue(t.totalAmount ?? amountValue);
+            const amountDisplay =
+              typeof t.amount === 'string' || typeof t.amount === 'number'
+                ? t.amount
+                : formatEGP(amountValue || normalizedTotal, true, language);
+            return {
+              ...t,
+              date,
+              amount: amountDisplay,
+              amountValue,
+              totalAmount: normalizedTotal,
+              outstandingAmount: sanitizeAmountValue(outstandingSource),
+              auto: Boolean(t.auto),
+            } as Transaction;
+          })
+          .filter((transaction) => transaction.sourceType !== 'purchase-order');
+
+        const purchaseOrderTransactions = buildPurchaseOrderTransactions(parsedPurchaseOrders);
+
+        const unifiedTransactions = sortTransactionsDescending([
+          ...manualTransactions,
+          ...purchaseOrderTransactions,
+        ]);
+        setTransactions(unifiedTransactions);
+        recomputeChartData(unifiedTransactions);
       } catch (error) {
-    toast({ title: t('financial.toast.error_fetching'), variant: "destructive" });
+        if (isActive) {
+          toast({ title: t('financial.toast.error_fetching'), variant: 'destructive' });
+        }
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
+
     fetchTransactions();
-  }, [toast, t]);
+    return () => {
+      isActive = false;
+    };
+  }, [
+    toast,
+    t,
+    language,
+    buildPurchaseOrderTransactions,
+    extractAmountValue,
+    sortTransactionsDescending,
+    recomputeChartData,
+  ]);
 
   const financialPageStats = React.useMemo(() => {
-    const revenue = transactions.filter(t => t.type === 'Revenue').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
-    const expenses = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
+    const revenue = transactions
+      .filter(t => t.type === 'Revenue')
+      .reduce((acc, t) => acc + extractAmountValue(t), 0);
+    const expenses = transactions
+      .filter(t => t.type === 'Expense')
+      .reduce((acc, t) => acc + extractAmountValue(t), 0);
     const netProfit = revenue - expenses;
-    const pending = transactions.filter(t => t.status === 'Pending').reduce((acc, t) => acc + parseFloat(t.amount.replace(/[^0-9.-]+/g,"")), 0);
+    const pending = transactions
+      .filter(t => t.status === 'Pending')
+      .reduce((acc, t) => acc + resolveOutstandingValue(t), 0);
 
     return [
       {
@@ -168,14 +348,14 @@ export default function FinancialPage() {
         icon: "Wallet",
       },
     ];
-  }, [transactions, language]);
+  }, [transactions, language, extractAmountValue, resolveOutstandingValue]);
   
   const expensesByCategory = React.useMemo(() => {
     const categoryTotals: Record<string, number> = {};
     transactions
       .filter(t => t.type === 'Expense')
       .forEach(t => {
-        const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+        const amount = extractAmountValue(t);
         if (!categoryTotals[t.category]) {
           categoryTotals[t.category] = 0;
         }
@@ -199,11 +379,13 @@ export default function FinancialPage() {
       value,
       color: colors[index % colors.length],
     }));
-  }, [transactions]);
+  }, [transactions, extractAmountValue, t]);
 
 
   const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
     try {
+      const numericAmount = sanitizeAmountValue(data.amount);
+      const formattedAmount = formatEGP(numericAmount, true, language);
       const newTransaction: Transaction = {
         id: `TRN-${Date.now()}`,
         date: new Date(data.date),
@@ -212,11 +394,22 @@ export default function FinancialPage() {
         category: data.category,
         paymentMethod: data.paymentMethod,
         patient: data.patient,
-        amount: `EGP ${parseFloat(data.amount as string).toFixed(2)}`,
+        amount: formattedAmount,
+        amountValue: numericAmount,
+        totalAmount: numericAmount,
+        outstandingAmount: 0,
         status: 'Completed',
+        auto: false,
       };
-      await setDocument('transactions', newTransaction.id, { ...newTransaction, date: newTransaction.date.toISOString() });
-      setTransactions(prev => [...prev, newTransaction]);
+      await setDocument('transactions', newTransaction.id, {
+        ...newTransaction,
+        date: newTransaction.date.toISOString(),
+      });
+      setTransactions(prev => {
+        const next = sortTransactionsDescending([...prev, newTransaction]);
+        recomputeChartData(next);
+        return next;
+      });
       toast({
         title: t('financial.toast.transaction_added'),
         description: t('financial.toast.transaction_added_desc'),
@@ -227,9 +420,17 @@ export default function FinancialPage() {
   };
   
   const handleUpdateTransaction = async (updatedTransaction: Transaction) => {
+    if (updatedTransaction.auto) {
+      setTransactionToEdit(null);
+      return;
+    }
     try {
       await updateDocument('transactions', updatedTransaction.id, { ...updatedTransaction, date: updatedTransaction.date.toISOString() });
-      setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+      setTransactions(prev => {
+        const next = sortTransactionsDescending(prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+        recomputeChartData(next);
+        return next;
+      });
       setTransactionToEdit(null);
       toast({
         title: t('financial.toast.transaction_updated'),
@@ -242,9 +443,17 @@ export default function FinancialPage() {
 
   const handleDeleteTransaction = async () => {
     if (transactionToDelete) {
+      if (transactionToDelete.auto) {
+        setTransactionToDelete(null);
+        return;
+      }
       try {
         await deleteDocument('transactions', transactionToDelete.id);
-        setTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id));
+        setTransactions(prev => {
+          const next = prev.filter(t => t.id !== transactionToDelete.id);
+          recomputeChartData(next);
+          return next;
+        });
         toast({
           title: t('financial.toast.transaction_deleted'),
           description: t('financial.toast.transaction_deleted_desc'),
@@ -493,7 +702,11 @@ export default function FinancialPage() {
                               {transaction.type === 'Revenue' ? t('financial.revenue') : t('financial.expense')}
                             </Badge>
                           </TableCell>
-                          <TableCell>{transaction.amount}</TableCell>
+                          <TableCell>
+                            {typeof transaction.amount === 'string'
+                              ? transaction.amount
+                              : formatEGP(transaction.amount ?? transaction.amountValue ?? 0, true, language)}
+                          </TableCell>
                           <TableCell>{transaction.paymentMethod}</TableCell>
                           <TableCell>
                             <Badge
@@ -507,18 +720,25 @@ export default function FinancialPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
-                             <DropdownMenu>
+                          <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button variant="ghost" size="icon" disabled={transaction.auto}>
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setTransactionToEdit(transaction)}>
+                                  <DropdownMenuItem
+                                    onClick={() => setTransactionToEdit(transaction)}
+                                    disabled={transaction.auto}
+                                  >
                                     <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('table.edit')}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setTransactionToDelete(transaction)} className="text-destructive">
+                                  <DropdownMenuItem
+                                    onClick={() => setTransactionToDelete(transaction)}
+                                    className="text-destructive"
+                                    disabled={transaction.auto}
+                                  >
                                     <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('table.delete')}
                                   </DropdownMenuItem>

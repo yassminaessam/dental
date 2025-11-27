@@ -151,6 +151,52 @@ function SuppliersPageContent() {
   const [isAddItemOpen, setIsAddItemOpen] = React.useState(false);
   const [newPoSupplier, setNewPoSupplier] = React.useState<string | undefined>(undefined);
 
+  const purchaseOrderLabel = React.useMemo(
+    () => (language === 'ar' ? 'أمر شراء' : 'Purchase Order'),
+    [language]
+  );
+
+  const normalizeCurrencyValue = React.useCallback((value: string | number | undefined | null) => {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, []);
+
+  const recordPurchaseOrderExpense = React.useCallback(async (order: PurchaseOrder) => {
+    try {
+      const amount = normalizeCurrencyValue(order.total);
+      if (!amount) return;
+      const deliveryDateIso = order.deliveryDate ? (() => {
+        const parsed = new Date(order.deliveryDate);
+        return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+      })() : undefined;
+      await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: `TRX-PO-${order.id}`,
+          description: `${purchaseOrderLabel} ${order.id} - ${order.supplier}`,
+          amount,
+          type: 'Expense',
+          category: 'Supplies',
+          status: 'Completed',
+          date: deliveryDateIso,
+          sourceId: order.id,
+          sourceType: 'purchase-order',
+          metadata: {
+            supplier: order.supplier,
+            orderDate: order.orderDate,
+            deliveryDate: order.deliveryDate,
+            items: order.items,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error('[SuppliersPage] failed to record purchase order expense', error);
+    }
+  }, [normalizeCurrencyValue, purchaseOrderLabel]);
+
 
   const { toast } = useToast();
   
@@ -433,6 +479,8 @@ function SuppliersPageContent() {
   const updatedInventory = await listDocuments<InventoryItem>('inventory');
         setInventory(updatedInventory);
 
+    await recordPurchaseOrderExpense(order);
+
     toast({
       title: t('suppliers.toast.status_updated'),
       description: t('suppliers.toast.status_updated_desc'),
@@ -476,6 +524,7 @@ function SuppliersPageContent() {
     if (!poToDelete) return;
     try {
       await deleteDocument('purchase-orders', poToDelete.id);
+      await deleteDocument('transactions', `TRX-PO-${poToDelete.id}`).catch(() => undefined);
       setPurchaseOrders((prev) => prev.filter((po) => po.id !== poToDelete.id));
       toast({ title: language === 'ar' ? 'تم حذف أمر الشراء' : 'Purchase order deleted' });
     } catch (e) {

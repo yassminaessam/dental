@@ -19,6 +19,7 @@ export interface InvoiceCreateInput {
   status?: InvoiceStatus;
   notes?: string;
   items: InvoiceItemInput[];
+  amountPaid?: number;
 }
 
 export interface InvoiceUpdateInput extends Partial<Omit<InvoiceCreateInput, 'number' | 'date' | 'items'>> {
@@ -44,6 +45,7 @@ export interface Invoice {
   date: Date;
   dueDate?: Date;
   amount: number;
+  amountPaid: number;
   status: InvoiceStatus;
   notes?: string;
   createdAt: Date;
@@ -52,6 +54,17 @@ export interface Invoice {
 }
 
 function mapRow(row: any): Invoice {
+  const amount = Number(row.amount);
+  const normalizedAmount = Number.isFinite(amount) ? amount : 0;
+  const rawAmountPaid = row.amountPaid !== undefined && row.amountPaid !== null
+    ? Number(row.amountPaid)
+    : undefined;
+  const numericAmountPaid = Number.isFinite(rawAmountPaid ?? NaN) ? (rawAmountPaid as number) : 0;
+  const clampedAmountPaid = Math.min(Math.max(0, numericAmountPaid), normalizedAmount);
+  const resolvedAmountPaid = row.status === 'Paid' && clampedAmountPaid < normalizedAmount
+    ? normalizedAmount
+    : clampedAmountPaid;
+
   return {
     id: row.id,
     number: row.number,
@@ -61,7 +74,8 @@ function mapRow(row: any): Invoice {
     treatmentId: row.treatmentId ?? undefined,
     date: row.date,
     dueDate: row.dueDate ?? undefined,
-    amount: Number(row.amount),
+    amount: normalizedAmount,
+    amountPaid: resolvedAmountPaid,
     status: row.status,
     notes: row.notes ?? undefined,
     createdAt: row.createdAt,
@@ -88,6 +102,7 @@ async function get(id: string): Promise<Invoice | null> {
 
 async function create(input: InvoiceCreateInput): Promise<Invoice> {
   const amount = input.items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0);
+  const initialAmountPaid = Math.min(input.amountPaid ?? 0, amount);
   const created = await prisma.invoice.create({
     data: {
       number: input.number,
@@ -98,6 +113,7 @@ async function create(input: InvoiceCreateInput): Promise<Invoice> {
       date: input.date,
       dueDate: input.dueDate ?? null,
       amount: amount,
+      amountPaid: initialAmountPaid,
       status: input.status ?? 'Draft',
       notes: input.notes ?? null,
       items: {
@@ -134,6 +150,9 @@ async function update(input: InvoiceUpdateInput): Promise<Invoice> {
     };
   }
 
+  const requestedAmountPaid = input.amountPaid ?? Number(existing.amountPaid ?? 0);
+  const clampedAmountPaid = Math.min(requestedAmountPaid, amount);
+
   const updated = await prisma.invoice.update({
     where: { id: input.id },
     data: {
@@ -145,6 +164,7 @@ async function update(input: InvoiceUpdateInput): Promise<Invoice> {
       status: input.status ?? existing.status,
       notes: input.notes ?? existing.notes,
       amount,
+      amountPaid: clampedAmountPaid,
       items: itemsMutation,
     },
     include: { items: true }
@@ -155,6 +175,8 @@ async function update(input: InvoiceUpdateInput): Promise<Invoice> {
 async function patch(id: string, data: Partial<InvoiceUpdateInput>): Promise<Invoice> {
   const existing = await prisma.invoice.findUnique({ where: { id }, include: { items: true } });
   if (!existing) throw new Error(`Invoice not found: ${id}`);
+  const requestedAmountPaid = data.amountPaid ?? Number(existing.amountPaid ?? 0);
+  const clampedAmountPaid = Math.min(requestedAmountPaid, Number(existing.amount));
   const updated = await prisma.invoice.update({
     where: { id },
     data: {
@@ -165,6 +187,7 @@ async function patch(id: string, data: Partial<InvoiceUpdateInput>): Promise<Inv
       dueDate: data.dueDate ?? existing.dueDate,
       status: data.status ?? existing.status,
       notes: data.notes ?? existing.notes,
+      amountPaid: clampedAmountPaid,
     },
     include: { items: true }
   });
