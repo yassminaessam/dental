@@ -44,6 +44,18 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
+const parseNumericValue = (input: string | number | null | undefined): number => {
+  if (typeof input === 'number') {
+    return Number.isFinite(input) ? input : 0;
+  }
+  if (typeof input === 'string') {
+    const cleaned = input.replace(/[^0-9.-]+/g, '');
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
 export default function ReportsPage() {
   const [loading, setLoading] = React.useState(true);
   const [dateRange, setDateRange] = React.useState('30');
@@ -110,7 +122,7 @@ export default function ReportsPage() {
             if (isValid(t.date)) {
                 const month = format(t.date, 'MMM');
                 if(!monthlyFinancials[month]) monthlyFinancials[month] = { revenue: 0, expenses: 0 };
-                const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g,""));
+                const amount = parseNumericValue(t.amount as string | number);
                 if(t.type === 'Revenue') monthlyFinancials[month].revenue += amount;
                 else monthlyFinancials[month].expenses += amount;
             }

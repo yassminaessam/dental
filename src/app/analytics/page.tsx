@@ -52,6 +52,18 @@ const iconMap = {
 
 type IconKey = keyof typeof iconMap;
 
+const parseNumericValue = (input: string | number | null | undefined): number => {
+  if (typeof input === 'number') {
+    return Number.isFinite(input) ? input : 0;
+  }
+  if (typeof input === 'string') {
+    const cleaned = input.replace(/[^0-9.-]+/g, '');
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
 
 export default function AnalyticsPage() {
     const { t, language } = useLanguage();
@@ -98,7 +110,7 @@ export default function AnalyticsPage() {
         if (completedTreatments > 0) {
             const totalTreatmentRevenue = treatments
                 .filter((t: Treatment) => t.status === 'Completed')
-                .reduce((acc: number, t: Treatment) => acc + parseFloat((t as any).cost.replace(/[^0-9.-]+/g, '')), 0);
+                .reduce((acc: number, t: Treatment) => acc + parseNumericValue((t as any).cost), 0);
             setAvgTreatmentValue(totalTreatmentRevenue / completedTreatments);
         }
 
@@ -176,7 +188,7 @@ export default function AnalyticsPage() {
             if (!monthlyRevenue[month]) {
                 monthlyRevenue[month] = { revenue: 0, expenses: 0 };
             }
-            const amount = parseFloat(t.amount.replace(/[^0-9.-]+/g, ''));
+            const amount = parseNumericValue(t.amount as string | number);
             if (t.type === 'Revenue') {
                 monthlyRevenue[month].revenue += amount;
             } else {

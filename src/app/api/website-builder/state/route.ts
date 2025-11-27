@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 const COLLECTION = 'website_builder_state';
 const DOCUMENT_ID = 'default';
@@ -45,6 +46,14 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Invalid default templates payload' }, { status: 400 });
     }
 
+    const defaultTemplatesValue = defaultTemplates ?? null;
+    const builderStateData: Prisma.JsonObject = {
+      templates: templates as Prisma.JsonArray,
+      canvasWidgets: canvasWidgets as Prisma.JsonArray,
+      canvasSettings: canvasSettings as Prisma.JsonObject,
+      defaultTemplates: defaultTemplatesValue as Prisma.JsonObject | null,
+    };
+
     await prisma.collectionDoc.upsert({
       where: {
         collection_id: {
@@ -52,11 +61,11 @@ export async function PUT(request: Request) {
           id: DOCUMENT_ID,
         },
       },
-      update: { data: { templates, canvasWidgets, canvasSettings, defaultTemplates: defaultTemplates ?? null } },
+      update: { data: builderStateData },
       create: {
         collection: COLLECTION,
         id: DOCUMENT_ID,
-        data: { templates, canvasWidgets, canvasSettings, defaultTemplates: defaultTemplates ?? null },
+        data: builderStateData,
       },
     });
 

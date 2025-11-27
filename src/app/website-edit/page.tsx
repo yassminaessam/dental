@@ -130,6 +130,8 @@ import {
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+const lucideIconRegistry: Record<string, LucideIcon> = LucideIcons as unknown as Record<string, LucideIcon>;
 import { useToast } from "@/hooks/use-toast";
 import { PropertyEditor } from "@/components/website-builder/PropertyEditor";
 import type { Widget, WidgetDefinition, NavLink } from "@/types/website-builder";
@@ -6288,7 +6290,7 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'stats' && (() => {
-            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const iconRegistry = lucideIconRegistry;
             const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
             const layoutVariant = widget.props.layout === 'horizontal' ? 'horizontal' : 'vertical';
             const alignment = widget.props.alignment || 'left';
@@ -6657,7 +6659,7 @@ export default function WebsiteEditPage() {
           
           {/* Forms & Inputs widgets */}
           {widget.type === 'searchBar' && (() => {
-            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const iconRegistry = lucideIconRegistry;
             const normalizeIconName = (name?: string) => {
               if (!name) return undefined;
               if (iconRegistry[name]) return name;
@@ -7011,7 +7013,7 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'newsletter' && (() => {
-            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const iconRegistry = lucideIconRegistry;
             const normalizeIconName = (name?: string) => {
               if (!name) return undefined;
               if (iconRegistry[name]) return name;
@@ -7450,7 +7452,7 @@ export default function WebsiteEditPage() {
             );
           })()}
           {widget.type === 'contactInfo' && (() => {
-            const iconRegistry = LucideIcons as Record<string, LucideIcon>;
+            const iconRegistry = lucideIconRegistry;
             const normalizeIconName = (name?: string) => {
               if (!name) return undefined;
               if (iconRegistry[name]) return name;
@@ -9080,8 +9082,10 @@ export default function WebsiteEditPage() {
             const quoteText = widget.props.quote || '';
             const highlightText = (widget.props.highlightText || '').trim();
             const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const highlightParts = highlightText
-              ? quoteText.split(new RegExp(`(${escapeRegExp(highlightText)})`, 'gi')).filter(Boolean)
+            const highlightParts: string[] = highlightText
+              ? quoteText
+                  .split(new RegExp(`(${escapeRegExp(highlightText)})`, 'gi'))
+                  .filter((part: string | undefined): part is string => Boolean(part))
               : [quoteText];
 
             const backgroundGradient = (widget.props.backgroundGradient || '').toString().trim();
@@ -9227,7 +9231,7 @@ export default function WebsiteEditPage() {
 
             const renderQuote = () => (
               <p className={quoteClass}>
-                {highlightParts.map((part, idx) => (
+                {highlightParts.map((part: string, idx: number) => (
                   highlightText && part.toLowerCase() === highlightText.toLowerCase() ? (
                     <span key={`${widget.id}-highlight-${idx}`} className={highlightClass}>{part}</span>
                   ) : (
