@@ -365,6 +365,7 @@ export default function PharmacyPage() {
           procedure: `${medicationForDispense.name} - Pharmacy Dispense`,
           cost: formatEGP(totalAmount, true, language),
           notes: input.notes ?? `Prescription ${prescriptionToDispense.id}`,
+          status: 'Completed',
           appointments: [],
         }),
       });

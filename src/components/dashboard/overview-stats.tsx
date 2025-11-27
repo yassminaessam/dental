@@ -17,8 +17,6 @@ import { listDocuments } from '@/lib/data-client';
 import type { Patient } from '@/app/patients/page';
 import type { Appointment } from '@/app/appointments/page';
 import type { StaffMember } from '@/app/staff/page';
-import type { Invoice } from '@/app/billing/page';
-import type { Treatment } from '@/app/treatments/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { formatEGP } from '@/lib/currency';
@@ -40,6 +38,42 @@ type StatItem = {
   icon: IconKey;
   cardStyle: string;
   href: string;
+};
+
+type TransactionDoc = {
+  amount?: number | string;
+  amountValue?: number | string;
+  type?: 'Revenue' | 'Expense' | string;
+};
+
+type SerializedTreatment = {
+  id: string;
+  status?: 'Pending' | 'In Progress' | 'Completed' | 'InProgress' | string;
+};
+
+const sanitizeAmountValue = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.-]+/g, '');
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const extractTransactionAmount = (transaction: TransactionDoc): number => {
+  if (transaction.amountValue !== undefined) {
+    return sanitizeAmountValue(transaction.amountValue);
+  }
+  return sanitizeAmountValue(transaction.amount);
+};
+
+const calculateTotalRevenueFromTransactions = (transactions: TransactionDoc[]): number => {
+  return transactions
+    .filter((transaction) => (transaction.type ?? 'Revenue') === 'Revenue')
+    .reduce((sum, transaction) => sum + extractTransactionAmount(transaction), 0);
 };
 
 interface OverviewStatsProps {
@@ -77,10 +111,15 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
                 const { staff: staffData } = await staffResponse.json();
                 
                 // Fetch other data from Firestore (for now)
-                const [invoices, treatments] = await Promise.all([
-                    listDocuments<Invoice>('invoices'),
-                    listDocuments<Treatment>('treatments'),
+                const [transactions, treatmentsResponse] = await Promise.all([
+                    listDocuments<TransactionDoc>('transactions'),
+                    fetch('/api/treatments'),
                 ]);
+                if (!treatmentsResponse.ok) throw new Error('Failed to fetch treatments');
+                const treatmentsPayload = await treatmentsResponse.json().catch(() => ({}));
+                const treatments: SerializedTreatment[] = Array.isArray(treatmentsPayload?.treatments)
+                  ? treatmentsPayload.treatments
+                  : [];
                 
                 const patients = patientsData.map((p: any) => ({
                     ...p,
@@ -102,10 +141,13 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
 
                 const totalPatients = patients.length;
                 const todaysAppointments = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
-                const totalRevenue = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+                const totalRevenue = calculateTotalRevenueFromTransactions(transactions);
                 const activeStaff = staff.filter(s => s.status === 'Active').length;
                 const pendingAppointments = appointments.filter(a => a.status === 'Pending').length;
-                const completedTreatments = treatments.filter(t => t.status === 'Completed').length;
+                const completedTreatments = treatments.filter((treatment) => {
+                  const status = treatment.status === 'InProgress' ? 'In Progress' : treatment.status;
+                  return status === 'Completed';
+                }).length;
                 
         setStats([
           { title: t('dashboard.total_patients'), value: `${totalPatients}`, description: t('dashboard.all_patients_system'), icon: "Users", cardStyle: "metric-card-blue", href: "/patients" },

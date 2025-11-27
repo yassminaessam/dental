@@ -20,6 +20,7 @@ export interface TreatmentCreateInput {
   cost?: string;
   notes?: string;
   appointments: TreatmentAppointmentInput[];
+  status?: TreatmentStatus;
 }
 
 export interface TreatmentUpdateInput extends TreatmentCreateInput {
@@ -88,6 +89,16 @@ function deriveTreatmentStatus(appointments: TreatmentAppointment[]): TreatmentS
   return inProgress ? 'In Progress' : 'Pending';
 }
 
+type PrismaTreatmentStatus = 'Pending' | 'InProgress' | 'Completed';
+
+const mapTreatmentStatusToPrisma = (status: TreatmentStatus): PrismaTreatmentStatus => {
+  return status === 'In Progress' ? 'InProgress' : status;
+};
+
+const mapPrismaStatusToTreatment = (status: PrismaTreatmentStatus): TreatmentStatus => {
+  return status === 'InProgress' ? 'In Progress' : status;
+};
+
 const mapTreatmentRow = async (row: any): Promise<Treatment> => {
   // row is a Prisma Treatment with appointments included
   const appointments: TreatmentAppointment[] = (row.appointments || []).map((ap: any) => ({
@@ -98,6 +109,10 @@ const mapTreatmentRow = async (row: any): Promise<Treatment> => {
     status: ap.status,
   }));
 
+  const storedStatus = mapPrismaStatusToTreatment(row.status);
+  const derivedStatus = deriveTreatmentStatus(appointments);
+  const status = appointments.length === 0 ? storedStatus : derivedStatus;
+
   return {
     id: row.id,
     date: row.createdAt.toISOString(),
@@ -107,7 +122,7 @@ const mapTreatmentRow = async (row: any): Promise<Treatment> => {
     doctorId: row.doctorId || undefined,
     procedure: row.procedure,
     cost: row.cost,
-    status: deriveTreatmentStatus(appointments),
+    status,
     notes: row.notes || undefined,
     appointments,
   };
@@ -124,6 +139,8 @@ async function get(id: string): Promise<Treatment | null> {
 }
 
 async function create(input: TreatmentCreateInput): Promise<Treatment> {
+  const requestedStatus = input.status ?? 'Pending';
+
   const treatment = await prisma.treatment.create({
     data: {
       patient: input.patientName,
@@ -133,6 +150,7 @@ async function create(input: TreatmentCreateInput): Promise<Treatment> {
       procedure: input.procedure,
       cost: input.cost ?? `EGP ${Math.floor(500 + Math.random() * 2000)}`,
       notes: input.notes,
+      status: mapTreatmentStatusToPrisma(requestedStatus),
     },
   });
 
@@ -144,6 +162,15 @@ async function create(input: TreatmentCreateInput): Promise<Treatment> {
     createdAppointments.push(normalizeAppointment(created, ap));
   }
 
+  const finalStatus = input.status ?? deriveTreatmentStatus(createdAppointments);
+  const finalPrismaStatus = mapTreatmentStatusToPrisma(finalStatus);
+  if (finalPrismaStatus !== mapTreatmentStatusToPrisma(requestedStatus)) {
+    await prisma.treatment.update({
+      where: { id: treatment.id },
+      data: { status: finalPrismaStatus },
+    });
+  }
+
   return {
     id: treatment.id,
     date: treatment.createdAt.toISOString(),
@@ -153,7 +180,7 @@ async function create(input: TreatmentCreateInput): Promise<Treatment> {
     doctorId: treatment.doctorId || undefined,
     procedure: treatment.procedure,
     cost: treatment.cost,
-    status: deriveTreatmentStatus(createdAppointments),
+    status: finalStatus,
     notes: treatment.notes || undefined,
     appointments: createdAppointments,
   };
@@ -191,6 +218,8 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
     }
   }
 
+  const updatedStatus = deriveTreatmentStatus(nextAppointments);
+
   const updatedTreatment = await prisma.treatment.update({
     where: { id: input.id },
     data: {
@@ -201,12 +230,7 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
       procedure: input.procedure,
       cost: input.cost,
       notes: input.notes,
-      // status derived, stored as enum value
-      status: deriveTreatmentStatus(nextAppointments) === 'Completed'
-        ? 'Completed'
-        : deriveTreatmentStatus(nextAppointments) === 'In Progress'
-          ? 'InProgress'
-          : 'Pending',
+      status: mapTreatmentStatusToPrisma(updatedStatus),
     },
     include: { appointments: true },
   });
@@ -220,7 +244,7 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
     doctorId: updatedTreatment.doctorId || undefined,
     procedure: updatedTreatment.procedure,
     cost: updatedTreatment.cost,
-    status: deriveTreatmentStatus(nextAppointments),
+    status: updatedStatus,
     notes: updatedTreatment.notes || undefined,
     appointments: nextAppointments,
   };

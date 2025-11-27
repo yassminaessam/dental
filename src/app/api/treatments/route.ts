@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TreatmentsService, type TreatmentCreateInput, type TreatmentAppointmentInput } from '@/services/treatments';
-import type { Appointment, Treatment } from '@/lib/types';
+import type { Appointment, Treatment, TreatmentStatus } from '@/lib/types';
 
 type SerializedTreatment = Omit<Treatment, 'appointments'> & {
   appointments: Array<{
@@ -31,6 +31,8 @@ const parseCreatePayload = async (request: Request): Promise<TreatmentCreateInpu
   }
 
   const appointments = Array.isArray(body.appointments) ? body.appointments : [];
+  const allowedStatuses: TreatmentStatus[] = ['Pending', 'In Progress', 'Completed'];
+  const status = allowedStatuses.includes(body.status) ? body.status as TreatmentStatus : undefined;
 
   return {
     patientId: body.patientId,
@@ -47,6 +49,7 @@ const parseCreatePayload = async (request: Request): Promise<TreatmentCreateInpu
       duration: appointment.duration,
       status: appointment.status,
     } as TreatmentAppointmentInput)),
+    status,
   } satisfies TreatmentCreateInput;
 };
 
