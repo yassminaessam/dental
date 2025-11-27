@@ -62,20 +62,22 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
         async function fetchStats() {
             try {
                 // ✅ Fetch data from Neon database
-                const [patientsResponse, appointmentsResponse] = await Promise.all([
+                const [patientsResponse, appointmentsResponse, staffResponse] = await Promise.all([
                     fetch('/api/patients'),
                     fetch('/api/appointments'),
+                    fetch('/api/staff'),
                 ]);
                 
                 if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
                 if (!appointmentsResponse.ok) throw new Error('Failed to fetch appointments');
+                if (!staffResponse.ok) throw new Error('Failed to fetch staff');
                 
                 const { patients: patientsData } = await patientsResponse.json();
                 const { appointments: appointmentsData } = await appointmentsResponse.json();
+                const { staff: staffData } = await staffResponse.json();
                 
                 // Fetch other data from Firestore (for now)
-                const [staff, invoices, treatments] = await Promise.all([
-                    listDocuments<StaffMember>('staff'),
+                const [invoices, treatments] = await Promise.all([
                     listDocuments<Invoice>('invoices'),
                     listDocuments<Treatment>('treatments'),
                 ]);
@@ -92,6 +94,11 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
                     createdAt: a.createdAt ? new Date(a.createdAt) : undefined,
                     updatedAt: a.updatedAt ? new Date(a.updatedAt) : undefined,
                 })) as Appointment[];
+
+                const staff = (staffData ?? []).map((member: any) => ({
+                  ...member,
+                  hireDate: member.hireDate ? new Date(member.hireDate) : undefined,
+                })) as StaffMember[];
 
                 const totalPatients = patients.length;
                 const todaysAppointments = appointments.filter(a => new Date(a.dateTime).toDateString() === new Date().toDateString()).length;
@@ -113,7 +120,7 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
             }
         }
     fetchStats();
-  }, [t, refreshKey]);
+  }, [t, refreshKey, language]);
 
   // RGBA icon tint classes mapped to metric card styles for لوحة التحكم
   // Lightened RGBA tints (reduced opacity for softer look)
