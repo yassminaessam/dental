@@ -30,9 +30,14 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { InventoryItem } from '@/app/inventory/page';
-import { listDocuments } from '@/lib/data-client';
-import { Supplier } from '@/app/suppliers/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+const resolveInventoryStatusValue = (stock: number, min?: number): InventoryItem['status'] => {
+  if (stock <= 0) return 'OutOfStock';
+  const threshold = min ?? 10;
+  if (stock < threshold) return 'LowStock';
+  return 'Normal';
+};
 
 const itemSchema = z.object({
   name: z.string().min(1, 'inventory.validation.item_name_required'),
@@ -52,56 +57,46 @@ interface EditItemDialogProps {
   onSave: (data: InventoryItem) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  suppliers: Array<{ id: string; name: string }>;
 }
 
-export function EditItemDialog({ item, onSave, open, onOpenChange }: EditItemDialogProps) {
+export function EditItemDialog({ item, onSave, open, onOpenChange, suppliers }: EditItemDialogProps) {
   const { t } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
-  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
   });
 
   React.useEffect(() => {
-    async function fetchSuppliers() {
-  const data = await listDocuments<Supplier>('suppliers');
-      setSuppliers(data);
-    }
-    if (open) {
-      fetchSuppliers();
-    }
-  }, [open]);
-
-  React.useEffect(() => {
-    if (item && suppliers.length > 0) {
-      const selectedSupplierId = item.supplierId ?? suppliers.find(s => s.name === item.supplier)?.id ?? '';
+    if (item) {
+      const selectedSupplierId = item.supplierId ?? suppliers.find(s => s.name === item.supplierName)?.id ?? '';
       form.reset({
         name: item.name,
-        category: item.category,
+        category: item.category ?? '',
         supplier: selectedSupplierId,
-        stock: item.stock,
-        unitCost: parseFloat(item.unitCost.replace(/[^0-9.-]+/g,"")),
-        location: item.location,
-        expires: item.expires !== 'N/A' ? new Date(item.expires) : undefined,
+        stock: item.quantity,
+        unitCost: item.unitCost,
+        location: item.location ?? '',
+        expires: item.expires ? new Date(item.expires) : undefined,
         notes: item.notes || '',
       });
     }
   }, [item, form, suppliers]);
-
   const onSubmit = (data: ItemFormData) => {
     const supplierId = data.supplier || item.supplierId || undefined;
     const supplierName = supplierId ? suppliers.find(s => s.id === supplierId)?.name : undefined;
+    const updatedQuantity = data.stock;
     const updatedItem: InventoryItem = {
       ...item,
       name: data.name,
       category: data.category || item.category,
-      supplier: supplierName || item.supplier,
       supplierId,
-      stock: data.stock,
-      status: data.stock < item.min ? 'Low Stock' : 'Normal',
-      unitCost: `EGP ${data.unitCost.toFixed(2)}`,
+      supplierName: supplierName || item.supplierName,
+      quantity: updatedQuantity,
+      status: resolveInventoryStatusValue(updatedQuantity, item.minQuantity),
+      unitCost: data.unitCost,
       location: data.location || item.location,
-      expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
+      expires: data.expires ? data.expires.toISOString() : item.expires ?? null,
       notes: data.notes || '',
     };
     onSave(updatedItem);

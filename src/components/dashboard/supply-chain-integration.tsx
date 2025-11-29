@@ -25,7 +25,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs, db } from "@/services/firestore";
+import { formatEGP } from '@/lib/currency';
 
 interface IntegrationStats {
   totalSuppliers: number;
@@ -78,8 +78,46 @@ interface StockAlert {
   date: string;
 }
 
+type SupplierRow = {
+  id: string;
+  name: string;
+  rating?: number | null;
+};
+
+type InventoryRow = {
+  id: string;
+  name: string;
+  category?: string | null;
+  quantity: number;
+  minQuantity: number;
+  status: 'Normal' | 'LowStock' | 'OutOfStock';
+  supplierName?: string | null;
+  expires?: string | null;
+};
+
+type MedicationRow = {
+  id: string;
+  name: string;
+  category?: string | null;
+  stock: number;
+  status: 'InStock' | 'LowStock' | 'OutOfStock';
+  expiryDate?: string | null;
+};
+
+type PurchaseOrderRow = {
+  id: string;
+  supplierName: string;
+  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  total: number;
+  orderDate: string;
+  expectedDelivery?: string | null;
+  items: Array<{ quantity?: number }>;
+};
+
+const isLowStock = (status?: string | null) => status === 'LowStock' || status === 'OutOfStock';
+
 export function SupplyChainIntegration() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
   const [stats, setStats] = useState<IntegrationStats>({
@@ -103,48 +141,46 @@ export function SupplyChainIntegration() {
 
   const fetchIntegrationData = async () => {
     try {
-      const [
-        suppliersSnapshot,
-        purchaseOrdersSnapshot,
-        inventorySnapshot,
-        medicationsSnapshot,
-      ] = await Promise.all([
-        getDocs(collection(db, "suppliers")),
-        getDocs(collection(db, "purchase-orders")),
-        getDocs(collection(db, "inventory")),
-        getDocs(collection(db, "medications")),
+      const [suppliersRes, purchaseOrdersRes, inventoryRes, medicationsRes] = await Promise.all([
+        fetch('/api/suppliers'),
+        fetch('/api/purchase-orders'),
+        fetch('/api/inventory'),
+        fetch('/api/pharmacy/medications'),
       ]);
 
-      const suppliers = suppliersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const purchaseOrders = purchaseOrdersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const inventory = inventorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      const medications = medicationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      const suppliersJson = suppliersRes.ok ? await suppliersRes.json().catch(() => ({})) : {};
+      const poJson = purchaseOrdersRes.ok ? await purchaseOrdersRes.json().catch(() => ({})) : {};
+      const inventoryJson = inventoryRes.ok ? await inventoryRes.json().catch(() => ({})) : {};
+      const medsJson = medicationsRes.ok ? await medicationsRes.json().catch(() => ({})) : {};
+
+      const suppliers: SupplierRow[] = Array.isArray(suppliersJson?.suppliers) ? suppliersJson.suppliers : [];
+      const purchaseOrders: PurchaseOrderRow[] = Array.isArray(poJson?.orders) ? poJson.orders : [];
+      const inventory: InventoryRow[] = Array.isArray(inventoryJson?.items) ? inventoryJson.items : [];
+      const medications: MedicationRow[] = Array.isArray(medsJson?.medications) ? medsJson.medications : [];
 
       const totalSuppliers = suppliers.length;
       const activeOrders = purchaseOrders.filter(po => po.status === 'Pending' || po.status === 'Shipped').length;
       const inventoryItems = inventory.length;
-      const lowStockItems = inventory.filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock').length;
+      const lowStockInventory = inventory.filter(item => isLowStock(item.status)).length;
       const totalMedications = medications.length;
-      const lowStockMedications = medications.filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock').length;
+      const lowStockMedications = medications.filter(med => isLowStock(med.status)).length;
 
-      // Calculate integration score (0-100)
       let integrationScore = 0;
       if (totalSuppliers > 0) integrationScore += 25;
       if (activeOrders > 0) integrationScore += 25;
-      if (inventoryItems > 0 && lowStockItems / inventoryItems < 0.2) integrationScore += 25;
-      if (totalMedications > 0 && lowStockMedications / totalMedications < 0.2) integrationScore += 25;
+      if (inventoryItems > 0 && (lowStockInventory / (inventoryItems || 1)) < 0.2) integrationScore += 25;
+      if (totalMedications > 0 && (lowStockMedications / (totalMedications || 1)) < 0.2) integrationScore += 25;
 
       setStats({
         totalSuppliers,
         activeOrders,
         inventoryItems,
-        lowStockItems,
+        lowStockItems: lowStockInventory,
         medications: totalMedications,
         lowStockMedications,
         integrationScore,
       });
 
-      // Prepare detailed data for modals
       prepareLowStockData(inventory, medications);
       preparePurchaseOrdersData(purchaseOrders);
       prepareSupplierPerformanceData(suppliers, purchaseOrders);
@@ -162,31 +198,31 @@ export function SupplyChainIntegration() {
     }
   };
 
-  const prepareLowStockData = (inventory: any[], medications: any[]) => {
+  const prepareLowStockData = (inventory: InventoryRow[], medications: MedicationRow[]) => {
     const lowStockInventory = inventory
-      .filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock')
+      .filter(item => isLowStock(item.status))
       .map(item => ({
         id: item.id,
-        name: item.name || item.itemName,
+        name: item.name,
         category: 'Inventory',
-        currentStock: item.quantity || 0,
-        minStock: item.minimumStock || 10,
-        unit: item.unit || 'pcs',
-        supplier: item.supplier || 'Various',
-        lastOrdered: item.lastOrdered || '2024-01-15'
+        currentStock: item.quantity ?? 0,
+        minStock: item.minQuantity ?? 10,
+        unit: 'pcs',
+        supplier: item.supplierName ?? t('dashboard.supply_chain.unknown_supplier') ?? 'Various',
+        lastOrdered: item.expires ? new Date(item.expires).toISOString().split('T')[0] : 'N/A'
       }));
 
     const lowStockMeds = medications
-      .filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock')
+      .filter(med => isLowStock(med.status))
       .map(med => ({
         id: med.id,
-        name: med.name || med.medicationName,
+        name: med.name,
         category: 'Medication',
-        currentStock: med.quantity || 0,
-        minStock: med.minimumStock || 5,
-        unit: med.unit || 'units',
-        supplier: med.supplier || 'Pharmacy Supplier',
-        lastOrdered: med.lastOrdered || '2024-01-10'
+        currentStock: med.stock ?? 0,
+        minStock: 5,
+        unit: 'units',
+        supplier: 'Pharmacy Supplier',
+        lastOrdered: med.expiryDate ? new Date(med.expiryDate).toISOString().split('T')[0] : 'N/A'
       }));
 
     // Add some mock data if no real data exists
@@ -227,17 +263,17 @@ export function SupplyChainIntegration() {
     setLowStockItems(allItems.length > 0 ? allItems : mockLowStockItems);
   };
 
-  const preparePurchaseOrdersData = (orders: any[]) => {
+  const preparePurchaseOrdersData = (orders: PurchaseOrderRow[]) => {
     const activeOrders = orders
       .filter(order => order.status === 'Pending' || order.status === 'Shipped')
       .map(order => ({
         id: order.id,
-        supplier: order.supplier || 'Unknown Supplier',
+        supplier: order.supplierName || 'Unknown Supplier',
         status: order.status,
-        totalAmount: order.totalAmount || '$0.00',
-        orderDate: order.orderDate || '2024-01-01',
-        expectedDelivery: order.expectedDelivery || '2024-01-15',
-        items: order.items?.length || 0
+        totalAmount: formatEGP(order.total ?? 0, true, language),
+        orderDate: order.orderDate?.slice(0, 10) || 'N/A',
+        expectedDelivery: order.expectedDelivery?.slice(0, 10) || 'N/A',
+        items: Array.isArray(order.items) ? order.items.length : 0,
       }));
 
     // Add mock data if no real data exists
@@ -265,22 +301,19 @@ export function SupplyChainIntegration() {
     setPurchaseOrders(activeOrders.length > 0 ? activeOrders : mockPurchaseOrders);
   };
 
-  const prepareSupplierPerformanceData = (suppliers: any[], orders: any[]) => {
+  const prepareSupplierPerformanceData = (suppliers: SupplierRow[], orders: PurchaseOrderRow[]) => {
     const performanceData = suppliers.map(supplier => {
-      const supplierOrders = orders.filter(order => order.supplier === supplier.name);
+      const supplierOrders = orders.filter(order => order.supplierName === supplier.name);
       const completedOrders = supplierOrders.filter(order => order.status === 'Delivered');
-      
+      const activeOrders = supplierOrders.filter(order => order.status === 'Pending' || order.status === 'Shipped').length;
       return {
         id: supplier.id,
         name: supplier.name || 'Unknown Supplier',
-        rating: supplier.rating || Math.floor(Math.random() * 2) + 4, // 4-5 stars
-        onTimeDelivery: completedOrders.length > 0 ? 
-          Math.floor(Math.random() * 20) + 80 : 85, // 80-100%
-        qualityScore: supplier.qualityScore || Math.floor(Math.random() * 20) + 80,
+        rating: supplier.rating ?? Math.floor(Math.random() * 2) + 4,
+        onTimeDelivery: completedOrders.length > 0 ? Math.floor(Math.random() * 20) + 80 : 85,
+        qualityScore: Math.floor(Math.random() * 20) + 80,
         totalOrders: supplierOrders.length,
-        activeOrders: supplierOrders.filter(order => 
-          order.status === 'Pending' || order.status === 'Shipped'
-        ).length
+        activeOrders,
       };
     });
 
@@ -318,15 +351,15 @@ export function SupplyChainIntegration() {
     setSupplierPerformance(performanceData.length > 0 ? performanceData : mockSupplierData);
   };
 
-  const prepareStockAlertsData = (inventory: any[], medications: any[]) => {
+  const prepareStockAlertsData = (inventory: InventoryRow[], medications: MedicationRow[]) => {
     const alerts: StockAlert[] = [];
 
     // Generate alerts for low stock inventory
     inventory
-      .filter(item => item.status === 'Low Stock' || item.status === 'Out of Stock')
+      .filter(item => isLowStock(item.status))
       .forEach(item => {
-        const itemName = item.name || item.itemName;
-        const statusType: StockAlert['type'] = item.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock';
+        const itemName = item.name;
+        const statusType: StockAlert['type'] = item.status === 'OutOfStock' ? 'Out of Stock' : 'Low Stock';
         const message = statusType === 'Out of Stock'
           ? t('dashboard.supply_chain.msg.out_of_stock', { item: itemName })
           : t('dashboard.supply_chain.msg.status_message', { item: itemName, status: t('dashboard.supply_chain.alert_type.low_stock') });
@@ -343,10 +376,10 @@ export function SupplyChainIntegration() {
 
     // Generate alerts for low stock medications
     medications
-      .filter(med => med.status === 'Low Stock' || med.status === 'Out of Stock')
+      .filter(med => isLowStock(med.status))
       .forEach(med => {
-        const medName = med.name || med.medicationName;
-        const statusType: StockAlert['type'] = med.status === 'Out of Stock' ? 'Out of Stock' : 'Low Stock';
+        const medName = med.name;
+        const statusType: StockAlert['type'] = med.status === 'OutOfStock' ? 'Out of Stock' : 'Low Stock';
         const message = statusType === 'Out of Stock'
           ? t('dashboard.supply_chain.msg.out_of_stock', { item: medName })
           : t('dashboard.supply_chain.msg.status_message', { item: medName, status: t('dashboard.supply_chain.alert_type.low_stock') });

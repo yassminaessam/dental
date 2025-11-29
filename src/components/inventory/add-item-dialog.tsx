@@ -29,8 +29,6 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Supplier } from '@/app/suppliers/page';
-import { listDocuments } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const itemSchema = z.object({
@@ -45,17 +43,22 @@ const itemSchema = z.object({
 
 type ItemFormData = z.infer<typeof itemSchema>;
 
+type SupplierOption = {
+  id: string;
+  name: string;
+};
+
 interface AddItemDialogProps {
   onSave: (data: any) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   showTrigger?: boolean;
+  suppliers: SupplierOption[];
 }
 
-export function AddItemDialog({ onSave, open, onOpenChange, showTrigger = true }: AddItemDialogProps) {
+export function AddItemDialog({ onSave, open, onOpenChange, showTrigger = true, suppliers }: AddItemDialogProps) {
   const { t, language } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
-  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const form = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
     defaultValues: {
@@ -68,16 +71,6 @@ export function AddItemDialog({ onSave, open, onOpenChange, showTrigger = true }
       expires: undefined,
     }
   });
-
-  React.useEffect(() => {
-    async function fetchSuppliers() {
-  const data = await listDocuments<Supplier>('suppliers');
-      setSuppliers(data);
-    }
-    if (open) {
-      fetchSuppliers();
-    }
-  }, [open]);
 
   const onSubmit = (data: ItemFormData) => {
     const supplierId = data.supplier || undefined;

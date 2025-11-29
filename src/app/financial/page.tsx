@@ -54,7 +54,6 @@ import RevenueVsExpensesChart from "@/components/financial/revenue-vs-expenses-c
 import ExpensesByCategoryChart from "@/components/financial/expenses-by-category-chart";
 import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { formatEGP } from '@/lib/currency';
 import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -84,10 +83,10 @@ export type Transaction = {
 
 type PurchaseOrderRecord = {
   id: string;
-  supplier?: string;
-  total?: string | number;
+  supplierName?: string;
+  total?: number;
   status?: string;
-  orderDate?: string;
+  orderDate?: string | null;
   deliveryDate?: string | null;
 };
 
@@ -130,6 +129,41 @@ const parseTransactionDate = (value: unknown): Date => {
   }
   return new Date();
 };
+
+const mapTransactionResponse = (row: any, language: string): Transaction => {
+  const amountValue = sanitizeAmountValue(row?.amountValue ?? row?.amount ?? 0);
+  const amountDisplay = typeof row?.amount === 'string' && row.amount.length
+    ? row.amount
+    : formatEGP(amountValue, true, language);
+  return {
+    id: String(row?.id ?? `TRN-${Date.now()}`),
+    date: parseTransactionDate(row?.date),
+    description: row?.description ?? '',
+    category: row?.category ?? 'Patient Payment',
+    type: row?.type === 'Expense' ? 'Expense' : 'Revenue',
+    amount: amountDisplay,
+    amountValue,
+    totalAmount: row?.totalAmount != null ? sanitizeAmountValue(row.totalAmount) : undefined,
+    outstandingAmount: row?.outstandingAmount != null ? sanitizeAmountValue(row.outstandingAmount) : undefined,
+    paymentMethod: row?.paymentMethod ?? undefined,
+    status: row?.status === 'Pending' ? 'Pending' : 'Completed',
+    patient: row?.patient ?? row?.patientName ?? undefined,
+    patientId: row?.patientId ?? undefined,
+    sourceId: row?.sourceId ?? undefined,
+    sourceType: row?.sourceType ?? undefined,
+    metadata: row?.metadata ?? null,
+    auto: Boolean(row?.auto),
+  };
+};
+
+const mapPurchaseOrderRecord = (row: any): PurchaseOrderRecord => ({
+  id: String(row?.id ?? `PO-${Date.now()}`),
+  supplierName: row?.supplierName ?? row?.supplier ?? 'Supplier',
+  total: sanitizeAmountValue(row?.total ?? 0),
+  status: row?.status ?? 'Pending',
+  orderDate: row?.orderDate ?? null,
+  deliveryDate: row?.expectedDelivery ?? row?.deliveryDate ?? null,
+});
 
 export default function FinancialPage() {
   const { t, isRTL, language } = useLanguage();
@@ -178,7 +212,8 @@ export default function FinancialPage() {
       const isDelivered = (po.status ?? '').toLowerCase() === 'delivered';
       const collectedAmount = isDelivered ? totalAmount : 0;
       const outstandingAmount = Math.max(totalAmount - collectedAmount, 0);
-      const descriptionParts = [purchaseOrderLabel, po.id, po.supplier ? `- ${po.supplier}` : ''].filter(Boolean);
+      const supplierName = po.supplierName ?? '';
+      const descriptionParts = [purchaseOrderLabel, po.id, supplierName ? `- ${supplierName}` : ''].filter(Boolean);
       const description = descriptionParts.join(' ');
       return {
         id: po.id,
@@ -192,11 +227,11 @@ export default function FinancialPage() {
         outstandingAmount,
         paymentMethod: purchaseOrderPaymentLabel,
         status: isDelivered ? 'Completed' : 'Pending',
-        patient: po.supplier,
+        patient: supplierName,
         sourceId: po.id,
         sourceType: 'purchase-order',
         metadata: {
-          supplier: po.supplier,
+          supplier: supplierName,
           status: po.status,
           orderDate: po.orderDate,
           deliveryDate: po.deliveryDate,
@@ -233,82 +268,59 @@ export default function FinancialPage() {
   }, [extractAmountValue]);
 
 
-  React.useEffect(() => {
-    let isActive = true;
+  const fetchTransactions = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      await fetch('/api/transactions/sync-invoices', { method: 'POST' }).catch(() => undefined);
+      const [transactionsRes, purchaseOrdersRes] = await Promise.all([
+        fetch('/api/transactions'),
+        fetch('/api/purchase-orders'),
+      ]);
+      const transactionsPayload = transactionsRes.ok ? await transactionsRes.json().catch(() => ({})) : {};
+      const purchaseOrdersPayload = purchaseOrdersRes.ok ? await purchaseOrdersRes.json().catch(() => ({})) : {};
 
-    async function fetchTransactions() {
-      try {
-        setLoading(true);
-        await fetch('/api/transactions/sync-invoices', { method: 'POST' }).catch(() => undefined);
-        const [transactionsData, purchaseOrdersData] = await Promise.all([
-          listDocuments<any>('transactions'),
-          listDocuments<any>('purchase-orders'),
-        ]);
-        if (!isActive) return;
+      const mappedTransactions: Transaction[] = Array.isArray(transactionsPayload?.transactions)
+        ? transactionsPayload.transactions.map((row: any) => mapTransactionResponse(row, language))
+        : [];
 
-        const parsedPurchaseOrders: PurchaseOrderRecord[] = purchaseOrdersData.map((po: any) => ({
-          id: String(po.id ?? `PO-${Date.now()}`),
-          supplier: po.supplier ?? po.vendor ?? po.name ?? '',
-          total: po.total ?? po.amount ?? 0,
-          status: po.status ?? 'Pending',
-          orderDate: po.orderDate ?? po.date ?? undefined,
-          deliveryDate: po.deliveryDate ?? null,
-        }));
+      const purchaseOrderRecords: PurchaseOrderRecord[] = Array.isArray(purchaseOrdersPayload?.orders)
+        ? purchaseOrdersPayload.orders.map(mapPurchaseOrderRecord)
+        : [];
 
-        const manualTransactions = transactionsData
-          .map((t: any) => {
-            const date = parseTransactionDate(t.date);
-            const amountValue = sanitizeAmountValue(t.amountValue ?? t.amount);
-            const outstandingSource = t.outstandingAmount ?? extractOutstandingFromMetadata(t.metadata);
-            const normalizedTotal = sanitizeAmountValue(t.totalAmount ?? amountValue);
-            const amountDisplay =
-              typeof t.amount === 'string' || typeof t.amount === 'number'
-                ? t.amount
-                : formatEGP(amountValue || normalizedTotal, true, language);
-            return {
-              ...t,
-              date,
-              amount: amountDisplay,
-              amountValue,
-              totalAmount: normalizedTotal,
-              outstandingAmount: sanitizeAmountValue(outstandingSource),
-              auto: Boolean(t.auto),
-            } as Transaction;
-          })
-          .filter((transaction) => transaction.sourceType !== 'purchase-order');
+      const existingPurchaseOrderIds = new Set(
+        mappedTransactions
+          .filter((tx) => tx.sourceType === 'purchase-order' && tx.sourceId)
+          .map((tx) => tx.sourceId as string)
+      );
 
-        const purchaseOrderTransactions = buildPurchaseOrderTransactions(parsedPurchaseOrders);
+      const purchaseOrderTransactions = buildPurchaseOrderTransactions(
+        purchaseOrderRecords.filter((po) => !existingPurchaseOrderIds.has(po.id))
+      );
 
-        const unifiedTransactions = sortTransactionsDescending([
-          ...manualTransactions,
-          ...purchaseOrderTransactions,
-        ]);
-        setTransactions(unifiedTransactions);
-        recomputeChartData(unifiedTransactions);
-      } catch (error) {
-        if (isActive) {
-          toast({ title: t('financial.toast.error_fetching'), variant: 'destructive' });
-        }
-      } finally {
-        if (isActive) {
-          setLoading(false);
-        }
-      }
+      const unifiedTransactions = sortTransactionsDescending([
+        ...mappedTransactions,
+        ...purchaseOrderTransactions,
+      ]);
+      setTransactions(unifiedTransactions);
+      recomputeChartData(unifiedTransactions);
+    } catch (error) {
+      console.error('[FinancialPage] fetch error', error);
+      toast({ title: t('financial.toast.error_fetching'), variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-
-    fetchTransactions();
-    return () => {
-      isActive = false;
-    };
   }, [
     toast,
     t,
     language,
     buildPurchaseOrderTransactions,
-    extractAmountValue,
     sortTransactionsDescending,
     recomputeChartData,
   ]);
+
+  React.useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const financialPageStats = React.useMemo(() => {
     const revenue = transactions
@@ -385,36 +397,30 @@ export default function FinancialPage() {
   const handleSaveTransaction = async (data: Omit<Transaction, 'id' | 'status'>) => {
     try {
       const numericAmount = sanitizeAmountValue(data.amount);
-      const formattedAmount = formatEGP(numericAmount, true, language);
-      const newTransaction: Transaction = {
-        id: `TRN-${Date.now()}`,
-        date: new Date(data.date),
+      const payload = {
+        date: data.date instanceof Date ? data.date.toISOString() : new Date(data.date).toISOString(),
         description: data.description,
         type: data.type,
         category: data.category,
         paymentMethod: data.paymentMethod,
         patient: data.patient,
-        amount: formattedAmount,
-        amountValue: numericAmount,
-        totalAmount: numericAmount,
-        outstandingAmount: 0,
+        amount: numericAmount,
         status: 'Completed',
         auto: false,
       };
-      await setDocument('transactions', newTransaction.id, {
-        ...newTransaction,
-        date: newTransaction.date.toISOString(),
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      setTransactions(prev => {
-        const next = sortTransactionsDescending([...prev, newTransaction]);
-        recomputeChartData(next);
-        return next;
-      });
+      if (!response.ok) throw new Error('Failed to create transaction');
+      await fetchTransactions();
       toast({
         title: t('financial.toast.transaction_added'),
         description: t('financial.toast.transaction_added_desc'),
       });
     } catch (e) {
+      console.error('[FinancialPage] add transaction error', e);
       toast({ title: t('financial.toast.error_adding_transaction'), variant: "destructive" });
     }
   };
@@ -425,18 +431,35 @@ export default function FinancialPage() {
       return;
     }
     try {
-      await updateDocument('transactions', updatedTransaction.id, { ...updatedTransaction, date: updatedTransaction.date.toISOString() });
-      setTransactions(prev => {
-        const next = sortTransactionsDescending(prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
-        recomputeChartData(next);
-        return next;
+      const numericAmount = sanitizeAmountValue(updatedTransaction.amountValue ?? updatedTransaction.amount);
+      const payload = {
+        date: updatedTransaction.date.toISOString(),
+        description: updatedTransaction.description,
+        type: updatedTransaction.type,
+        category: updatedTransaction.category,
+        paymentMethod: updatedTransaction.paymentMethod,
+        amount: numericAmount,
+        status: updatedTransaction.status,
+        patient: updatedTransaction.patient,
+        totalAmount: updatedTransaction.totalAmount ?? numericAmount,
+        outstandingAmount: updatedTransaction.outstandingAmount ?? 0,
+        metadata: updatedTransaction.metadata ?? undefined,
+        auto: false,
+      };
+      const response = await fetch(`/api/transactions/${updatedTransaction.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+      if (!response.ok) throw new Error('Failed to update transaction');
+      await fetchTransactions();
       setTransactionToEdit(null);
       toast({
         title: t('financial.toast.transaction_updated'),
         description: t('financial.toast.transaction_updated_desc'),
       });
     } catch (e) {
+      console.error('[FinancialPage] update transaction error', e);
       toast({ title: t('financial.toast.error_updating_transaction'), variant: 'destructive' });
     }
   };
@@ -448,12 +471,9 @@ export default function FinancialPage() {
         return;
       }
       try {
-        await deleteDocument('transactions', transactionToDelete.id);
-        setTransactions(prev => {
-          const next = prev.filter(t => t.id !== transactionToDelete.id);
-          recomputeChartData(next);
-          return next;
-        });
+        const response = await fetch(`/api/transactions/${transactionToDelete.id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete transaction');
+        await fetchTransactions();
         toast({
           title: t('financial.toast.transaction_deleted'),
           description: t('financial.toast.transaction_deleted_desc'),
@@ -461,6 +481,7 @@ export default function FinancialPage() {
         });
         setTransactionToDelete(null);
       } catch (e) {
+        console.error('[FinancialPage] delete transaction error', e);
         toast({ title: t('financial.toast.error_deleting_transaction'), variant: 'destructive' });
       }
     }

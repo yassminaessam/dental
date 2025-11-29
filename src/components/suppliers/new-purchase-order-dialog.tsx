@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useCallback } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -30,10 +31,13 @@ import { format } from 'date-fns';
 import { cn } from '../../lib/utils';
 import { Input } from '../ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { InventoryItem } from '../../app/inventory/page';
 import type { Supplier, PurchaseOrder } from '../../app/suppliers/page';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useCallback } from 'react';
+
+type InventoryItemOption = {
+  id: string;
+  name: string;
+};
 
 const orderItemSchema = z.object({
   itemId: z.string().min(1, 'suppliers.validation.item_required'),
@@ -56,7 +60,7 @@ interface NewPurchaseOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialSupplierId?: string;
-  inventoryItems: InventoryItem[];
+  inventoryItems: InventoryItemOption[];
   suppliers: Supplier[];
   onAddItem: () => void;
   initialOrder?: PurchaseOrder | null;
@@ -91,7 +95,7 @@ export function NewPurchaseOrderDialog({
 
   const computeDefaultValues = useCallback((): PurchaseOrderFormData => {
     if (mode === 'edit' && initialOrder) {
-      const supplierId = suppliers.find((s) => s.name === initialOrder.supplier)?.id ?? initialSupplierId ?? '';
+      const supplierId = initialOrder.supplierId ?? suppliers.find((s) => s.name === initialOrder.supplierName)?.id ?? initialSupplierId ?? '';
       return {
         supplier: supplierId,
         orderDate: parseDate(initialOrder.orderDate) ?? new Date(),
@@ -128,13 +132,20 @@ export function NewPurchaseOrderDialog({
   }, [computeDefaultValues, form]);
 
   const onSubmit = (data: PurchaseOrderFormData) => {
-    const supplierName = suppliers.find(s => s.id === data.supplier)?.name;
+    const supplierName = suppliers.find(s => s.id === data.supplier)?.name ?? 'Supplier';
     const itemsWithDesc = data.items.map(item => ({
         ...item,
         description: inventoryItems.find(inv => inv.id === item.itemId)?.name || 'Unknown Item'
     }));
 
-    onSave({ ...data, supplier: supplierName, items: itemsWithDesc, id: initialOrder?.id });
+    onSave({
+      supplierId: data.supplier,
+      supplierName,
+      orderDate: data.orderDate,
+      deliveryDate: data.deliveryDate,
+      items: itemsWithDesc,
+      id: initialOrder?.id,
+    });
     form.reset();
     onOpenChange(false);
   };

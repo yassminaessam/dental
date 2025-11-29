@@ -58,8 +58,8 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
         form: medication.form,
         strength: medication.strength,
         stock: medication.stock,
-        unitPrice: parseFloat(medication.unitPrice.replace(/[^0-9.-]+/g, "")),
-        expiryDate: medication.expiryDate !== 'N/A' ? new Date(medication.expiryDate) : undefined,
+        unitPrice: medication.unitPrice,
+        expiryDate: medication.expiryDate ? new Date(medication.expiryDate) : undefined,
       });
     }
   }, [medication, form]);
@@ -73,9 +73,9 @@ export function EditMedicationDialog({ medication, onSave, open, onOpenChange }:
       form: data.form || medication.form,
       strength: data.strength || medication.strength,
       stock: data.stock,
-      unitPrice: `EGP ${data.unitPrice.toFixed(2)}`,
-      status: data.stock > 20 ? 'In Stock' : (data.stock > 0 ? 'Low Stock' : 'Out of Stock'),
-      expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
+      unitPrice: data.unitPrice,
+      status: data.stock <= 0 ? 'OutOfStock' : data.stock <= 20 ? 'LowStock' : 'InStock',
+      expiryDate: data.expiryDate ? data.expiryDate.toISOString() : undefined,
     };
     onSave(updatedMedication);
   };

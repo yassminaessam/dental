@@ -72,58 +72,57 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
 import { DispenseMedicationDialog } from '@/components/pharmacy/dispense-medication-dialog';
-import { listDocuments, setDocument, deleteDocument, updateDocument } from '@/lib/data-client';
 import type { NewPrescriptionPayload } from '@/components/pharmacy/new-prescription-dialog';
 import type { Patient, StaffMember } from '@/lib/types';
 
 export type Medication = {
   id: string;
   name: string;
-  fullName: string;
-  strength: string;
-  form: string;
-  category: string;
+  fullName?: string;
+  strength?: string;
+  form?: string;
+  category?: string;
   stock: number;
-  unitPrice: string;
-  expiryDate: string;
-  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+  unitPrice: number;
+  expiryDate?: string | null;
+  status: 'InStock' | 'LowStock' | 'OutOfStock';
 };
 
 export type Prescription = {
   id: string;
   patientId?: string;
-  patient: string;
+  patientName: string;
   doctorId?: string;
-  medication: string;
+  doctorName: string;
+  medicationName: string;
   medicationId?: string;
-  strength: string;
-  dosage: string;
+  strength?: string;
+  dosage?: string;
   instructions?: string;
-  duration: string;
+  duration?: string;
   refills: number;
-  doctor: string;
-  date: string;
   status: 'Active' | 'Completed';
   invoiceId?: string;
   treatmentId?: string;
   dispensedAt?: string;
   dispensedQuantity?: number;
   totalAmount?: number;
+  createdAt?: string;
 };
 
 // Minimal inventory type used on this page
 type InventoryItem = {
-  id?: string;
+  id: string;
   name: string;
-  status: string;
-  expires?: string;
-  category?: string;
-  stock?: number;
-  min?: number;
-  max?: number;
-  unitCost?: string | number;
-  supplier?: string;
-  location?: string;
+  status: 'Normal' | 'LowStock' | 'OutOfStock';
+  expires?: string | null;
+  category?: string | null;
+  quantity: number;
+  minQuantity: number;
+  maxQuantity: number;
+  unitCost: number;
+  supplierName?: string | null;
+  location?: string | null;
 };
 
 // Incoming payloads from dialogs
@@ -147,12 +146,85 @@ const iconMap = {
 type IconKey = keyof typeof iconMap;
 
 const resolveMedicationStatus = (stock: number): Medication['status'] => {
-  if (stock <= 0) return 'Out of Stock';
-  if (stock <= 20) return 'Low Stock';
-  return 'In Stock';
+  if (stock <= 0) return 'OutOfStock';
+  if (stock <= 20) return 'LowStock';
+  return 'InStock';
 };
 
-const parseCurrencyValue = (value: string): number => {
+const formatMedicationStatusLabel = (status: Medication['status']) => {
+  switch (status) {
+    case 'OutOfStock':
+      return 'Out of Stock';
+    case 'LowStock':
+      return 'Low Stock';
+    default:
+      return 'In Stock';
+  }
+};
+
+const medicationStatusVariant = (status: Medication['status']): 'destructive' | 'secondary' | 'default' => {
+  if (status === 'OutOfStock') return 'destructive';
+  if (status === 'LowStock') return 'secondary';
+  return 'default';
+};
+
+const mapMedicationStatusToInventory = (status: Medication['status']): InventoryItem['status'] => {
+  if (status === 'OutOfStock') return 'OutOfStock';
+  if (status === 'LowStock') return 'LowStock';
+  return 'Normal';
+};
+
+const mapMedicationResponse = (row: any): Medication => ({
+  id: row.id,
+  name: row.name,
+  fullName: row.fullName ?? row.name,
+  strength: row.strength ?? '',
+  form: row.form ?? '',
+  category: row.category ?? '',
+  stock: row.stock ?? 0,
+  unitPrice: Number(row.unitPrice ?? 0),
+  expiryDate: row.expiryDate ?? null,
+  status: row.status ?? resolveMedicationStatus(row.stock ?? 0),
+});
+
+const mapPrescriptionResponse = (row: any): Prescription => ({
+  id: row.id,
+  patientId: row.patientId ?? undefined,
+  patientName: row.patientName ?? row.patient ?? '',
+  doctorId: row.doctorId ?? undefined,
+  doctorName: row.doctorName ?? row.doctor ?? '',
+  medicationId: row.medicationId ?? undefined,
+  medicationName: row.medicationName ?? row.medication ?? '',
+  strength: row.strength ?? '',
+  dosage: row.dosage ?? '',
+  instructions: row.instructions ?? '',
+  duration: row.duration ?? 'As directed',
+  refills: row.refills ?? 0,
+  status: row.status ?? 'Active',
+  invoiceId: row.invoiceId ?? undefined,
+  treatmentId: row.treatmentId ?? undefined,
+  dispensedAt: row.dispensedAt ?? undefined,
+  dispensedQuantity: row.dispensedQuantity ?? undefined,
+  totalAmount: row.totalAmount != null ? Number(row.totalAmount) : undefined,
+  createdAt: row.createdAt ?? row.date ?? undefined,
+});
+
+const mapInventoryResponse = (row: any): InventoryItem => ({
+  id: row.id,
+  name: row.name,
+  status: row.status ?? 'Normal',
+  expires: row.expires ?? null,
+  category: row.category ?? null,
+  quantity: row.quantity ?? row.stock ?? 0,
+  minQuantity: row.minQuantity ?? row.min ?? 0,
+  maxQuantity: row.maxQuantity ?? row.max ?? 0,
+  unitCost: Number(row.unitCost ?? 0),
+  supplierName: row.supplierName ?? row.supplier ?? null,
+  location: row.location ?? null,
+});
+
+const parseCurrencyValue = (value: string | number): number => {
+  if (typeof value === 'number') return value;
   if (!value) return 0;
   const numeric = parseFloat(value.replace(/[^\d.-]/g, ''));
   return Number.isFinite(numeric) ? numeric : 0;
@@ -185,11 +257,23 @@ export default function PharmacyPage() {
     React.useEffect(() => {
         async function fetchData() {
             try {
-        const [medicationData, prescriptionData, inventoryData] = await Promise.all([
-          listDocuments<Medication>('medications'),
-          listDocuments<Prescription>('prescriptions'),
-          listDocuments<InventoryItem>('inventory'),
+        const [medicationsRes, prescriptionsRes, inventoryRes] = await Promise.all([
+          fetch('/api/pharmacy/medications'),
+          fetch('/api/pharmacy/prescriptions'),
+          fetch('/api/inventory'),
         ]);
+        const medicationsPayload = medicationsRes.ok ? await medicationsRes.json().catch(() => ({})) : {};
+        const prescriptionsPayload = prescriptionsRes.ok ? await prescriptionsRes.json().catch(() => ({})) : {};
+        const inventoryPayload = inventoryRes.ok ? await inventoryRes.json().catch(() => ({})) : {};
+        const medicationData = Array.isArray(medicationsPayload?.medications)
+          ? medicationsPayload.medications.map(mapMedicationResponse)
+          : [];
+        const prescriptionData = Array.isArray(prescriptionsPayload?.prescriptions)
+          ? prescriptionsPayload.prescriptions.map(mapPrescriptionResponse)
+          : [];
+        const inventoryData = Array.isArray(inventoryPayload?.items)
+          ? inventoryPayload.items.map(mapInventoryResponse)
+          : [];
                 setMedications(medicationData);
                 setPrescriptions(prescriptionData);
                 setInventory(inventoryData);
@@ -268,9 +352,9 @@ export default function PharmacyPage() {
     const pharmacyPageStats = React.useMemo(() => {
         const totalMedications = medications.length;
         const totalPrescriptions = prescriptions.length;
-        const lowStockMedications = medications.filter(m => m.status === 'Low Stock' || m.status === 'Out of Stock').length;
+        const lowStockMedications = medications.filter(m => m.status === 'LowStock' || m.status === 'OutOfStock').length;
         const expiringSoon = medications.filter(m => {
-            if (m.expiryDate === 'N/A') return false;
+            if (!m.expiryDate) return false;
             const expiry = new Date(m.expiryDate);
             const today = new Date();
             const thirtyDaysFromNow = new Date();
@@ -288,20 +372,26 @@ export default function PharmacyPage() {
 
   const handleSaveMedication = async (data: MedicationInput) => {
       try {
-          const newMedication: Medication = {
-            id: `MED-${Date.now()}`,
-            name: data.name,
-            fullName: data.name,
-      strength: data.strength ?? '',
-      form: data.form ?? '',
-      category: data.category ?? '',
-            stock: data.stock,
-      unitPrice: `$${parseFloat(String(data.unitPrice)).toFixed(2)}`,
-      expiryDate: data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : 'N/A',
-            status: data.stock > 20 ? 'In Stock' : 'Low Stock',
-          };
-          await setDocument('medications', newMedication.id, newMedication);
-          setMedications(prev => [newMedication, ...prev]);
+          const response = await fetch('/api/pharmacy/medications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: data.name,
+              fullName: data.name,
+              strength: data.strength,
+              form: data.form,
+              category: data.category,
+              stock: data.stock,
+              unitPrice: typeof data.unitPrice === 'number' ? data.unitPrice : parseFloat(String(data.unitPrice)),
+              expiryDate: data.expiryDate ? data.expiryDate.toISOString() : undefined,
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to create medication');
+          const payload = await response.json();
+          const createdMedication = payload?.medication ? mapMedicationResponse(payload.medication) : null;
+          if (createdMedication) {
+            setMedications(prev => [createdMedication, ...prev]);
+          }
           toast({
             title: t('pharmacy.toast.medication_added'),
             description: t('pharmacy.toast.medication_added_desc'),
@@ -313,7 +403,7 @@ export default function PharmacyPage() {
 
   const openDispenseDialog = React.useCallback((record: Prescription) => {
     const medicationMatch = medications.find((med) => (
-      med.id === record.medicationId || med.name.trim().toLowerCase() === record.medication.trim().toLowerCase()
+      med.id === record.medicationId || med.name.trim().toLowerCase() === record.medicationName.trim().toLowerCase()
     ));
 
     if (!medicationMatch) {
@@ -334,13 +424,13 @@ export default function PharmacyPage() {
       return;
     }
 
-    const patientRecord = findPatientRecord(prescriptionToDispense.patientId, prescriptionToDispense.patient);
+    const patientRecord = findPatientRecord(prescriptionToDispense.patientId, prescriptionToDispense.patientName);
     if (!patientRecord) {
       toast({ title: t('common.error'), description: t('pharmacy.toast.missing_patient'), variant: 'destructive' });
       return;
     }
 
-    const doctorRecord = findDoctorRecord(prescriptionToDispense.doctorId, prescriptionToDispense.doctor);
+    const doctorRecord = findDoctorRecord(prescriptionToDispense.doctorId, prescriptionToDispense.doctorName);
     if (!doctorRecord) {
       toast({ title: t('common.error'), description: t('pharmacy.toast.missing_doctor'), variant: 'destructive' });
       return;
@@ -349,7 +439,7 @@ export default function PharmacyPage() {
     const parsedUnitPrice = input.unitPrice ?? parseCurrencyValue(medicationForDispense.unitPrice);
     const unitPrice = Number(parsedUnitPrice.toFixed(2));
     const totalAmount = unitPrice * input.quantity;
-    const patientName = `${patientRecord.name} ${patientRecord.lastName ?? ''}`.trim() || prescriptionToDispense.patient;
+    const patientName = `${patientRecord.name} ${patientRecord.lastName ?? ''}`.trim() || prescriptionToDispense.patientName;
 
     setIsDispenseLoading(true);
 
@@ -408,44 +498,69 @@ export default function PharmacyPage() {
       const invoiceId: string | undefined = invoicePayload?.invoice?.id;
 
       const nextStock = currentStock - input.quantity;
-      const updatedMedication: Medication = {
-        ...medicationForDispense,
-        stock: nextStock,
-        status: resolveMedicationStatus(nextStock),
-      };
-
-      await updateDocument('medications', medicationForDispense.id, updatedMedication);
+      const medicationResponse = await fetch(`/api/pharmacy/medications/${medicationForDispense.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock: nextStock,
+          status: resolveMedicationStatus(nextStock),
+        }),
+      });
+      if (!medicationResponse.ok) throw new Error('Failed to update medication stock');
+      const medicationPayload = await medicationResponse.json();
+      const updatedMedication = medicationPayload?.medication
+        ? mapMedicationResponse(medicationPayload.medication)
+        : { ...medicationForDispense, stock: nextStock, status: resolveMedicationStatus(nextStock) };
       setMedications((prev) => prev.map((med) => (med.id === updatedMedication.id ? updatedMedication : med)));
 
-      await setDocument('pharmacy-dispensing', `DISP-${Date.now()}`, {
-        prescriptionId: prescriptionToDispense.id,
-        patientId: patientRecord.id,
-        patient: patientName,
-        doctorId: doctorRecord.id,
-        doctor: doctorRecord.name,
-        medicationId: medicationForDispense.id,
-        medication: medicationForDispense.name,
-        quantity: input.quantity,
-        unitPrice,
-        total: totalAmount,
-        invoiceId,
-        treatmentId,
-        notes: input.notes ?? '',
-        dispensedAt: new Date().toISOString(),
-        dispensedBy: user ? `${user.firstName} ${user.lastName}`.trim() : 'System',
+      const dispenseResponse = await fetch('/api/pharmacy/dispenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prescriptionId: prescriptionToDispense.id,
+          patientId: patientRecord.id,
+          patientName,
+          doctorId: doctorRecord.id,
+          doctorName: doctorRecord.name,
+          medicationId: medicationForDispense.id,
+          quantity: input.quantity,
+          unitPrice,
+          totalAmount,
+          invoiceId,
+          treatmentId,
+          notes: input.notes ?? '',
+          dispensedAt: new Date().toISOString(),
+          dispensedBy: user ? `${user.firstName} ${user.lastName}`.trim() : 'System',
+        }),
       });
+      if (!dispenseResponse.ok) throw new Error('Failed to record dispense');
 
-      const updatedPrescription: Prescription = {
-        ...prescriptionToDispense,
-        status: 'Completed',
-        invoiceId,
-        treatmentId,
-        dispensedAt: new Date().toISOString(),
-        dispensedQuantity: input.quantity,
-        totalAmount,
-      };
+      const prescriptionResponse = await fetch(`/api/pharmacy/prescriptions/${prescriptionToDispense.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Completed',
+          invoiceId,
+          treatmentId,
+          dispensedAt: new Date().toISOString(),
+          dispensedQuantity: input.quantity,
+          totalAmount,
+        }),
+      });
+      if (!prescriptionResponse.ok) throw new Error('Failed to update prescription');
+      const prescriptionPayload = await prescriptionResponse.json();
+      const updatedPrescription = prescriptionPayload?.prescription
+        ? mapPrescriptionResponse(prescriptionPayload.prescription)
+        : {
+            ...prescriptionToDispense,
+            status: 'Completed',
+            invoiceId,
+            treatmentId,
+            dispensedAt: new Date().toISOString(),
+            dispensedQuantity: input.quantity,
+            totalAmount,
+          };
 
-      await updateDocument('prescriptions', prescriptionToDispense.id, updatedPrescription);
       setPrescriptions((prev) => prev.map((record) => (record.id === updatedPrescription.id ? updatedPrescription : record)));
 
       toast({
@@ -465,8 +580,25 @@ export default function PharmacyPage() {
 
     const handleUpdateMedication = async (updatedMedication: Medication) => {
       try {
-          await updateDocument('medications', updatedMedication.id, updatedMedication);
-          setMedications(prev => prev.map(med => med.id === updatedMedication.id ? updatedMedication : med));
+          const response = await fetch(`/api/pharmacy/medications/${updatedMedication.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: updatedMedication.name,
+              fullName: updatedMedication.fullName,
+              category: updatedMedication.category,
+              form: updatedMedication.form,
+              strength: updatedMedication.strength,
+              stock: updatedMedication.stock,
+              unitPrice: updatedMedication.unitPrice,
+              expiryDate: updatedMedication.expiryDate,
+              status: updatedMedication.status,
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to update medication');
+          const payload = await response.json();
+          const nextMedication = payload?.medication ? mapMedicationResponse(payload.medication) : updatedMedication;
+          setMedications(prev => prev.map(med => med.id === nextMedication.id ? nextMedication : med));
           setMedicationToEdit(null);
           toast({
             title: t('pharmacy.toast.medication_updated'),
@@ -480,7 +612,8 @@ export default function PharmacyPage() {
     const handleDeleteMedication = async () => {
       if (medicationToDelete) {
         try {
-            await deleteDocument('medications', medicationToDelete.id);
+            const response = await fetch(`/api/pharmacy/medications/${medicationToDelete.id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to delete');
             setMedications(prev => prev.filter(med => med.id !== medicationToDelete.id));
             toast({
               title: t('pharmacy.toast.medication_deleted'),
@@ -497,14 +630,14 @@ export default function PharmacyPage() {
     const createMedicationPurchaseOrder = async (medication: Medication) => {
       try {
         const orderQuantity = 100; // Standard reorder quantity
-        const unitPrice = parseFloat(medication.unitPrice.replace(/[^\d.]/g, ''));
+        const unitPrice = medication.unitPrice;
         const total = orderQuantity * unitPrice;
 
         const newPurchaseOrder = {
           supplier: 'PharmaPlus', // Default pharmaceutical supplier
           orderDate: new Date().toISOString().split('T')[0],
           deliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days
-          total: formatEGP(total, true, language),
+          total,
           status: 'Pending',
           items: [{
             itemId: medication.id,
@@ -514,7 +647,19 @@ export default function PharmacyPage() {
           }]
         };
 
-        await setDocument('purchase-orders', `PO-MED-${Date.now()}`, newPurchaseOrder);
+        const response = await fetch('/api/purchase-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            supplierName: newPurchaseOrder.supplier,
+            orderDate: new Date(newPurchaseOrder.orderDate),
+            expectedDelivery: new Date(newPurchaseOrder.deliveryDate),
+            total: newPurchaseOrder.total,
+            status: 'Pending',
+            items: newPurchaseOrder.items,
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to create purchase order');
         
         toast({
           title: t('pharmacy.toast.purchase_order_created'),
@@ -543,20 +688,27 @@ export default function PharmacyPage() {
           });
         } else {
           // Create new inventory item
-          const newInventoryItem: InventoryItem = {
-            name: medication.name,
-            expires: medication.expiryDate,
-            category: 'Medications',
-            stock: medication.stock,
-            min: 20,
-            max: 100,
-            status: medication.status,
-            unitCost: medication.unitPrice,
-            supplier: 'PharmaPlus',
-            location: 'Pharmacy'
-          };
-
-          await setDocument('inventory', `INV-MED-${Date.now()}`, newInventoryItem);
+          const response = await fetch('/api/inventory', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: medication.name,
+              category: 'Medications',
+              quantity: medication.stock,
+              minQuantity: 20,
+              maxQuantity: 100,
+              unitCost: medication.unitPrice,
+              status: mapMedicationStatusToInventory(medication.status),
+              expires: medication.expiryDate ?? undefined,
+              supplierName: 'PharmaPlus',
+              location: 'Pharmacy',
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to sync inventory');
+          const payload = await response.json();
+          if (payload?.item) {
+            setInventory((prev) => [mapInventoryResponse(payload.item), ...prev]);
+          }
           
           toast({
             title: t('pharmacy.toast.added_to_inventory'),
@@ -574,24 +726,30 @@ export default function PharmacyPage() {
     
   const handleSavePrescription = async (data: NewPrescriptionPayload) => {
         try {
-            const newPrescription: Prescription = {
-              id: `RX-${Date.now()}`,
-              patientId: data.patientId,
-              patient: data.patientName,
-        doctorId: data.doctorId,
-        doctor: data.doctorName,
-        medicationId: data.medicationId,
-        medication: data.medicationName,
-        strength: data.strength ?? '',
-        dosage: data.dosage ?? '',
-        instructions: data.instructions ?? '',
-              duration: 'As directed',
-              refills: data.refills,
-        date: new Date(data.date).toLocaleDateString(),
-              status: 'Active',
-            };
-            await setDocument('prescriptions', newPrescription.id, newPrescription);
-            setPrescriptions(prev => [newPrescription, ...prev]);
+            const response = await fetch('/api/pharmacy/prescriptions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                patientId: data.patientId,
+                patientName: data.patientName,
+                doctorId: data.doctorId,
+                doctorName: data.doctorName,
+                medicationId: data.medicationId,
+                medicationName: data.medicationName,
+                strength: data.strength,
+                dosage: data.dosage,
+                instructions: data.instructions,
+                refills: data.refills,
+              date: data.date.toISOString(),
+                duration: 'As directed',
+              }),
+            });
+            if (!response.ok) throw new Error('Failed to create prescription');
+            const payload = await response.json();
+            const createdPrescription = payload?.prescription ? mapPrescriptionResponse(payload.prescription) : null;
+            if (createdPrescription) {
+              setPrescriptions(prev => [createdPrescription, ...prev]);
+            }
             toast({
               title: t('pharmacy.toast.prescription_created'),
               description: t('pharmacy.toast.prescription_created_desc'),
@@ -610,8 +768,8 @@ export default function PharmacyPage() {
     const filteredPrescriptions = React.useMemo(() => {
         return prescriptions
           .filter(p => 
-            p.patient.toLowerCase().includes(prescriptionSearchTerm.toLowerCase()) ||
-            p.medication.toLowerCase().includes(prescriptionSearchTerm.toLowerCase())
+            p.patientName.toLowerCase().includes(prescriptionSearchTerm.toLowerCase()) ||
+            p.medicationName.toLowerCase().includes(prescriptionSearchTerm.toLowerCase())
           )
           .filter(p => prescriptionStatusFilter === 'all' || p.status.toLowerCase() === prescriptionStatusFilter);
       }, [prescriptions, prescriptionSearchTerm, prescriptionStatusFilter]);
@@ -805,24 +963,21 @@ export default function PharmacyPage() {
                             <Badge variant="secondary">{item.category}</Badge>
                           </TableCell>
                           <TableCell>
-              <div className={cn("font-medium", item.status === 'Low Stock' && 'text-destructive flex items-center gap-2')}>
-                                {item.stock}
-                {item.status === 'Low Stock' && <AlertTriangle className="h-4 w-4" />}
+              <div
+                className={cn(
+                  'font-medium flex items-center gap-2',
+                  (item.status === 'LowStock' || item.status === 'OutOfStock') && 'text-destructive'
+                )}
+              >
+                {item.stock}
+                {(item.status === 'LowStock' || item.status === 'OutOfStock') && <AlertTriangle className="h-4 w-4" />}
                             </div>
                           </TableCell>
-                          <TableCell>{item.unitPrice}</TableCell>
-                          <TableCell>{item.expiryDate !== 'N/A' ? new Date(item.expiryDate).toLocaleDateString(language) : t('common.na')}</TableCell>
+                          <TableCell>{formatEGP(item.unitPrice, true, language)}</TableCell>
+                          <TableCell>{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString(language) : t('common.na')}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
-                                item.status === "Low Stock"
-                                  ? "destructive"
-                                  : "outline"
-                              }
-                            >
-                              {item.status === 'In Stock' && t('pharmacy.status.in_stock')}
-                              {item.status === 'Low Stock' && t('pharmacy.status.low_stock')}
-                              {item.status === 'Out of Stock' && t('pharmacy.status.out_of_stock')}
+                            <Badge variant={medicationStatusVariant(item.status)}>
+                              {formatMedicationStatusLabel(item.status)}
                             </Badge>
                           </TableCell>
                           <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
@@ -838,7 +993,7 @@ export default function PharmacyPage() {
                                   <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('common.edit')}
                                 </DropdownMenuItem>
-                                {(item.status === 'Low Stock' || item.status === 'Out of Stock') && (
+                                {(item.status === 'LowStock' || item.status === 'OutOfStock') && (
                                   <DropdownMenuItem onClick={() => createMedicationPurchaseOrder(item)}>
                                     <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.reorder')}
@@ -939,12 +1094,12 @@ export default function PharmacyPage() {
                         filteredPrescriptions.map((record) => (
                         <TableRow key={record.id}>
                             <TableCell className="font-medium">{record.id}</TableCell>
-                            <TableCell>{record.patient}</TableCell>
+                            <TableCell>{record.patientName}</TableCell>
                             <TableCell>
                             <div className="flex items-center gap-2">
                                 <Pill className="h-4 w-4 text-muted-foreground" />
                                 <div>
-                                <div className="font-medium">{record.medication}</div>
+                                <div className="font-medium">{record.medicationName}</div>
                                 <div className="text-xs text-muted-foreground">
                                     {record.strength}
                                 </div>
@@ -960,8 +1115,8 @@ export default function PharmacyPage() {
                                 {t('pharmacy.refills')}: {record.refills}
                             </div>
                             </TableCell>
-                            <TableCell>{record.doctor}</TableCell>
-                            <TableCell>{new Date(record.date).toLocaleDateString(language)}</TableCell>
+                            <TableCell>{record.doctorName}</TableCell>
+                            <TableCell>{record.createdAt ? new Date(record.createdAt).toLocaleDateString(language) : t('common.na')}</TableCell>
                             <TableCell>
                             <Badge
                                 variant={record.status === 'Active' ? 'default' : 'outline'}

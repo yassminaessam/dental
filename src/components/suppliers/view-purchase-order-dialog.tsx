@@ -25,7 +25,11 @@ export function ViewPurchaseOrderDialog({ order, open, onOpenChange }: ViewPurch
   const { t, language } = useLanguage();
   if (!order) return null;
   const currency = new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-EG', { style: 'currency', currency: 'EGP' });
-  const formatDate = (d: string) => d; // order.orderDate appears as string already; leave as-is
+  const formatDate = (value?: string | null) => {
+    if (!value) return t('common.na');
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-EG');
+  };
   const statusLabel = (s: string) => {
     switch (s) {
       case 'Shipped': return t('suppliers.status.shipped');
@@ -41,14 +45,14 @@ export function ViewPurchaseOrderDialog({ order, open, onOpenChange }: ViewPurch
         <DialogHeader>
           <DialogTitle>{t('suppliers.purchase_order_title')}: {order.id}</DialogTitle>
           <DialogDescription>
-            {t('suppliers.supplier')}: {order.supplier} · {t('suppliers.order_date')}: {formatDate(order.orderDate)}
+            {t('suppliers.supplier')}: {order.supplierName} · {t('suppliers.order_date')}: {formatDate(order.orderDate)}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 text-sm">
           <div className="grid grid-cols-3 gap-4">
             <div>
               <h4 className="font-semibold">{t('suppliers.supplier')}</h4>
-              <p className="text-muted-foreground">{order.supplier}</p>
+              <p className="text-muted-foreground">{order.supplierName}</p>
             </div>
             <div>
               <h4 className="font-semibold">{t('suppliers.order_date')}</h4>
@@ -56,7 +60,7 @@ export function ViewPurchaseOrderDialog({ order, open, onOpenChange }: ViewPurch
             </div>
             <div>
               <h4 className="font-semibold">{t('suppliers.expected_delivery')}</h4>
-              <p className="text-muted-foreground">{order.deliveryDate || t('common.na')}</p>
+              <p className="text-muted-foreground">{formatDate(order.deliveryDate)}</p>
             </div>
           </div>
            <div className="grid grid-cols-3 gap-4">
@@ -83,7 +87,7 @@ export function ViewPurchaseOrderDialog({ order, open, onOpenChange }: ViewPurch
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {order.items.map((item, index) => (
+                        {(order.items ?? []).map((item, index) => (
                             <TableRow key={index}>
                                 <TableCell className="font-medium">{item.description}</TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>

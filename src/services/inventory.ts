@@ -6,12 +6,14 @@ export interface InventoryCreateInput {
   name: string;
   category?: string;
   supplierId?: string;
+  supplierName?: string;
   quantity: number;
   minQuantity?: number;
   maxQuantity?: number;
   unitCost: number;
   status?: InventoryItemStatus;
   expires?: Date;
+  location?: string;
 }
 
 export type InventoryUpdateInput = Partial<InventoryCreateInput> & { id: string };
@@ -21,12 +23,14 @@ export interface InventoryItem {
   name: string;
   category?: string;
   supplierId?: string;
+  supplierName?: string;
   quantity: number;
   minQuantity: number;
   maxQuantity: number;
   unitCost: number;
   status: InventoryItemStatus;
   expires?: Date;
+  location?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,12 +40,14 @@ const mapRow = (row: any): InventoryItem => ({
   name: row.name,
   category: row.category ?? undefined,
   supplierId: row.supplierId ?? undefined,
+  supplierName: row.supplierName ?? undefined,
   quantity: row.quantity,
   minQuantity: row.minQuantity,
   maxQuantity: row.maxQuantity,
   unitCost: Number(row.unitCost),
   status: row.status,
   expires: row.expires ?? undefined,
+  location: row.location ?? undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
@@ -62,12 +68,14 @@ async function create(input: InventoryCreateInput): Promise<InventoryItem> {
       name: input.name,
       category: input.category ?? null,
       supplierId: input.supplierId ?? null,
+      supplierName: input.supplierName ?? null,
       quantity: input.quantity,
       minQuantity: input.minQuantity ?? 0,
       maxQuantity: input.maxQuantity ?? 0,
       unitCost: input.unitCost,
       status: input.status ?? 'Normal',
       expires: input.expires ?? null,
+      location: input.location ?? null,
     },
   });
   return mapRow(created);
@@ -80,12 +88,14 @@ async function update(input: InventoryUpdateInput): Promise<InventoryItem> {
       name: input.name,
       category: input.category,
       supplierId: input.supplierId,
+      supplierName: input.supplierName,
       quantity: input.quantity,
       minQuantity: input.minQuantity,
       maxQuantity: input.maxQuantity,
       unitCost: input.unitCost,
       status: input.status as any,
       expires: input.expires,
+      location: input.location,
     },
   });
   return mapRow(updated);

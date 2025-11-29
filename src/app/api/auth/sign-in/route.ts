@@ -1,9 +1,63 @@
 import { NextResponse } from 'next/server';
 import { UsersService } from '@/services/users';
 import bcrypt from 'bcryptjs';
+import { ROLE_PERMISSIONS, type UserRole } from '@/lib/types';
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+const DEFAULT_ACCOUNTS: Array<{
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+}> = [
+  {
+    email: 'admin@cairodental.com',
+    password: 'Admin123!',
+    firstName: 'System',
+    lastName: 'Admin',
+    role: 'admin',
+  },
+  {
+    email: 'doctor2@cairodental.com',
+    password: 'Doctor@123',
+    firstName: 'Demo',
+    lastName: 'Doctor',
+    role: 'doctor',
+  },
+  {
+    email: 'receptionist@cairodental.com',
+    password: 'Receptionist@123',
+    firstName: 'Frontdesk',
+    lastName: 'Staff',
+    role: 'receptionist',
+  },
+  {
+    email: 'patient@cairodental.com',
+    password: 'Patient@123',
+    firstName: 'Demo',
+    lastName: 'Patient',
+    role: 'patient',
+  },
+];
+
+async function ensureDefaultAccount(email: string) {
+  const match = DEFAULT_ACCOUNTS.find((account) => account.email === email);
+  if (!match) return;
+  const existing = await UsersService.getByEmail(email);
+  if (existing) return;
+  console.log('[sign-in] Seeding default account for', email);
+  await UsersService.create({
+    email: match.email,
+    password: match.password,
+    firstName: match.firstName,
+    lastName: match.lastName,
+    role: match.role,
+    permissions: ROLE_PERMISSIONS[match.role] ?? [],
+  });
 }
 
 export async function POST(request: Request) {
@@ -21,6 +75,7 @@ export async function POST(request: Request) {
     }
 
     const normalized = normalizeEmail(email);
+    await ensureDefaultAccount(normalized);
     console.log('[sign-in] Email normalized:', normalized);
     
     const user = await UsersService.getByEmail(normalized);

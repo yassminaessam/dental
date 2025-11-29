@@ -29,7 +29,8 @@ interface DispenseMedicationDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const parseCurrencyValue = (value?: string): number => {
+const parseCurrencyValue = (value?: string | number): number => {
+  if (typeof value === 'number') return value;
   if (!value) return 0;
   const numeric = parseFloat(value.replace(/[^\d.-]/g, ''));
   return Number.isFinite(numeric) ? numeric : 0;
@@ -82,10 +83,10 @@ export function DispenseMedicationDialog({
           <div className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-4 text-sm">
             <div className="font-semibold">{medication.fullName || medication.name}</div>
             <div className="text-muted-foreground">
-              {t('common.patient')}: {prescription.patient}
+              {t('common.patient')}: {prescription.patientName}
             </div>
             <div className="text-muted-foreground">
-              {t('common.doctor')}: {prescription.doctor}
+              {t('common.doctor')}: {prescription.doctorName}
             </div>
             <div className="text-muted-foreground">
               {t('pharmacy.dispense_dialog.available', { count: availableStock })}

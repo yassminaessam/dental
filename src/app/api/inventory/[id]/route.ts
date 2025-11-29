@@ -7,12 +7,14 @@ const parsePatch = async (req: Request): Promise<Partial<InventoryUpdateInput>> 
   if ('name' in b) patch.name = b.name;
   if ('category' in b) patch.category = b.category;
   if ('supplierId' in b) patch.supplierId = b.supplierId;
+  if ('supplierName' in b) patch.supplierName = b.supplierName;
   if ('quantity' in b) patch.quantity = Number(b.quantity);
   if ('minQuantity' in b) patch.minQuantity = b.minQuantity != null ? Number(b.minQuantity) : undefined;
   if ('maxQuantity' in b) patch.maxQuantity = b.maxQuantity != null ? Number(b.maxQuantity) : undefined;
   if ('unitCost' in b) patch.unitCost = Number(b.unitCost);
   if ('status' in b) patch.status = b.status;
   if ('expires' in b) patch.expires = b.expires ? new Date(b.expires) : undefined;
+  if ('location' in b) patch.location = b.location;
   return patch;
 };
 

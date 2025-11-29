@@ -5,6 +5,14 @@ import 'server-only';
 import prisma from '@/lib/db';
 import { UsersService } from '@/services/users';
 import type { User } from '@/lib/types';
+import {
+  listTransactions as listFinancialTransactions,
+  recordTransaction as saveFinancialTransaction,
+  updateTransaction as updateFinancialTransaction,
+  deleteTransaction as removeFinancialTransaction,
+  getTransaction as getFinancialTransaction,
+} from '@/services/transactions.server';
+import type { TransactionRecord, TransactionStatus, TransactionType } from '@/services/transactions.server';
 
 type PrismaUser = Awaited<ReturnType<typeof prisma.user.findMany>>[number];
 type PrismaCollectionDoc = Awaited<ReturnType<typeof prisma.collectionDoc.findMany>>[number];
@@ -60,6 +68,60 @@ export function writeBatch(_dbHandle: unknown) {
 type QSDoc = { id: string; data: () => unknown; ref?: DocRef };
 type QS = { docs: QSDoc[] };
 
+const parseCurrencyToNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length) {
+    const cleaned = value.replace(/[^0-9.-]/g, '');
+    const parsed = Number(cleaned);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return Number.NaN;
+};
+
+const toTransactionRecord = (raw: DocumentData): TransactionRecord => {
+  const amountCandidates = [raw.amountValue, raw.amount, raw.totalAmount];
+  let amountValue = Number.NaN;
+  for (const candidate of amountCandidates) {
+    const parsed = parseCurrencyToNumber(candidate);
+    if (!Number.isNaN(parsed)) {
+      amountValue = parsed;
+      break;
+    }
+  }
+  if (Number.isNaN(amountValue) && raw.totalAmount != null && raw.outstandingAmount != null) {
+    const total = parseCurrencyToNumber(raw.totalAmount);
+    const outstanding = parseCurrencyToNumber(raw.outstandingAmount);
+    if (!Number.isNaN(total) && !Number.isNaN(outstanding)) {
+      amountValue = total - outstanding;
+    }
+  }
+  if (Number.isNaN(amountValue)) amountValue = 0;
+  const totalAmountParsed = raw.totalAmount != null ? parseCurrencyToNumber(raw.totalAmount) : Number.NaN;
+  const outstandingAmountParsed = raw.outstandingAmount != null
+    ? parseCurrencyToNumber(raw.outstandingAmount)
+    : Number.NaN;
+  return {
+    id: typeof raw.id === 'string' ? raw.id : undefined,
+    date: raw.date,
+    description: typeof raw.description === 'string' ? raw.description : 'Transaction',
+    amount: amountValue,
+    type: (raw.type ?? 'Revenue') as TransactionType,
+    category: typeof raw.category === 'string' ? raw.category : 'Patient Payment',
+    paymentMethod: typeof raw.paymentMethod === 'string' ? raw.paymentMethod : undefined,
+    patient: typeof raw.patient === 'string' ? raw.patient : undefined,
+    patientId: typeof raw.patientId === 'string' ? raw.patientId : undefined,
+    sourceId: typeof raw.sourceId === 'string' ? raw.sourceId : undefined,
+    sourceType: typeof raw.sourceType === 'string' ? raw.sourceType : undefined,
+    status: raw.status as TransactionStatus | undefined,
+    totalAmount: raw.totalAmount != null && !Number.isNaN(totalAmountParsed) ? totalAmountParsed : undefined,
+    outstandingAmount: raw.outstandingAmount != null && !Number.isNaN(outstandingAmountParsed)
+      ? outstandingAmountParsed
+      : undefined,
+    metadata: raw.metadata as Record<string, unknown> | undefined,
+    auto: typeof raw.auto === 'boolean' ? raw.auto : undefined,
+  };
+};
+
 export async function getDocs(colRef: ColRef | unknown): Promise<QS> {
   const col = (colRef as ColRef | undefined)?.__col ?? '';
   if (col === 'users') {
@@ -103,6 +165,10 @@ export async function getCollection<T>(collectionName: string): Promise<T[]> {
     const rows = await UsersService.listAll();
     return rows as unknown as T[];
   }
+  if (collectionName === 'transactions') {
+    const rows = await listFinancialTransactions();
+    return rows as unknown as T[];
+  }
   const rows = await prisma.collectionDoc.findMany({
     where: { collection: collectionName },
     orderBy: { createdAt: 'desc' }
@@ -134,6 +200,11 @@ export async function addDocument<T extends DocumentData>(collectionName: string
     const created = await UsersService.create(data as unknown as User & { password: string });
     return created.id;
   }
+  if (collectionName === 'transactions') {
+    const record = toTransactionRecord(data);
+    const id = await saveFinancialTransaction(record);
+    return id;
+  }
   const id = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   await prisma.collectionDoc.create({ data: { collection: collectionName, id, data } });
   return id;
@@ -142,6 +213,11 @@ export async function addDocument<T extends DocumentData>(collectionName: string
 export async function setDocument<T extends DocumentData>(collectionName: string, id: string, data: T): Promise<void> {
   if (collectionName === 'users') {
     await UsersService.update(id, data as unknown as Partial<User>);
+    return;
+  }
+  if (collectionName === 'transactions') {
+    const record = toTransactionRecord({ ...data, id });
+    await saveFinancialTransaction({ ...record, id });
     return;
   }
   await prisma.collectionDoc.upsert({
@@ -154,6 +230,13 @@ export async function setDocument<T extends DocumentData>(collectionName: string
 export async function updateDocument<T extends DocumentData>(collectionName: string, id: string, patch: Partial<T>): Promise<void> {
   if (collectionName === 'users') {
     await UsersService.update(id, patch as unknown as Partial<User>);
+    return;
+  }
+  if (collectionName === 'transactions') {
+    const existing = await getFinancialTransaction(id);
+    const merged = existing ? { ...existing, ...patch, id } : { ...patch, id };
+    const record = toTransactionRecord(merged);
+    await updateFinancialTransaction(id, record);
     return;
   }
   const existing = await prisma.collectionDoc.findUnique({
@@ -170,6 +253,10 @@ export async function updateDocument<T extends DocumentData>(collectionName: str
 export async function deleteDocument(collectionName: string, id: string): Promise<void> {
   if (collectionName === 'users') {
     await UsersService.update(id, { isActive: false });
+    return;
+  }
+  if (collectionName === 'transactions') {
+    await removeFinancialTransaction(id);
     return;
   }
   await prisma.collectionDoc.delete({ where: { collection_id: { collection: collectionName, id } } });

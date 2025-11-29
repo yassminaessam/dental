@@ -31,23 +31,26 @@ export function ViewPrescriptionDialog({ prescription, open, onOpenChange }: Vie
         <DialogHeader>
           <DialogTitle>{t('pharmacy.prescription_details')}: {prescription.id}</DialogTitle>
           <DialogDescription>
-            {t('pharmacy.prescribed_by_on', { doctor: prescription.doctor, date: prescription.date })}
+            {t('pharmacy.prescribed_by_on', {
+              doctor: prescription.doctorName,
+              date: prescription.createdAt ? new Date(prescription.createdAt).toLocaleDateString() : ''
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 grid gap-4 text-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h4 className="font-semibold">{t('common.patient')}</h4>
-              <p className="text-muted-foreground">{prescription.patient}</p>
+              <p className="text-muted-foreground">{prescription.patientName}</p>
             </div>
             <div>
               <h4 className="font-semibold">{t('common.doctor')}</h4>
-              <p className="text-muted-foreground">{prescription.doctor}</p>
+              <p className="text-muted-foreground">{prescription.doctorName}</p>
             </div>
           </div>
           <div>
             <h4 className="font-semibold">{t('pharmacy.medication')}</h4>
-            <p className="text-muted-foreground">{prescription.medication} ({prescription.strength})</p>
+            <p className="text-muted-foreground">{prescription.medicationName} ({prescription.strength})</p>
           </div>
           <div>
             <h4 className="font-semibold">{t('pharmacy.instructions')}</h4>

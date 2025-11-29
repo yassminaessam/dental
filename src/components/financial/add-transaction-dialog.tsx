@@ -31,7 +31,6 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { listDocuments } from '@/lib/data-client';
 import { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 

@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatEGP } from '@/lib/currency';
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
   Table,
   TableBody,
@@ -50,10 +50,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, ShoppingCart, AlertTriangle, CheckCircle2, Clock, Truck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listDocuments, setDocument, updateDocument, deleteDocument } from "@/lib/data-client";
+type PurchaseOrderStatus = 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
 
 interface PurchaseOrderItem {
-  itemId: string;
+  itemId?: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -61,36 +61,94 @@ interface PurchaseOrderItem {
 
 interface PurchaseOrder {
   id: string;
-  supplier: string;
+  supplierId?: string | null;
+  supplierName: string;
   orderDate: string;
-  deliveryDate: string;
-  total: string;
-  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  deliveryDate?: string | null;
+  total: number;
+  status: PurchaseOrderStatus;
   items: PurchaseOrderItem[];
 }
 
 interface InventoryItem {
   id: string;
   name: string;
-  stock: number;
-  min: number;
-  max: number;
-  status: string;
-  unitCost: string;
-  supplier: string;
-  category: string;
+  category?: string | null;
+  quantity: number;
+  minQuantity: number;
+  maxQuantity: number;
+  status: 'Normal' | 'LowStock' | 'OutOfStock';
+  unitCost: number;
+  supplierId?: string | null;
+  supplierName?: string | null;
 }
 
 interface Supplier {
   id: string;
   name: string;
-  category: string;
-  rating: number;
-  status: string;
-  paymentTerms: string;
+  category?: string | null;
+  rating?: number | null;
+  status: 'Active' | 'Inactive';
+  paymentTerms?: string | null;
 }
 
-type PurchaseOrderPayload = Omit<PurchaseOrder, 'id'> & { id?: string; supplierId?: string };
+type PurchaseOrderPayload = {
+  supplierId?: string;
+  supplierName: string;
+  orderDate: string;
+  expectedDelivery?: string;
+  total: number;
+  status?: PurchaseOrderStatus;
+  items: PurchaseOrderItem[];
+};
+
+const mapPurchaseOrderResponse = (row: any): PurchaseOrder => ({
+  id: row.id,
+  supplierId: row.supplierId ?? null,
+  supplierName: row.supplierName ?? row.supplier ?? 'Supplier',
+  orderDate: row.orderDate ? new Date(row.orderDate).toISOString() : new Date().toISOString(),
+  deliveryDate: row.expectedDelivery ? new Date(row.expectedDelivery).toISOString() : null,
+  total: Number(row.total ?? 0),
+  status: row.status ?? 'Pending',
+  items: Array.isArray(row.items)
+    ? row.items.map((item: any) => ({
+        itemId: item.itemId ?? undefined,
+        description: item.description ?? 'Item',
+        quantity: Number(item.quantity ?? 0),
+        unitPrice: Number(item.unitPrice ?? 0),
+      }))
+    : [],
+});
+
+const mapInventoryResponse = (row: any): InventoryItem => ({
+  id: row.id,
+  name: row.name,
+  category: row.category ?? null,
+  quantity: Number(row.quantity ?? row.stock ?? 0),
+  minQuantity: Number(row.minQuantity ?? row.min ?? 0),
+  maxQuantity: Number(row.maxQuantity ?? row.max ?? 0),
+  status: row.status ?? 'Normal',
+  unitCost: Number(row.unitCost ?? 0),
+  supplierId: row.supplierId ?? null,
+  supplierName: row.supplierName ?? row.supplier ?? null,
+});
+
+const mapSupplierResponse = (row: any): Supplier => ({
+  id: row.id,
+  name: row.name ?? 'Supplier',
+  category: row.category ?? null,
+  rating: row.rating != null ? Number(row.rating) : null,
+  status: row.status === 'Inactive' ? 'Inactive' : 'Active',
+  paymentTerms: row.paymentTerms ?? null,
+});
+
+const formatDateDisplay = (value?: string | null, language: string = 'en') => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-EG');
+};
 
 const getToday = () => new Date().toISOString().split('T')[0];
 const getFutureDate = (days = 7) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -102,7 +160,7 @@ export default function PurchaseOrdersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<PurchaseOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<'all' | PurchaseOrderStatus>('all');
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [orderItems, setOrderItems] = useState<PurchaseOrderItem[]>([]);
@@ -114,35 +172,48 @@ export default function PurchaseOrdersPage() {
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(getFutureDate());
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const orderTotal = useMemo(() => {
-    return orderItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0), 0);
+    return orderItems.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0);
   }, [orderItems]);
   const availableInventoryItems = useMemo(() => {
     if (!selectedSupplier) return inventoryItems;
-    const supplierName = suppliers.find((supplier) => supplier.id === selectedSupplier)?.name;
-    if (!supplierName) return inventoryItems;
-    return inventoryItems.filter((item) => item.supplier === supplierName);
+    const supplierName = suppliers.find((supplier) => supplier.id === selectedSupplier)?.name ?? '';
+    return inventoryItems.filter(
+      (item) => item.supplierId === selectedSupplier || (!item.supplierId && item.supplierName === supplierName)
+    );
   }, [inventoryItems, selectedSupplier, suppliers]);
 
   const fetchData = useCallback(async () => {
     try {
-      const [ordersData, inventoryData, suppliersData] = await Promise.all([
-        listDocuments<PurchaseOrder>("purchase-orders"),
-        listDocuments<InventoryItem>("inventory"),
-        listDocuments<Supplier>("suppliers"),
+      const [ordersRes, inventoryRes, suppliersRes] = await Promise.all([
+        fetch('/api/purchase-orders'),
+        fetch('/api/inventory'),
+        fetch('/api/suppliers'),
       ]);
 
-      setPurchaseOrders(ordersData);
-      setInventoryItems(inventoryData);
-      setSuppliers(suppliersData);
+      const ordersPayload = ordersRes.ok ? await ordersRes.json().catch(() => ({})) : {};
+      const inventoryPayload = inventoryRes.ok ? await inventoryRes.json().catch(() => ({})) : {};
+      const suppliersPayload = suppliersRes.ok ? await suppliersRes.json().catch(() => ({})) : {};
 
-      const lowStock = inventoryData.filter(item => item.stock <= item.min);
-      setLowStockItems(lowStock);
+      const mappedOrders = Array.isArray(ordersPayload?.orders)
+        ? ordersPayload.orders.map(mapPurchaseOrderResponse)
+        : [];
+      const mappedInventory = Array.isArray(inventoryPayload?.items)
+        ? inventoryPayload.items.map(mapInventoryResponse)
+        : [];
+      const mappedSuppliers = Array.isArray(suppliersPayload?.suppliers)
+        ? suppliersPayload.suppliers.map(mapSupplierResponse)
+        : [];
+
+      setPurchaseOrders(mappedOrders);
+      setInventoryItems(mappedInventory);
+      setSuppliers(mappedSuppliers);
+      setLowStockItems(mappedInventory.filter((item) => item.quantity <= item.minQuantity));
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error('Error fetching purchase order data', error);
       toast({
         title: t('common.error'),
         description: t('communications.toast.error_fetching'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   }, [t]);
@@ -157,7 +228,7 @@ export default function PurchaseOrdersPage() {
     if (searchTerm) {
       const normalized = searchTerm.toLowerCase();
       filtered = filtered.filter(order =>
-        order.supplier.toLowerCase().includes(normalized) ||
+        order.supplierName.toLowerCase().includes(normalized) ||
         order.id.toLowerCase().includes(normalized)
       );
     }
@@ -205,9 +276,7 @@ export default function PurchaseOrdersPage() {
       return;
     }
 
-    const parsedUnitCost = inventoryItem.unitCost
-      ? parseFloat(String(inventoryItem.unitCost).replace(/[^\d.]/g, ''))
-      : 0;
+    const parsedUnitCost = Number(inventoryItem.unitCost ?? 0);
     const unitPriceValue = selectedItemPrice
       ? parseFloat(selectedItemPrice)
       : parsedUnitCost;
@@ -277,25 +346,31 @@ export default function PurchaseOrdersPage() {
     }
 
     const supplierRecord = suppliers.find((supplier) => supplier.id === selectedSupplier);
-    const orderId = `PO-${Date.now()}`;
+    const preparedItems = orderItems.map((item) => ({
+      itemId: item.itemId,
+      description: item.description,
+      quantity: Number(item.quantity) || 0,
+      unitPrice: Number(item.unitPrice) || 0,
+    }));
+
     const payload: PurchaseOrderPayload = {
-      id: orderId,
-      supplier: supplierRecord?.name || selectedSupplier,
       supplierId: selectedSupplier,
-      orderDate: newOrderDate || getToday(),
-      deliveryDate: expectedDeliveryDate || getFutureDate(),
-      total: formatEGP(orderTotal, true, language),
-      status: 'Pending' as const,
-      items: orderItems.map((item) => ({
-        ...item,
-        unitPrice: Number(item.unitPrice) || 0,
-        quantity: Number(item.quantity) || 0,
-      })),
+      supplierName: supplierRecord?.name ?? 'Supplier',
+      orderDate: new Date(newOrderDate || getToday()).toISOString(),
+      expectedDelivery: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
+      total: Number(orderTotal || 0),
+      status: 'Pending',
+      items: preparedItems,
     };
 
     try {
       setIsSubmittingOrder(true);
-      await setDocument('purchase-orders', orderId, payload);
+      const response = await fetch('/api/purchase-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create purchase order');
       toast({
         title: t('suppliers.toast.po_created') || t('common.success'),
         description: t('suppliers.toast.po_created_desc') || 'Purchase order created successfully.',
@@ -337,73 +412,86 @@ export default function PurchaseOrdersPage() {
 
   const createQuickOrder = async (item: InventoryItem) => {
     try {
-      const orderQuantity = item.max - item.stock;
-      const unitPrice = parseFloat(item.unitCost.replace(/[^\d.]/g, ''));
+      const orderQuantity = Math.max(0, item.maxQuantity - item.quantity);
+      if (orderQuantity <= 0) {
+        toast({ title: t('suppliers.toast.no_low_stock') });
+        return;
+      }
+      const unitPrice = Number(item.unitCost ?? 0);
       const total = orderQuantity * unitPrice;
-
-      const orderId = `PO-${Date.now()}`;
-      const newOrder: PurchaseOrderPayload = {
-        id: orderId,
-        supplier: item.supplier,
-        orderDate: new Date().toISOString().split('T')[0],
-        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        total: formatEGP(total, true, language),
-        status: 'Pending' as const,
+      const payload: PurchaseOrderPayload = {
+        supplierId: item.supplierId ?? undefined,
+        supplierName: item.supplierName ?? 'Supplier',
+        orderDate: new Date().toISOString(),
+        expectedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        total,
+        status: 'Pending',
         items: [{
           itemId: item.id,
           description: item.name,
           quantity: orderQuantity,
-          unitPrice: unitPrice
-        }]
+          unitPrice,
+        }],
       };
 
-      await setDocument('purchase-orders', orderId, newOrder);
+      const response = await fetch('/api/purchase-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create quick order');
       fetchData();
       toast({
         title: t('suppliers.toast.quick_order_created'),
         description: t('suppliers.toast.po_created_desc'),
       });
     } catch (error) {
-      console.error("Error creating quick order:", error);
+      console.error('Error creating quick order:', error);
       toast({
         title: t('suppliers.toast.error_quick_order'),
         description: t('suppliers.toast.error_quick_order_desc'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: PurchaseOrderStatus) => {
     try {
-      await updateDocument<PurchaseOrder>("purchase-orders", orderId, { status: newStatus as PurchaseOrder['status'] });
+      const response = await fetch(`/api/purchase-orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!response.ok) throw new Error('Failed to update order status');
       fetchData();
       toast({
         title: t('suppliers.toast.status_updated'),
         description: t('suppliers.toast.status_updated_desc'),
       });
     } catch (error) {
-      console.error("Error updating order status:", error);
+      console.error('Error updating order status:', error);
       toast({
         title: t('suppliers.toast.error_updating_status'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const deleteOrder = async (orderId: string) => {
     try {
-      await deleteDocument("purchase-orders", orderId);
+      const response = await fetch(`/api/purchase-orders/${orderId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete order');
       fetchData();
       toast({
         title: t('common.success'),
         description: t('purchase_orders.delete_order'),
       });
     } catch (error) {
-      console.error("Error deleting order:", error);
+      console.error('Error deleting order:', error);
       toast({
         title: t('common.error'),
         description: t('suppliers.toast.error_updating'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -459,10 +547,10 @@ export default function PurchaseOrdersPage() {
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {t('dashboard.supply_chain.current_stock')}: {item.stock} / {t('dashboard.supply_chain.min_stock')}: {item.min}
+                      {t('dashboard.supply_chain.current_stock')}: {item.quantity} / {t('dashboard.supply_chain.min_stock')}: {item.minQuantity}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {t('suppliers.supplier')}: {item.supplier}
+                      {t('suppliers.supplier')}: {item.supplierName ?? t('common.na')}
                     </p>
                   </div>
                   <Button
@@ -488,7 +576,7 @@ export default function PurchaseOrdersPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | PurchaseOrderStatus)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('purchase_orders.filter_by_status')} />
           </SelectTrigger>
@@ -521,17 +609,17 @@ export default function PurchaseOrdersPage() {
             {filteredOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.supplier}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
-                <TableCell>{order.deliveryDate}</TableCell>
-                <TableCell>{order.total}</TableCell>
+                <TableCell>{order.supplierName}</TableCell>
+                <TableCell>{formatDateDisplay(order.orderDate, language)}</TableCell>
+                <TableCell>{formatDateDisplay(order.deliveryDate, language)}</TableCell>
+                <TableCell>{formatEGP(order.total, true, language)}</TableCell>
                 <TableCell>
                   <Badge className={getStatusColor(order.status)}>
                     {getStatusIcon(order.status)}
                     <span className="ml-1">{statusLabel(order.status)}</span>
                   </Badge>
                 </TableCell>
-                <TableCell>{order.items.length} {t('purchase_orders.items')}</TableCell>
+                <TableCell>{order.items?.length ?? 0} {t('purchase_orders.items')}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -647,11 +735,8 @@ export default function PurchaseOrdersPage() {
                   onValueChange={(value) => {
                     setSelectedItemId(value);
                     const inventoryItem = inventoryItems.find((item) => item.id === value);
-                    if (inventoryItem?.unitCost) {
-                      const parsed = parseFloat(String(inventoryItem.unitCost).replace(/[^\d.]/g, ''));
-                      if (!Number.isNaN(parsed)) {
-                        setSelectedItemPrice(parsed.toString());
-                      }
+                    if (inventoryItem) {
+                      setSelectedItemPrice(String(inventoryItem.unitCost ?? ''));
                     }
                   }}
                 >
@@ -661,7 +746,7 @@ export default function PurchaseOrdersPage() {
                   <SelectContent>
                     {availableInventoryItems.map((item) => (
                       <SelectItem key={item.id} value={item.id}>
-                        {item.name} {item.stock !== undefined && `(${item.stock})`}
+                        {item.name} {item.quantity !== undefined && `(${item.quantity})`}
                       </SelectItem>
                     ))}
                   </SelectContent>

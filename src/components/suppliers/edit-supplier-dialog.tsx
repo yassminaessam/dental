@@ -28,7 +28,7 @@ const supplierSchema = z.object({
   address: z.string().optional(),
   category: z.string().optional(),
   paymentTerms: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
+  status: z.enum(['Active', 'Inactive']),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
@@ -187,8 +187,8 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="active">{t('common.active')}</SelectItem>
-                      <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+                      <SelectItem value="Active">{t('common.active')}</SelectItem>
+                      <SelectItem value="Inactive">{t('common.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormItem>

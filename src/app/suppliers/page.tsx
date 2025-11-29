@@ -67,21 +67,21 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EditSupplierDialog } from '@/components/suppliers/edit-supplier-dialog';
 import { ViewPurchaseOrderDialog } from '@/components/suppliers/view-purchase-order-dialog';
-import { InventoryItem } from '../inventory/page';
-import { listDocuments, setDocument, updateDocument, deleteDocument } from '@/lib/data-client';
 import { AddItemDialog } from '@/components/inventory/add-item-dialog';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+export type SupplierStatus = 'Active' | 'Inactive';
 
 export type Supplier = {
   id: string;
   name: string;
-  address: string;
-  phone: string;
-  email: string;
-  category: string;
-  paymentTerms: string;
-  rating: number;
-  status: 'active' | 'inactive';
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  category?: string | null;
+  paymentTerms?: string | null;
+  rating?: number | null;
+  status: SupplierStatus;
 };
 
 export type PurchaseOrderItem = {
@@ -93,29 +93,31 @@ export type PurchaseOrderItem = {
 
 export type PurchaseOrder = {
   id: string;
-  supplier: string;
+  supplierId?: string | null;
+  supplierName: string;
+  supplier?: string;
   orderDate: string;
-  deliveryDate: string | null;
-  total: string;
+  deliveryDate?: string | null;
+  total: number;
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
   items: PurchaseOrderItem[];
 };
 
-const ARABIC_TO_ENGLISH_DIGITS: Record<string, string> = {
-  '٠': '0',
-  '١': '1',
-  '٢': '2',
-  '٣': '3',
-  '٤': '4',
-  '٥': '5',
-  '٦': '6',
-  '٧': '7',
-  '٨': '8',
-  '٩': '9'
+type InventoryItem = {
+  id: string;
+  name: string;
+  category?: string | null;
+  quantity: number;
+  minQuantity: number;
+  maxQuantity: number;
+  status: 'Normal' | 'LowStock' | 'OutOfStock';
+  unitCost: number;
+  supplierId?: string | null;
+  supplierName?: string | null;
+  location?: string | null;
+  expires?: string | null;
+  notes?: string | null;
 };
-
-const normalizeDigits = (value: string): string =>
-  value.replace(/[٠-٩]/g, (digit) => ARABIC_TO_ENGLISH_DIGITS[digit] ?? digit);
 
 
 const iconMap = {
@@ -126,6 +128,53 @@ const iconMap = {
 };
 
 type IconKey = keyof typeof iconMap;
+
+const mapSupplierResponse = (row: any): Supplier => ({
+  id: row.id,
+  name: row.name ?? 'Supplier',
+  address: row.address ?? null,
+  phone: row.phone ?? null,
+  email: row.email ?? null,
+  category: row.category ?? null,
+  paymentTerms: row.paymentTerms ?? null,
+  rating: row.rating != null ? Number(row.rating) : null,
+  status: row.status === 'Inactive' ? 'Inactive' : 'Active',
+});
+
+const mapPurchaseOrderResponse = (row: any): PurchaseOrder => ({
+  id: row.id,
+  supplierId: row.supplierId ?? null,
+  supplierName: row.supplierName ?? row.supplier ?? 'Supplier',
+  supplier: row.supplierName ?? row.supplier ?? 'Supplier',
+  orderDate: row.orderDate ? new Date(row.orderDate).toISOString() : new Date().toISOString(),
+  deliveryDate: row.expectedDelivery ? new Date(row.expectedDelivery).toISOString() : null,
+  total: Number(row.total ?? 0),
+  status: row.status ?? 'Pending',
+  items: Array.isArray(row.items) ? row.items : [],
+});
+
+const mapInventoryResponse = (row: any): InventoryItem => ({
+  id: row.id,
+  name: row.name,
+  category: row.category ?? null,
+  quantity: Number(row.quantity ?? 0),
+  minQuantity: Number(row.minQuantity ?? 0),
+  maxQuantity: Number(row.maxQuantity ?? 0),
+  status: row.status ?? 'Normal',
+  unitCost: Number(row.unitCost ?? 0),
+  supplierId: row.supplierId ?? null,
+  supplierName: row.supplierName ?? null,
+  location: row.location ?? null,
+  expires: row.expires ?? null,
+  notes: row.notes ?? null,
+});
+
+const resolveInventoryStatusValue = (quantity: number, minQuantity?: number): InventoryItem['status'] => {
+  if (quantity <= 0) return 'OutOfStock';
+  const threshold = typeof minQuantity === 'number' ? minQuantity : 10;
+  if (quantity < threshold) return 'LowStock';
+  return 'Normal';
+};
 
 function SuppliersPageContent() {
   const { t, language, isRTL } = useLanguage();
@@ -156,27 +205,17 @@ function SuppliersPageContent() {
     [language]
   );
 
-  const normalizeCurrencyValue = React.useCallback((value: string | number | undefined | null) => {
-    if (typeof value === 'number') return value;
-    if (!value) return 0;
-    const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }, []);
-
   const recordPurchaseOrderExpense = React.useCallback(async (order: PurchaseOrder) => {
     try {
-      const amount = normalizeCurrencyValue(order.total);
+      const amount = Number(order.total ?? 0);
       if (!amount) return;
-      const deliveryDateIso = order.deliveryDate ? (() => {
-        const parsed = new Date(order.deliveryDate);
-        return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
-      })() : undefined;
+      const deliveryDateIso = order.deliveryDate ?? undefined;
       await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: `TRX-PO-${order.id}`,
-          description: `${purchaseOrderLabel} ${order.id} - ${order.supplier}`,
+          description: `${purchaseOrderLabel} ${order.id} - ${order.supplierName}`,
           amount,
           type: 'Expense',
           category: 'Supplies',
@@ -185,7 +224,7 @@ function SuppliersPageContent() {
           sourceId: order.id,
           sourceType: 'purchase-order',
           metadata: {
-            supplier: order.supplier,
+            supplier: order.supplierName,
             orderDate: order.orderDate,
             deliveryDate: order.deliveryDate,
             items: order.items,
@@ -195,31 +234,42 @@ function SuppliersPageContent() {
     } catch (error) {
       console.error('[SuppliersPage] failed to record purchase order expense', error);
     }
-  }, [normalizeCurrencyValue, purchaseOrderLabel]);
+  }, [purchaseOrderLabel]);
 
 
   const { toast } = useToast();
   
   React.useEffect(() => {
+    let isMounted = true;
     async function fetchData() {
-        try {
-      // Replaced legacy getCollection calls with listDocuments (client REST layer)
-      const [suppliersData, poData, inventoryData] = await Promise.all([
-        listDocuments<Supplier>('suppliers'),
-        listDocuments<PurchaseOrder>('purchase-orders'),
-        listDocuments<InventoryItem>('inventory'),
-      ]);
-            setSuppliers(suppliersData);
-            setPurchaseOrders(poData);
-            setInventory(inventoryData);
-    } catch(e) {
-      toast({ title: t('suppliers.toast.error_fetching'), variant: 'destructive'});
-        } finally {
-            setLoading(false);
-        }
+      try {
+        const [suppliersRes, poRes, inventoryRes] = await Promise.all([
+          fetch('/api/suppliers'),
+          fetch('/api/purchase-orders'),
+          fetch('/api/inventory'),
+        ]);
+
+        const suppliersPayload = suppliersRes.ok ? await suppliersRes.json().catch(() => ({})) : {};
+        const poPayload = poRes.ok ? await poRes.json().catch(() => ({})) : {};
+        const inventoryPayload = inventoryRes.ok ? await inventoryRes.json().catch(() => ({})) : {};
+
+        if (!isMounted) return;
+
+        setSuppliers(Array.isArray(suppliersPayload?.suppliers) ? suppliersPayload.suppliers.map(mapSupplierResponse) : []);
+        setPurchaseOrders(Array.isArray(poPayload?.orders) ? poPayload.orders.map(mapPurchaseOrderResponse) : []);
+        setInventory(Array.isArray(inventoryPayload?.items) ? inventoryPayload.items.map(mapInventoryResponse) : []);
+      } catch (error) {
+        console.error('[SuppliersPage] fetch error', error);
+        toast({ title: t('suppliers.toast.error_fetching'), variant: 'destructive' });
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
     fetchData();
-  }, [toast]);
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, t]);
 
   React.useEffect(() => {
     const shouldOpenDialog = searchParams.get('openNewPo');
@@ -249,19 +299,16 @@ function SuppliersPageContent() {
   }, [searchParams, suppliers, router]);
   
   const supplierCategories = React.useMemo(() => {
-    return [...new Set(suppliers.map((s) => s.category))];
+    return [...new Set(suppliers.map((s) => s.category).filter(Boolean))] as string[];
   }, [suppliers]);
   
   const suppliersPageStats = React.useMemo(() => {
     const totalSuppliers = suppliers.length;
     const pendingPOs = purchaseOrders.filter(po => po.status === 'Pending').length;
-    const totalPOValue = purchaseOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
-    const topRatedSuppliers = suppliers.filter(s => s.rating >= 4.5).length;
-    
-    const englishDigitsAmount = formatEGP(totalPOValue, false, 'en');
-    const totalPoValueLabel = language === 'ar'
-      ? `${englishDigitsAmount} جم`
-      : `EGP ${englishDigitsAmount}`;
+    const totalPOValue = purchaseOrders.reduce((acc, po) => acc + Number(po.total || 0), 0);
+    const topRatedSuppliers = suppliers.filter(s => (s.rating ?? 0) >= 4.5).length;
+
+    const totalPoValueLabel = formatEGP(totalPOValue, true, language);
     return [
       { title: t('suppliers.total_suppliers'), value: totalSuppliers, icon: "Building2", description: t('suppliers.all_active_suppliers'), cardStyle: 'metric-card-blue' },
       { title: t('suppliers.pending_pos'), value: pendingPOs, icon: "FileText", description: t('suppliers.orders_awaiting_shipment'), cardStyle: 'metric-card-orange' },
@@ -271,12 +318,12 @@ function SuppliersPageContent() {
   }, [suppliers, purchaseOrders, language, t]);
 
   const getSupplierPerformance = React.useCallback((supplierName: string) => {
-    const supplierOrders = purchaseOrders.filter(po => po.supplier === supplierName);
+    const supplierOrders = purchaseOrders.filter(po => po.supplierName === supplierName);
     const totalOrders = supplierOrders.length;
     const deliveredOrders = supplierOrders.filter(po => po.status === 'Delivered').length;
     const pendingOrders = supplierOrders.filter(po => po.status === 'Pending').length;
     const onTimeDelivery = totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0;
-    const totalValue = supplierOrders.reduce((acc, po) => acc + parseFloat(po.total.replace(/[^0-9.-]+/g, '')), 0);
+    const totalValue = supplierOrders.reduce((acc, po) => acc + Number(po.total || 0), 0);
     
     return {
       totalOrders,
@@ -288,103 +335,134 @@ function SuppliersPageContent() {
     };
   }, [purchaseOrders]);
 
-  const formatPurchaseOrderTotal = React.useCallback((total: string) => {
-    const normalized = normalizeDigits(total ?? '');
-    const numericPortion = normalized.replace(/[^0-9.,-]+/g, '').trim();
-    const fallback = '0.00';
-    const symbol = language === 'ar' ? 'جم' : 'EGP';
-    return `${numericPortion || fallback} ${symbol}`;
+  const formatPurchaseOrderTotal = React.useCallback((total: number) => {
+    return formatEGP(total, true, language);
   }, [language]);
+
+  const formatDateDisplay = React.useCallback((value?: string | null) => {
+    if (!value) return t('common.na');
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? value
+      : date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-EG');
+  }, [language, t]);
 
   const createQuickPurchaseOrder = async (supplier: Supplier) => {
     try {
-      // Find low stock items from this supplier
-      const lowStockFromSupplier = inventory.filter(item => 
-        item.supplier === supplier.name && 
-        (item.status === 'Low Stock' || item.status === 'Out of Stock')
-      );
+      const lowStockFromSupplier = inventory.filter((item) => {
+        const matchesSupplier = item.supplierId === supplier.id || item.supplierName === supplier.name;
+        return matchesSupplier && (item.status === 'LowStock' || item.status === 'OutOfStock');
+      });
 
       if (lowStockFromSupplier.length === 0) {
-        toast({
-          title: t('suppliers.toast.no_low_stock'),
-        });
+        toast({ title: t('suppliers.toast.no_low_stock') });
         return;
       }
 
-      const orderItems = lowStockFromSupplier.map(item => ({
-        itemId: item.id,
-        description: item.name,
-        quantity: item.max - item.stock,
-        unitPrice: parseFloat(item.unitCost.replace(/[^\d.]/g, ''))
-      }));
+      const orderItems = lowStockFromSupplier
+        .map((item) => {
+          const quantity = Math.max(item.maxQuantity - item.quantity, 0);
+          return {
+            itemId: item.id,
+            description: item.name,
+            quantity,
+            unitPrice: item.unitCost,
+          };
+        })
+        .filter((item) => item.quantity > 0);
 
-      const total = orderItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+      if (!orderItems.length) {
+        toast({ title: t('suppliers.toast.no_low_stock') });
+        return;
+      }
 
-      const newPurchaseOrder = {
-        supplier: supplier.name,
-        orderDate: new Date().toISOString().split('T')[0],
-        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        total: formatEGP(total, true, language),
-        status: 'Pending',
-        items: orderItems
+      const total = orderItems.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+      const payload = {
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        total,
+        status: 'Pending' as PurchaseOrder['status'],
+        orderDate: new Date().toISOString(),
+        expectedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        items: orderItems,
       };
 
-      await setDocument('purchase-orders', `PO-${Date.now()}`, newPurchaseOrder);
-      
-      // Refresh purchase orders
-  const updatedPOs = await listDocuments<PurchaseOrder>('purchase-orders');
-      setPurchaseOrders(updatedPOs);
-      
+      const response = await fetch('/api/purchase-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create quick purchase order');
+      const result = await response.json();
+      const created = result?.order ? mapPurchaseOrderResponse(result.order) : null;
+      if (created) {
+        setPurchaseOrders((prev) => [created, ...prev]);
+      }
+
       toast({
         title: t('suppliers.toast.quick_order_created'),
         description: t('suppliers.toast.po_created_desc'),
       });
     } catch (error) {
+      console.error('[SuppliersPage] quick PO error', error);
       toast({
         title: t('suppliers.toast.error_quick_order'),
         description: t('suppliers.toast.error_quick_order_desc'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
-  const handleSaveSupplier = async (data: Omit<Supplier, 'id' | 'rating' | 'status'>) => {
+  const handleSaveSupplier = async (data: Partial<Supplier>) => {
     try {
-        const newSupplier: Supplier = {
-          id: `SUP-${Date.now()}`,
-          ...data,
-          rating: 5.0,
-          status: 'active',
-        };
-        await setDocument('suppliers', newSupplier.id, newSupplier);
-        setSuppliers(prev => [newSupplier, ...prev]);
-        toast({
-          title: t('suppliers.toast.supplier_added'),
-          description: t('suppliers.toast.supplier_added_desc'),
-        });
-    } catch(e) {
-        toast({ title: t('suppliers.toast.error_adding'), variant: 'destructive'});
+      const response = await fetch('/api/suppliers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, status: 'Active' }),
+      });
+      if (!response.ok) throw new Error('Failed to create supplier');
+      const result = await response.json();
+      const created = result?.supplier ? mapSupplierResponse(result.supplier) : null;
+      if (created) {
+        setSuppliers((prev) => [created, ...prev]);
+      }
+      toast({
+        title: t('suppliers.toast.supplier_added'),
+        description: t('suppliers.toast.supplier_added_desc'),
+      });
+    } catch (error) {
+      console.error('[SuppliersPage] add supplier error', error);
+      toast({ title: t('suppliers.toast.error_adding'), variant: 'destructive' });
     }
   };
 
   const handleUpdateSupplier = async (updatedSupplier: Supplier) => {
     try {
-        await updateDocument('suppliers', updatedSupplier.id, updatedSupplier);
-        setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
-        setSupplierToEdit(null);
-        toast({
-          title: t('suppliers.toast.supplier_updated'),
-          description: t('suppliers.toast.supplier_updated_desc'),
-        });
-    } catch(e) {
-        toast({ title: t('suppliers.toast.error_updating'), variant: 'destructive'});
+      const response = await fetch(`/api/suppliers/${updatedSupplier.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSupplier),
+      });
+      if (!response.ok) throw new Error('Failed to update supplier');
+      const result = await response.json();
+      const nextSupplier = result?.supplier ? mapSupplierResponse(result.supplier) : updatedSupplier;
+      setSuppliers((prev) => prev.map((s) => (s.id === nextSupplier.id ? nextSupplier : s)));
+      setSupplierToEdit(null);
+      toast({
+        title: t('suppliers.toast.supplier_updated'),
+        description: t('suppliers.toast.supplier_updated_desc'),
+      });
+    } catch (error) {
+      console.error('[SuppliersPage] update supplier error', error);
+      toast({ title: t('suppliers.toast.error_updating'), variant: 'destructive' });
     }
   };
 
   const handleDeleteSupplier = async () => {
     if (supplierToDelete) {
       try {
-          await deleteDocument('suppliers', supplierToDelete.id);
+          const response = await fetch(`/api/suppliers/${supplierToDelete.id}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to delete supplier');
           setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete.id));
           toast({
             title: t('suppliers.toast.supplier_deleted'),
@@ -392,7 +470,8 @@ function SuppliersPageContent() {
             variant: "destructive"
           });
           setSupplierToDelete(null);
-      } catch(e) {
+      } catch(error) {
+          console.error('[SuppliersPage] delete supplier error', error);
           toast({ title: t('suppliers.toast.error_deleting'), variant: 'destructive'});
       }
     }
@@ -400,93 +479,157 @@ function SuppliersPageContent() {
 
   const handleSavePurchaseOrder = async (data: any) => {
     try {
-        const newPurchaseOrder: PurchaseOrder = {
-          id: `PO-${Date.now()}`,
-          supplier: data.supplier,
-          orderDate: new Date(data.orderDate).toLocaleDateString(),
-          deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
-          total: `$${data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0).toFixed(2)}`,
-          status: 'Pending',
-          items: data.items,
-        };
-        await setDocument('purchase-orders', newPurchaseOrder.id, newPurchaseOrder);
-        setPurchaseOrders(prev => [newPurchaseOrder, ...prev]);
-        toast({
-          title: t('suppliers.toast.po_created'),
-          description: t('suppliers.toast.po_created_desc'),
-        });
-    } catch(e) {
-        toast({ title: t('suppliers.toast.error_creating_po'), variant: 'destructive'});
+      const supplierId = data.supplierId ?? data.supplier ?? newPoSupplier;
+      const supplierName = data.supplierName
+        ?? suppliers.find((s) => s.id === supplierId)?.name
+        ?? data.supplier
+        ?? 'Supplier';
+      const items = Array.isArray(data.items) ? data.items.map((item: any) => ({
+        itemId: item.itemId,
+        description: item.description,
+        quantity: Number(item.quantity ?? 0),
+        unitPrice: Number(item.unitPrice ?? 0),
+      })) : [];
+      const total = items.reduce((acc: number, item) => acc + item.quantity * item.unitPrice, 0);
+      const payload = {
+        supplierId,
+        supplierName,
+        total,
+        status: 'Pending' as PurchaseOrder['status'],
+        orderDate: data.orderDate instanceof Date ? data.orderDate.toISOString() : new Date(data.orderDate ?? Date.now()).toISOString(),
+        expectedDelivery: data.deliveryDate instanceof Date ? data.deliveryDate.toISOString() : (data.deliveryDate ? new Date(data.deliveryDate).toISOString() : undefined),
+        items,
+      };
+
+      const response = await fetch('/api/purchase-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create purchase order');
+      const result = await response.json();
+      const created = result?.order ? mapPurchaseOrderResponse(result.order) : null;
+      if (created) {
+        setPurchaseOrders((prev) => [created, ...prev]);
+      }
+      toast({
+        title: t('suppliers.toast.po_created'),
+        description: t('suppliers.toast.po_created_desc'),
+      });
+    } catch (error) {
+      console.error('[SuppliersPage] create PO error', error);
+      toast({ title: t('suppliers.toast.error_creating_po'), variant: 'destructive' });
     }
   };
 
   const handleSaveItem = async (data: any) => {
     try {
-        const newItem: InventoryItem = {
-          id: `INV-${Date.now()}`,
-          name: data.name,
-          expires: data.expires ? new Date(data.expires).toLocaleDateString() : 'N/A',
-          category: data.category,
-          stock: data.stock,
-          min: 10,
-          max: 50,
-          status: data.stock < 10 ? 'Low Stock' : 'Normal',
-          unitCost: `EGP ${parseFloat(data.unitCost).toFixed(2)}`,
-          supplier: data.supplier,
-          location: data.location,
-        };
-        await setDocument('inventory', newItem.id, newItem);
-        setInventory(prev => [newItem, ...prev]);
-        toast({
-          title: t('inventory.toast.item_added'),
-          description: t('inventory.toast.item_added_desc'),
-        });
-        setIsAddItemOpen(false); // Close the dialog
-    } catch(e) {
-        toast({ title: t('inventory.toast.error_adding'), variant: 'destructive'});
+      const quantity = Number(data.stock ?? data.quantity ?? 0);
+      const minQuantity = 10;
+      const maxQuantity = 50;
+      const payload = {
+        name: data.name,
+        category: data.category,
+        supplierId: data.supplierId ?? undefined,
+        supplierName: data.supplierName ?? data.supplier ?? undefined,
+        quantity,
+        minQuantity,
+        maxQuantity,
+        unitCost: Number(data.unitCost ?? 0),
+        status: resolveInventoryStatusValue(quantity, minQuantity),
+        expires: data.expires ? data.expires.toISOString() : undefined,
+        location: data.location,
+      };
+
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create inventory item');
+      const result = await response.json();
+      const created = result?.item ? mapInventoryResponse(result.item) : null;
+      if (created) {
+        setInventory((prev) => [created, ...prev]);
+      }
+      toast({
+        title: t('inventory.toast.item_added'),
+        description: t('inventory.toast.item_added_desc'),
+      });
+      setIsAddItemOpen(false);
+    } catch (error) {
+      console.error('[SuppliersPage] add inventory item error', error);
+      toast({ title: t('inventory.toast.error_adding'), variant: 'destructive' });
     }
   };
 
-  const handlePoStatusChange = async (poId: string, status: PurchaseOrder['status']) => {
+  const handlePoStatusChange = async (
+    poId: string,
+    status: PurchaseOrder['status'],
+    options?: { suppressToast?: boolean }
+  ) => {
     try {
-        await updateDocument('purchase-orders', poId, { status });
-        setPurchaseOrders(prev => prev.map(po => po.id === poId ? { ...po, status } : po));
-    toast({
-      title: t('suppliers.toast.status_updated'),
-      description: t('suppliers.toast.status_updated_desc')
-    });
-    } catch (e) {
-    toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive'});
+      const response = await fetch(`/api/purchase-orders/${poId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Failed to update purchase order status');
+      const result = await response.json();
+      const updated = result?.order ? mapPurchaseOrderResponse(result.order) : null;
+      setPurchaseOrders((prev) => prev.map((po) => (po.id === poId ? (updated ?? { ...po, status }) : po)));
+      if (!options?.suppressToast) {
+        toast({
+          title: t('suppliers.toast.status_updated'),
+          description: t('suppliers.toast.status_updated_desc'),
+        });
+      }
+      return updated ?? purchaseOrders.find((po) => po.id === poId) ?? null;
+    } catch (error) {
+      console.error('[SuppliersPage] update PO status error', error);
+      toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive' });
+      return null;
     }
   };
   
   const handleReceiveOrder = async (order: PurchaseOrder) => {
     try {
-        // 1. Update PO status to Delivered
-        await handlePoStatusChange(order.id, 'Delivered');
+      const updatedOrder = await handlePoStatusChange(order.id, 'Delivered', { suppressToast: true }) ?? { ...order, status: 'Delivered' };
+      const orderItems = updatedOrder.items?.length ? updatedOrder.items : order.items;
 
-        // 2. Update inventory stock
-        for (const orderItem of order.items) {
-            const inventoryItem = inventory.find(invItem => invItem.id === orderItem.itemId);
-            if (inventoryItem) {
-                const newStock = inventoryItem.stock + orderItem.quantity;
-                const newStatus = newStock >= inventoryItem.min ? 'Normal' : inventoryItem.status;
-                await updateDocument('inventory', inventoryItem.id, { stock: newStock, status: newStatus });
-            }
-        }
-        
-        // Refetch inventory to show updated stock
-  const updatedInventory = await listDocuments<InventoryItem>('inventory');
-        setInventory(updatedInventory);
+      const updates = await Promise.all(orderItems.map(async (orderItem: PurchaseOrderItem) => {
+        if (!orderItem.itemId) return null;
+        const inventoryItem = inventory.find((invItem) => invItem.id === orderItem.itemId);
+        if (!inventoryItem) return null;
+        const newQuantity = inventoryItem.quantity + orderItem.quantity;
+        const newStatus = resolveInventoryStatusValue(newQuantity, inventoryItem.minQuantity);
+        const response = await fetch(`/api/inventory/${inventoryItem.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: newQuantity, status: newStatus }),
+        });
+        if (!response.ok) throw new Error('Failed to update inventory item during receiving');
+        const payload = await response.json();
+        return payload?.item ? mapInventoryResponse(payload.item) : { ...inventoryItem, quantity: newQuantity, status: newStatus };
+      }));
 
-    await recordPurchaseOrderExpense(order);
+      setInventory((prev) => {
+        const map = new Map(prev.map((item) => [item.id, item] as const));
+        updates.forEach((updated) => {
+          if (updated) map.set(updated.id, updated);
+        });
+        return Array.from(map.values());
+      });
 
-    toast({
-      title: t('suppliers.toast.status_updated'),
-      description: t('suppliers.toast.status_updated_desc'),
-    });
-    } catch (e) {
-    toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive'});
+      await recordPurchaseOrderExpense(updatedOrder);
+
+      toast({
+        title: t('suppliers.toast.status_updated'),
+        description: t('suppliers.toast.status_updated_desc'),
+      });
+    } catch (error) {
+      console.error('[SuppliersPage] receive order error', error);
+      toast({ title: t('suppliers.toast.error_updating_status'), variant: 'destructive' });
     }
   };
 
@@ -494,28 +637,43 @@ function SuppliersPageContent() {
     const targetId = data?.id ?? poToEdit?.id;
     if (!targetId) return;
     try {
-      const total = data.items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
-      const updatedOrder: PurchaseOrder = {
-        id: targetId,
-        supplier: data.supplier,
-        orderDate: data.orderDate ? new Date(data.orderDate).toLocaleDateString() : (poToEdit?.orderDate ?? ''),
-        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : null,
-        total: `$${total.toFixed(2)}`,
-        status: purchaseOrders.find((po) => po.id === targetId)?.status ?? 'Pending',
-        items: data.items,
+      const supplierId = data.supplierId ?? data.supplier ?? poToEdit?.supplierId;
+      const supplierName = data.supplierName
+        ?? suppliers.find((s) => s.id === supplierId)?.name
+        ?? poToEdit?.supplierName
+        ?? 'Supplier';
+      const items = Array.isArray(data.items) ? data.items.map((item: any) => ({
+        itemId: item.itemId,
+        description: item.description,
+        quantity: Number(item.quantity ?? 0),
+        unitPrice: Number(item.unitPrice ?? 0),
+      })) : [];
+      const total = items.reduce((acc: number, item) => acc + item.quantity * item.unitPrice, 0);
+      const payload = {
+        supplierId,
+        supplierName,
+        total,
+        orderDate: data.orderDate instanceof Date ? data.orderDate.toISOString() : (data.orderDate ? new Date(data.orderDate).toISOString() : poToEdit?.orderDate),
+        expectedDelivery: data.deliveryDate instanceof Date ? data.deliveryDate.toISOString() : (data.deliveryDate ? new Date(data.deliveryDate).toISOString() : poToEdit?.deliveryDate),
+        items,
       };
-      await updateDocument('purchase-orders', targetId, {
-        supplier: updatedOrder.supplier,
-        orderDate: updatedOrder.orderDate,
-        deliveryDate: updatedOrder.deliveryDate,
-        total: updatedOrder.total,
-        status: updatedOrder.status,
-        items: updatedOrder.items,
+
+      const response = await fetch(`/api/purchase-orders/${targetId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      setPurchaseOrders((prev) => prev.map((po) => (po.id === targetId ? updatedOrder : po)));
+      if (!response.ok) throw new Error('Failed to update purchase order');
+      const result = await response.json();
+      const updated = result?.order ? mapPurchaseOrderResponse(result.order) : {
+        ...(poToEdit ?? { id: targetId, status: 'Pending', supplierId, supplierName, orderDate: payload.orderDate ?? new Date().toISOString(), deliveryDate: payload.expectedDelivery ?? null, total }),
+        ...payload,
+      };
+      setPurchaseOrders((prev) => prev.map((po) => (po.id === targetId ? updated : po)));
       setPoToEdit(null);
       toast({ title: language === 'ar' ? 'تم تحديث أمر الشراء' : 'Purchase order updated' });
-    } catch (e) {
+    } catch (error) {
+      console.error('[SuppliersPage] update PO error', error);
       toast({ title: language === 'ar' ? 'فشل تحديث أمر الشراء' : 'Failed to update purchase order', variant: 'destructive' });
     }
   };
@@ -523,8 +681,8 @@ function SuppliersPageContent() {
   const handleDeletePurchaseOrder = async () => {
     if (!poToDelete) return;
     try {
-      await deleteDocument('purchase-orders', poToDelete.id);
-      await deleteDocument('transactions', `TRX-PO-${poToDelete.id}`).catch(() => undefined);
+      const response = await fetch(`/api/purchase-orders/${poToDelete.id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete purchase order');
       setPurchaseOrders((prev) => prev.filter((po) => po.id !== poToDelete.id));
       toast({ title: language === 'ar' ? 'تم حذف أمر الشراء' : 'Purchase order deleted' });
     } catch (e) {
@@ -540,14 +698,17 @@ function SuppliersPageContent() {
   };
 
   const filteredSuppliers = React.useMemo(() => {
+    const term = supplierSearchTerm.toLowerCase();
+    const categoryTerm = categoryFilter.toLowerCase();
     return suppliers
-      .filter(supplier =>
-        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase()) ||
-        supplier.category.toLowerCase().includes(supplierSearchTerm.toLowerCase())
-      )
-      .filter(supplier =>
-        categoryFilter === 'all' || supplier.category.toLowerCase() === categoryFilter.toLowerCase()
-      );
+      .filter((supplier) => {
+        const categoryValue = supplier.category?.toLowerCase() ?? '';
+        return (
+          supplier.name.toLowerCase().includes(term) ||
+          categoryValue.includes(term)
+        );
+      })
+      .filter((supplier) => categoryFilter === 'all' || (supplier.category?.toLowerCase() ?? '') === categoryTerm);
   }, [suppliers, supplierSearchTerm, categoryFilter]);
 
   const filteredPurchaseOrders = React.useMemo(() => {
@@ -556,7 +717,7 @@ function SuppliersPageContent() {
 
     return purchaseOrders
       .filter((po) => {
-        const supplierName = (po.supplier ?? '').toLowerCase();
+        const supplierName = (po.supplierName ?? '').toLowerCase();
         const poId = (po.id ?? '').toLowerCase();
         return (
           supplierName.includes(normalizedSearch) ||
@@ -573,6 +734,8 @@ function SuppliersPageContent() {
   const receivingOrders = React.useMemo(() => {
     return purchaseOrders.filter(po => po.status === 'Shipped');
   }, [purchaseOrders]);
+
+  const inventoryOptions = React.useMemo(() => inventory.map((item) => ({ id: item.id, name: item.name })), [inventory]);
 
   return (
     <DashboardLayout>
@@ -749,23 +912,23 @@ function SuppliersPageContent() {
                           <TableCell>
                             <div className="font-medium">{supplier.name}</div>
                             <div className="text-xs text-muted-foreground">
-                              {supplier.address}
+                              {supplier.address || t('common.na')}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3 w-3" />
-                              <span>{supplier.phone}</span>
+                              <span>{supplier.phone || t('common.na')}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Mail className="h-3 w-3" />
-                              <span>{supplier.email}</span>
+                              <span>{supplier.email || t('common.na')}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{supplier.category}</Badge>
+                            <Badge variant="outline">{supplier.category || t('common.na')}</Badge>
                             <div className="text-xs text-muted-foreground mt-1">
-                              {supplier.paymentTerms}
+                              {supplier.paymentTerms || t('common.na')}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -785,24 +948,24 @@ function SuppliersPageContent() {
                             <div className="flex items-center gap-1">
                               <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                               <span className="font-medium">
-                                {supplier.rating}
+                                {supplier.rating ?? '—'}
                               </span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant={
-                                supplier.status === "active"
+                                supplier.status === 'Active'
                                   ? "default"
                                   : "destructive"
                               }
                               className={
-                                supplier.status === "active"
+                                supplier.status === 'Active'
                                   ? "bg-green-100 text-green-800"
                                   : ""
                               }
                             >
-                {supplier.status === 'active' ? t('common.active') : t('common.inactive')}
+                {supplier.status === 'Active' ? t('common.active') : t('common.inactive')}
                             </Badge>
                           </TableCell>
                            <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
@@ -908,9 +1071,9 @@ function SuppliersPageContent() {
                       filteredPurchaseOrders.map((po) => (
                         <TableRow key={po.id}>
                           <TableCell className="font-medium">{po.id}</TableCell>
-                          <TableCell>{po.supplier}</TableCell>
-                          <TableCell>{po.orderDate}</TableCell>
-                          <TableCell>{po.deliveryDate || 'N/A'}</TableCell>
+                          <TableCell>{po.supplierName}</TableCell>
+                          <TableCell>{formatDateDisplay(po.orderDate)}</TableCell>
+                          <TableCell>{formatDateDisplay(po.deliveryDate)}</TableCell>
                           <TableCell>{formatPurchaseOrderTotal(po.total)}</TableCell>
                           <TableCell>
                              <Badge
@@ -1008,8 +1171,8 @@ function SuppliersPageContent() {
                                 receivingOrders.map((order) => (
                                     <TableRow key={order.id}>
                                         <TableCell className="font-medium">{order.id}</TableCell>
-                                        <TableCell>{order.supplier}</TableCell>
-                                        <TableCell>{order.deliveryDate || 'N/A'}</TableCell>
+                                        <TableCell>{order.supplierName}</TableCell>
+                                        <TableCell>{formatDateDisplay(order.deliveryDate)}</TableCell>
                                         <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
                                             <Button
                                               variant="outline"
@@ -1044,7 +1207,7 @@ function SuppliersPageContent() {
         onOpenChange={setIsNewPoOpen}
         onSave={handleSavePurchaseOrder}
         initialSupplierId={newPoSupplier}
-        inventoryItems={inventory}
+        inventoryItems={inventoryOptions}
         suppliers={suppliers}
         onAddItem={() => setIsAddItemOpen(true)}
       />
@@ -1056,15 +1219,21 @@ function SuppliersPageContent() {
           if (!isOpen) setPoToEdit(null);
         }}
         onSave={handleUpdatePurchaseOrder}
-        initialSupplierId={poToEdit ? suppliers.find((s) => s.name === poToEdit.supplier)?.id : undefined}
-        inventoryItems={inventory}
+        initialSupplierId={poToEdit?.supplierId ?? undefined}
+        inventoryItems={inventoryOptions}
         suppliers={suppliers}
         onAddItem={() => setIsAddItemOpen(true)}
         initialOrder={poToEdit}
         mode="edit"
       />
 
-      <AddItemDialog onSave={handleSaveItem} open={isAddItemOpen} onOpenChange={setIsAddItemOpen} showTrigger={false} />
+      <AddItemDialog
+        onSave={handleSaveItem}
+        open={isAddItemOpen}
+        onOpenChange={setIsAddItemOpen}
+        showTrigger={false}
+        suppliers={suppliers}
+      />
       
       {supplierToEdit && (
         <EditSupplierDialog

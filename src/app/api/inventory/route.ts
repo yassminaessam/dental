@@ -10,12 +10,14 @@ const parseCreate = async (req: Request): Promise<InventoryCreateInput> => {
     name: String(b.name),
     category: b.category,
     supplierId: b.supplierId,
+    supplierName: b.supplierName,
     quantity: Number(b.quantity),
     minQuantity: b.minQuantity != null ? Number(b.minQuantity) : undefined,
     maxQuantity: b.maxQuantity != null ? Number(b.maxQuantity) : undefined,
     unitCost: Number(b.unitCost),
     status: b.status,
     expires: b.expires ? new Date(b.expires) : undefined,
+    location: b.location,
   } satisfies InventoryCreateInput;
 };
 

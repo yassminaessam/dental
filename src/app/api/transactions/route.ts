@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { recordTransaction } from '@/services/transactions.server';
+import { listTransactions, recordTransaction } from '@/services/transactions.server';
 
 const transactionSchema = z.object({
   id: z.string().optional(),
@@ -41,5 +41,15 @@ export async function POST(request: Request) {
     console.error('[api/transactions] POST error', error);
     const message = error instanceof Error ? error.message : 'Failed to record transaction.';
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function GET() {
+  try {
+    const transactions = await listTransactions();
+    return NextResponse.json({ transactions });
+  } catch (error) {
+    console.error('[api/transactions] GET error', error);
+    return NextResponse.json({ error: 'Failed to load transactions.' }, { status: 500 });
   }
 }
