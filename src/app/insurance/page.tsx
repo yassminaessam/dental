@@ -53,6 +53,7 @@ import { AddProviderDialog } from '@/components/insurance/add-provider-dialog';
 import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ApproveClaimDialog } from '@/components/insurance/approve-claim-dialog';
 
 export type Claim = {
   id: string;
@@ -110,6 +111,7 @@ export default function InsurancePage() {
   const [providerToEdit, setProviderToEdit] = React.useState<InsuranceProvider | null>(null);
   const [providerToDelete, setProviderToDelete] = React.useState<InsuranceProvider | null>(null);
   const [providerSearchTerm, setProviderSearchTerm] = React.useState('');
+  const [claimToApprove, setClaimToApprove] = React.useState<Claim | null>(null);
   const [patientDirectory, setPatientDirectory] = React.useState<Record<string, { phone?: string }>>({});
 
   const { toast } = useToast();
@@ -249,6 +251,28 @@ export default function InsurancePage() {
   toast({ title: t('insurance.toast.status_updated'), description: t('insurance.toast.status_updated_desc') });
     } catch(e) {
   toast({ title: t('insurance.toast.error_updating_status'), variant: 'destructive' });
+    }
+  };
+
+  const handleApproveWithAmount = async (claimId: string, approvedAmount: number) => {
+    try {
+      const formattedAmount = `EGP ${approvedAmount.toFixed(2)}`;
+      await updateDocument('insurance-claims', claimId, { 
+        status: 'Approved',
+        approvedAmount: formattedAmount
+      });
+      setClaims(prev => 
+        prev.map(claim => 
+          claim.id === claimId ? { ...claim, status: 'Approved', approvedAmount: formattedAmount } : claim
+        )
+      );
+      toast({ 
+        title: t('insurance.toast.claim_approved'), 
+        description: t('insurance.toast.claim_approved_desc', { amount: formattedAmount })
+      });
+    } catch(e) {
+      toast({ title: t('insurance.toast.error_approving'), variant: 'destructive' });
+      throw e;
     }
   };
 
@@ -552,7 +576,8 @@ export default function InsurancePage() {
                                   <Download className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} /> {t('insurance.download')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleStatusChange(claim.id, 'Approved')}>
+                                <DropdownMenuItem onClick={() => setClaimToApprove(claim)} className="text-green-600">
+                                  <CheckCircle2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('insurance.mark_as_approved')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusChange(claim.id, 'Processing')}>
@@ -714,6 +739,18 @@ export default function InsurancePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {claimToApprove && (
+        <ApproveClaimDialog
+          open={!!claimToApprove}
+          onOpenChange={(isOpen) => !isOpen && setClaimToApprove(null)}
+          claimId={claimToApprove.id}
+          patientName={claimToApprove.patient}
+          procedure={claimToApprove.procedure}
+          claimAmount={claimToApprove.amount}
+          onApprove={handleApproveWithAmount}
+        />
+      )}
 
     </DashboardLayout>
   );

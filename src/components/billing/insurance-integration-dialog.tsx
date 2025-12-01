@@ -21,11 +21,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, FileText, DollarSign, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Shield, FileText, DollarSign, CheckCircle, Search, Eye, CreditCard, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocument } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatEGP } from '@/lib/currency';
 
 interface InsuranceClaim {
   id: string;
@@ -48,12 +50,43 @@ interface InsuranceIntegrationDialogProps {
 
 export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: InsuranceIntegrationDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedClaim, setSelectedClaim] = React.useState<InsuranceClaim | null>(null);
   const { toast } = useToast();
   const { t, language, isRTL } = useLanguage();
 
   const processableClaims = claims.filter(claim => 
     claim.status === 'Approved' && claim.approvedAmount && !claim.statusReason
   );
+
+  // Smart search - filters by patient name, insurance company, procedure, status, or claim ID
+  const filteredClaims = React.useMemo(() => {
+    if (!searchTerm.trim()) return claims;
+    
+    const lowerSearch = searchTerm.toLowerCase().trim();
+    
+    return claims.filter(claim => {
+      const patientName = claim.patient?.toLowerCase() || '';
+      const insurance = claim.insurance?.toLowerCase() || '';
+      const procedure = claim.procedure?.toLowerCase() || '';
+      const procedureCode = claim.procedureCode?.toLowerCase() || '';
+      const status = claim.status?.toLowerCase() || '';
+      const claimId = claim.id?.toLowerCase() || '';
+      const amount = claim.amount?.toLowerCase() || '';
+      const approvedAmount = claim.approvedAmount?.toLowerCase() || '';
+      
+      return (
+        patientName.includes(lowerSearch) ||
+        insurance.includes(lowerSearch) ||
+        procedure.includes(lowerSearch) ||
+        procedureCode.includes(lowerSearch) ||
+        status.includes(lowerSearch) ||
+        claimId.includes(lowerSearch) ||
+        amount.includes(lowerSearch) ||
+        approvedAmount.includes(lowerSearch)
+      );
+    });
+  }, [claims, searchTerm]);
 
   const handleApplyInsuranceCredit = async (claim: InsuranceClaim) => {
     try {
@@ -155,10 +188,22 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
             </Card>
           </div>
 
+          {/* Search Input */}
+          <div className="relative">
+            <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+            <Input
+              type="search"
+              placeholder={t('insurance.search_placeholder') || "Search by patient, insurance, procedure, status..."}
+              className={cn("rounded-lg", isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
           {/* Claims Table */}
-          <div className="border rounded-lg">
+          <div className="border rounded-lg max-h-[400px] overflow-y-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead>{t('insurance.patient')}</TableHead>
                   <TableHead>{t('insurance.insurance')}</TableHead>
@@ -170,8 +215,15 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {claims.length > 0 ? (
-                  claims.map((claim) => (
+                {filteredClaims.length > 0 ? (
+                  filteredClaims.map((claim) => {
+                    const approvedAmountNum = claim.approvedAmount 
+                      ? (typeof claim.approvedAmount === 'string' 
+                          ? parseFloat(claim.approvedAmount.replace(/[^\d.]/g, '')) 
+                          : claim.approvedAmount)
+                      : 0;
+                    
+                    return (
                     <TableRow key={claim.id}>
                       <TableCell className="font-medium">{claim.patient}</TableCell>
                       <TableCell>{claim.insurance}</TableCell>
@@ -184,7 +236,12 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                       <TableCell>{claim.amount}</TableCell>
                       <TableCell>
                         {claim.approvedAmount ? (
-                          <span className="text-green-600 font-medium">{claim.approvedAmount}</span>
+                          <div className="flex flex-col">
+                            <span className="text-green-600 font-bold">{formatEGP(approvedAmountNum, true, language)}</span>
+                            {claim.status === 'Approved' && !claim.statusReason && (
+                              <span className="text-xs text-green-500">{t('insurance.ready_to_apply')}</span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
@@ -209,27 +266,80 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {claim.status === 'Approved' && claim.approvedAmount && !claim.statusReason ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleApplyInsuranceCredit(claim)}
+                        <div className="flex items-center justify-end gap-1">
+                          {/* View Details Button */}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setSelectedClaim(claim)}
+                            title={t('insurance.action.view_details')}
                           >
-                            {t('insurance.apply_credit')}
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {claim.status === 'Processing' ? t('insurance.action.pending') : 
-                             claim.status === 'Denied' ? t('insurance.action.denied') :
-                             claim.statusReason ? t('insurance.action.applied') : t('common.na')}
-                          </span>
-                        )}
+                          
+                          {/* Apply Credit Button - Only for approved claims */}
+                          {claim.status === 'Approved' && claim.approvedAmount && !claim.statusReason && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => handleApplyInsuranceCredit(claim)}
+                              title={t('insurance.apply_credit')}
+                            >
+                              <CreditCard className="h-4 w-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Follow-up Button - Only for processing claims */}
+                          {claim.status === 'Processing' && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                              onClick={() => {
+                                toast({
+                                  title: t('insurance.action.follow_up_sent'),
+                                  description: t('insurance.action.follow_up_desc', { insurance: claim.insurance }),
+                                });
+                              }}
+                              title={t('insurance.action.send_follow_up')}
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Appeal Button - Only for denied claims */}
+                          {claim.status === 'Denied' && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                toast({
+                                  title: t('insurance.action.appeal_initiated'),
+                                  description: t('insurance.action.appeal_desc', { id: claim.id }),
+                                });
+                              }}
+                              title={t('insurance.action.file_appeal')}
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Already Applied indicator */}
+                          {claim.statusReason && (
+                            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      {t('insurance.no_claims_found')}
+                      {searchTerm ? t('insurance.no_matching_claims') : t('insurance.no_claims_found')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -237,6 +347,93 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
             </Table>
           </div>
         </div>
+
+        {/* Claim Details Dialog */}
+        {selectedClaim && (
+          <Dialog open={!!selectedClaim} onOpenChange={(isOpen) => !isOpen && setSelectedClaim(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t('insurance.claim_details')}</DialogTitle>
+                <DialogDescription>{t('insurance.claim_id')}: {selectedClaim.id}</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.patient')}</p>
+                    <p className="font-medium">{selectedClaim.patient}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.insurance')}</p>
+                    <p className="font-medium">{selectedClaim.insurance}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.procedure')}</p>
+                    <p className="font-medium">{selectedClaim.procedure}</p>
+                    <p className="text-xs text-muted-foreground">{selectedClaim.procedureCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.submit_date')}</p>
+                    <p className="font-medium">{selectedClaim.submitDate}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.claim_amount')}</p>
+                    <p className="font-medium">{selectedClaim.amount}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('insurance.approved_amount')}</p>
+                    <p className="font-bold text-green-600">
+                      {selectedClaim.approvedAmount 
+                        ? formatEGP(
+                            typeof selectedClaim.approvedAmount === 'string' 
+                              ? parseFloat(selectedClaim.approvedAmount.replace(/[^\d.]/g, '')) 
+                              : selectedClaim.approvedAmount, 
+                            true, 
+                            language
+                          )
+                        : '-'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t('insurance.status')}</p>
+                  <Badge
+                    variant={
+                      selectedClaim.status === 'Approved' ? 'default' :
+                      selectedClaim.status === 'Denied' ? 'destructive' : 'secondary'
+                    }
+                    className={cn(
+                      selectedClaim.status === 'Approved' && 'bg-green-100 text-green-800',
+                      selectedClaim.status === 'Processing' && 'bg-yellow-100 text-yellow-800'
+                    )}
+                  >
+                    {selectedClaim.status === 'Approved' ? t('insurance.status.approved') : selectedClaim.status === 'Denied' ? t('insurance.status.denied') : t('insurance.status.processing')}
+                  </Badge>
+                  {selectedClaim.statusReason && (
+                    <p className="text-sm text-muted-foreground mt-2">{selectedClaim.statusReason}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                {selectedClaim.status === 'Approved' && selectedClaim.approvedAmount && !selectedClaim.statusReason && (
+                  <Button onClick={() => {
+                    handleApplyInsuranceCredit(selectedClaim);
+                    setSelectedClaim(null);
+                  }}>
+                    <CreditCard className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                    {t('insurance.apply_credit')}
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setSelectedClaim(null)}>
+                  {t('common.close')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>

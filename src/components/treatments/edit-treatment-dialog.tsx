@@ -117,6 +117,13 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
 
   const selectedDates = React.useMemo(() => fields.map((field) => toDate(field.date)), [fields]);
 
+  // Disable past dates in calendar
+  const today = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  }, []);
+
   React.useEffect(() => {
     if (!open) return;
 
@@ -225,80 +232,85 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('treatments.edit_dialog.title')}</DialogTitle>
           <DialogDescription>{t('treatments.edit_dialog.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-3 gap-6 py-4">
-            <div className="col-span-1 space-y-6">
-              <FormField
-                control={control}
-                name="patient"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>{t('common.patient')} *</FormLabel>
-                    <FormControl>
-                      <PatientCombobox
-                        patients={patients}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder={t('treatments.select_patient')}
-                        searchPlaceholder={t('treatments.search_patient') || "Search by name or phone..."}
-                        emptyMessage={t('treatments.no_patient_found') || "No patient found."}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="doctor"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>{t('treatments.doctor')} *</FormLabel>
-                    <FormControl>
-                      <DoctorCombobox
-                        doctors={doctors}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder={t('treatments.select_doctor')}
-                        searchPlaceholder={t('treatments.search_doctor') || "Search by name or phone..."}
-                        emptyMessage={t('treatments.no_doctor_found') || "No doctor found."}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="procedure"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('treatments.treatment_name')} *</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('treatments.treatment_name_placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="cost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('treatments.cost')} *</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="EGP 0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-7 gap-4 py-4">
+            {/* Left section - Patient, Doctor, Treatment details (compact) */}
+            <div className="col-span-1 lg:col-span-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                <FormField
+                  control={control}
+                  name="patient"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('common.patient')} *</FormLabel>
+                      <FormControl>
+                        <PatientCombobox
+                          patients={patients}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder={t('treatments.select_patient')}
+                          searchPlaceholder={t('treatments.search_patient') || "Search by name or phone..."}
+                          emptyMessage={t('treatments.no_patient_found') || "No patient found."}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="doctor"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>{t('treatments.doctor')} *</FormLabel>
+                      <FormControl>
+                        <DoctorCombobox
+                          doctors={doctors}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder={t('treatments.select_doctor')}
+                          searchPlaceholder={t('treatments.search_doctor') || "Search by name or phone..."}
+                          emptyMessage={t('treatments.no_doctor_found') || "No doctor found."}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                <FormField
+                  control={control}
+                  name="procedure"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('treatments.treatment_name')} *</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('treatments.treatment_name_placeholder')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="cost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('treatments.cost')} *</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="EGP 0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={control}
                 name="notes"
@@ -308,7 +320,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                     <FormControl>
                       <Textarea
                         placeholder={t('treatments.notes_placeholder')}
-                        className="h-24 resize-none"
+                        className="resize-none h-16"
                         {...field}
                         value={field.value ?? ''}
                       />
@@ -318,33 +330,38 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                 )}
               />
             </div>
-            <div className="col-span-2">
+
+            {/* Right section - Calendar and Selected Appointments (larger) */}
+            <div className="col-span-1 lg:col-span-5">
               <FormItem>
                 <FormLabel>{t('appointments.appointment_dates')} *</FormLabel>
-                <div className="flex gap-4">
-                  <Calendar
-                    mode="multiple"
-                    selected={selectedDates}
-                    onSelect={handleDateSelect}
-                    className="rounded-md border"
-                  />
-                  <div className="flex-1">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="multiple"
+                      selected={selectedDates}
+                      onSelect={handleDateSelect}
+                      className="rounded-md border"
+                      disabled={(date) => date < today}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
-                    <ScrollArea className="h-72 rounded-md border p-2">
+                    <ScrollArea className="h-64 md:h-80 rounded-md border p-2">
                       {fields.length > 0 ? (
                         fields.map((field, index) => {
                           const fieldDate = toDate(field.date);
 
                           return (
-                            <div key={field.id} className="mb-2 grid grid-cols-12 items-center gap-2">
-                              <p className="col-span-4 text-sm font-medium">
+                            <div key={field.id} className="flex flex-wrap md:grid md:grid-cols-12 gap-2 items-center mb-3 md:mb-2 pb-2 md:pb-0 border-b md:border-b-0">
+                              <p className="w-full md:w-auto md:col-span-4 text-sm font-medium">
                                 {fieldDate.toLocaleDateString(locale, { dateStyle: 'medium' })}
                               </p>
                               <FormField
                                 control={control}
                                 name={`appointments.${index}.time`}
                                 render={({ field: timeField }) => (
-                                  <FormItem className="col-span-3">
+                                  <FormItem className="flex-1 md:flex-none md:col-span-3">
                                     <Select onValueChange={timeField.onChange} value={timeField.value}>
                                       <FormControl>
                                         <SelectTrigger>
@@ -366,7 +383,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                                 control={control}
                                 name={`appointments.${index}.duration`}
                                 render={({ field: durationField }) => (
-                                  <FormItem className="col-span-4">
+                                  <FormItem className="flex-1 md:flex-none md:col-span-4">
                                     <Select onValueChange={durationField.onChange} value={durationField.value}>
                                       <FormControl>
                                         <SelectTrigger>
@@ -388,7 +405,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="col-span-1"
+                                className="md:col-span-1"
                                 onClick={() => remove(index)}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -407,11 +424,12 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                 <FormMessage>{errors.appointments?.message || errors.appointments?.root?.message}</FormMessage>
               </FormItem>
             </div>
-            <DialogFooter className="col-span-3">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            
+            <DialogFooter className="col-span-1 lg:col-span-7 flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 {t('common.cancel')}
               </Button>
-              <Button type="submit">{t('common.save_changes')}</Button>
+              <Button type="submit" className="w-full sm:w-auto">{t('common.save_changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

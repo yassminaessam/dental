@@ -89,7 +89,7 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
                 <FormItem>
                   <FormLabel>{t('billing.payment_amount')} *</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder={t('billing.amount_placeholder')} {...field} />
+                    <Input type="number" step="0.01" placeholder={t('billing.amount_placeholder')} {...field} readOnly className="bg-muted cursor-not-allowed" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

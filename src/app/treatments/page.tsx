@@ -242,6 +242,7 @@ export default function TreatmentsPage() {
             doctorId: data.doctorId,
             doctorName: data.doctorName,
             procedure: data.procedure,
+            cost: data.cost ? `EGP ${data.cost.replace(/[^0-9.]/g, '')}` : 'EGP 0',
             notes: data.notes,
             appointments: data.appointments.map((appointment) => ({
               date: appointment.date.toISOString(),

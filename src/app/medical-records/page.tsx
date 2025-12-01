@@ -57,15 +57,12 @@ import { ViewRecordDialog } from '@/components/medical-records/view-record-dialo
 import { EditRecordDialog } from '@/components/medical-records/edit-record-dialog';
 import { LinkImageToToothDialog } from '@/components/medical-records/link-image-to-tooth-dialog';
 import { ViewImageDialog } from '@/components/medical-records/view-image-dialog';
-import type { ClinicalImage, MedicalRecord, MedicalRecordTemplate } from '@/lib/types';
-import {
-  listMedicalRecordTemplates,
-} from '@/services/medical-records';
+import type { ClinicalImage, MedicalRecord } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
 
-export type { MedicalRecord, MedicalRecordTemplate, ClinicalImage } from '@/lib/types';
+export type { MedicalRecord, ClinicalImage } from '@/lib/types';
 
 const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
@@ -73,7 +70,6 @@ export default function MedicalRecordsPage() {
   const { t, isRTL } = useLanguage();
   const [records, setRecords] = React.useState<MedicalRecord[]>([]);
   const [images, setImages] = React.useState<ClinicalImage[]>([]);
-  const [templates, setTemplates] = React.useState<MedicalRecordTemplate[]>([]);
   const [patients, setPatients] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -82,7 +78,6 @@ export default function MedicalRecordsPage() {
   const [recordTypeFilter, setRecordTypeFilter] = React.useState('all');
   
   const [imageSearchTerm, setImageSearchTerm] = React.useState('');
-  const [templateSearchTerm, setTemplateSearchTerm] = React.useState('');
 
   const [recordToView, setRecordToView] = React.useState<MedicalRecord | null>(null);
   const [recordToEdit, setRecordToEdit] = React.useState<MedicalRecord | null>(null);
@@ -104,8 +99,6 @@ export default function MedicalRecordsPage() {
       const hash = window.location.hash.slice(1); // Remove the # character
       if (hash === 'clinical-images') {
         setActiveTab('clinical-images');
-      } else if (hash === 'templates') {
-        setActiveTab('templates');
       } else if (hash === 'medical-records' || hash === '') {
         setActiveTab('medical-records');
       }
@@ -126,11 +119,10 @@ export default function MedicalRecordsPage() {
     async function fetchData() {
         try {
         // Fetch all data from Neon database
-        const [patientsResponse, recordsResponse, imagesResponse, templatesData] = await Promise.all([
+        const [patientsResponse, recordsResponse, imagesResponse] = await Promise.all([
           fetch('/api/patients'),
           fetch('/api/medical-records'),
           fetch('/api/clinical-images'),
-          listMedicalRecordTemplates(),
         ]);
         
         const patientsData = patientsResponse.ok ? await patientsResponse.json() : { patients: [] };
@@ -139,7 +131,6 @@ export default function MedicalRecordsPage() {
         
             setRecords(recordsData.records || []);
             setImages(imagesData.images || []);
-            setTemplates(templatesData);
             setPatients(patientsData.patients || []);
         } catch (e) {
             console.error('Error fetching data:', e);
@@ -242,26 +233,16 @@ export default function MedicalRecordsPage() {
     
     return filtered;
   }, [images, selectedPatientId, imageSearchTerm, patients]);
-  
-  const filteredTemplates = React.useMemo(() => {
-    return templates.filter(template =>
-      template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
-      template.content.toLowerCase().includes(templateSearchTerm.toLowerCase())
-    );
-  }, [templates, templateSearchTerm]);
 
   const medicalRecordsPageStats = React.useMemo(() => {
-    const draftRecords = filteredRecords.filter(r => r.status === 'Draft').length;
     const recordsTitle = selectedPatientId ? t('medical_records.patient_records') : t('medical_records.total_records');
     const imagesTitle = selectedPatientId ? t('medical_records.patient_images') : t('medical_records.clinical_images');
     
     return [
       { title: recordsTitle, value: filteredRecords.length, description: t('medical_records.all_patient_records'), cardStyle: 'metric-card-blue' },
       { title: imagesTitle, value: filteredImages.length, description: t('medical_records.all_uploaded_images'), cardStyle: 'metric-card-green' },
-      { title: t('medical_records.templates'), value: templates.length, description: t('medical_records.for_faster_documentation'), cardStyle: 'metric-card-purple' },
-      { title: t('medical_records.draft_records'), value: draftRecords, description: t('medical_records.awaiting_finalization'), cardStyle: 'metric-card-orange' },
     ];
-  }, [filteredRecords, filteredImages, templates, selectedPatientId, t]);
+  }, [filteredRecords, filteredImages, selectedPatientId, t]);
 
   const handleSaveRecord = async (data: any) => {
     try {
@@ -532,7 +513,7 @@ export default function MedicalRecordsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2">
           {medicalRecordsPageStats.map((stat, idx) => (
             <Card
               key={stat.title}
@@ -544,10 +525,9 @@ export default function MedicalRecordsPage() {
               tabIndex={0}
               aria-label={stat.title}
               onClick={() => {
-                // 0: total records -> records tab, 1: images -> images tab, 2: templates -> templates tab, 3: drafts -> records tab
-                if (idx === 0 || idx === 3) setActiveTab('medical-records');
+                // 0: total records -> records tab, 1: images -> images tab
+                if (idx === 0) setActiveTab('medical-records');
                 else if (idx === 1) setActiveTab('clinical-images');
-                else if (idx === 2) setActiveTab('templates');
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -562,11 +542,9 @@ export default function MedicalRecordsPage() {
                 <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                   {stat.title}
                 </CardTitle>
-                <CardIcon variant={(['blue','green','pink','purple'] as const)[idx % 4]} aria-hidden="true">
+                <CardIcon variant={(['blue','green'] as const)[idx % 2]} aria-hidden="true">
                   {idx === 0 && <FileText className="h-5 w-5" />}
                   {idx === 1 && <Images className="h-5 w-5" />}
-                  {idx === 2 && <User className="h-5 w-5" />}
-                  {idx === 3 && <Pencil className="h-5 w-5" />}
                 </CardIcon>
               </CardHeader>
               <CardContent className="pt-0">
@@ -585,7 +563,6 @@ export default function MedicalRecordsPage() {
           <TabsList>
             <TabsTrigger value="medical-records">{t('medical_records.medical_records')}</TabsTrigger>
             <TabsTrigger value="clinical-images">{t('medical_records.clinical_images')}</TabsTrigger>
-            <TabsTrigger value="templates">{t('medical_records.templates')}</TabsTrigger>
           </TabsList>
           <TabsContent value="medical-records" className="mt-4">
             <Card className="group relative border-2 border-muted hover:border-rose-200 dark:hover:border-rose-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-rose-50/10 dark:to-rose-950/5">
@@ -671,7 +648,7 @@ export default function MedicalRecordsPage() {
                           <TableCell>{record.provider}</TableCell>
                           <TableCell>{record.date}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{record.status === 'Draft' ? t('medical_records.draft') : t('medical_records.final')}</Badge>
+                            <Badge variant="outline">{t('medical_records.final')}</Badge>
                           </TableCell>
                           <TableCell className={cn("text-right", isRTL && "text-left")}>
                             <DropdownMenu>
@@ -848,57 +825,6 @@ export default function MedicalRecordsPage() {
                     )}
                 </CardContent>
              </Card>
-          </TabsContent>
-          <TabsContent value="templates" className="mt-4">
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>{t('medical_records.templates')}</CardTitle>
-                        <div className="relative w-full md:w-auto">
-                            <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
-                            <Input
-                            type="search"
-                            placeholder={t('medical_records.search_templates')}
-                            className={cn("w-full rounded-lg bg-background md:w-[250px] lg:w-[336px]", isRTL ? 'pr-8' : 'pl-8')}
-                            value={templateSearchTerm}
-                            onChange={(e) => setTemplateSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                {loading ? (
-                  <div className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                ) : filteredTemplates.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredTemplates.map((template) => (
-                    <Card key={template.id} className="flex flex-col">
-                        <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span>{template.name}</span>
-                            <Badge variant="outline">{template.type}</Badge>
-                        </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                            {template.content}
-                        </p>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm">
-                            {t('medical_records.use_template')}
-                        </Button>
-                        </CardFooter>
-                    </Card>
-                    ))}
-                </div>
-                ) : (
-                <div className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    <p>{t('medical_records.no_templates_found')}</p>
-                </div>
-                )}
-                </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>

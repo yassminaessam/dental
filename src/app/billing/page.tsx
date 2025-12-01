@@ -83,6 +83,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'Paid' | 'Unpaid' | 'Partially Paid' | 'Overdue'>('all');
   const [invoiceToPay, setInvoiceToPay] = React.useState<Invoice | null>(null);
   const [invoiceToView, setInvoiceToView] = React.useState<Invoice | null>(null);
   const [invoiceToDelete, setInvoiceToDelete] = React.useState<Invoice | null>(null);
@@ -120,7 +121,6 @@ export default function BillingPage() {
             const today = new Date();
             const updatedInvoices = invoiceData.map((invoice: any) => {
               const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
-              let status = invoice.status;
               const totalAmount = Number(invoice.amount) || 0;
               const rawAmountPaid = Number(
                 invoice.amountPaid ?? (invoice.status === 'Paid' ? invoice.amount : 0)
@@ -129,8 +129,20 @@ export default function BillingPage() {
                 ? Math.min(Math.max(rawAmountPaid, 0), totalAmount)
                 : 0;
 
-              if (dueDate && dueDate < today && invoice.status === 'Unpaid' && normalizedAmountPaid < totalAmount) {
-                status = 'Overdue' as const;
+              // Map database status to UI status
+              // Database: Draft, Sent, Paid, Overdue, Cancelled
+              // UI: Paid, Unpaid, Partially Paid, Overdue
+              let status: 'Paid' | 'Unpaid' | 'Partially Paid' | 'Overdue';
+              
+              if (invoice.status === 'Paid' || normalizedAmountPaid >= totalAmount) {
+                status = 'Paid';
+              } else if (normalizedAmountPaid > 0 && normalizedAmountPaid < totalAmount) {
+                status = 'Partially Paid';
+              } else if (dueDate && dueDate < today && normalizedAmountPaid < totalAmount) {
+                status = 'Overdue';
+              } else {
+                // Draft, Sent, or any other status with no payment = Unpaid
+                status = 'Unpaid';
               }
 
               const patientMatchById = invoice.patientId
@@ -447,7 +459,9 @@ export default function BillingPage() {
       const remainingBalance = oldestInvoice.totalAmount - oldestInvoice.amountPaid;
       const creditToApply = Math.min(approvedAmount, remainingBalance);
       const newAmountPaid = oldestInvoice.amountPaid + creditToApply;
-      const newStatus: Invoice['status'] = newAmountPaid >= oldestInvoice.totalAmount ? 'Paid' : 'Partially Paid';
+      // Use 'Paid' if fully paid, otherwise keep as 'Sent' (since API doesn't support 'Partially Paid')
+      const newStatus = newAmountPaid >= oldestInvoice.totalAmount ? 'Paid' : 'Sent';
+      const displayStatus: Invoice['status'] = newAmountPaid >= oldestInvoice.totalAmount ? 'Paid' : 'Partially Paid';
 
       // Update via Neon API
       const response = await fetch(`/api/invoices/${oldestInvoice.id}`, {
@@ -456,18 +470,22 @@ export default function BillingPage() {
         body: JSON.stringify({
           status: newStatus,
           amountPaid: newAmountPaid,
-          notes: `Insurance credit applied: ${claimId}`,
+          notes: oldestInvoice.notes 
+            ? `${oldestInvoice.notes}\nInsurance credit applied: ${claimId}` 
+            : `Insurance credit applied: ${claimId}`,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update invoice');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Invoice update failed:', errorData);
+        throw new Error(errorData.error || 'Failed to update invoice');
       }
 
       setInvoices(prev => 
         prev.map(invoice => 
           invoice.id === oldestInvoice.id 
-            ? { ...invoice, amountPaid: newAmountPaid, status: newStatus, insuranceClaimId: claimId }
+            ? { ...invoice, amountPaid: newAmountPaid, status: displayStatus, insuranceClaimId: claimId }
             : invoice
         )
       );
@@ -490,14 +508,16 @@ export default function BillingPage() {
       if (!invoiceToUpdate) return;
 
       const newAmountPaid = invoiceToUpdate.amountPaid + paymentAmount;
-      const newStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
+      // Use 'Paid' if fully paid, otherwise 'Sent' (since API doesn't support 'Partially Paid')
+      const apiStatus = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Sent';
+      const displayStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
       
       // Update via Neon API
       const response = await fetch(`/api/invoices/${invoiceId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: newStatus,
+          status: apiStatus,
           amountPaid: newAmountPaid,
           notes: invoiceToUpdate.notes 
             ? `${invoiceToUpdate.notes}\nPayment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`
@@ -511,7 +531,7 @@ export default function BillingPage() {
       
       const updatedData = { 
         amountPaid: newAmountPaid, 
-        status: newStatus,
+        status: displayStatus,
         lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
         lastModifiedAt: new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
       };
@@ -677,11 +697,19 @@ export default function BillingPage() {
   }, [buildInvoicePrintHtml, invoices]);
 
   const filteredInvoices = React.useMemo(() => {
-    if (!searchTerm) return invoices;
+    let result = invoices;
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(invoice => invoice.status === statusFilter);
+    }
+    
+    // Apply search filter
+    if (!searchTerm) return result;
     
     const lowerSearchTerm = searchTerm.toLowerCase();
     const normalizedPhoneSearch = lowerSearchTerm.replace(/[^\d]/g, '');
-    return invoices.filter(invoice => {
+    return result.filter(invoice => {
       const patientName = invoice.patient?.toLowerCase() || '';
       const invoiceId = invoice.id?.toLowerCase() || '';
       const patientRecord = resolvePatientRecord(invoice);
@@ -707,7 +735,7 @@ export default function BillingPage() {
         || invoiceId.includes(lowerSearchTerm)
         || phoneMatches;
     });
-  }, [invoices, resolvePatientRecord, searchTerm]);
+  }, [invoices, resolvePatientRecord, searchTerm, statusFilter]);
 
   return (
     <DashboardLayout>
@@ -877,28 +905,104 @@ export default function BillingPage() {
         <Card className="group relative border-2 border-muted hover:border-emerald-200 dark:hover:border-emerald-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-emerald-50/10 dark:to-emerald-950/5">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
           
-          <CardHeader className="relative z-10 flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 group-hover:from-emerald-500/20 group-hover:to-teal-500/20 transition-colors">
-                <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <CardHeader className="relative z-10 flex flex-col gap-4 p-4 sm:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 group-hover:from-emerald-500/20 group-hover:to-teal-500/20 transition-colors">
+                  <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+                  {t('billing.patient_invoices')}
+                </CardTitle>
               </div>
-              <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
-                {t('billing.patient_invoices')}
-              </CardTitle>
+              
+              <div className="relative w-full md:w-auto group/search">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative">
+                  <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-emerald-500 transition-colors duration-300", isRTL ? 'right-3' : 'left-3')} />
+                  <Input
+                    type="search"
+                    placeholder={t('billing.search_by_invoice_or_patient')}
+                    className={cn("w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-emerald-300 dark:hover:border-emerald-700 focus:border-emerald-500 dark:focus:border-emerald-600 py-5 h-auto lg:w-[336px] shadow-sm hover:shadow-md transition-all duration-300", isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
             
-            <div className="relative w-full md:w-auto group/search">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl blur-lg opacity-0 group-hover/search:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative">
-                <Search className={cn("absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-hover/search:text-emerald-500 transition-colors duration-300", isRTL ? 'right-3' : 'left-3')} />
-                <Input
-                  type="search"
-                  placeholder={t('billing.search_by_invoice_or_patient')}
-                  className={cn("w-full rounded-xl bg-background/80 backdrop-blur-sm border-2 border-muted hover:border-emerald-300 dark:hover:border-emerald-700 focus:border-emerald-500 dark:focus:border-emerald-600 py-5 h-auto lg:w-[336px] shadow-sm hover:shadow-md transition-all duration-300", isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            {/* Status Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('all')}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  statusFilter === 'all' && "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md"
+                )}
+              >
+                {t('billing.filter.all')}
+                <Badge variant="secondary" className={cn("ml-2", statusFilter === 'all' && "bg-white/20 text-white")}>
+                  {invoices.length}
+                </Badge>
+              </Button>
+              <Button
+                variant={statusFilter === 'Paid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('Paid')}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  statusFilter === 'Paid' && "bg-green-500 text-white shadow-md hover:bg-green-600"
+                )}
+              >
+                {t('billing.paid')}
+                <Badge variant="secondary" className={cn("ml-2", statusFilter === 'Paid' && "bg-white/20 text-white")}>
+                  {invoices.filter(inv => inv.status === 'Paid').length}
+                </Badge>
+              </Button>
+              <Button
+                variant={statusFilter === 'Unpaid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('Unpaid')}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  statusFilter === 'Unpaid' && "bg-gray-500 text-white shadow-md hover:bg-gray-600"
+                )}
+              >
+                {t('billing.unpaid')}
+                <Badge variant="secondary" className={cn("ml-2", statusFilter === 'Unpaid' && "bg-white/20 text-white")}>
+                  {invoices.filter(inv => inv.status === 'Unpaid').length}
+                </Badge>
+              </Button>
+              <Button
+                variant={statusFilter === 'Partially Paid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('Partially Paid')}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  statusFilter === 'Partially Paid' && "bg-yellow-500 text-white shadow-md hover:bg-yellow-600"
+                )}
+              >
+                {t('billing.partial')}
+                <Badge variant="secondary" className={cn("ml-2", statusFilter === 'Partially Paid' && "bg-white/20 text-white")}>
+                  {invoices.filter(inv => inv.status === 'Partially Paid').length}
+                </Badge>
+              </Button>
+              <Button
+                variant={statusFilter === 'Overdue' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('Overdue')}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  statusFilter === 'Overdue' && "bg-red-500 text-white shadow-md hover:bg-red-600"
+                )}
+              >
+                {t('billing.overdue')}
+                <Badge variant="secondary" className={cn("ml-2", statusFilter === 'Overdue' && "bg-white/20 text-white")}>
+                  {invoices.filter(inv => inv.status === 'Overdue').length}
+                </Badge>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -908,6 +1012,8 @@ export default function BillingPage() {
                   <TableHead>{t('billing.invoiceId')}</TableHead>
                   <TableHead>{t('common.patient')}</TableHead>
                   <TableHead>{t('common.phone')}</TableHead>
+                  <TableHead>{t('billing.item')}</TableHead>
+                  <TableHead>{t('billing.quantity')}</TableHead>
                   <TableHead>{t('billing.issue_date')}</TableHead>
                   <TableHead>{t('billing.due_date')}</TableHead>
                   <TableHead>{t('billing.total_amount')}</TableHead>
@@ -919,7 +1025,7 @@ export default function BillingPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                    <TableRow><TableCell colSpan={10} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={12} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
                     const patient = resolvePatientRecord(invoice);
@@ -936,6 +1042,16 @@ export default function BillingPage() {
                       <TableCell className="font-medium">{invoice.id}</TableCell>
                       <TableCell>{invoice.patient}</TableCell>
                       <TableCell>{phoneCell}</TableCell>
+                      <TableCell>
+                        {invoice.items.length > 0 
+                          ? invoice.items.map(item => item.description).join(', ')
+                          : t('common.na')}
+                      </TableCell>
+                      <TableCell>
+                        {invoice.items.length > 0 
+                          ? invoice.items.reduce((sum, item) => sum + item.quantity, 0)
+                          : 0}
+                      </TableCell>
                       <TableCell>{invoice.issueDate}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>{formatEGP(invoice.totalAmount, true, language)}</TableCell>
@@ -1000,7 +1116,7 @@ export default function BillingPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center">
+                    <TableCell colSpan={12} className="h-24 text-center">
                       {t('billing.no_invoices_found')}
                     </TableCell>
                   </TableRow>

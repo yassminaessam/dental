@@ -25,12 +25,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import type { MedicalRecord, Patient, StaffMember } from '@/lib/types';
-import { listCollection } from '@/lib/collections-client';
+import type { MedicalRecord } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const recordSchema = z.object({
@@ -40,7 +39,7 @@ const recordSchema = z.object({
   date: z.date({ required_error: "Date is required." }),
   complaint: z.string().optional(),
   notes: z.string().optional(),
-  status: z.enum(['Final', 'Draft']),
+  status: z.enum(['Final']),
 });
 
 type RecordFormData = z.infer<typeof recordSchema>;
@@ -57,8 +56,9 @@ interface EditRecordDialogProps {
 export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRecordDialogProps) {
   const { t, isRTL } = useLanguage();
   const [dateOpen, setDateOpen] = React.useState(false);
-  const [patients, setPatients] = React.useState<Patient[]>([]);
-  const [doctors, setDoctors] = React.useState<StaffMember[]>([]);
+  const [patients, setPatients] = React.useState<Array<{ id: string; name: string; lastName?: string; phone?: string }>>([]);
+  const [doctors, setDoctors] = React.useState<Array<{ id: string; name: string; role: string }>>([]);
+  const [loading, setLoading] = React.useState(false);
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
@@ -69,36 +69,68 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
         date: new Date(),
         complaint: '',
         notes: '',
-        status: 'Draft',
+        status: 'Final',
     }
   });
 
+  // Fetch patients and staff from Neon database
   React.useEffect(() => {
     async function fetchData() {
-        type PatientRecord = Omit<Patient, 'dob'> & { dob: string };
-        const patientData = await listCollection<PatientRecord>('patients');
-        setPatients(patientData.map((patient) => ({ ...patient, dob: new Date(patient.dob) })));
-        const staffData = await listCollection<StaffMember>('staff');
-        setDoctors(staffData.filter(s => s.role === 'Dentist'));
+        setLoading(true);
+        try {
+          const [patientsRes, staffRes] = await Promise.all([
+            fetch('/api/patients'),
+            fetch('/api/staff')
+          ]);
+          
+          if (patientsRes.ok) {
+            const data = await patientsRes.json();
+            setPatients(data.patients || []);
+          }
+          
+          if (staffRes.ok) {
+            const data = await staffRes.json();
+            // Filter to only include doctors/dentists
+            const staffList = data.staff || [];
+            setDoctors(staffList.filter((s: { role: string }) => 
+              s.role === 'Dentist' || s.role === 'Doctor' || s.role === 'dentist' || s.role === 'doctor'
+            ));
+          }
+        } catch (error) {
+          console.error('Error fetching data for edit dialog:', error);
+        } finally {
+          setLoading(false);
+        }
     }
     if (open) {
         fetchData();
     }
   }, [open]);
 
+  // Populate form with record data when record and reference data are loaded
   React.useEffect(() => {
-    if (record && patients.length > 0 && doctors.length > 0) {
+    if (record && !loading) {
+      // Find patient by ID first, then by name
+      const patientById = patients.find(p => p.id === record.patientId);
+      const patientByName = patients.find(p => p.name === record.patient);
+      const matchedPatient = patientById || patientByName;
+      
+      // Find provider by ID first, then by name
+      const providerById = doctors.find(d => d.id === record.providerId);
+      const providerByName = doctors.find(d => d.name === record.provider);
+      const matchedProvider = providerById || providerByName;
+      
       form.reset({
-        patient: patients.find(p => p.name === record.patient)?.id || '',
-        provider: doctors.find(d => d.name === record.provider)?.id || '',
+        patient: matchedPatient?.id || '',
+        provider: matchedProvider?.id || '',
         type: record.type,
         date: new Date(record.date),
-        complaint: record.complaint,
+        complaint: record.complaint || '',
         status: record.status,
         notes: record.notes || '',
       });
     }
-  }, [record, form, patients, doctors]);
+  }, [record, form, patients, doctors, loading]);
 
   const onSubmit = (data: RecordFormData) => {
     if (!record) return;
@@ -128,6 +160,11 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
           <DialogTitle>{t('medical_records.edit_record')}</DialogTitle>
           <DialogDescription>{t('medical_records.update_record')}</DialogDescription>
         </DialogHeader>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="grid grid-cols-2 gap-4">
@@ -276,7 +313,6 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Draft">{t('medical_records.status_draft')}</SelectItem>
                         <SelectItem value="Final">{t('medical_records.status_final')}</SelectItem>
                       </SelectContent>
                     </Select>
@@ -290,6 +326,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
             </DialogFooter>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -7,9 +7,10 @@ const parseAmount = (value: unknown): number | undefined => {
   return Number.isFinite(num) ? num : undefined;
 };
 
-export async function GET(_req: Request, context: any) {
+export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const invoice = await InvoicesService.get(context?.params?.id);
+    const { id } = await context.params;
+    const invoice = await InvoicesService.get(id);
     if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ invoice });
   } catch (error) {
@@ -41,9 +42,10 @@ const parsePatchPayload = async (request: Request, id: string): Promise<InvoiceU
   } as InvoiceUpdateInput;
 };
 
-export async function PATCH(request: Request, context: any) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const payload = await parsePatchPayload(request, context?.params?.id);
+    const { id } = await context.params;
+    const payload = await parsePatchPayload(request, id);
     const updated = await InvoicesService.update(payload);
     try {
       await syncInvoiceTransaction(updated);
@@ -58,11 +60,12 @@ export async function PATCH(request: Request, context: any) {
   }
 }
 
-export async function DELETE(_req: Request, context: any) {
+export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const invoice = await InvoicesService.get(context?.params?.id);
+    const { id } = await context.params;
+    const invoice = await InvoicesService.get(id);
     if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    await InvoicesService.remove(context?.params?.id);
+    await InvoicesService.remove(id);
     try {
       await removeInvoiceTransaction(invoice.id);
     } catch (error) {
