@@ -147,8 +147,11 @@ export default function InsurancePage() {
     fetchData();
   }, [toast, t]);
 
+  const [cardFilter, setCardFilter] = React.useState<'all' | 'Approved' | 'Processing' | 'Denied'>('all');
+
   const insurancePageStats = React.useMemo(() => {
     const totalClaims = claims.length;
+    const approvedClaims = claims.filter(c => c.status === 'Approved').length;
     const approvedAmount = claims
       .filter(c => c.status === 'Approved' && c.approvedAmount)
       .reduce((acc, c) => acc + parseFloat(c.approvedAmount!.replace(/[^0-9.-]+/g, '')), 0);
@@ -156,10 +159,10 @@ export default function InsurancePage() {
     const deniedClaims = claims.filter(c => c.status === 'Denied').length;
 
     return [
-      { title: t('insurance.total_claims'), value: totalClaims, description: t('insurance.all_insurance_claims'), valueClassName: "" },
-      { title: t('insurance.approved_amount'), value: formatEGP(approvedAmount, true, language), description: t('insurance.approved_claims'), valueClassName: "text-green-600" },
-      { title: t('common.pending'), value: pendingClaims, description: t('insurance.pending_credit'), valueClassName: "text-orange-500" },
-      { title: t('insurance.status.denied'), value: deniedClaims, description: t('insurance.action.denied'), valueClassName: "text-red-600" },
+      { title: t('insurance.total_claims'), value: totalClaims, description: t('insurance.all_insurance_claims'), filterValue: 'all' as const, valueColor: 'text-blue-900 dark:text-blue-100' },
+      { title: t('insurance.approved_amount'), value: `${approvedClaims}`, secondaryValue: formatEGP(approvedAmount, true, language), description: t('insurance.approved_claims'), filterValue: 'Approved' as const, valueColor: 'text-emerald-900 dark:text-emerald-100' },
+      { title: t('common.pending'), value: pendingClaims, description: t('insurance.pending_credit'), filterValue: 'Processing' as const, valueColor: 'text-amber-900 dark:text-amber-100' },
+      { title: t('insurance.status.denied'), value: deniedClaims, description: t('insurance.action.denied'), filterValue: 'Denied' as const, valueColor: 'text-rose-900 dark:text-rose-100' },
     ];
   }, [claims, t, language]);
 
@@ -313,8 +316,11 @@ export default function InsurancePage() {
       })
       .filter((claim) =>
         statusFilter === 'all' || claim.status.toLowerCase() === statusFilter
+      )
+      .filter((claim) =>
+        cardFilter === 'all' || claim.status === cardFilter
       );
-  }, [claims, getClaimPhone, searchTerm, statusFilter]);
+  }, [claims, getClaimPhone, searchTerm, statusFilter, cardFilter]);
 
   const filteredProviders = React.useMemo(() => {
     return providers.filter(provider => provider.name.toLowerCase().includes(providerSearchTerm.toLowerCase()));
@@ -368,22 +374,32 @@ export default function InsurancePage() {
           </div>
         </div>
 
-        {/* Ultra Enhanced Stats Cards */}
+        {/* Ultra Enhanced Stats Cards - Clickable Filters */}
         <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {insurancePageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
             const icons = [FileText, DollarSign, Clock, AlertCircle];
             const Icon = icons[index % icons.length];
+            const isActive = cardFilter === stat.filterValue;
             
             return (
               <Card 
                 key={stat.title}
+                onClick={() => setCardFilter(stat.filterValue)}
                 className={cn(
                   "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
-                  cardStyle
+                  cardStyle,
+                  isActive && "ring-4 ring-white/50 scale-105"
                 )}
               >
+                {/* Active Indicator */}
+                {isActive && (
+                  <div className="absolute top-2 right-2 z-20">
+                    <CheckCircle2 className="h-5 w-5 text-white drop-shadow-lg" />
+                  </div>
+                )}
+                
                 {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
@@ -394,9 +410,17 @@ export default function InsurancePage() {
                       <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
                         {stat.title}
                       </CardTitle>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className={cn(
+                        "text-xl sm:text-2xl lg:text-3xl font-bold drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300",
+                        stat.valueColor
+                      )}>
                         {stat.value}
                       </div>
+                      {stat.secondaryValue && (
+                        <div className="text-sm font-semibold text-white/80">
+                          {stat.secondaryValue}
+                        </div>
+                      )}
                     </div>
                     <CardIcon 
                       variant={(['blue', 'green', 'orange', 'purple'] as const)[index % 4]}
@@ -414,8 +438,13 @@ export default function InsurancePage() {
                     {stat.description}
                   </p>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Active</span>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full animate-pulse",
+                      isActive ? "bg-white" : "bg-gray-500 dark:bg-gray-400"
+                    )} />
+                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      {isActive ? t('common.active') || 'Active Filter' : t('common.click_to_filter') || 'Click to filter'}
+                    </span>
                     <div className="ml-auto">
                       <div className="text-xs text-white/60 font-bold">↗</div>
                     </div>
@@ -464,6 +493,24 @@ export default function InsurancePage() {
                   <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
                     {t('insurance.insurance_claims')}
                   </CardTitle>
+                  {/* Card Filter Indicator */}
+                  {cardFilter !== 'all' && (
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "ml-2 cursor-pointer hover:opacity-80 transition-opacity",
+                        cardFilter === 'Approved' && "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+                        cardFilter === 'Processing' && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+                        cardFilter === 'Denied' && "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                      )}
+                      onClick={() => setCardFilter('all')}
+                    >
+                      {cardFilter === 'Approved' && t('insurance.status.approved')}
+                      {cardFilter === 'Processing' && t('insurance.status.processing')}
+                      {cardFilter === 'Denied' && t('insurance.status.denied')}
+                      <XCircle className="h-3 w-3 ml-1" />
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row">
                   <div className="relative w-full md:w-auto">

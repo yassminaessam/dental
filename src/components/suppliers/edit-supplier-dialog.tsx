@@ -17,6 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Supplier } from '@/app/suppliers/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -28,12 +30,47 @@ const supplierSchema = z.object({
   address: z.string().optional(),
   category: z.string().optional(),
   paymentTerms: z.string().optional(),
+  rating: z.number().min(0).max(5).optional(),
   status: z.enum(['Active', 'Inactive']),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
 
 const supplierPaymentTerms = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
+
+// Star Rating Component
+function StarRating({ value, onChange }: { value: number; onChange: (rating: number) => void }) {
+  const [hoverValue, setHoverValue] = React.useState<number | null>(null);
+  
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+          title={`${star} star${star > 1 ? 's' : ''}`}
+          className="p-0.5 hover:scale-110 transition-transform focus:outline-none"
+          onMouseEnter={() => setHoverValue(star)}
+          onMouseLeave={() => setHoverValue(null)}
+          onClick={() => onChange(star === value ? 0 : star)}
+        >
+          <Star
+            className={cn(
+              "h-6 w-6 transition-colors",
+              (hoverValue !== null ? star <= hoverValue : star <= value)
+                ? "fill-yellow-400 text-yellow-400"
+                : "fill-transparent text-gray-300 dark:text-gray-600"
+            )}
+          />
+        </button>
+      ))}
+      <span className="ml-2 text-sm text-muted-foreground">
+        {value > 0 ? `${value}/5` : ''}
+      </span>
+    </div>
+  );
+}
 
 interface EditSupplierDialogProps {
   supplier: Supplier;
@@ -57,6 +94,7 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
         address: supplier.address ?? undefined,
         category: supplier.category ?? undefined,
         paymentTerms: supplier.paymentTerms ?? undefined,
+        rating: supplier.rating ?? 0,
         status: supplier.status,
       });
     }
@@ -174,26 +212,43 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('common.status')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('suppliers.rating') || 'Rating'}</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('common.select_status')} />
-                      </SelectTrigger>
+                      <StarRating
+                        value={field.value ?? 0}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Active">{t('common.active')}</SelectItem>
-                      <SelectItem value="Inactive">{t('common.inactive')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('common.status')}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('common.select_status')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Active">{t('common.active')}</SelectItem>
+                        <SelectItem value="Inactive">{t('common.inactive')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
               <Button type="submit">{t('common.save_changes')}</Button>
