@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 export type PurchaseOrderStatus = 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
 
@@ -66,7 +67,7 @@ async function create(input: PurchaseOrderCreateInput): Promise<PurchaseOrder> {
       total: input.total,
       orderDate: input.orderDate,
       expectedDelivery: input.expectedDelivery ?? null,
-      items: input.items ?? [],
+      items: (input.items ?? []) as unknown as Prisma.InputJsonValue,
     },
   });
   return mapRow(created);
@@ -82,7 +83,7 @@ async function update(input: PurchaseOrderUpdateInput): Promise<PurchaseOrder> {
       total: input.total,
       orderDate: input.orderDate,
       expectedDelivery: input.expectedDelivery,
-      items: input.items,
+      items: input.items as Prisma.InputJsonValue | undefined,
     },
   });
   return mapRow(updated);

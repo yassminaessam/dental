@@ -630,3 +630,130 @@ enum NotificationPriority {
   HIGH
   URGENT
 }
+
+// Patient Messages/Communications
+enum MessageType {
+  Email
+  SMS
+  WhatsApp
+  Call
+}
+
+enum MessageStatus {
+  Sent
+  Delivered
+  Failed
+  Queued
+  Read
+}
+
+enum MessagePriority {
+  low
+  normal
+  high
+}
+
+model PatientMessage {
+  id          String          @id @default(uuid())
+  patientId   String
+  patientName String
+  type        MessageType     @default(Email)
+  subject     String
+  content     String          @db.Text
+  snippet     String?
+  status      MessageStatus   @default(Queued)
+  priority    MessagePriority @default(normal)
+  sentAt      DateTime?
+  readAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([type])
+}
+
+// Insurance Claims
+enum InsuranceClaimStatus {
+  Processing
+  Approved
+  Denied
+  Pending
+}
+
+model InsuranceClaim {
+  id              String                @id @default(uuid())
+  patientId       String
+  patientName     String
+  insuranceProvider String
+  policyNumber    String?
+  procedure       String
+  procedureCode   String?
+  amount          Decimal               @db.Decimal(12, 2)
+  approvedAmount  Decimal?              @db.Decimal(12, 2)
+  status          InsuranceClaimStatus  @default(Pending)
+  submitDate      DateTime              @default(now())
+  responseDate    DateTime?
+  notes           String?               @db.Text
+  treatmentId     String?
+  invoiceId       String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([submitDate])
+}
+
+// Referrals
+enum ReferralStatus {
+  pending
+  scheduled
+  completed
+  cancelled
+}
+
+enum ReferralUrgency {
+  routine
+  urgent
+  emergency
+}
+
+model Referral {
+  id            String          @id @default(uuid())
+  patientId     String
+  patientName   String
+  specialty     String
+  specialist    String
+  reason        String          @db.Text
+  urgency       ReferralUrgency @default(routine)
+  status        ReferralStatus  @default(pending)
+  referringDoctor String?
+  referringDoctorId String?
+  referralDate  DateTime        @default(now())
+  appointmentDate DateTime?
+  notes         String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([referralDate])
+}
+
+// Tooth Image Links (linking clinical images to specific teeth)
+model ToothImageLink {
+  id            String   @id @default(uuid())
+  patientId     String
+  patientName   String
+  imageId       String
+  toothNumber   Int
+  condition     String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([imageId])
+  @@index([toothNumber])
+}

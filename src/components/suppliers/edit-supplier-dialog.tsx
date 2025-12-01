@@ -52,11 +52,11 @@ export function EditSupplierDialog({ supplier, onSave, open, onOpenChange }: Edi
     if (supplier) {
       form.reset({
         name: supplier.name,
-        phone: supplier.phone,
-        email: supplier.email,
-        address: supplier.address,
-        category: supplier.category,
-        paymentTerms: supplier.paymentTerms,
+        phone: supplier.phone ?? undefined,
+        email: supplier.email ?? undefined,
+        address: supplier.address ?? undefined,
+        category: supplier.category ?? undefined,
+        paymentTerms: supplier.paymentTerms ?? undefined,
         status: supplier.status,
       });
     }

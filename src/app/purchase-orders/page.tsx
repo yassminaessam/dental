@@ -195,19 +195,19 @@ export default function PurchaseOrdersPage() {
       const suppliersPayload = suppliersRes.ok ? await suppliersRes.json().catch(() => ({})) : {};
 
       const mappedOrders = Array.isArray(ordersPayload?.orders)
-        ? ordersPayload.orders.map(mapPurchaseOrderResponse)
+        ? ordersPayload.orders.map((item: any) => mapPurchaseOrderResponse(item))
         : [];
       const mappedInventory = Array.isArray(inventoryPayload?.items)
-        ? inventoryPayload.items.map(mapInventoryResponse)
+        ? inventoryPayload.items.map((item: any) => mapInventoryResponse(item))
         : [];
       const mappedSuppliers = Array.isArray(suppliersPayload?.suppliers)
-        ? suppliersPayload.suppliers.map(mapSupplierResponse)
+        ? suppliersPayload.suppliers.map((item: any) => mapSupplierResponse(item))
         : [];
 
       setPurchaseOrders(mappedOrders);
       setInventoryItems(mappedInventory);
       setSuppliers(mappedSuppliers);
-      setLowStockItems(mappedInventory.filter((item) => item.quantity <= item.minQuantity));
+      setLowStockItems(mappedInventory.filter((item: InventoryItem) => item.quantity <= item.minQuantity));
     } catch (error) {
       console.error('Error fetching purchase order data', error);
       toast({
@@ -309,7 +309,7 @@ export default function PurchaseOrdersPage() {
     setSelectedItemPrice("");
   };
 
-  const handleOrderItemChange = (itemId: string, field: 'quantity' | 'unitPrice', value: number) => {
+  const handleOrderItemChange = (itemId: string | undefined, field: 'quantity' | 'unitPrice', value: number) => {
     setOrderItems((prev) =>
       prev.map((item) =>
         item.itemId === itemId
@@ -322,7 +322,7 @@ export default function PurchaseOrdersPage() {
     );
   };
 
-  const handleRemoveOrderItem = (itemId: string) => {
+  const handleRemoveOrderItem = (itemId: string | undefined) => {
     setOrderItems((prev) => prev.filter((item) => item.itemId !== itemId));
   };
 

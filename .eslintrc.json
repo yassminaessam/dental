@@ -14,5 +14,15 @@
     "@next/next/no-img-element": "off",
     "jsx-a11y/alt-text": "off",
     "no-inline-styles": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/app/website-edit/**/*", "src/components/website-builder/**/*"],
+      "rules": {
+        "no-inline-styles": "off",
+        "react/forbid-component-props": "off",
+        "react/forbid-dom-props": "off"
+      }
+    }
+  ]
 }

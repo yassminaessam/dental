@@ -66,8 +66,7 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   const InvoiceContent = () => (
      <div
       id={`printable-invoice-${invoice.id}`}
-      className="px-4 sm:px-10 py-6"
-      style={{ paddingInline: '1.5rem' }}
+      className="px-4 sm:px-10 py-6 print:px-6"
     >
         <DialogHeader>
     <DialogTitle className="text-2xl flex items-center justify-between">

@@ -22,9 +22,10 @@ const parsePatchPayload = async (req: Request) => {
   };
 };
 
-export async function GET(_req: Request, context: { params: { id: string } }) {
+export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const transaction = await getTransaction(context?.params?.id);
+    const { id } = await context.params;
+    const transaction = await getTransaction(id);
     if (!transaction) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
@@ -35,10 +36,11 @@ export async function GET(_req: Request, context: { params: { id: string } }) {
   }
 }
 
-export async function PATCH(req: Request, context: { params: { id: string } }) {
+export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params;
     const patch = await parsePatchPayload(req);
-    const transaction = await updateTransaction(context?.params?.id, patch);
+    const transaction = await updateTransaction(id, patch);
     return NextResponse.json({ transaction });
   } catch (error: any) {
     console.error('[api/transactions/:id] PATCH error', error);
@@ -46,9 +48,10 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
   }
 }
 
-export async function DELETE(_req: Request, context: { params: { id: string } }) {
+export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await deleteTransaction(context?.params?.id);
+    const { id } = await context.params;
+    await deleteTransaction(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[api/transactions/:id] DELETE error', error);

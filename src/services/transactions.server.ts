@@ -1,7 +1,7 @@
 import 'server-only';
 
 import prisma from '@/lib/db';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { Invoice } from '@/services/invoices';
 import { formatEGP } from '@/lib/currency';
 
@@ -50,7 +50,6 @@ export type StoredTransaction = {
   sourceType?: string;
   metadata?: Prisma.InputJsonValue;
   auto?: boolean;
-  completedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -87,9 +86,8 @@ const mapRowToStored = (row: TransactionRow): StoredTransaction => ({
   patientId: row.patientId ?? undefined,
   sourceId: row.sourceId ?? undefined,
   sourceType: row.sourceType ?? undefined,
-  metadata: row.metadata ?? undefined,
+  metadata: (row.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
   auto: row.auto ?? undefined,
-  completedAt: row.completedAt?.toISOString(),
   createdAt: row.createdAt?.toISOString(),
   updatedAt: row.updatedAt?.toISOString(),
 });
@@ -117,10 +115,9 @@ const toDatabasePayload = (input: TransactionRecord) => {
     patientId: input.patientId ?? null,
     sourceId: input.sourceId ?? null,
     sourceType: input.sourceType ?? null,
-    metadata: input.metadata ?? null,
+    metadata: input.metadata ?? Prisma.DbNull,
     auto: input.auto ?? true,
-    completedAt: (input.status ?? 'Completed') === 'Completed' ? normalizeDate(input.date) : null,
-  } satisfies Prisma.PharmacyTransactionUncheckedCreateInput;
+  };
 };
 
 export async function listTransactions(): Promise<StoredTransaction[]> {
@@ -159,7 +156,7 @@ export async function updateTransaction(id: string, patch: Partial<TransactionRe
     patientId: patch.patientId ?? existing.patientId ?? undefined,
     sourceId: patch.sourceId ?? existing.sourceId ?? undefined,
     sourceType: patch.sourceType ?? existing.sourceType ?? undefined,
-    metadata: patch.metadata ?? existing.metadata ?? undefined,
+    metadata: (patch.metadata ?? existing.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
     auto: patch.auto ?? existing.auto ?? true,
     totalAmount: patch.totalAmount ?? (existing.totalAmount != null ? Number(existing.totalAmount) : undefined),
     outstandingAmount: patch.outstandingAmount ?? (existing.outstandingAmount != null ? Number(existing.outstandingAmount) : undefined),
@@ -181,7 +178,6 @@ function invoiceTransactionId(invoiceId: string): string {
 export async function syncInvoiceTransaction(invoice: Invoice, options?: {
   paymentMethod?: string;
   statusOverride?: TransactionStatus;
-  completedAt?: Date | string;
 }): Promise<void> {
   const transactionId = invoiceTransactionId(invoice.id);
   const totalAmount = Number(invoice.amount) || 0;
@@ -214,9 +210,6 @@ export async function syncInvoiceTransaction(invoice: Invoice, options?: {
       sourceId: invoice.id,
       sourceType: 'invoice',
       auto: true,
-      completedAt: status === 'Completed'
-        ? normalizeDate(options?.completedAt ?? new Date())
-        : null,
       metadata: {
         invoiceNumber: invoice.number,
         totalAmount,
@@ -241,9 +234,6 @@ export async function syncInvoiceTransaction(invoice: Invoice, options?: {
       patientName: invoice.patientNameSnapshot ?? null,
       patientId: invoice.patientId ?? null,
       auto: true,
-      completedAt: status === 'Completed'
-        ? normalizeDate(options?.completedAt ?? new Date())
-        : null,
       metadata: {
         invoiceNumber: invoice.number,
         totalAmount,

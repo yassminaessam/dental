@@ -8,13 +8,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   User, 
   Calendar, 
@@ -30,11 +43,20 @@ import {
   Heart,
   Activity,
   TrendingUp,
-  History
+  History,
+  Eye,
+  Edit,
+  Plus,
+  ExternalLink,
+  Printer,
+  Download,
+  Send,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { listCollection } from '@/lib/collections-client';
 import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -87,6 +109,29 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const isRTL = false; // Force LTR layout as requested
+  
+  // State for detail dialogs
+  const [selectedItem, setSelectedItem] = React.useState<any>(null);
+  const [detailDialogType, setDetailDialogType] = React.useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = React.useState<any>(null);
+  
+  // Open detail dialog for an item
+  const openDetailDialog = React.useCallback((type: string, item: any) => {
+    setDetailDialogType(type);
+    setSelectedItem(item);
+  }, []);
+  
+  // Close detail dialog
+  const closeDetailDialog = React.useCallback(() => {
+    setDetailDialogType(null);
+    setSelectedItem(null);
+  }, []);
+  
+  // Navigate to related page
+  const navigateTo = React.useCallback((path: string) => {
+    window.open(path, '_blank');
+  }, []);
+  
   // Local date helpers
   const toValidDate = React.useCallback((value: any): Date | null => {
     if (!value) return null;
@@ -146,89 +191,31 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     [t]
   );
 
-  const fetchClinicalImagesForPatient = React.useCallback(async (currentPatient: Patient) => {
-    const query = new URLSearchParams();
-    if (currentPatient.id) {
-      query.set('patientId', currentPatient.id);
-    }
-
-    const url = `/api/clinical-images${query.toString() ? `?${query.toString()}` : ''}`;
-
-    try {
-      const response = await fetch(url, { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch clinical images (${response.status})`);
-      }
-      const payload = await response.json();
-      if (Array.isArray(payload.images)) {
-        return payload.images as any[];
-      }
-    } catch (error) {
-      console.error('Failed to load clinical images via API, falling back to legacy store', error);
-    }
-
-    try {
-      const legacy = await listCollection('clinical-images');
-      return (legacy as any[]).filter((img) => {
-        if (img.patientId && currentPatient.id) {
-          return img.patientId === currentPatient.id;
-        }
-        return img.patient === currentPatient.name;
-      });
-    } catch (fallbackError) {
-      console.error('Failed to load legacy clinical images', fallbackError);
-      return [];
-    }
-  }, []);
-
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const onOpenChange = externalOnOpenChange || setInternalOpen;
 
   const fetchPatientHistory = React.useCallback(async () => {
-    if (!patient) return;
+    if (!patient || !patient.id) return;
 
     setLoading(true);
     try {
-      const [
-        appointments,
-        treatments,
-        medicalRecords,
-        invoices,
-        insuranceClaims,
-        toothImageLinks,
-        messages,
-        prescriptions,
-        referrals,
-        clinicalImages
-      ] = await Promise.all([
-        listCollection('appointments'),
-        listCollection('treatments'),
-        listCollection('medical-records'),
-        listCollection('invoices'),
-        listCollection('insurance-claims'),
-        listCollection('tooth-image-links'),
-        listCollection('messages'),
-        listCollection('prescriptions'),
-        listCollection('referrals'),
-        fetchClinicalImagesForPatient(patient)
-      ]);
+      // Fetch all patient history from the new unified API endpoint
+      const response = await fetch(`/api/patients/${patient.id}/history`, {
+        cache: 'no-store'
+      });
 
-      // Filter data by patient
-      const patientData: PatientHistoryData = {
-        appointments: (appointments as any[]).filter((apt: any) => apt.patient === patient.name),
-        treatments: (treatments as any[]).filter((t: any) => t.patient === patient.name),
-        medicalRecords: (medicalRecords as any[]).filter((r: any) => r.patient === patient.name),
-        clinicalImages: clinicalImages as any[],
-        invoices: (invoices as any[]).filter((inv: any) => inv.patientId === patient.id || inv.patient === patient.name),
-        insuranceClaims: (insuranceClaims as any[]).filter((claim: any) => claim.patientId === patient.id || claim.patient === patient.name),
-        toothImageLinks: (toothImageLinks as any[]).filter((link: any) => link.patient === patient.name),
-        messages: (messages as any[]).filter((msg: any) => msg.patient === patient.name),
-        prescriptions: (prescriptions as any[]).filter((rx: any) => rx.patient === patient.name),
-        referrals: (referrals as any[]).filter((ref: any) => ref.patient === patient.name)
-      };
+      if (!response.ok) {
+        throw new Error(`Failed to fetch patient history (${response.status})`);
+      }
 
-      setHistoryData(patientData);
+      const data = await response.json();
+
+      if (data.success && data.history) {
+        setHistoryData(data.history);
+      } else {
+        throw new Error(data.error || 'Unknown error fetching patient history');
+      }
     } catch (error) {
       console.error('Error fetching patient history:', error);
       toast({
@@ -239,7 +226,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
     } finally {
       setLoading(false);
     }
-  }, [patient, fetchClinicalImagesForPatient, t, toast]);
+  }, [patient, t, toast]);
 
   React.useEffect(() => {
     if (open && patient) {
@@ -731,13 +718,20 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                           {historyData.medicalRecords
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .map((record, index) => (
-                              <Card key={index} className="p-4">
+                              <Card 
+                                key={index} 
+                                className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200 group"
+                                onClick={() => openDetailDialog('medical-record', record)}
+                              >
                                 <div className="flex items-center justify-between mb-2">
                                   <Badge variant="outline">{record.type}</Badge>
-                                  <span className="text-xs text-muted-foreground">{record.date}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">{formatDateSafe(record.date, 'PPP')}</span>
+                                    <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                  </div>
                                 </div>
                                 <h4 className="font-medium">{record.complaint}</h4>
-        <p className="text-sm text-muted-foreground">{t('medical_records.provider')}: {record.provider}</p>
+                                <p className="text-sm text-muted-foreground">{t('medical_records.provider')}: {record.provider}</p>
                                 <Badge className="mt-2" variant={record.status === 'Final' ? 'default' : 'secondary'}>
                                   {trMedicalRecordStatus(record.status)}
                                 </Badge>
@@ -770,19 +764,29 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                               {historyData.treatments
                                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                 .map((treatment, index) => (
-                                  <div key={index} className="border rounded p-3">
+                                  <div 
+                                    key={treatment.id || index} 
+                                    className="border rounded p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                    onClick={() => openDetailDialog('treatment', treatment)}
+                                  >
                                     <div className="flex items-center justify-between mb-1">
                                       <h4 className="font-medium text-sm">{treatment.procedure}</h4>
-                                      <Badge variant={
-                                        treatment.status === 'Completed' ? 'default' :
-                                        treatment.status === 'In Progress' ? 'secondary' : 'outline'
-                                      }>
-                                        {treatment.status}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant={
+                                          treatment.status === 'Completed' ? 'default' :
+                                          treatment.status === 'InProgress' ? 'secondary' : 'outline'
+                                        }>
+                                          {treatment.status}
+                                        </Badge>
+                                        <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                      </div>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      {treatment.date} • {treatment.doctor} • {treatment.cost}
+                                      {formatDateSafe(treatment.date, 'PPP')} • {treatment.doctor} • {formatEGP(parseFloat(treatment.cost) || 0, true, language)}
                                     </p>
+                                    {treatment.notes && (
+                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{treatment.notes}</p>
+                                    )}
                                   </div>
                                 ))}
                             </div>
@@ -807,20 +811,30 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                               {historyData.appointments
                                 .sort((a, b) => new Date(b.dateTime || b.date).getTime() - new Date(a.dateTime || a.date).getTime())
                                 .map((appointment, index) => (
-                                  <div key={index} className="border rounded p-3">
+                                  <div 
+                                    key={appointment.id || index} 
+                                    className="border rounded p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                    onClick={() => openDetailDialog('appointment', appointment)}
+                                  >
                                     <div className="flex items-center justify-between mb-1">
                                       <h4 className="font-medium text-sm">{appointment.type}</h4>
-                                      <Badge variant={
-                                        appointment.status === 'Completed' ? 'default' :
-                                        appointment.status === 'Confirmed' ? 'secondary' :
-                                        appointment.status === 'Cancelled' ? 'destructive' : 'outline'
-                                      }>
-                                        {appointment.status}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant={
+                                          appointment.status === 'Completed' ? 'default' :
+                                          appointment.status === 'Confirmed' ? 'secondary' :
+                                          appointment.status === 'Cancelled' ? 'destructive' : 'outline'
+                                        }>
+                                          {appointment.status}
+                                        </Badge>
+                                        <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                      </div>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                       {formatDateSafe(appointment.dateTime || appointment.date, 'PPP')} • {appointment.doctor} • {appointment.duration}
                                     </p>
+                                    {appointment.notes && (
+                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{appointment.notes}</p>
+                                    )}
                                   </div>
                                 ))}
                             </div>
@@ -855,20 +869,27 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                               {historyData.invoices
                                 .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
                                 .map((invoice, index) => (
-                                  <div key={index} className="border rounded p-3">
+                                  <div 
+                                    key={invoice.id || index} 
+                                    className="border rounded p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                    onClick={() => openDetailDialog('invoice', invoice)}
+                                  >
                                     <div className="flex items-center justify-between mb-1">
                                       <h4 className="font-medium text-sm">{invoice.id}</h4>
-                                      <Badge variant={
-                                        invoice.status === 'Paid' ? 'default' :
-                                        invoice.status === 'Overdue' ? 'destructive' : 'secondary'
-                                      }>
-                                        {invoice.status}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant={
+                                          invoice.status === 'Paid' ? 'default' :
+                                          invoice.status === 'Overdue' ? 'destructive' : 'secondary'
+                                        }>
+                                          {invoice.status}
+                                        </Badge>
+                                        <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                      </div>
                                     </div>
                                     <div className="text-xs text-muted-foreground space-y-1">
-                                      <p>{t('common.total')}: EGP {invoice.totalAmount?.toFixed(2) || '0.00'}</p>
-                                      <p>{t('billing.paid')}: EGP {invoice.amountPaid?.toFixed(2) || '0.00'}</p>
-                                      <p>Date: {invoice.issueDate}</p>
+                                      <p>{t('common.total')}: {formatEGP(invoice.totalAmount || 0, true, language)}</p>
+                                      <p>{t('billing.paid')}: {formatEGP(invoice.amountPaid || 0, true, language)}</p>
+                                      <p>Date: {formatDateSafe(invoice.issueDate, 'PPP')}</p>
                                     </div>
                                   </div>
                                 ))}
@@ -894,15 +915,22 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                               {historyData.insuranceClaims
                                 .sort((a, b) => new Date(b.submitDate).getTime() - new Date(a.submitDate).getTime())
                                 .map((claim, index) => (
-                                  <div key={index} className="border rounded p-3">
+                                  <div 
+                                    key={claim.id || index} 
+                                    className="border rounded p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                    onClick={() => openDetailDialog('insurance-claim', claim)}
+                                  >
                                     <div className="flex items-center justify-between mb-1">
                                       <h4 className="font-medium text-sm">{claim.procedure}</h4>
-                                      <Badge variant={
-                                        claim.status === 'Approved' ? 'default' :
-                                        claim.status === 'Denied' ? 'destructive' : 'secondary'
-                                      }>
-                                        {claim.status}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant={
+                                          claim.status === 'Approved' ? 'default' :
+                                          claim.status === 'Denied' ? 'destructive' : 'secondary'
+                                        }>
+                                          {claim.status}
+                                        </Badge>
+                                        <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                      </div>
                                     </div>
                                     <div className="text-xs text-muted-foreground space-y-1">
                                       <p>Insurance: {claim.insurance}</p>
@@ -946,13 +974,23 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 .map((image, index) => {
                                   const linkedTooth = historyData.toothImageLinks.find(link => link.imageId === image.id);
                                   return (
-                                    <Card key={index} className="p-2 sm:p-3 w-48 flex-shrink-0">
-                                      <div className="aspect-square bg-muted rounded-lg mb-2 sm:mb-3 overflow-hidden">
+                                    <Card 
+                                      key={index} 
+                                      className="p-2 sm:p-3 w-48 flex-shrink-0 cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group"
+                                      onClick={() => setSelectedImage({
+                                        ...image,
+                                        toothNumber: linkedTooth?.toothNumber
+                                      })}
+                                    >
+                                      <div className="aspect-square bg-muted rounded-lg mb-2 sm:mb-3 overflow-hidden relative">
                                         <img 
                                           src={image.imageUrl} 
                                           alt={image.caption}
-                                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                         />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                          <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                        </div>
                                       </div>
                                       <div className="space-y-2">
                                         <div className="flex items-center justify-between gap-1">
@@ -965,7 +1003,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                           )}
                                         </div>
                                         <h4 className="text-sm font-medium line-clamp-2">{image.caption}</h4>
-                                        <p className="text-xs text-muted-foreground">{image.date}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDateSafe(image.date, 'PPP')}</p>
                                       </div>
                                     </Card>
                                   );
@@ -1042,9 +1080,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                           {historyData.prescriptions
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .map((prescription, index) => (
-                              <Card key={index} className="p-4">
+                              <Card 
+                                key={index} 
+                                className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200 group"
+                                onClick={() => openDetailDialog('prescription', prescription)}
+                              >
                                 <div className="flex items-center justify-between mb-2">
-                                  <h4 className="font-medium">{prescription.medication} {prescription.strength}</h4>
+                                  <h4 className="font-medium flex items-center gap-2">
+                                    {prescription.medication} {prescription.strength}
+                                    <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                  </h4>
                                   <Badge variant={prescription.status === 'Active' ? 'default' : 'secondary'}>
                                     {prescription.status}
                                   </Badge>
@@ -1054,7 +1099,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                   <p><strong>{t('appointments.duration')}:</strong> {prescription.duration}</p>
                                   <p><strong>{t('pharmacy.refills')}:</strong> {prescription.refills}</p>
                                   <p><strong>{t('appointments.doctor')}:</strong> {prescription.doctor}</p>
-                                  <p><strong>{t('common.date')}:</strong> {prescription.date}</p>
+                                  <p><strong>{t('common.date')}:</strong> {formatDateSafe(prescription.date, 'PPP')}</p>
                                 </div>
                               </Card>
                             ))}
@@ -1083,9 +1128,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                           {historyData.referrals
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .map((referral, index) => (
-                              <Card key={index} className="p-4">
+                              <Card 
+                                key={index} 
+                                className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200 group"
+                                onClick={() => openDetailDialog('referral', referral)}
+                              >
                                 <div className="flex items-center justify-between mb-2">
-                                  <h4 className="font-medium">{referral.specialist}</h4>
+                                  <h4 className="font-medium flex items-center gap-2">
+                                    {referral.specialist}
+                                    <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                  </h4>
                                   <div className="flex items-center gap-2">
                                     <Badge variant={referral.urgency === 'urgent' ? 'destructive' : 'secondary'}>
                                       {referral.urgency}
@@ -1101,8 +1153,8 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                                 <div className="text-sm text-muted-foreground space-y-1">
                                   <p><strong>{t('referrals.specialty')}:</strong> {referral.specialty}</p>
                                   <p><strong>{t('referrals.reason')}:</strong> {referral.reason}</p>
-                                  <p><strong>{t('referrals.referral_date')}:</strong> {referral.date}</p>
-                                  {referral.apptDate && <p><strong>{t('appointments.appointment')}:</strong> {referral.apptDate}</p>}
+                                  <p><strong>{t('referrals.referral_date')}:</strong> {formatDateSafe(referral.date, 'PPP')}</p>
+                                  {referral.apptDate && <p><strong>{t('appointments.appointment')}:</strong> {formatDateSafe(referral.apptDate, 'PPP')}</p>}
                                 </div>
                               </Card>
                             ))}
@@ -1123,6 +1175,511 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
           </div>
         )}
       </DialogContent>
+      
+      {/* Detail Dialog for viewing item details */}
+      <Dialog open={!!detailDialogType} onOpenChange={() => closeDetailDialog()}>
+        <DialogContent className="max-w-lg">
+          {selectedItem && (
+            <>
+              {/* Appointment Detail */}
+              {detailDialogType === 'appointment' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      {t('appointments.appointment_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.type} - {formatDateSafe(selectedItem.dateTime || selectedItem.date, 'PPP')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.type')}</p>
+                        <p className="font-medium">{selectedItem.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.status')}</p>
+                        <Badge variant={
+                          selectedItem.status === 'Completed' ? 'default' :
+                          selectedItem.status === 'Confirmed' ? 'secondary' :
+                          selectedItem.status === 'Cancelled' ? 'destructive' : 'outline'
+                        }>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.doctor')}</p>
+                        <p>{selectedItem.doctor}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.duration')}</p>
+                        <p>{selectedItem.duration}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.date')}</p>
+                        <p>{formatDateSafe(selectedItem.dateTime || selectedItem.date, 'PPP p')}</p>
+                      </div>
+                      {selectedItem.reason && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">{t('appointments.reason')}</p>
+                          <p>{selectedItem.reason}</p>
+                        </div>
+                      )}
+                    </div>
+                    {selectedItem.notes && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.notes')}</p>
+                        <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                    <Button onClick={() => navigateTo('/appointments')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('appointments.view_all')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Treatment Detail */}
+              {detailDialogType === 'treatment' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5 text-green-600" />
+                      {t('treatments.treatment_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.procedure}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('treatments.procedure')}</p>
+                        <p className="font-medium">{selectedItem.procedure}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('treatments.status')}</p>
+                        <Badge variant={
+                          selectedItem.status === 'Completed' ? 'default' :
+                          selectedItem.status === 'InProgress' ? 'secondary' : 'outline'
+                        }>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.doctor')}</p>
+                        <p>{selectedItem.doctor}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('treatments.cost')}</p>
+                        <p className="font-medium">{formatEGP(parseFloat(selectedItem.cost) || 0, true, language)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.date')}</p>
+                        <p>{formatDateSafe(selectedItem.date, 'PPP')}</p>
+                      </div>
+                    </div>
+                    {selectedItem.notes && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.notes')}</p>
+                        <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                    <Button onClick={() => navigateTo('/treatments')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('treatments.view_all')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Invoice Detail */}
+              {detailDialogType === 'invoice' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-red-600" />
+                      {t('billing.invoice_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {t('billing.invoice')} #{selectedItem.id}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('billing.invoice_number')}</p>
+                        <p className="font-medium">{selectedItem.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
+                        <Badge variant={
+                          selectedItem.status === 'Paid' ? 'default' :
+                          selectedItem.status === 'Overdue' ? 'destructive' : 'secondary'
+                        }>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.total')}</p>
+                        <p className="font-medium text-lg">{formatEGP(selectedItem.totalAmount || 0, true, language)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('billing.paid')}</p>
+                        <p className="font-medium text-lg text-green-600">{formatEGP(selectedItem.amountPaid || 0, true, language)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('billing.outstanding')}</p>
+                        <p className="font-medium text-lg text-orange-600">
+                          {formatEGP((selectedItem.totalAmount || 0) - (selectedItem.amountPaid || 0), true, language)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('billing.issue_date')}</p>
+                        <p>{formatDateSafe(selectedItem.issueDate, 'PPP')}</p>
+                      </div>
+                    </div>
+                    {selectedItem.items && selectedItem.items.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">{t('billing.items')}</p>
+                        <div className="border rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted">
+                              <tr>
+                                <th className="text-left p-2">{t('common.description')}</th>
+                                <th className="text-right p-2">{t('common.qty')}</th>
+                                <th className="text-right p-2">{t('billing.price')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedItem.items.map((item: any, idx: number) => (
+                                <tr key={idx} className="border-t">
+                                  <td className="p-2">{item.description}</td>
+                                  <td className="text-right p-2">{item.quantity}</td>
+                                  <td className="text-right p-2">{formatEGP(Number(item.total) || 0, true, language)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                    <Button variant="outline" onClick={() => window.print()}>
+                      <Printer className="h-4 w-4 mr-2" />
+                      {t('common.print')}
+                    </Button>
+                    <Button onClick={() => navigateTo('/billing')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('billing.view_all')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Insurance Claim Detail */}
+              {detailDialogType === 'insurance-claim' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-indigo-600" />
+                      {t('insurance.claim_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.procedure}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('insurance.procedure')}</p>
+                        <p className="font-medium">{selectedItem.procedure}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
+                        <Badge variant={
+                          selectedItem.status === 'Approved' ? 'default' :
+                          selectedItem.status === 'Denied' ? 'destructive' : 'secondary'
+                        }>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('insurance.provider')}</p>
+                        <p>{selectedItem.insurance}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('insurance.claim_amount')}</p>
+                        <p className="font-medium">{formatEGP(selectedItem.amount || 0, true, language)}</p>
+                      </div>
+                      {selectedItem.approvedAmount && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">{t('insurance.approved_amount')}</p>
+                          <p className="font-medium text-green-600">{formatEGP(selectedItem.approvedAmount, true, language)}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('insurance.submit_date')}</p>
+                        <p>{formatDateSafe(selectedItem.submitDate, 'PPP')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Medical Record Detail */}
+              {detailDialogType === 'medical-record' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-purple-600" />
+                      {t('medical_records.record_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.type} - {formatDateSafe(selectedItem.date, 'PPP')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('medical_records.type')}</p>
+                        <p className="font-medium">{selectedItem.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
+                        <Badge variant={selectedItem.status === 'Final' ? 'default' : 'secondary'}>
+                          {trMedicalRecordStatus(selectedItem.status)}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('medical_records.provider')}</p>
+                        <p>{selectedItem.provider}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.date')}</p>
+                        <p>{formatDateSafe(selectedItem.date, 'PPP')}</p>
+                      </div>
+                    </div>
+                    {selectedItem.complaint && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('medical_records.complaint')}</p>
+                        <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.complaint}</p>
+                      </div>
+                    )}
+                    {selectedItem.notes && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.notes')}</p>
+                        <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                    <Button onClick={() => navigateTo('/medical-records')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('medical_records.view_all')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Prescription Detail */}
+              {detailDialogType === 'prescription' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Heart className="h-5 w-5 text-pink-600" />
+                      {t('pharmacy.prescription_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.medication} {selectedItem.strength}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('pharmacy.medication')}</p>
+                        <p className="font-medium">{selectedItem.medication}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
+                        <Badge variant={selectedItem.status === 'Active' ? 'default' : 'secondary'}>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('pharmacy.strength')}</p>
+                        <p>{selectedItem.strength}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('pharmacy.dosage')}</p>
+                        <p>{selectedItem.dosage}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.duration')}</p>
+                        <p>{selectedItem.duration}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('pharmacy.refills')}</p>
+                        <p>{selectedItem.refills}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('appointments.doctor')}</p>
+                        <p>{selectedItem.doctor}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.date')}</p>
+                        <p>{formatDateSafe(selectedItem.date, 'PPP')}</p>
+                      </div>
+                    </div>
+                    {selectedItem.instructions && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('pharmacy.instructions')}</p>
+                        <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                    <Button onClick={() => navigateTo('/pharmacy')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('pharmacy.view_all')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+
+              {/* Referral Detail */}
+              {detailDialogType === 'referral' && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-violet-600" />
+                      {t('referrals.referral_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {selectedItem.specialty} - {selectedItem.specialist}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('referrals.specialty')}</p>
+                        <p className="font-medium">{selectedItem.specialty}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
+                        <Badge variant={
+                          selectedItem.status === 'completed' ? 'default' :
+                          selectedItem.status === 'scheduled' ? 'secondary' : 'outline'
+                        }>
+                          {selectedItem.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('referrals.specialist')}</p>
+                        <p>{selectedItem.specialist}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('referrals.urgency')}</p>
+                        <Badge variant={selectedItem.urgency === 'urgent' ? 'destructive' : 'secondary'}>
+                          {selectedItem.urgency}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">{t('referrals.referral_date')}</p>
+                        <p>{formatDateSafe(selectedItem.date, 'PPP')}</p>
+                      </div>
+                      {selectedItem.apptDate && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">{t('appointments.appointment')}</p>
+                          <p>{formatDateSafe(selectedItem.apptDate, 'PPP')}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">{t('referrals.reason')}</p>
+                      <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedItem.reason}</p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => closeDetailDialog()}>
+                      {t('common.close')}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          {selectedImage && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5 text-orange-600" />
+                  {selectedImage.type}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedImage.caption}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center justify-center py-4">
+                <img 
+                  src={selectedImage.imageUrl} 
+                  alt={selectedImage.caption}
+                  className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  {formatDateSafe(selectedImage.date, 'PPP')}
+                  {selectedImage.toothNumber && ` • Tooth #${selectedImage.toothNumber}`}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setSelectedImage(null)}>
+                    {t('common.close')}
+                  </Button>
+                  <Button variant="outline" onClick={() => window.open(selectedImage.imageUrl, '_blank')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('common.download')}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

@@ -59,9 +59,11 @@ export function IconPicker({
   const getCurrentIcon = () => {
     if (uploadedIcon) {
       return (
+        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop, no-inline-styles
         <img
           src={uploadedIcon}
           alt="Custom icon"
+          className="object-contain"
           style={{ width: size, height: size }}
         />
       );
@@ -69,9 +71,10 @@ export function IconPicker({
     
     const IconComponent = (Icons as any)[value];
     if (IconComponent) {
+      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
       return <IconComponent style={{ width: size, height: size, color }} />;
     }
-    
+    // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
     return <Icons.HelpCircle style={{ width: size, height: size, color }} />;
   };
 

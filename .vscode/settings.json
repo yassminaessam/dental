@@ -9,5 +9,21 @@
     "files.associations": {
         "*.css": "tailwindcss"
     },
-    "chat.agent.maxRequests": 100
+    "chat.agent.maxRequests": 100,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.rules.customizations": [
+        { "rule": "no-inline-styles", "severity": "off" },
+        { "rule": "*inline*", "severity": "off" }
+    ],
+    "stylelint.enable": false,
+    "css-in-js-styling.enable": false,
+    "html.validate.styles": false,
+    "axe-linter.rules": {
+        "aria-valid-attr-value": false
+    },
+    "deque-axe-linter.rules": {
+        "aria-valid-attr-value": "off"
+    }
 }

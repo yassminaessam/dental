@@ -117,7 +117,7 @@ const toTransactionRecord = (raw: DocumentData): TransactionRecord => {
     outstandingAmount: raw.outstandingAmount != null && !Number.isNaN(outstandingAmountParsed)
       ? outstandingAmountParsed
       : undefined,
-    metadata: raw.metadata as Record<string, unknown> | undefined,
+    metadata: (raw.metadata ?? undefined) as import('@prisma/client').Prisma.InputJsonValue | undefined,
     auto: typeof raw.auto === 'boolean' ? raw.auto : undefined,
   };
 };

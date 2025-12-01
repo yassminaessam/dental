@@ -346,7 +346,7 @@ export default function PharmacyPage() {
   );
 
     const medicationCategories = React.useMemo(() => {
-        return [...new Set(medications.map((i) => i.category))];
+        return [...new Set(medications.map((i) => i.category).filter((cat): cat is string => !!cat))];
     }, [medications]);
 
     const pharmacyPageStats = React.useMemo(() => {
@@ -383,7 +383,7 @@ export default function PharmacyPage() {
               category: data.category,
               stock: data.stock,
               unitPrice: typeof data.unitPrice === 'number' ? data.unitPrice : parseFloat(String(data.unitPrice)),
-              expiryDate: data.expiryDate ? data.expiryDate.toISOString() : undefined,
+              expiryDate: data.expiryDate ? (typeof data.expiryDate === 'string' ? data.expiryDate : data.expiryDate.toISOString()) : undefined,
             }),
           });
           if (!response.ok) throw new Error('Failed to create medication');
@@ -553,7 +553,7 @@ export default function PharmacyPage() {
         ? mapPrescriptionResponse(prescriptionPayload.prescription)
         : {
             ...prescriptionToDispense,
-            status: 'Completed',
+            status: 'Completed' as const,
             invoiceId,
             treatmentId,
             dispensedAt: new Date().toISOString(),

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ import {
   Eye, 
   History,
   Users as UsersIcon,
+  KeyRound,
   Sparkles,
   Filter,
   SortAsc,
@@ -99,6 +101,9 @@ export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [showHistory, setShowHistory] = React.useState(false);
+  const [patientForUserAccount, setPatientForUserAccount] = React.useState<Patient | null>(null);
+  const [userAccountPassword, setUserAccountPassword] = React.useState('');
+  const [creatingUserAccount, setCreatingUserAccount] = React.useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const isCompact = useMaxWidth(1024); // treat tablets/smaller laptops as compact for this page
@@ -216,6 +221,39 @@ export default function PatientsPage() {
       } catch (error) {
         toast({ title: t('patients.error_deleting'), variant: "destructive" });
       }
+    }
+  };
+
+  const handleCreateUserAccount = async () => {
+    if (!patientForUserAccount || !userAccountPassword) return;
+    
+    setCreatingUserAccount(true);
+    try {
+      const response = await fetch(`/api/patients/${patientForUserAccount.id}/create-account`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: userAccountPassword })
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create user account');
+      }
+      
+      toast({ 
+        title: t('patients.user_account_created'), 
+        description: t('patients.user_account_created_description', { email: patientForUserAccount.email })
+      });
+      setPatientForUserAccount(null);
+      setUserAccountPassword('');
+    } catch (error: any) {
+      toast({ 
+        title: t('patients.error_creating_user_account'), 
+        description: error.message,
+        variant: "destructive" 
+      });
+    } finally {
+      setCreatingUserAccount(false);
     }
   };
 
@@ -544,6 +582,10 @@ export default function PatientsPage() {
                                     <Pencil className="mr-2 h-4 w-4" />
                                     {t('table.edit')}
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setPatientForUserAccount(patient)}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    {t('patients.create_user_account')}
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     {t('table.delete')}
@@ -605,6 +647,64 @@ export default function PatientsPage() {
             <AlertDialogFooter>
               <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeletePatient}>{t('common.delete')}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Create User Account Dialog */}
+        <AlertDialog open={!!patientForUserAccount} onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setPatientForUserAccount(null);
+            setUserAccountPassword('');
+          }
+        }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('patients.create_user_account')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('patients.create_user_account_description', { name: patientForUserAccount?.name || '' })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <div className="space-y-4">
+                <div>
+                  <Label>{t('patients.email')}</Label>
+                  <Input 
+                    value={patientForUserAccount?.email || ''} 
+                    disabled 
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password">{t('auth.password')} *</Label>
+                  <Input 
+                    id="password"
+                    type="password" 
+                    value={userAccountPassword}
+                    onChange={(e) => setUserAccountPassword(e.target.value)}
+                    placeholder={t('patients.enter_password')}
+                    className="mt-1"
+                    minLength={6}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{t('patients.password_hint')}</p>
+                </div>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleCreateUserAccount}
+                disabled={!userAccountPassword || userAccountPassword.length < 6 || creatingUserAccount}
+              >
+                {creatingUserAccount ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('common.creating')}
+                  </>
+                ) : (
+                  t('patients.create_account')
+                )}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

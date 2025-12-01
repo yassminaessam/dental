@@ -490,7 +490,7 @@ function SuppliersPageContent() {
         quantity: Number(item.quantity ?? 0),
         unitPrice: Number(item.unitPrice ?? 0),
       })) : [];
-      const total = items.reduce((acc: number, item) => acc + item.quantity * item.unitPrice, 0);
+      const total = items.reduce((acc: number, item: { quantity: number; unitPrice: number }) => acc + item.quantity * item.unitPrice, 0);
       const payload = {
         supplierId,
         supplierName,
@@ -648,7 +648,7 @@ function SuppliersPageContent() {
         quantity: Number(item.quantity ?? 0),
         unitPrice: Number(item.unitPrice ?? 0),
       })) : [];
-      const total = items.reduce((acc: number, item) => acc + item.quantity * item.unitPrice, 0);
+      const total = items.reduce((acc: number, item: { quantity: number; unitPrice: number }) => acc + item.quantity * item.unitPrice, 0);
       const payload = {
         supplierId,
         supplierName,
