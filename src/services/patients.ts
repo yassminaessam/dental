@@ -19,6 +19,7 @@ function mapRow(row: any): Patient {
     insuranceProvider: row.insuranceProvider ?? undefined,
     policyNumber: row.policyNumber ?? undefined,
     medicalHistory: row.medicalHistory ?? undefined,
+    createdAt: row.createdAt ? new Date(row.createdAt) : undefined,
   };
 }
 

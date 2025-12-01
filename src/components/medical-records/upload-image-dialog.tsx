@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, X, ImageIcon } from 'lucide-react';
 import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,11 +30,21 @@ const imageSchema = z.object({
   type: z.string({ required_error: 'Image type is required.' }),
   file: z.any()
     .refine((files) => files?.length === 1, 'Image is required.')
-    .refine((files) => files?.[0]?.size <= 10 * 1024 * 1024, 'File size must be less than 10MB.')
+    .refine((files) => files?.[0]?.size <= 50 * 1024 * 1024, 'File size must be less than 50MB.')
     .refine((files) => {
       const file = files?.[0];
-      return file && ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
-    }, 'File must be a valid image (JPEG, PNG, GIF, or WebP).'),
+      if (!file) return false;
+      // Accept all common image formats
+      const validTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'image/bmp', 'image/tiff', 'image/svg+xml', 'image/heic', 'image/heif',
+        'image/avif', 'image/x-icon', 'image/vnd.microsoft.icon'
+      ];
+      // Also check by extension if type detection fails
+      const extension = file.name?.toLowerCase().split('.').pop();
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'svg', 'heic', 'heif', 'avif', 'ico'];
+      return validTypes.includes(file.type) || validExtensions.includes(extension);
+    }, 'Please upload a valid image file (JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, HEIC, AVIF).'),
   caption: z.string().optional(),
   toothNumber: z.string().optional(),
 });
@@ -63,6 +73,7 @@ export function UploadImageDialog({
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [uploading, setUploading] = React.useState(false);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
@@ -80,6 +91,42 @@ export function UploadImageDialog({
       toothNumber: defaultToothNumber ? defaultToothNumber.toString() : '',
     },
   });
+
+  // Handle file change for preview
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  };
+
+  // Clear preview when dialog closes
+  React.useEffect(() => {
+    if (!open) {
+      setImagePreview(null);
+    }
+  }, [open]);
+
+  // Update form values when dialog opens with new defaults
+  React.useEffect(() => {
+    if (open) {
+      // Set default patient if provided
+      if (defaultPatient) {
+        form.setValue('patient', defaultPatient);
+      }
+      // Set default tooth number if provided
+      if (defaultToothNumber) {
+        form.setValue('toothNumber', defaultToothNumber.toString());
+      }
+    }
+  }, [open, defaultPatient, defaultToothNumber, form]);
   
   React.useEffect(() => {
     async function fetchPatients() {
@@ -267,9 +314,62 @@ export function UploadImageDialog({
               name="file"
               render={({ field }) => (
                 <FormItem>
-      <FormLabel>{t('medical_records.image_file')} *</FormLabel>
-                   <FormControl>
-                    <Input type="file" accept="image/*" {...form.register("file")} />
+                  <FormLabel>{t('medical_records.image_file')} *</FormLabel>
+                  <FormControl>
+                    <div className="space-y-3">
+                      <Input 
+                        type="file" 
+                        accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.heic,.heif,.avif,.ico"
+                        {...form.register("file")}
+                        onChange={(e) => {
+                          form.register("file").onChange(e);
+                          handleFileChange(e);
+                        }}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {isRTL 
+                          ? "الصيغ المدعومة: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, HEIC, AVIF (حتى 50 ميجابايت)" 
+                          : "Supported: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, HEIC, AVIF (up to 50MB)"}
+                      </p>
+                      {/* Image Preview */}
+                      {imagePreview && (
+                        <div className="relative mt-3 rounded-lg border-2 border-dashed border-muted-foreground/25 p-2">
+                          <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                            onClick={() => {
+                              setImagePreview(null);
+                              form.setValue('file', undefined);
+                              // Reset the file input
+                              const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                              if (fileInput) fileInput.value = '';
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      {!imagePreview && (
+                        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6">
+                          <div className="text-center">
+                            <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {isRTL ? "لم يتم اختيار صورة" : "No image selected"}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     const serialized = patients.map(p => ({
       ...p,
       dob: p.dob.toISOString(),
+      createdAt: p.createdAt?.toISOString() || null,
     }));
 
     return NextResponse.json({ patients: serialized });
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
     const serialized = {
       ...patient,
       dob: patient.dob.toISOString(),
+      createdAt: patient.createdAt?.toISOString() || null,
     };
 
     return NextResponse.json({ patient: serialized }, { status: 201 });

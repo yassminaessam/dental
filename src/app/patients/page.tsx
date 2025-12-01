@@ -111,7 +111,11 @@ export default function PatientsPage() {
         if (!response.ok) throw new Error('Failed to fetch patients');
         
         const data = await response.json();
-        setPatients(data.patients.map((p: any) => ({...p, dob: new Date(p.dob) })));
+        setPatients(data.patients.map((p: any) => ({
+          ...p, 
+          dob: new Date(p.dob),
+          createdAt: p.createdAt ? new Date(p.createdAt) : undefined
+        })));
       } catch (error) {
         toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
       } finally {
@@ -123,18 +127,23 @@ export default function PatientsPage() {
   
   const patientPageStats = React.useMemo(() => {
     const totalPatients = patients.length;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Count patients created in the last 30 days
     const newPatients = patients.filter(p => {
-        const lastVisitDate = new Date(p.lastVisit);
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        return lastVisitDate > thirtyDaysAgo;
+        if (p.createdAt) {
+          const createdDate = new Date(p.createdAt);
+          return createdDate > thirtyDaysAgo;
+        }
+        return false;
     }).length;
     const inactivePatients = patients.filter(p => p.status === 'Inactive').length;
     const averageAge = totalPatients > 0 ? Math.round(patients.reduce((acc, p) => acc + p.age, 0) / totalPatients) : 0;
 
    return [
      { title: t('patients.total_patients'), value: totalPatients, icon: "User", description: t('patients.all_patients_description'), cardStyle: 'metric-card-blue' },
-     { title: t('patients.new_patients_30d'), value: newPatients, icon: "UserPlus", description: t('patients.recent_visits_description'), cardStyle: 'metric-card-green' },
+     { title: t('patients.new_patients_30d'), value: newPatients, icon: "UserPlus", description: t('patients.new_patients_description'), cardStyle: 'metric-card-green' },
      { title: t('patients.inactive_patients'), value: inactivePatients, icon: "UserMinus", description: t('patients.inactive_description'), cardStyle: 'metric-card-orange' },
      { title: t('patients.average_age'), value: averageAge, icon: "UserCheck", description: t('patients.average_age_description'), cardStyle: 'metric-card-purple' },
    ];

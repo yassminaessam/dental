@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2, UserPlus, Clock, Sparkles, Users, Briefcase } from "lucide-react";
+import { Search, User, MoreHorizontal, Pencil, Trash2, Eye, Loader2, UserPlus, Clock, Sparkles, Users, Briefcase, X, Stethoscope, Heart, ClipboardList, ShieldCheck } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
 import { AddEmployeeDialog } from "@/components/staff/add-employee-dialog";
 import { EditEmployeeDialog } from "@/components/staff/edit-employee-dialog";
@@ -52,11 +52,13 @@ import type { StaffMember } from '@/lib/types';
 export type { StaffMember } from '@/lib/types';
 
 const staffRoles = [
-  { name: "Dentist", color: "bg-blue-100 text-blue-800" },
-  { name: "Hygienist", color: "bg-green-100 text-green-800" },
-  { name: "Assistant", color: "bg-purple-100 text-purple-800" },
-  { name: "Receptionist", color: "bg-yellow-100 text-yellow-800" },
-  { name: "Manager", color: "bg-red-100 text-red-800" },
+  { name: "doctor", color: "bg-blue-100 text-blue-800" },
+  { name: "hygienist", color: "bg-green-100 text-green-800" },
+  { name: "assistant", color: "bg-purple-100 text-purple-800" },
+  { name: "receptionist", color: "bg-yellow-100 text-yellow-800" },
+  { name: "manager", color: "bg-red-100 text-red-800" },
+  { name: "nurse", color: "bg-pink-100 text-pink-800" },
+  { name: "admin", color: "bg-slate-100 text-slate-800" },
 ];
 
 const normalizePhoneNumber = (value?: string | null) =>
@@ -69,6 +71,7 @@ export default function StaffPage() {
   const [staffToEdit, setStaffToEdit] = React.useState<StaffMember | null>(null);
   const [staffToDelete, setStaffToDelete] = React.useState<StaffMember | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
 
@@ -208,6 +211,12 @@ export default function StaffPage() {
     const hasNumericSearch = numericSearchTerm.length > 0;
 
     return staff.filter((member) => {
+      // First apply role filter if selected
+      if (selectedRole && member.role !== selectedRole) {
+        return false;
+      }
+
+      // If no search term and role matches (or no role filter), include the member
       if (!hasTextSearch && !hasNumericSearch) return true;
 
       const matchesName = member.name.toLowerCase().includes(lowercasedTerm);
@@ -233,7 +242,7 @@ export default function StaffPage() {
         matchesPhone
       );
     });
-  }, [staff, searchTerm]);
+  }, [staff, searchTerm, selectedRole]);
 
 
   return (
@@ -317,39 +326,66 @@ export default function StaffPage() {
         </div>
 
         {/* Enhanced Role Breakdown */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {staffRoles.map((role, index) => {
-            const icons = [Briefcase, User, UserPlus, Clock, Users];
+            const icons = [Stethoscope, Heart, UserPlus, ClipboardList, Briefcase, Heart, ShieldCheck];
             const Icon = icons[index % icons.length];
             const count = staff.filter(s => s.role === role.name).length;
+            const isSelected = selectedRole === role.name;
             
             return (
               <Card 
                 key={role.name} 
-                className="group relative border-2 border-muted hover:border-violet-200 dark:hover:border-violet-900 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background to-violet-50/10 dark:to-violet-950/5 cursor-pointer hover:scale-105"
+                onClick={() => setSelectedRole(isSelected ? null : role.name)}
+                className={cn(
+                  "group relative border-2 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background cursor-pointer hover:scale-105",
+                  isSelected 
+                    ? "border-violet-500 dark:border-violet-400 ring-2 ring-violet-500/50 dark:ring-violet-400/50 to-violet-100/30 dark:to-violet-900/20 scale-105" 
+                    : "border-muted hover:border-violet-200 dark:hover:border-violet-900 to-violet-50/10 dark:to-violet-950/5"
+                )}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                 
                 <CardContent className="relative z-10 p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 group-hover:from-violet-500/20 group-hover:to-fuchsia-500/20 transition-colors">
-                      <Icon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                    <div className={cn(
+                      "p-2 rounded-xl transition-colors",
+                      isSelected 
+                        ? "bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30" 
+                        : "bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 group-hover:from-violet-500/20 group-hover:to-fuchsia-500/20"
+                    )}>
+                      <Icon className={cn(
+                        "h-5 w-5",
+                        isSelected 
+                          ? "text-violet-700 dark:text-violet-300" 
+                          : "text-violet-600 dark:text-violet-400"
+                      )} />
                     </div>
                     <Badge className={cn("text-xs font-semibold", role.color)}>
-                      {t('common.active')}
+                      {isSelected ? t('common.filtered') : t('common.active')}
                     </Badge>
                   </div>
                   
                   <div className="space-y-1">
-                    <div className="text-sm font-bold text-muted-foreground">{t(`roles.${role.name.toLowerCase()}`)}</div>
-                    <div className="text-2xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+                    <div className="text-sm font-bold text-muted-foreground">{t(`roles.${role.name}`)}</div>
+                    <div className={cn(
+                      "text-2xl font-black bg-clip-text text-transparent",
+                      isSelected 
+                        ? "bg-gradient-to-r from-violet-700 to-fuchsia-700 dark:from-violet-300 dark:to-fuchsia-300" 
+                        : "bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400"
+                    )}>
                       {count}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2 mt-3">
-                    <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-                    <span className="text-xs text-muted-foreground font-medium">Department</span>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      isSelected ? "bg-violet-600 animate-pulse" : "bg-violet-500 animate-pulse"
+                    )} />
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {isSelected ? t('common.click_to_clear') : t('common.click_to_filter')}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -370,6 +406,16 @@ export default function StaffPage() {
                   <CardTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
                     {t('staff.directory')}
                   </CardTitle>
+                  {selectedRole && (
+                    <Badge 
+                      variant="secondary"
+                      className="flex items-center gap-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+                      onClick={() => setSelectedRole(null)}
+                    >
+                      <span>{t(`roles.${selectedRole}`)}</span>
+                      <X className="h-3 w-3" />
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="relative w-full md:w-auto group/search">

@@ -467,12 +467,12 @@ export default function AppointmentsPage() {
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.type}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>{appt.duration}</TableCell>
                               <TableCell className={cn("whitespace-nowrap", isRTL ? 'text-right' : 'text-left')}>
-                                <Badge variant={
-                                  appt.status === 'Cancelled' ? 'destructive' :
-                                  appt.status === 'Completed' ? 'default' :
-                                  'secondary'
-                                } className={cn(
-                                  appt.status === 'Completed' && 'bg-green-100 text-green-800'
+                                <Badge className={cn(
+                                  "font-medium",
+                                  appt.status === 'Cancelled' && 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                                  appt.status === 'Completed' && 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                                  appt.status === 'Confirmed' && 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                                  appt.status === 'Pending' && 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                                 )}>
                                   {t(
                                     appt.status === 'Cancelled'

@@ -19,10 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { PatientCombobox } from '@/components/ui/patient-combobox';
 import { cn } from "@/lib/utils";
 import { allHealthyDentalChart } from "@/lib/data/dental-chart-data";
-import { Download, Printer, Search, User, Loader2, Sparkles, Activity } from "lucide-react";
+import { Download, Printer, Search, User, Loader2, Sparkles, Activity, Check, ChevronsUpDown } from "lucide-react";
 import InteractiveDentalChart from "@/components/dental-chart/interactive-dental-chart";
 import { ToothDetailCard } from '@/components/dental-chart/tooth-detail-card';
 import { EnhancedToothDetailCard } from '@/components/dental-chart/enhanced-tooth-detail-card';
@@ -219,6 +233,7 @@ export default function DentalChartPage() {
     const [historyTooth, setHistoryTooth] = React.useState<Tooth | null>(null);
     const [highlightedCondition, setHighlightedCondition] = React.useState<ToothCondition | 'all'>('all');
     const [showUploadDialog, setShowUploadDialog] = React.useState(false);
+    const [conditionPopoverOpen, setConditionPopoverOpen] = React.useState(false);
     const { toast } = useToast();
 
     // Handle image upload from dental chart context
@@ -235,6 +250,7 @@ export default function DentalChartPage() {
                     imageUrl: data.imageUrl,
                     caption: data.caption || '',
                     date: new Date().toISOString(),
+                    toothNumber: data.toothNumber || selectedTooth?.id || null,
                 }),
             });
             
@@ -248,9 +264,10 @@ export default function DentalChartPage() {
         description: t('dental_chart.toast.image_uploaded_desc'),
             });
             
-            // Optionally refresh the selected tooth data if needed
+            // Refresh the selected tooth data to show the new image
             if (selectedTooth) {
-                // You could refresh the tooth's related images here
+                // Trigger a re-render of the tooth detail card by updating the selected tooth
+                setSelectedTooth({ ...selectedTooth });
             }
         } catch (error) {
             console.error('Error handling image upload:', error);
@@ -491,23 +508,378 @@ export default function DentalChartPage() {
                 />
               </div>
             </div>
-            <Select onValueChange={(value) => setHighlightedCondition(value as ToothCondition | 'all')} value={highlightedCondition}>
-              <SelectTrigger className="rounded-xl border-2 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                <SelectValue placeholder={t('dental_chart.all_conditions')} />
-              </SelectTrigger>
-              <SelectContent className="max-h-96 overflow-y-auto">
-                <SelectItem value="all">{t('dental_chart.all_conditions')}</SelectItem>
-                <SelectItem value="healthy">{t('dental_chart.healthy')}</SelectItem>
-                <SelectItem value="cavity">{t('dental_chart.cavity')}</SelectItem>
-                <SelectItem value="filling">{t('dental_chart.filling')}</SelectItem>
-                <SelectItem value="crown">{t('dental_chart.crown')}</SelectItem>
-                <SelectItem value="missing">{t('dental_chart.missing')}</SelectItem>
-                <SelectItem value="root-canal">{t('dental_chart.root_canal')}</SelectItem>
-                <SelectItem value="implant">{t('dental_chart.implant')}</SelectItem>
-                <SelectItem value="veneer">{t('dental_chart.veneer')}</SelectItem>
-                <SelectItem value="extraction">{t('dental_chart.extraction')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover open={conditionPopoverOpen} onOpenChange={setConditionPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={conditionPopoverOpen}
+                  className="w-full justify-between rounded-xl border-2 hover:border-purple-300 dark:hover:border-purple-700 transition-colors h-10"
+                >
+                  <span className="flex items-center gap-2">
+                    {highlightedCondition !== 'all' && (
+                      <span className={cn(
+                        "w-3 h-3 rounded-full",
+                        dentalChartStats.find(s => s.condition === highlightedCondition)?.color || 'bg-gray-400'
+                      )} />
+                    )}
+                    {highlightedCondition === 'all' 
+                      ? t('dental_chart.all_conditions')
+                      : t(dentalChartStats.find(s => s.condition === highlightedCondition)?.labelKey || 'dental_chart.all_conditions')
+                    }
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder={isRTL ? "ابحث عن الحالة..." : "Search conditions..."} />
+                  <CommandList className="max-h-[400px]">
+                    <CommandEmpty>{isRTL ? "لم يتم العثور على حالة" : "No condition found"}</CommandEmpty>
+                    
+                    {/* All Conditions Option */}
+                    <CommandGroup>
+                      <CommandItem
+                        value="all"
+                        onSelect={() => {
+                          setHighlightedCondition('all');
+                          setConditionPopoverOpen(false);
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", highlightedCondition === 'all' ? "opacity-100" : "opacity-0")} />
+                        {t('dental_chart.all_conditions')}
+                      </CommandItem>
+                    </CommandGroup>
+                    
+                    <CommandSeparator />
+                    
+                    {/* Basic */}
+                    <CommandGroup heading={isRTL ? "أساسي" : "Basic"}>
+                      {dentalChartStats.filter(s => s.category === 'basic').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Missing */}
+                    <CommandGroup heading={isRTL ? "مفقود" : "Missing"}>
+                      {dentalChartStats.filter(s => s.category === 'missing').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Bleaching */}
+                    <CommandGroup heading={isRTL ? "تبييض" : "Bleaching"}>
+                      {dentalChartStats.filter(s => s.category === 'bleaching').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Bridges */}
+                    <CommandGroup heading={isRTL ? "الجسور" : "Bridges"}>
+                      {dentalChartStats.filter(s => s.category === 'bridges').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Crowns */}
+                    <CommandGroup heading={isRTL ? "التيجان" : "Crowns"}>
+                      {dentalChartStats.filter(s => s.category === 'crowns').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Fillings */}
+                    <CommandGroup heading={isRTL ? "الحشوات" : "Fillings"}>
+                      {dentalChartStats.filter(s => s.category === 'fillings').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Inlays */}
+                    <CommandGroup heading={isRTL ? "الحشوات الداخلية" : "Inlays"}>
+                      {dentalChartStats.filter(s => s.category === 'inlays').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Onlays */}
+                    <CommandGroup heading={isRTL ? "الحشوات الخارجية" : "Onlays"}>
+                      {dentalChartStats.filter(s => s.category === 'onlays').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Extractions */}
+                    <CommandGroup heading={isRTL ? "الخلع" : "Extractions"}>
+                      {dentalChartStats.filter(s => s.category === 'extractions').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Root Canal */}
+                    <CommandGroup heading={isRTL ? "علاج العصب" : "Root Canal"}>
+                      {dentalChartStats.filter(s => s.category === 'root_canal').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Pulpotomy */}
+                    <CommandGroup heading={isRTL ? "بتر اللب" : "Pulpotomy"}>
+                      {dentalChartStats.filter(s => s.category === 'pulpotomy').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Posts & Cores */}
+                    <CommandGroup heading={isRTL ? "الدعامات والأنوية" : "Posts & Cores"}>
+                      {dentalChartStats.filter(s => s.category === 'posts_cores').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Implants */}
+                    <CommandGroup heading={isRTL ? "الزراعة" : "Implants"}>
+                      {dentalChartStats.filter(s => s.category === 'implants').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Veneers */}
+                    <CommandGroup heading={isRTL ? "القشور" : "Veneers"}>
+                      {dentalChartStats.filter(s => s.category === 'veneers').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Scaling */}
+                    <CommandGroup heading={isRTL ? "التنظيف" : "Scaling"}>
+                      {dentalChartStats.filter(s => s.category === 'scaling').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Gingivectomy */}
+                    <CommandGroup heading={isRTL ? "قطع اللثة" : "Gingivectomy"}>
+                      {dentalChartStats.filter(s => s.category === 'gingivectomy').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Imaging */}
+                    <CommandGroup heading={isRTL ? "التصوير" : "Imaging"}>
+                      {dentalChartStats.filter(s => s.category === 'imaging').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    
+                    {/* Other */}
+                    <CommandGroup heading={isRTL ? "أخرى" : "Other"}>
+                      {dentalChartStats.filter(s => s.category === 'other').map((stat) => (
+                        <CommandItem
+                          key={stat.condition}
+                          value={stat.condition}
+                          onSelect={() => {
+                            setHighlightedCondition(stat.condition);
+                            setConditionPopoverOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", highlightedCondition === stat.condition ? "opacity-100" : "opacity-0")} />
+                          <span className={cn("w-3 h-3 rounded-full mr-2", stat.color)} />
+                          {t(stat.labelKey)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </CardContent>
         </Card>
 

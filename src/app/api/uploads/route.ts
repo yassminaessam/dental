@@ -32,8 +32,20 @@ function getDriver(): StorageDriver {
 
 export const runtime = 'nodejs';
 
-const MAX_BYTES = 15 * 1024 * 1024; // 15MB cap
-const ALLOWED_TYPES = new Set(['image/png','image/jpeg','image/webp','image/gif','application/pdf']);
+const MAX_BYTES = 50 * 1024 * 1024; // 50MB cap
+const ALLOWED_TYPES = new Set([
+  'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif',
+  'image/bmp', 'image/tiff', 'image/svg+xml', 'image/heic', 'image/heif',
+  'image/avif', 'image/x-icon', 'image/vnd.microsoft.icon',
+  'application/pdf'
+]);
+
+// Helper to check file extension if MIME type detection fails
+function isValidImageExtension(filename: string): boolean {
+  const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'svg', 'heic', 'heif', 'avif', 'ico', 'pdf'];
+  const extension = filename?.toLowerCase().split('.').pop();
+  return validExtensions.includes(extension || '');
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,11 +72,13 @@ export async function POST(req: NextRequest) {
     
     if (file.size > MAX_BYTES) {
       console.error('❌ File too large:', file.size, 'bytes');
-      return NextResponse.json({ error: 'File too large' }, { status: 413 });
+      return NextResponse.json({ error: 'File too large (max 50MB)' }, { status: 413 });
     }
-    if (!ALLOWED_TYPES.has(file.type)) {
+    
+    // Check both MIME type and extension for flexibility
+    if (!ALLOWED_TYPES.has(file.type) && !isValidImageExtension(file.name)) {
       console.error('❌ Unsupported content type:', file.type);
-      return NextResponse.json({ error: 'Unsupported content type' }, { status: 415 });
+      return NextResponse.json({ error: 'Unsupported file type. Please upload an image file.' }, { status: 415 });
     }
 
     console.log('✅ File validation passed, converting to buffer...');

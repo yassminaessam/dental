@@ -179,6 +179,7 @@ export interface Patient {
   insuranceProvider?: string;
   policyNumber?: string;
   medicalHistory?: PatientMedicalHistoryEntry[];
+  createdAt?: Date; // When the patient was added to the system
 }
 
 export type AppointmentStatus = 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
