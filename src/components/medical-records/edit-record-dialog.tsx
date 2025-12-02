@@ -39,7 +39,7 @@ const recordSchema = z.object({
   date: z.date({ required_error: "Date is required." }),
   complaint: z.string().optional(),
   notes: z.string().optional(),
-  status: z.enum(['Final']),
+  status: z.enum(['Final', 'Draft']),
 });
 
 type RecordFormData = z.infer<typeof recordSchema>;

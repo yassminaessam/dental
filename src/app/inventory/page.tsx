@@ -58,6 +58,7 @@ import {
 import { AddItemDialog } from "@/components/inventory/add-item-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import { TransferToPharmacyDialog, type TransferFormData } from '@/components/inventory/transfer-to-pharmacy-dialog';
+import { SupplierInfoDialog } from "@/components/inventory/supplier-info-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,6 +121,7 @@ export default function InventoryPage() {
   const [itemToEdit, setItemToEdit] = React.useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<InventoryItem | null>(null);
   const [itemToTransfer, setItemToTransfer] = React.useState<InventoryItem | null>(null);
+  const [itemForSupplierInfo, setItemForSupplierInfo] = React.useState<InventoryItem | null>(null);
   const [isTransferLoading, setIsTransferLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
@@ -790,7 +792,7 @@ const mapMedicationResponse = (row: any): PharmacyMedication => ({
                               <DropdownMenuItem onClick={() => createQuickPurchaseOrder(item)}>
                                 <ShoppingCart className="mr-2 h-4 w-4" />
                                 {t('inventory.quick_order')}
-                              </DropdownMenuItem>
+                            </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
                               onClick={() => setItemToTransfer(item)}
@@ -799,10 +801,7 @@ const mapMedicationResponse = (row: any): PharmacyMedication => ({
                               <PillBottle className="mr-2 h-4 w-4" />
                               {t('inventory.transfer_to_pharmacy')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast({
-                              title: t('inventory.supplier_info'),
-                              description: t('inventory.supplier_contact_desc')
-                            })}>
+                            <DropdownMenuItem onClick={() => setItemForSupplierInfo(item)}>
                               <Star className="mr-2 h-4 w-4" />
                               {t('inventory.supplier_info')}
                             </DropdownMenuItem>
@@ -848,6 +847,16 @@ const mapMedicationResponse = (row: any): PharmacyMedication => ({
         }}
         onConfirm={handleTransferToPharmacy}
         isSubmitting={isTransferLoading}
+      />
+
+      <SupplierInfoDialog
+        supplierId={itemForSupplierInfo?.supplierId}
+        supplierName={itemForSupplierInfo?.supplierName}
+        itemName={itemForSupplierInfo?.name}
+        open={!!itemForSupplierInfo}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setItemForSupplierInfo(null);
+        }}
       />
 
       <AlertDialog open={!!itemToDelete} onOpenChange={(isOpen) => !isOpen && setItemToDelete(null)}>

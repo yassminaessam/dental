@@ -55,11 +55,19 @@ const purchaseOrderSchema = z.object({
 
 type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
 
+type InitialItem = {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 interface NewPurchaseOrderDialogProps {
   onSave: (data: unknown) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialSupplierId?: string;
+  initialItems?: InitialItem[];
   inventoryItems: InventoryItemOption[];
   suppliers: Supplier[];
   onAddItem: () => void;
@@ -81,6 +89,7 @@ export function NewPurchaseOrderDialog({
   open,
   onOpenChange,
   initialSupplierId,
+  initialItems,
   inventoryItems,
   suppliers,
   onAddItem,
@@ -108,6 +117,20 @@ export function NewPurchaseOrderDialog({
         })) : [{ itemId: '', quantity: 1, unitPrice: 0 }],
       };
     }
+    // Handle initial items for reorder functionality
+    if (initialItems && initialItems.length > 0) {
+      return {
+        supplier: initialSupplierId ?? '',
+        orderDate: new Date(),
+        deliveryDate: undefined,
+        notes: '',
+        items: initialItems.map((item) => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      };
+    }
     return {
       supplier: initialSupplierId ?? '',
       orderDate: new Date(),
@@ -115,7 +138,7 @@ export function NewPurchaseOrderDialog({
       notes: '',
       items: [{ itemId: '', quantity: 1, unitPrice: 0 }],
     };
-  }, [initialOrder, initialSupplierId, mode, suppliers]);
+  }, [initialOrder, initialSupplierId, initialItems, mode, suppliers]);
 
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),

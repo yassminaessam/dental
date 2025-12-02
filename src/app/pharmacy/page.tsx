@@ -72,8 +72,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditMedicationDialog } from '@/components/pharmacy/edit-medication-dialog';
 import { ViewPrescriptionDialog } from '@/components/pharmacy/view-prescription-dialog';
 import { DispenseMedicationDialog } from '@/components/pharmacy/dispense-medication-dialog';
+import { PrescriptionHistoryDialog } from '@/components/pharmacy/prescription-history-dialog';
+import { NewPurchaseOrderDialog } from '@/components/suppliers/new-purchase-order-dialog';
+import { AddItemDialog } from '@/components/inventory/add-item-dialog';
 import type { NewPrescriptionPayload } from '@/components/pharmacy/new-prescription-dialog';
 import type { Patient, StaffMember } from '@/lib/types';
+import type { Supplier, SupplierStatus } from '@/app/suppliers/page';
 
 export type Medication = {
   id: string;
@@ -123,6 +127,27 @@ type InventoryItem = {
   unitCost: number;
   supplierName?: string | null;
   location?: string | null;
+};
+
+// Dispense record type
+type DispenseRecord = {
+  id: string;
+  prescriptionId?: string;
+  medicationId?: string;
+  medicationName?: string;
+  patientId?: string;
+  patientName: string;
+  doctorId?: string;
+  doctorName?: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  invoiceId?: string;
+  treatmentId?: string;
+  notes?: string;
+  dispensedBy: string;
+  dispensedAt: string;
+  createdAt?: string;
 };
 
 // Incoming payloads from dialogs
@@ -223,6 +248,26 @@ const mapInventoryResponse = (row: any): InventoryItem => ({
   location: row.location ?? null,
 });
 
+const mapDispenseResponse = (row: any): DispenseRecord => ({
+  id: row.id,
+  prescriptionId: row.prescriptionId ?? undefined,
+  medicationId: row.medicationId ?? undefined,
+  medicationName: row.medicationName ?? '',
+  patientId: row.patientId ?? undefined,
+  patientName: row.patientName ?? '',
+  doctorId: row.doctorId ?? undefined,
+  doctorName: row.doctorName ?? '',
+  quantity: row.quantity ?? 0,
+  unitPrice: Number(row.unitPrice ?? 0),
+  totalAmount: Number(row.totalAmount ?? 0),
+  invoiceId: row.invoiceId ?? undefined,
+  treatmentId: row.treatmentId ?? undefined,
+  notes: row.notes ?? undefined,
+  dispensedBy: row.dispensedBy ?? '',
+  dispensedAt: row.dispensedAt ?? row.createdAt ?? new Date().toISOString(),
+  createdAt: row.createdAt ?? undefined,
+});
+
 const parseCurrencyValue = (value: string | number): number => {
   if (typeof value === 'number') return value;
   if (!value) return 0;
@@ -251,20 +296,36 @@ export default function PharmacyPage() {
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
   const [patientsDirectory, setPatientsDirectory] = React.useState<Patient[]>([]);
   const [doctorsDirectory, setDoctorsDirectory] = React.useState<StaffMember[]>([]);
+  
+  // New states for Reorder, Prescription History, and Stock Alerts
+  const [medicationForHistory, setMedicationForHistory] = React.useState<Medication | null>(null);
+  const [medicationToReorder, setMedicationToReorder] = React.useState<Medication | null>(null);
+  const [isNewPoOpen, setIsNewPoOpen] = React.useState(false);
+  const [isAddItemOpen, setIsAddItemOpen] = React.useState(false);
+  const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
+  
+  // Dispensing tab states
+  const [dispenses, setDispenses] = React.useState<DispenseRecord[]>([]);
+  const [dispenseSearchTerm, setDispenseSearchTerm] = React.useState('');
+  const [dispenseDateFilter, setDispenseDateFilter] = React.useState<'all' | 'today' | 'week' | 'month'>('all');
     
     const { toast } = useToast();
     
     React.useEffect(() => {
         async function fetchData() {
             try {
-        const [medicationsRes, prescriptionsRes, inventoryRes] = await Promise.all([
+        const [medicationsRes, prescriptionsRes, inventoryRes, suppliersRes, dispensesRes] = await Promise.all([
           fetch('/api/pharmacy/medications'),
           fetch('/api/pharmacy/prescriptions'),
           fetch('/api/inventory'),
+          fetch('/api/suppliers'),
+          fetch('/api/pharmacy/dispenses'),
         ]);
         const medicationsPayload = medicationsRes.ok ? await medicationsRes.json().catch(() => ({})) : {};
         const prescriptionsPayload = prescriptionsRes.ok ? await prescriptionsRes.json().catch(() => ({})) : {};
         const inventoryPayload = inventoryRes.ok ? await inventoryRes.json().catch(() => ({})) : {};
+        const suppliersPayload = suppliersRes.ok ? await suppliersRes.json().catch(() => ({})) : {};
+        const dispensesPayload = dispensesRes.ok ? await dispensesRes.json().catch(() => ({})) : {};
         const medicationData = Array.isArray(medicationsPayload?.medications)
           ? medicationsPayload.medications.map(mapMedicationResponse)
           : [];
@@ -274,9 +335,27 @@ export default function PharmacyPage() {
         const inventoryData = Array.isArray(inventoryPayload?.items)
           ? inventoryPayload.items.map(mapInventoryResponse)
           : [];
+        const suppliersData: Supplier[] = Array.isArray(suppliersPayload?.suppliers)
+          ? suppliersPayload.suppliers.map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              status: (s.status as SupplierStatus) ?? 'Active',
+              address: s.address ?? null,
+              phone: s.phone ?? null,
+              email: s.email ?? null,
+              category: s.category ?? null,
+              paymentTerms: s.paymentTerms ?? null,
+              rating: s.rating ?? null,
+            }))
+          : [];
+        const dispensesData = Array.isArray(dispensesPayload?.dispenses)
+          ? dispensesPayload.dispenses.map(mapDispenseResponse)
+          : [];
                 setMedications(medicationData);
                 setPrescriptions(prescriptionData);
                 setInventory(inventoryData);
+                setSuppliers(suppliersData);
+                setDispenses(dispensesData);
       } catch (error) {
         toast({ title: t('pharmacy.toast.error_fetching'), variant: 'destructive'});
             } finally {
@@ -627,50 +706,104 @@ export default function PharmacyPage() {
       }
     };
 
-    const createMedicationPurchaseOrder = async (medication: Medication) => {
+    // Open Reorder dialog with medication pre-filled
+    const openReorderDialog = React.useCallback((medication: Medication) => {
+      setMedicationToReorder(medication);
+      setIsNewPoOpen(true);
+    }, []);
+
+    // Inventory options for purchase order dialog (medications + inventory items)
+    const inventoryOptions = React.useMemo(() => {
+      const medOptions = medications.map((m) => ({ id: m.id, name: `${m.name} ${m.strength || ''}`.trim() }));
+      const invOptions = inventory.map((i) => ({ id: i.id, name: i.name }));
+      // Combine and deduplicate
+      const combined = [...medOptions];
+      invOptions.forEach((inv) => {
+        if (!combined.find((c) => c.id === inv.id)) {
+          combined.push(inv);
+        }
+      });
+      return combined;
+    }, [medications, inventory]);
+
+    // Initial items for purchase order when reordering a medication
+    const initialPoItems = React.useMemo(() => {
+      if (!medicationToReorder) return undefined;
+      return [{
+        itemId: medicationToReorder.id,
+        itemName: `${medicationToReorder.name} ${medicationToReorder.strength || ''}`.trim(),
+        quantity: 100, // Default reorder quantity
+        unitPrice: medicationToReorder.unitPrice,
+      }];
+    }, [medicationToReorder]);
+
+    // Handle saving a new purchase order
+    const handleSavePurchaseOrder = async (data: any) => {
       try {
-        const orderQuantity = 100; // Standard reorder quantity
-        const unitPrice = medication.unitPrice;
-        const total = orderQuantity * unitPrice;
-
-        const newPurchaseOrder = {
-          supplier: 'PharmaPlus', // Default pharmaceutical supplier
-          orderDate: new Date().toISOString().split('T')[0],
-          deliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days
-          total,
-          status: 'Pending',
-          items: [{
-            itemId: medication.id,
-            description: `${medication.fullName} ${medication.strength}`,
-            quantity: orderQuantity,
-            unitPrice: unitPrice
-          }]
-        };
-
+        const total = data.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
         const response = await fetch('/api/purchase-orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            supplierName: newPurchaseOrder.supplier,
-            orderDate: new Date(newPurchaseOrder.orderDate),
-            expectedDelivery: new Date(newPurchaseOrder.deliveryDate),
-            total: newPurchaseOrder.total,
+            supplierId: data.supplierId,
+            supplierName: data.supplierName,
+            orderDate: data.orderDate,
+            expectedDelivery: data.deliveryDate,
+            total,
             status: 'Pending',
-            items: newPurchaseOrder.items,
+            items: data.items,
           }),
         });
         if (!response.ok) throw new Error('Failed to create purchase order');
         
         toast({
-          title: t('pharmacy.toast.purchase_order_created'),
-          description: t('pharmacy.toast.purchase_order_created_desc', { name: medication.name, count: orderQuantity }),
+          title: t('pharmacy.purchase_order_created'),
+          description: t('pharmacy.toast.purchase_order_created_desc', { 
+            name: medicationToReorder?.name || 'Item', 
+            count: data.items[0]?.quantity || 0 
+          }),
         });
+        setMedicationToReorder(null);
       } catch (error) {
         toast({
           title: t('common.error'),
           description: t('pharmacy.toast.error_purchase_order_desc'),
           variant: "destructive",
         });
+      }
+    };
+
+    // Handle saving a new inventory item from AddItemDialog
+    const handleSaveInventoryItem = async (data: any) => {
+      try {
+        const response = await fetch('/api/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            category: data.category,
+            supplierId: data.supplierId,
+            supplierName: data.supplierName,
+            quantity: data.stock,
+            minQuantity: 10,
+            maxQuantity: 50,
+            unitCost: data.unitCost,
+            status: 'Normal',
+            expires: data.expires ? data.expires.toISOString() : undefined,
+            location: data.location,
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to create inventory item');
+        const result = await response.json();
+        if (result?.item) {
+          setInventory((prev) => [mapInventoryResponse(result.item), ...prev]);
+        }
+        toast({
+          title: t('inventory.toast.item_added'),
+          description: t('inventory.toast.item_added_desc'),
+        });
+      } catch (error) {
+        toast({ title: t('inventory.toast.error_adding'), variant: 'destructive' });
       }
     };
 
@@ -773,6 +906,63 @@ export default function PharmacyPage() {
           )
           .filter(p => prescriptionStatusFilter === 'all' || p.status.toLowerCase() === prescriptionStatusFilter);
       }, [prescriptions, prescriptionSearchTerm, prescriptionStatusFilter]);
+
+    // Filter dispenses based on search and date
+    const filteredDispenses = React.useMemo(() => {
+      let result = dispenses;
+      
+      // Apply search filter
+      if (dispenseSearchTerm.trim()) {
+        const query = dispenseSearchTerm.toLowerCase().trim();
+        result = result.filter(d =>
+          d.patientName?.toLowerCase().includes(query) ||
+          d.medicationName?.toLowerCase().includes(query) ||
+          d.doctorName?.toLowerCase().includes(query) ||
+          d.dispensedBy?.toLowerCase().includes(query)
+        );
+      }
+      
+      // Apply date filter
+      if (dispenseDateFilter !== 'all') {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        result = result.filter(d => {
+          const dispenseDate = new Date(d.dispensedAt);
+          switch (dispenseDateFilter) {
+            case 'today':
+              return dispenseDate >= startOfToday;
+            case 'week': {
+              const weekAgo = new Date(startOfToday);
+              weekAgo.setDate(weekAgo.getDate() - 7);
+              return dispenseDate >= weekAgo;
+            }
+            case 'month': {
+              const monthAgo = new Date(startOfToday);
+              monthAgo.setMonth(monthAgo.getMonth() - 1);
+              return dispenseDate >= monthAgo;
+            }
+            default:
+              return true;
+          }
+        });
+      }
+      
+      return result;
+    }, [dispenses, dispenseSearchTerm, dispenseDateFilter]);
+
+    // Dispense stats
+    const dispenseStats = React.useMemo(() => {
+      const total = dispenses.length;
+      const totalQuantity = dispenses.reduce((sum, d) => sum + d.quantity, 0);
+      const totalRevenue = dispenses.reduce((sum, d) => sum + d.totalAmount, 0);
+      const todayCount = dispenses.filter(d => {
+        const today = new Date();
+        const dispenseDate = new Date(d.dispensedAt);
+        return dispenseDate.toDateString() === today.toDateString();
+      }).length;
+      return { total, totalQuantity, totalRevenue, todayCount };
+    }, [dispenses]);
 
   return (
     <DashboardLayout>
@@ -994,7 +1184,7 @@ export default function PharmacyPage() {
                                   {t('common.edit')}
                                 </DropdownMenuItem>
                                 {(item.status === 'LowStock' || item.status === 'OutOfStock') && (
-                                  <DropdownMenuItem onClick={() => createMedicationPurchaseOrder(item)}>
+                                  <DropdownMenuItem onClick={() => openReorderDialog(item)}>
                                     <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('pharmacy.actions.reorder')}
                                   </DropdownMenuItem>
@@ -1003,10 +1193,7 @@ export default function PharmacyPage() {
                                   <Package className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('pharmacy.actions.add_to_inventory')}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast({
-                                  title: t('pharmacy.toast.prescription_history'),
-                                  description: t('pharmacy.toast.prescription_history_desc', { name: item.name })
-                                })}>
+                                <DropdownMenuItem onClick={() => setMedicationForHistory(item)}>
                                   <ClipboardList className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                   {t('pharmacy.actions.prescription_history')}
                                 </DropdownMenuItem>
@@ -1185,17 +1372,283 @@ export default function PharmacyPage() {
           </TabsContent>
            <TabsContent value="dispensing">
              <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    {t('pharmacy.no_dispensing_records')}
-                </CardContent>
+               <CardHeader className="pb-3">
+                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                   <CardTitle className="flex items-center gap-2">
+                     <Package className="h-5 w-5 text-primary" />
+                     {t('pharmacy.dispensing_history')}
+                   </CardTitle>
+                   {/* Stats Summary */}
+                   <div className="flex flex-wrap gap-3">
+                     <div className="bg-muted/50 rounded-lg px-3 py-2 text-center min-w-[80px]">
+                       <p className="text-lg font-bold">{dispenseStats.total}</p>
+                       <p className="text-xs text-muted-foreground">{t('common.total')}</p>
+                     </div>
+                     <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg px-3 py-2 text-center min-w-[80px]">
+                       <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{dispenseStats.todayCount}</p>
+                       <p className="text-xs text-muted-foreground">{t('common.today')}</p>
+                     </div>
+                     <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg px-3 py-2 text-center min-w-[80px]">
+                       <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{dispenseStats.totalQuantity}</p>
+                       <p className="text-xs text-muted-foreground">{t('common.units')}</p>
+                     </div>
+                     <div className="bg-green-50 dark:bg-green-950/30 rounded-lg px-3 py-2 text-center min-w-[80px]">
+                       <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatEGP(dispenseStats.totalRevenue, true, language)}</p>
+                       <p className="text-xs text-muted-foreground">{t('common.revenue')}</p>
+                     </div>
+                   </div>
+                 </div>
+               </CardHeader>
+               <CardContent>
+                 {/* Search and Filter Controls */}
+                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                   <div className="relative flex-1">
+                     <Search className={cn(
+                       "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground",
+                       isRTL ? "right-3" : "left-3"
+                     )} />
+                     <Input
+                       placeholder={t('pharmacy.search_dispenses_placeholder') || 'Search by patient, medication, doctor...'}
+                       value={dispenseSearchTerm}
+                       onChange={(e) => setDispenseSearchTerm(e.target.value)}
+                       className={cn(isRTL ? "pr-10" : "pl-10")}
+                     />
+                   </div>
+                   <Select value={dispenseDateFilter} onValueChange={(v) => setDispenseDateFilter(v as typeof dispenseDateFilter)}>
+                     <SelectTrigger className="w-[160px]">
+                       <CalendarClock className="h-4 w-4 mr-2" />
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="all">{t('common.all_time')}</SelectItem>
+                       <SelectItem value="today">{t('common.today')}</SelectItem>
+                       <SelectItem value="week">{t('common.this_week')}</SelectItem>
+                       <SelectItem value="month">{t('common.this_month')}</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+
+                 {/* Dispenses Table */}
+                 {loading ? (
+                   <div className="flex items-center justify-center py-12">
+                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                   </div>
+                 ) : filteredDispenses.length === 0 ? (
+                   <div className="text-center py-12">
+                     <Package className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                     <p className="text-lg font-medium mb-1">
+                       {dispenses.length === 0 ? t('pharmacy.no_dispensing_records') : t('common.no_results_found')}
+                     </p>
+                     <p className="text-sm text-muted-foreground">
+                       {dispenses.length === 0 
+                         ? t('pharmacy.no_dispensing_records_desc')
+                         : t('pharmacy.try_different_search')
+                       }
+                     </p>
+                   </div>
+                 ) : (
+                   <div className="rounded-lg border overflow-auto">
+                     <Table>
+                       <TableHeader>
+                         <TableRow>
+                           <TableHead>{t('common.patient')}</TableHead>
+                           <TableHead>{t('pharmacy.medication')}</TableHead>
+                           <TableHead className="text-center">{t('pharmacy.quantity')}</TableHead>
+                           <TableHead className="text-right">{t('common.unit_price')}</TableHead>
+                           <TableHead className="text-right">{t('common.total')}</TableHead>
+                           <TableHead>{t('pharmacy.dispensed_by')}</TableHead>
+                           <TableHead>{t('common.date')}</TableHead>
+                         </TableRow>
+                       </TableHeader>
+                       <TableBody>
+                         {filteredDispenses.map((record) => (
+                           <TableRow key={record.id}>
+                             <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950">
+                                   <PillBottle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                 </div>
+                                 <div>
+                                   <p className="font-medium">{record.patientName}</p>
+                                   {record.doctorName && (
+                                     <p className="text-xs text-muted-foreground">{t('common.by')} {record.doctorName}</p>
+                                   )}
+                                 </div>
+                               </div>
+                             </TableCell>
+                             <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <Pill className="h-4 w-4 text-muted-foreground" />
+                                 <span className="font-medium">{record.medicationName || t('common.na')}</span>
+                               </div>
+                             </TableCell>
+                             <TableCell className="text-center">
+                               <Badge variant="secondary">{record.quantity}</Badge>
+                             </TableCell>
+                             <TableCell className="text-right font-medium">
+                               {formatEGP(record.unitPrice, true, language)}
+                             </TableCell>
+                             <TableCell className="text-right">
+                               <span className="font-bold text-green-600 dark:text-green-400">
+                                 {formatEGP(record.totalAmount, true, language)}
+                               </span>
+                             </TableCell>
+                             <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                 <span className="text-sm">{record.dispensedBy}</span>
+                               </div>
+                             </TableCell>
+                             <TableCell>
+                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                 <CalendarClock className="h-4 w-4" />
+                                 {new Date(record.dispensedAt).toLocaleDateString(language)}
+                               </div>
+                             </TableCell>
+                           </TableRow>
+                         ))}
+                       </TableBody>
+                     </Table>
+                   </div>
+                 )}
+                 
+                 {/* Results count when filtered */}
+                 {(dispenseSearchTerm.trim() || dispenseDateFilter !== 'all') && filteredDispenses.length > 0 && (
+                   <p className="text-sm text-muted-foreground mt-3">
+                     {t('common.showing')} {filteredDispenses.length} {t('common.of')} {dispenses.length} {t('pharmacy.records')}
+                   </p>
+                 )}
+               </CardContent>
              </Card>
           </TabsContent>
            <TabsContent value="stock-alerts">
-             <Card>
-                <CardContent className="h-48 text-center text-muted-foreground flex items-center justify-center p-6">
-                    {t('pharmacy.no_stock_alerts')}
-                </CardContent>
-             </Card>
+             <div className="grid gap-6 md:grid-cols-2">
+               {/* Low Stock Medications */}
+               <Card className="border-2 border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50/50 via-background to-red-50/30 dark:from-orange-950/10 dark:via-background dark:to-red-950/5">
+                 <CardHeader>
+                   <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                     <AlertTriangle className="h-5 w-5" />
+                     {t('pharmacy.low_stock_medications')}
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="space-y-3">
+                   {medications.filter(m => m.status === 'LowStock' || m.status === 'OutOfStock').length === 0 ? (
+                     <div className="text-center py-8 text-muted-foreground">
+                       <CheckCircle2 className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                       <p>{t('pharmacy.no_stock_alerts')}</p>
+                     </div>
+                   ) : (
+                     medications.filter(m => m.status === 'LowStock' || m.status === 'OutOfStock').map((med) => (
+                       <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-background border">
+                         <div className="flex items-center gap-3">
+                           <div className={cn(
+                             "p-2 rounded-lg",
+                             med.status === 'OutOfStock' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
+                           )}>
+                             <Pill className={cn(
+                               "h-4 w-4",
+                               med.status === 'OutOfStock' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                             )} />
+                           </div>
+                           <div>
+                             <p className="font-medium">{med.name}</p>
+                             <p className="text-sm text-muted-foreground">
+                               {t('pharmacy.stock_level')}: <span className={cn(
+                                 "font-semibold",
+                                 med.status === 'OutOfStock' ? 'text-red-600' : 'text-orange-600'
+                               )}>{med.stock}</span>
+                             </p>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <Badge variant={med.status === 'OutOfStock' ? 'destructive' : 'secondary'}>
+                             {med.status === 'OutOfStock' ? t('pharmacy.out_of_stock') : t('pharmacy.low_stock')}
+                           </Badge>
+                           <Button size="sm" onClick={() => openReorderDialog(med)}>
+                             <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                             {t('pharmacy.reorder_now')}
+                           </Button>
+                         </div>
+                       </div>
+                     ))
+                   )}
+                 </CardContent>
+               </Card>
+
+               {/* Expiring Medications */}
+               <Card className="border-2 border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50/50 via-background to-yellow-50/30 dark:from-amber-950/10 dark:via-background dark:to-yellow-950/5">
+                 <CardHeader>
+                   <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                     <CalendarClock className="h-5 w-5" />
+                     {t('pharmacy.expiring_medications')}
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="space-y-3">
+                   {medications.filter(m => {
+                     if (!m.expiryDate) return false;
+                     const expiry = new Date(m.expiryDate);
+                     const today = new Date();
+                     const ninetyDaysFromNow = new Date();
+                     ninetyDaysFromNow.setDate(today.getDate() + 90);
+                     return expiry <= ninetyDaysFromNow;
+                   }).length === 0 ? (
+                     <div className="text-center py-8 text-muted-foreground">
+                       <CheckCircle2 className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                       <p>{t('pharmacy.no_stock_alerts')}</p>
+                     </div>
+                   ) : (
+                     medications.filter(m => {
+                       if (!m.expiryDate) return false;
+                       const expiry = new Date(m.expiryDate);
+                       const today = new Date();
+                       const ninetyDaysFromNow = new Date();
+                       ninetyDaysFromNow.setDate(today.getDate() + 90);
+                       return expiry <= ninetyDaysFromNow;
+                     }).sort((a, b) => new Date(a.expiryDate!).getTime() - new Date(b.expiryDate!).getTime()).map((med) => {
+                       const expiry = new Date(med.expiryDate!);
+                       const today = new Date();
+                       const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                       const isExpired = daysUntilExpiry < 0;
+                       
+                       return (
+                         <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-background border">
+                           <div className="flex items-center gap-3">
+                             <div className={cn(
+                               "p-2 rounded-lg",
+                               isExpired ? 'bg-red-100 dark:bg-red-950' : 'bg-amber-100 dark:bg-amber-950'
+                             )}>
+                               <CalendarClock className={cn(
+                                 "h-4 w-4",
+                                 isExpired ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
+                               )} />
+                             </div>
+                             <div>
+                               <p className="font-medium">{med.name}</p>
+                               <p className="text-sm text-muted-foreground">
+                                 {t('pharmacy.expiry_date')}: {expiry.toLocaleDateString(language)}
+                               </p>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Badge variant={isExpired ? 'destructive' : 'secondary'} className={cn(
+                               !isExpired && daysUntilExpiry <= 30 && 'bg-amber-100 text-amber-800 border-transparent'
+                             )}>
+                               {isExpired 
+                                 ? t('pharmacy.expired') 
+                                 : `${daysUntilExpiry} ${t('pharmacy.days_until_expiry')}`}
+                             </Badge>
+                             <Button size="sm" variant="outline" onClick={() => openReorderDialog(med)}>
+                               <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                               {t('pharmacy.reorder_now')}
+                             </Button>
+                           </div>
+                         </div>
+                       );
+                     })
+                   )}
+                 </CardContent>
+               </Card>
+             </div>
           </TabsContent>
         </Tabs>
       </main>
@@ -1242,6 +1695,40 @@ export default function PharmacyPage() {
         prescription={prescriptionToView}
         open={!!prescriptionToView}
         onOpenChange={(isOpen) => !isOpen && setPrescriptionToView(null)}
+      />
+
+      {/* Prescription History Dialog */}
+      <PrescriptionHistoryDialog
+        medicationId={medicationForHistory?.id}
+        medicationName={medicationForHistory?.name}
+        open={!!medicationForHistory}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setMedicationForHistory(null);
+        }}
+      />
+
+      {/* New Purchase Order Dialog for Reorder */}
+      <NewPurchaseOrderDialog
+        key={medicationToReorder?.id ?? 'new-po'}
+        open={isNewPoOpen}
+        onOpenChange={(isOpen) => {
+          setIsNewPoOpen(isOpen);
+          if (!isOpen) setMedicationToReorder(null);
+        }}
+        onSave={handleSavePurchaseOrder}
+        initialItems={initialPoItems}
+        inventoryItems={inventoryOptions}
+        suppliers={suppliers}
+        onAddItem={() => setIsAddItemOpen(true)}
+      />
+
+      {/* Add Item Dialog for creating new inventory items */}
+      <AddItemDialog
+        onSave={handleSaveInventoryItem}
+        open={isAddItemOpen}
+        onOpenChange={setIsAddItemOpen}
+        showTrigger={false}
+        suppliers={suppliers}
       />
 
     </DashboardLayout>
