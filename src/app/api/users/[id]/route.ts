@@ -33,6 +33,24 @@ export async function PUT(
     return NextResponse.json({ user });
   } catch (error: any) {
     console.error('[api/users/[id]] PUT error', error);
+    
+    // Check for unique constraint violations
+    if (error?.code === 'P2002') {
+      const target = error?.meta?.target;
+      if (target?.includes('phone')) {
+        return NextResponse.json({ 
+          error: 'A user with this phone number already exists.',
+          field: 'phone'
+        }, { status: 409 });
+      }
+      if (target?.includes('email')) {
+        return NextResponse.json({ 
+          error: 'A user with this email already exists.',
+          field: 'email'
+        }, { status: 409 });
+      }
+    }
+    
     return NextResponse.json({ 
       error: 'Failed to update user',
       details: error.message 

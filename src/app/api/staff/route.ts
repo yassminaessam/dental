@@ -37,6 +37,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ staff: member }, { status: 201 });
   } catch (e: any) {
     console.error('[api/staff] POST error', e);
+    
+    // Check for unique constraint violations
+    if (e?.code === 'P2002') {
+      const target = e?.meta?.target;
+      if (target?.includes('phone')) {
+        return NextResponse.json({ 
+          error: 'A staff member with this phone number already exists.',
+          field: 'phone'
+        }, { status: 409 });
+      }
+      if (target?.includes('email')) {
+        return NextResponse.json({ 
+          error: 'A staff member with this email already exists.',
+          field: 'email'
+        }, { status: 409 });
+      }
+    }
+    
     return NextResponse.json({ error: e?.message ?? 'Failed to create staff.' }, { status: 400 });
   }
 }

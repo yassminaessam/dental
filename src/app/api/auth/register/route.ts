@@ -51,12 +51,19 @@ export async function POST(request: Request) {
     console.error('[api/auth/register] Error code:', error?.code);
     
     let message = 'Failed to create user.';
+    let field = undefined;
+    let status = 500;
     
     // Handle Prisma-specific errors
     if (error?.code === 'P2002') {
+      status = 409;
       const target = error?.meta?.target;
       if (target?.includes('email')) {
         message = 'A user with this email already exists.';
+        field = 'email';
+      } else if (target?.includes('phone')) {
+        message = 'A user with this phone number already exists.';
+        field = 'phone';
       } else {
         message = `Unique constraint failed on: ${target?.join(', ')}`;
       }
@@ -64,6 +71,6 @@ export async function POST(request: Request) {
       message = error.message;
     }
     
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, field }, { status });
   }
 }

@@ -52,7 +52,7 @@ model User {
   employeeId      String?
   department      String?
   patientId       String?
-  phone           String?
+  phone           String?   @unique
   address         String?
   profileImageUrl String?
 
@@ -127,7 +127,7 @@ model Patient {
   name              String
   lastName          String
   email             String        @unique
-  phone             String
+  phone             String        @unique
   dob               DateTime
   lastVisit         DateTime?
   status            PatientStatus @default(Active)
@@ -756,4 +756,123 @@ model ToothImageLink {
   @@index([patientId])
   @@index([imageId])
   @@index([toothNumber])
+}
+
+// Lab Management
+enum LabCaseStatus {
+  Draft
+  Submitted
+  InProgress
+  QualityCheck
+  Completed
+  Delivered
+  Cancelled
+}
+
+enum LabCasePriority {
+  Low
+  Normal
+  High
+  Urgent
+}
+
+model Lab {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  address      String?
+  phone        String?
+  email        String?
+  contactName  String?
+  specialty    String?     // Crown & Bridge, Orthodontics, Implants, etc.
+  rating       Float?
+  isActive     Boolean     @default(true)
+  notes        String?     @db.Text
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  cases        LabCase[]
+
+  @@index([isActive])
+}
+
+model LabCase {
+  id              String          @id @default(uuid())
+  caseNumber      String          @unique
+  labId           String?
+  lab             Lab?            @relation(fields: [labId], references: [id])
+  labName         String?
+  patientId       String?
+  patientName     String
+  doctorId        String?
+  doctorName      String
+  treatmentId     String?
+  
+  // Case Details
+  caseType        String          // Crown, Bridge, Denture, Implant, Orthodontic, etc.
+  toothNumbers    String?         // Comma-separated tooth numbers
+  shade           String?         // Tooth shade
+  material        String?         // Material type (Zirconia, PFM, etc.)
+  description     String?         @db.Text
+  instructions    String?         @db.Text
+  
+  // Dates & Tracking
+  status          LabCaseStatus   @default(Draft)
+  priority        LabCasePriority @default(Normal)
+  requestDate     DateTime        @default(now())
+  dueDate         DateTime?
+  sentToLabDate   DateTime?
+  receivedDate    DateTime?
+  deliveredDate   DateTime?
+  
+  // Financial
+  estimatedCost   Decimal?        @db.Decimal(12, 2)
+  actualCost      Decimal?        @db.Decimal(12, 2)
+  invoiceId       String?
+  
+  // Tracking
+  notes           String?         @db.Text
+  createdBy       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Related
+  attachments     LabCaseAttachment[]
+  updates         LabCaseUpdate[]
+
+  @@index([labId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([priority])
+  @@index([requestDate])
+  @@index([dueDate])
+}
+
+model LabCaseAttachment {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        LabCase  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String   // image, document, prescription, scan, etc.
+  fileSize    Int?
+  description String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@index([caseId])
+  @@index([fileType])
+}
+
+model LabCaseUpdate {
+  id          String        @id @default(uuid())
+  caseId      String
+  case        LabCase       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  status      LabCaseStatus
+  message     String?       @db.Text
+  updatedBy   String?
+  isSharedWithLab Boolean   @default(false)
+  createdAt   DateTime      @default(now())
+
+  @@index([caseId])
+  @@index([createdAt])
 }

@@ -35,6 +35,7 @@ import {
   User,
   MessageCircle,
   Layout,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -155,6 +156,13 @@ export function SidebarNav() {
   label: t('nav.suppliers'),
       subLabel: t('nav.suppliers_desc'),
       permission: "view_suppliers",
+    },
+    {
+      href: "/lab-management",
+      icon: FlaskConical,
+      label: t('nav.lab_management'),
+      subLabel: t('nav.lab_management_desc'),
+      permission: "view_inventory",
     },
     {
       href: "/communications",

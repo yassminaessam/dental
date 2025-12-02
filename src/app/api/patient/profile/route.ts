@@ -60,8 +60,26 @@ export async function PATCH(request: NextRequest) {
     };
 
     return NextResponse.json({ patient: serialized });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[api/patient/profile] PATCH error', error);
+    
+    // Check for unique constraint violations
+    if (error?.code === 'P2002') {
+      const target = error?.meta?.target;
+      if (target?.includes('phone')) {
+        return NextResponse.json({ 
+          error: 'A patient with this phone number already exists.',
+          field: 'phone'
+        }, { status: 409 });
+      }
+      if (target?.includes('email')) {
+        return NextResponse.json({ 
+          error: 'A patient with this email already exists.',
+          field: 'email'
+        }, { status: 409 });
+      }
+    }
+    
     return NextResponse.json({ error: 'Failed to update patient profile.' }, { status: 500 });
   }
 }

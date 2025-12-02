@@ -53,7 +53,8 @@ import {
   Send,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -93,6 +94,7 @@ interface PatientHistoryData {
   messages: any[];
   prescriptions: any[];
   referrals: any[];
+  labCases: any[];
 }
 
 interface ComprehensivePatientHistoryProps {
@@ -510,6 +512,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
             <TabsTrigger value="communications" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.communications')}</TabsTrigger>
             <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.prescriptions')}</TabsTrigger>
             <TabsTrigger value="referrals" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.referrals')}</TabsTrigger>
+            <TabsTrigger value="labcases" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.lab_cases')}</TabsTrigger>
                       </TabsList>
                     </div>
                   <div className="sm:hidden text-center py-1 text-xs text-muted-foreground bg-muted/30">
@@ -1161,6 +1164,68 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                         </div>
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">{t('referrals.pending_referrals')}</div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Lab Cases */}
+              <TabsContent value="labcases" className="space-y-3 sm:space-y-4 mt-4">
+                <Card>
+                  <CardHeader className={cn(isRTL ? "text-right" : undefined)}>
+                    <CardTitle className={cn("flex items-center gap-2", isRTL ? "justify-end text-right flex-row-reverse" : undefined)}>
+                      <FlaskConical className="h-5 w-5" />
+                      {t('lab.title')} ({historyData.labCases?.length || 0})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-80 lg:h-96">
+                      {historyData.labCases && historyData.labCases.length > 0 ? (
+                        <div className="space-y-3 p-2">
+                          {historyData.labCases
+                            .sort((a: any, b: any) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime())
+                            .map((labCase: any, index: number) => (
+                              <Card 
+                                key={index} 
+                                className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200 group"
+                                onClick={() => openDetailDialog('labCase', labCase)}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-medium flex items-center gap-2">
+                                    {labCase.caseNumber} - {labCase.caseType}
+                                    <Eye className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant={
+                                      labCase.priority === 'Urgent' ? 'destructive' :
+                                      labCase.priority === 'High' ? 'default' : 'secondary'
+                                    }>
+                                      {t(`lab.priority.${labCase.priority.toLowerCase()}`)}
+                                    </Badge>
+                                    <Badge variant={
+                                      labCase.status === 'Delivered' || labCase.status === 'Completed' ? 'default' :
+                                      labCase.status === 'InProgress' || labCase.status === 'QualityCheck' ? 'secondary' :
+                                      labCase.status === 'Cancelled' ? 'destructive' : 'outline'
+                                    }>
+                                      {t(`lab.status.${labCase.status.toLowerCase().replace('inprogress', 'in_progress').replace('qualitycheck', 'quality_check')}`)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="text-sm text-muted-foreground space-y-1">
+                                  {labCase.labName && <p><strong>{t('lab.lab')}:</strong> {labCase.labName}</p>}
+                                  {labCase.doctorName && <p><strong>{t('lab.doctor')}:</strong> {labCase.doctorName}</p>}
+                                  {labCase.toothNumbers && <p><strong>{t('lab.tooth_numbers')}:</strong> {labCase.toothNumbers}</p>}
+                                  {labCase.material && <p><strong>{t('lab.material')}:</strong> {labCase.material}</p>}
+                                  <p><strong>{t('lab.request_date')}:</strong> {formatDateSafe(labCase.requestDate, 'PPP')}</p>
+                                  {labCase.dueDate && <p><strong>{t('lab.due_date')}:</strong> {formatDateSafe(labCase.dueDate, 'PPP')}</p>}
+                                  {labCase.estimatedCost && <p><strong>{t('lab.estimated_cost')}:</strong> {formatEGP(labCase.estimatedCost)}</p>}
+                                </div>
+                              </Card>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">{t('lab.no_cases_found')}</div>
                       )}
                     </ScrollArea>
                   </CardContent>

@@ -63,6 +63,34 @@ interface ToothImageLinkData {
   notes: string | null;
 }
 
+interface LabCaseData {
+  id: string;
+  caseNumber: string;
+  patientId: string;
+  patientName: string;
+  doctorId: string | null;
+  doctorName: string | null;
+  labId: string | null;
+  labName: string | null;
+  caseType: string;
+  toothNumbers: string | null;
+  shade: string | null;
+  material: string | null;
+  status: string;
+  priority: string;
+  dueDate: Date | null;
+  estimatedCost: number | string | null;
+  actualCost: number | string | null;
+  requestDate: Date;
+  sentToLabDate: Date | null;
+  receivedDate: Date | null;
+  deliveredDate: Date | null;
+  description: string | null;
+  instructions: string | null;
+  notes: string | null;
+  lab?: { id: string; name: string } | null;
+}
+
 type AppointmentWithTreatment = Appointment & {
   treatment?: { id: string; procedure: string } | null;
 };
@@ -111,7 +139,8 @@ export async function GET(
       referrals,
       messages,
       toothImageLinks,
-      dentalChart
+      dentalChart,
+      labCases
     ] = await Promise.all([
       // Appointments - using proper model with patientId
       prisma.appointment.findMany({
@@ -219,7 +248,18 @@ export async function GET(
       // Dental Chart
       prisma.dentalChart.findUnique({
         where: { patientId }
-      })
+      }),
+
+      // Lab Cases - using proper model with patientId
+      prisma.labCase.findMany({
+        where: { patientId },
+        orderBy: { requestDate: 'desc' },
+        include: {
+          lab: {
+            select: { id: true, name: true }
+          }
+        }
+      }).catch(() => [])
     ]);
 
     // Transform data to match expected format
@@ -346,7 +386,33 @@ export async function GET(
         id: dentalChart.id,
         patientId: dentalChart.patientId,
         chartData: dentalChart.chartData
-      } : null
+      } : null,
+      labCases: labCases.map((lc: any) => ({
+        id: lc.id,
+        caseNumber: lc.caseNumber,
+        patientId: lc.patientId,
+        patientName: lc.patientName,
+        doctorId: lc.doctorId,
+        doctorName: lc.doctorName,
+        labId: lc.labId,
+        labName: lc.labName || lc.lab?.name,
+        caseType: lc.caseType,
+        toothNumbers: lc.toothNumbers,
+        shade: lc.shade,
+        material: lc.material,
+        status: lc.status,
+        priority: lc.priority,
+        dueDate: lc.dueDate?.toISOString() || null,
+        estimatedCost: lc.estimatedCost ? Number(lc.estimatedCost) : null,
+        actualCost: lc.actualCost ? Number(lc.actualCost) : null,
+        requestDate: lc.requestDate.toISOString(),
+        sentToLabDate: lc.sentToLabDate?.toISOString() || null,
+        receivedDate: lc.receivedDate?.toISOString() || null,
+        deliveredDate: lc.deliveredDate?.toISOString() || null,
+        description: lc.description,
+        instructions: lc.instructions,
+        notes: lc.notes
+      }))
     };
 
     return NextResponse.json({ 

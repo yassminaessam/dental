@@ -19,6 +19,24 @@ export async function PATCH(request: Request, context: any) {
     return NextResponse.json({ staff: updated });
   } catch (e: any) {
     console.error('[api/staff/[id]] PATCH error', e);
+    
+    // Check for unique constraint violations
+    if (e?.code === 'P2002') {
+      const target = e?.meta?.target;
+      if (target?.includes('phone')) {
+        return NextResponse.json({ 
+          error: 'A staff member with this phone number already exists.',
+          field: 'phone'
+        }, { status: 409 });
+      }
+      if (target?.includes('email')) {
+        return NextResponse.json({ 
+          error: 'A staff member with this email already exists.',
+          field: 'email'
+        }, { status: 409 });
+      }
+    }
+    
     return NextResponse.json({ error: e?.message ?? 'Failed to update staff.' }, { status: 400 });
   }
 }
