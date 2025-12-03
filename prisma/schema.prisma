@@ -250,6 +250,16 @@ model Staff {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
+  // Attendance relations
+  attendanceRecords AttendanceRecord[]
+  leaveRequests     LeaveRequest[]
+  
+  // Reception Shift relations
+  receptionShifts       ReceptionShift[]
+  handoversFrom         ShiftHandover[] @relation("HandoverFromStaff")
+  handoversTo           ShiftHandover[] @relation("HandoverToStaff")
+  cashDrawerTransactions CashDrawerTransaction[]
+
   @@index([status])
   @@index([role])
 }
@@ -876,3 +886,370 @@ model LabCaseUpdate {
   @@index([caseId])
   @@index([createdAt])
 }
+
+// ============================================
+// Attendance Management System
+// ============================================
+
+enum AttendanceStatus {
+  Present
+  Absent
+  Late
+  HalfDay
+  OnLeave
+  Holiday
+  Weekend
+}
+
+enum LeaveType {
+  Annual
+  Sick
+  Personal
+  Unpaid
+  Maternity
+  Paternity
+  Emergency
+  Other
+}
+
+enum LeaveStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+}
+
+model AttendanceRecord {
+  id            String           @id @default(uuid())
+  staffId       String
+  staff         Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date          DateTime         @db.Date
+  status        AttendanceStatus @default(Present)
+  
+  // Clock In/Out Times
+  clockIn       DateTime?
+  clockOut      DateTime?
+  
+  // Break Times
+  breakStart    DateTime?
+  breakEnd      DateTime?
+  totalBreakMinutes Int?
+  
+  // Location Tracking
+  clockInLocation   Json?        // { latitude, longitude, address }
+  clockOutLocation  Json?        // { latitude, longitude, address }
+  locationVerified  Boolean      @default(false)
+  
+  // Work Hours Calculation
+  scheduledHours    Decimal?     @db.Decimal(4, 2)
+  workedHours       Decimal?     @db.Decimal(4, 2)
+  overtimeHours     Decimal?     @db.Decimal(4, 2)
+  
+  // Late/Early Tracking
+  lateMinutes       Int?
+  earlyDepartureMinutes Int?
+  
+  // Notes and Metadata
+  notes             String?      @db.Text
+  approvedBy        String?
+  approvedAt        DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([staffId, date])
+  @@index([staffId])
+  @@index([date])
+  @@index([status])
+}
+
+model LeaveRequest {
+  id            String       @id @default(uuid())
+  staffId       String
+  staff         Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  leaveType     LeaveType
+  startDate     DateTime     @db.Date
+  endDate       DateTime     @db.Date
+  totalDays     Int
+  reason        String?      @db.Text
+  status        LeaveStatus  @default(Pending)
+  
+  // Approval
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNotes   String?      @db.Text
+  
+  // Attachment (medical certificate, etc.)
+  attachmentUrl String?
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([staffId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model AttendanceSettings {
+  id                    String   @id @default("main")
+  
+  // Work Hours
+  workStartTime         String   @default("09:00")   // Expected start time
+  workEndTime           String   @default("17:00")   // Expected end time
+  lunchBreakMinutes     Int      @default(60)
+  
+  // Grace Period
+  lateGraceMinutes      Int      @default(15)        // Minutes before marked late
+  earlyLeaveGraceMinutes Int     @default(15)        // Minutes before marked early leave
+  
+  // Overtime
+  overtimeEnabled       Boolean  @default(true)
+  overtimeThresholdHours Decimal @default(8) @db.Decimal(4, 2)
+  
+  // Location
+  locationTrackingEnabled Boolean @default(true)
+  clinicLatitude        Decimal? @db.Decimal(10, 7)
+  clinicLongitude       Decimal? @db.Decimal(10, 7)
+  allowedRadiusMeters   Int      @default(100)       // Radius for valid clock-in
+  
+  // Work Days
+  workDays              String   @default("1,2,3,4,5") // Mon=1, Sun=0
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// ============================================
+// Reception Shift Management System
+// ============================================
+
+enum ShiftStatus {
+  Active
+  Completed
+  Cancelled
+}
+
+enum HandoverType {
+  Shift      // Regular shift handover
+  CashDrawer // Cash drawer handover
+  Emergency  // Emergency handover
+}
+
+enum HandoverStatus {
+  Pending
+  Accepted
+  Rejected
+  Completed
+}
+
+model ReceptionShift {
+  id               String       @id @default(uuid())
+  staffId          String
+  staff            Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  
+  // Shift Timing
+  scheduledStart   DateTime
+  scheduledEnd     DateTime
+  actualStart      DateTime?
+  actualEnd        DateTime?
+  
+  // Shift Details
+  status           ShiftStatus  @default(Active)
+  shiftType        String       @default("Regular") // Regular, Morning, Evening, Night, Weekend
+  notes            String?      @db.Text
+  
+  // Cash Drawer
+  openingCashAmount    Decimal?     @db.Decimal(12, 2)
+  closingCashAmount    Decimal?     @db.Decimal(12, 2)
+  expectedCashAmount   Decimal?     @db.Decimal(12, 2)
+  cashDiscrepancy      Decimal?     @db.Decimal(12, 2)
+  cashDiscrepancyNotes String?      @db.Text
+  
+  // Summary
+  totalTransactions    Int          @default(0)
+  totalRevenue         Decimal?     @db.Decimal(12, 2)
+  totalAppointments    Int          @default(0)
+  
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  
+  // Relations
+  handoversFrom    ShiftHandover[] @relation("HandoverFromShift")
+  handoversTo      ShiftHandover[] @relation("HandoverToShift")
+  cashDrawerTransactions CashDrawerTransaction[]
+
+  @@index([staffId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([scheduledEnd])
+}
+
+model ShiftHandover {
+  id               String         @id @default(uuid())
+  
+  // Staff involved
+  fromStaffId      String
+  fromStaff        Staff          @relation("HandoverFromStaff", fields: [fromStaffId], references: [id], onDelete: Cascade)
+  toStaffId        String
+  toStaff          Staff          @relation("HandoverToStaff", fields: [toStaffId], references: [id], onDelete: Cascade)
+  
+  // Shift references
+  fromShiftId      String?
+  fromShift        ReceptionShift? @relation("HandoverFromShift", fields: [fromShiftId], references: [id])
+  toShiftId        String?
+  toShift          ReceptionShift? @relation("HandoverToShift", fields: [toShiftId], references: [id])
+  
+  // Handover Details
+  handoverType     HandoverType   @default(Shift)
+  status           HandoverStatus @default(Pending)
+  handoverTime     DateTime       @default(now())
+  acceptedAt       DateTime?
+  completedAt      DateTime?
+  
+  // Notes and Communication
+  handoverNotes    String?        @db.Text  // Notes from outgoing staff
+  acceptanceNotes  String?        @db.Text  // Notes from incoming staff
+  pendingTasks     Json?          // List of pending tasks to hand over
+  importantNotes   Json?          // Critical items requiring attention
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([fromStaffId])
+  @@index([toStaffId])
+  @@index([status])
+  @@index([handoverType])
+  @@index([handoverTime])
+}
+
+model CashDrawerTransaction {
+  id               String       @id @default(uuid())
+  shiftId          String
+  shift            ReceptionShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  staffId          String
+  staff            Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  
+  // Transaction Details
+  type             String       // Opening, Closing, Deposit, Withdrawal, Adjustment, FloatAdded, FloatRemoved
+  amount           Decimal      @db.Decimal(12, 2)
+  previousBalance  Decimal      @db.Decimal(12, 2)
+  newBalance       Decimal      @db.Decimal(12, 2)
+  
+  // Payment Method breakdown (for deposits/withdrawals)
+  cashAmount       Decimal?     @db.Decimal(12, 2)
+  cardAmount       Decimal?     @db.Decimal(12, 2)
+  otherAmount      Decimal?     @db.Decimal(12, 2)
+  
+  // Reference
+  referenceId      String?      // Invoice ID, Payment ID, etc.
+  referenceType    String?      // Invoice, Payment, Adjustment
+  description      String?
+  notes            String?      @db.Text
+  
+  // Verification
+  verifiedBy       String?
+  verifiedAt       DateTime?
+  
+  createdAt        DateTime     @default(now())
+
+  @@index([shiftId])
+  @@index([staffId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Patient Wallet System
+enum WalletTransactionType {
+  Deposit           // Patient adds money to wallet
+  Withdrawal        // Patient withdraws money
+  Payment           // Payment for invoice/treatment
+  Refund            // Refund back to wallet
+  Adjustment        // Manual adjustment by staff
+  Transfer          // Transfer between wallets (future)
+}
+
+enum WalletTransactionStatus {
+  Pending
+  Completed
+  Failed
+  Cancelled
+  Refunded
+}
+
+model PatientWallet {
+  id               String              @id @default(uuid())
+  patientId        String              @unique
+  
+  // Balance Information
+  balance          Decimal             @db.Decimal(12, 2) @default(0)
+  totalDeposits    Decimal             @db.Decimal(12, 2) @default(0)
+  totalWithdrawals Decimal             @db.Decimal(12, 2) @default(0)
+  totalPayments    Decimal             @db.Decimal(12, 2) @default(0)
+  totalRefunds     Decimal             @db.Decimal(12, 2) @default(0)
+  
+  // Wallet Settings
+  isActive         Boolean             @default(true)
+  autoPayEnabled   Boolean             @default(false)  // Auto-pay invoices from wallet
+  lowBalanceAlert  Decimal?            @db.Decimal(12, 2)  // Alert when balance drops below
+  
+  // Patient Info (denormalized for quick access)
+  patientName      String?
+  patientPhone     String?
+  patientEmail     String?
+  
+  // Timestamps
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  lastTransactionAt DateTime?
+  
+  // Relations
+  transactions     WalletTransaction[]
+
+  @@index([patientId])
+  @@index([balance])
+  @@index([isActive])
+}
+
+model WalletTransaction {
+  id               String                    @id @default(uuid())
+  walletId         String
+  wallet           PatientWallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  // Transaction Details
+  type             WalletTransactionType
+  status           WalletTransactionStatus   @default(Completed)
+  amount           Decimal                   @db.Decimal(12, 2)
+  balanceBefore    Decimal                   @db.Decimal(12, 2)
+  balanceAfter     Decimal                   @db.Decimal(12, 2)
+  
+  // Reference (for payments/refunds)
+  referenceId      String?           // Invoice ID, Treatment ID, etc.
+  referenceType    String?           // Invoice, Treatment, Manual, etc.
+  
+  // Payment Method (for deposits)
+  paymentMethod    String?           // Cash, Card, BankTransfer, etc.
+  
+  // Description and Notes
+  description      String
+  notes            String?           @db.Text
+  
+  // Staff who processed the transaction
+  processedBy      String?
+  processedByName  String?
+  
+  // Timestamps
+  createdAt        DateTime          @default(now())
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  
+  // Cancellation/Refund info
+  cancelledBy      String?
+  cancellationReason String?
+
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+

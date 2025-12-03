@@ -14,6 +14,7 @@ import { Badge } from '../ui/badge';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { PatientWallet } from './patient-wallet';
 
 interface ViewPatientDialogProps {
   patient: Patient | null;
@@ -134,6 +135,17 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
         <p className="text-muted-foreground">{t('patients.no_conditions_reported')}</p>
                 )}
             </div>
+          </div>
+
+          {/* Patient Wallet Section */}
+          <div className={isRTL ? 'text-right' : undefined}>
+            <PatientWallet
+              patientId={patient.id}
+              patientName={patient.name}
+              patientPhone={patient.phone || undefined}
+              patientEmail={patient.email || undefined}
+              compact={true}
+            />
           </div>
 
         </div>

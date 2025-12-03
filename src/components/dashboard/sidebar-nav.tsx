@@ -36,6 +36,8 @@ import {
   MessageCircle,
   Layout,
   FlaskConical,
+  Clock,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -109,6 +111,13 @@ export function SidebarNav() {
       permission: "view_billing",
     },
     {
+      href: "/wallets",
+      icon: Wallet,
+      label: t('nav.wallets'),
+      subLabel: t('nav.wallets_desc'),
+      permission: "view_billing",
+    },
+    {
       href: "/dental-chart",
       icon: LineChart,
   label: t('nav.dental_chart'),
@@ -120,6 +129,13 @@ export function SidebarNav() {
       icon: UsersRound,
   label: t('nav.staff'),
       subLabel: t('nav.staff_desc'),
+      permission: "view_staff",
+    },
+    {
+      href: "/attendance",
+      icon: Clock,
+      label: t('nav.attendance'),
+      subLabel: t('nav.attendance_desc'),
       permission: "view_staff",
     },
     {
