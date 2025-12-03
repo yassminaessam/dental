@@ -536,7 +536,7 @@ export default function InsurancePage() {
         </div>
 
         {/* Ultra Enhanced Stats Cards - Clickable Filters */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-5">
           {insurancePageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-teal', 'metric-card-orange', 'metric-card-red'];
             const cardStyle = cardStyles[index % cardStyles.length];
@@ -549,60 +549,58 @@ export default function InsurancePage() {
                 key={stat.title}
                 onClick={() => setCardFilter(stat.filterValue)}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-sm transition-all duration-500 hover:scale-105 cursor-pointer group min-h-0",
                   cardStyle,
                   isActive && "ring-4 ring-white/50 scale-105"
                 )}
               >
                 {/* Active Indicator */}
                 {isActive && (
-                  <div className="absolute top-2 right-2 z-20">
-                    <CheckCircle2 className="h-5 w-5 text-white drop-shadow-lg" />
+                  <div className="absolute top-1 right-1 z-20">
+                    <CheckCircle2 className="h-3 w-3 text-white drop-shadow-lg" />
                   </div>
                 )}
                 
                 {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="pb-4 relative z-10">
+                <CardHeader className="pb-0.5 p-1.5 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+                      <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
                       <div className={cn(
-                        "text-xl sm:text-2xl lg:text-3xl font-bold drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300",
+                        "text-base font-bold drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300",
                         stat.valueColor
                       )}>
                         {stat.value}
                       </div>
                       {stat.secondaryValue && (
-                        <div className="text-sm font-semibold text-white/80">
+                        <div className="text-[10px] font-medium text-white/80 leading-tight">
                           {stat.secondaryValue}
                         </div>
                       )}
                     </div>
                     <CardIcon 
                       variant={(['blue', 'green', 'teal', 'orange', 'red'] as const)[index % 5]}
-                      size="lg"
-                      className="group-hover:rotate-12"
+                      className="w-6 h-6 group-hover:rotate-12"
                       aria-hidden="true"
                     >
-                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <Icon className="h-3.5 w-3.5" />
                     </CardIcon>
                   </div>
                 </CardHeader>
                 
-                <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
+                <CardContent className="pt-0 p-1.5 relative z-10">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-2 h-2 rounded-full animate-pulse",
-                      isActive ? "bg-white" : "bg-gray-500 dark:bg-gray-400"
-                    )} />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                       {isActive ? t('common.active') || 'Active Filter' : t('common.click_to_filter') || 'Click to filter'}
                     </span>
@@ -907,17 +905,17 @@ export default function InsurancePage() {
           </TabsContent>
           <TabsContent value="claims-reports" className="mt-0 space-y-6">
             {/* Report Summary Cards */}
-            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-3">
               {/* Total Revenue from Insurance */}
-              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-600" />
+              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-md bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardHeader className="pb-1 p-2">
+                  <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="h-3 w-3 text-green-600" />
                     {t('insurance.reports.total_insurance_revenue')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
+                <CardContent className="p-2 pt-0">
+                  <div className="text-base font-bold text-green-600">
                     {formatEGP(
                       claims
                         .filter(c => c.status === 'Paid')
@@ -929,20 +927,20 @@ export default function InsurancePage() {
                       language
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{t('insurance.reports.from_paid_claims')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('insurance.reports.from_paid_claims')}</p>
                 </CardContent>
               </Card>
 
               {/* Pending Amount */}
-              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-600" />
+              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-md bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
+                <CardHeader className="pb-1 p-2">
+                  <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-amber-600" />
                     {t('insurance.reports.pending_amount')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">
+                <CardContent className="p-2 pt-0">
+                  <div className="text-base font-bold text-amber-600">
                     {formatEGP(
                       claims
                         .filter(c => c.status === 'Processing' || c.status === 'Approved')
@@ -954,20 +952,20 @@ export default function InsurancePage() {
                       language
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{t('insurance.reports.awaiting_payment')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('insurance.reports.awaiting_payment')}</p>
                 </CardContent>
               </Card>
 
               {/* Denied Amount */}
-              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-xl bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Card className="relative overflow-hidden border-2 border-muted/50 shadow-md bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20">
+                <CardHeader className="pb-1 p-2">
+                  <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center gap-2">
                     <XCircle className="h-4 w-4 text-red-600" />
                     {t('insurance.reports.denied_amount')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
+                <CardContent className="p-3 pt-0">
+                  <div className="text-lg sm:text-xl font-bold text-red-600">
                     {formatEGP(
                       claims
                         .filter(c => c.status === 'Denied')

@@ -176,14 +176,14 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {stats.map((stat, index) => {
         const Icon = iconMap[stat.icon as IconKey];
         return (
           <Card 
             key={stat.title} 
             className={cn(
-              "relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+              "relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-102 cursor-pointer group min-h-0",
               stat.cardStyle
             )}
             role="button"
@@ -197,37 +197,29 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
               }
             }}
           >
-            {/* Animated Background Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-              <div className="flex flex-col gap-1">
-                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 p-1.5 relative z-10">
+              <div className="flex flex-col">
+                <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                   {stat.title}
                 </CardTitle>
-                <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
                   {stat.value}
                 </div>
               </div>
               <div
                 className={cn(
-                  'flex items-center justify-center w-12 h-12 rounded-xl backdrop-blur-sm transition-all duration-300 group-hover:scale-110 border border-transparent',
+                  'flex items-center justify-center w-6 h-6 rounded backdrop-blur-sm',
                   iconTintMap[stat.cardStyle] || 'bg-gray-500/10 text-gray-700 dark:text-gray-300'
                 )}
               >
-                <Icon className="h-6 w-6" />
+                <Icon className="h-3.5 w-3.5" />
               </div>
             </CardHeader>
             
-            <CardContent className="pt-0 relative z-10">
-              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+            <CardContent className="pt-0 p-1.5 relative z-10">
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                 {stat.description}
               </p>
-              {/* Elite Metric Indicator */}
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
-                <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Active</span>
-              </div>
             </CardContent>
             
           </Card>

@@ -260,7 +260,7 @@ export default function CommunicationsPage() {
         </div>
 
         {/* Ultra Enhanced Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
           {communicationsPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
@@ -271,41 +271,33 @@ export default function CommunicationsPage() {
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-sm transition-all duration-500 hover:scale-105 cursor-pointer group min-h-0",
                   cardStyle
                 )}
               >
                 {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="pb-4 relative z-10">
+                <CardHeader className="pb-0.5 p-1.5 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+                      <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-base font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
                         {stat.value}
                       </div>
                     </div>
-                    <CardIcon variant={(['blue','green','orange','purple'] as const)[index % 4]} size="lg" className="group-hover:rotate-12">
-                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <CardIcon variant={(['blue','green','orange','purple'] as const)[index % 4]} className="w-6 h-6 group-hover:rotate-12">
+                      <Icon className="h-3.5 w-3.5" />
                     </CardIcon>
                   </div>
                 </CardHeader>
                 
-                <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
+                <CardContent className="pt-0 p-1.5 relative z-10">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Live</span>
-                    <div className="ml-auto">
-                      <div className="text-xs text-white/60 font-bold">↗</div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             );
@@ -545,30 +537,30 @@ export default function CommunicationsPage() {
           </TabsContent>
           <TabsContent value="templates" className="mt-0">
              {templates.length > 0 ? (
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {templates.map((template) => (
                   <Card key={template.name} className="group relative flex flex-col overflow-hidden border-2 border-muted hover:border-purple-300 dark:hover:border-purple-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
                     
-                    <CardHeader className="p-4 sm:p-6 relative z-10">
-                      <CardTitle className="flex items-center justify-between text-base sm:text-lg font-black">
+                    <CardHeader className="p-3 sm:p-4 relative z-10">
+                      <CardTitle className="flex items-center justify-between text-sm sm:text-base font-black">
                         <span className="truncate mr-2 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">{template.name}</span>
                         <Badge variant="outline" className="text-xs font-bold border-2 border-purple-200 dark:border-purple-800">
                           {template.type}
                         </Badge>
                       </CardTitle>
-                      <CardDescription className="text-sm font-medium mt-2">{template.subject}</CardDescription>
+                      <CardDescription className="text-xs font-medium mt-1">{template.subject}</CardDescription>
                     </CardHeader>
                     
-                    <CardContent className="flex-grow p-4 sm:p-6 pt-0 relative z-10">
-                      <div className="p-4 rounded-xl bg-muted/30 backdrop-blur-sm">
-                        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                    <CardContent className="flex-grow p-3 sm:p-4 pt-0 relative z-10">
+                      <div className="p-3 rounded-xl bg-muted/30 backdrop-blur-sm">
+                        <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
                           {template.body}
                         </p>
                       </div>
                     </CardContent>
                     
-                    <CardFooter className="flex justify-end gap-2 p-4 sm:p-6 pt-0 relative z-10">
+                    <CardFooter className="flex justify-end gap-2 p-3 sm:p-4 pt-0 relative z-10">
                       <Button variant="outline" size="sm" disabled className="font-bold border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
                         <Pencil className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
                         <span className="hidden sm:inline">{t('communications.edit')}</span>

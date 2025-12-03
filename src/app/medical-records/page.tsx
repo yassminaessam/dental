@@ -513,12 +513,12 @@ export default function MedicalRecordsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-2">
+        <div className="grid gap-1.5 grid-cols-2">
           {medicalRecordsPageStats.map((stat, idx) => (
             <Card
               key={stat.title}
               className={cn(
-                "relative overflow-hidden border-0 shadow-xl transition-all duration-500 cursor-pointer hover:scale-105",
+                "relative overflow-hidden border-0 shadow-sm transition-all duration-500 cursor-pointer hover:scale-105 min-h-0",
                 stat.cardStyle
               )}
               role="button"
@@ -538,20 +538,20 @@ export default function MedicalRecordsPage() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-                <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+              <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                   {stat.title}
                 </CardTitle>
-                <CardIcon variant={(['blue','green'] as const)[idx % 2]} aria-hidden="true">
-                  {idx === 0 && <FileText className="h-5 w-5" />}
-                  {idx === 1 && <Images className="h-5 w-5" />}
+                <CardIcon variant={(['blue','green'] as const)[idx % 2]} className="w-6 h-6" aria-hidden="true">
+                  {idx === 0 && <FileText className="h-3.5 w-3.5" />}
+                  {idx === 1 && <Images className="h-3.5 w-3.5" />}
                 </CardIcon>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <CardContent className="pt-0 p-1.5">
+                <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
                   {stat.value}
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mt-2">
+                <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                   {stat.description}
                 </p>
               </CardContent>

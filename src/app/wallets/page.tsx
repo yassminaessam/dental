@@ -464,60 +464,60 @@ export default function WalletsPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-          <Card className="relative overflow-hidden border-0 shadow-xl transition-all duration-500 group metric-card-blue">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
+          <Card className="relative overflow-hidden border-0 shadow-sm transition-all duration-500 group metric-card-blue min-h-0">
             <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">{t('wallet.total_wallets')}</CardTitle>
-              <CardIcon variant="blue">
-                <Users className="h-4 w-4" />
+            <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+              <CardTitle className="text-[11px] font-semibold leading-tight">{t('wallet.total_wallets')}</CardTitle>
+              <CardIcon variant="blue" className="w-6 h-6">
+                <Users className="h-3.5 w-3.5" />
               </CardIcon>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalWallets}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('wallet.active_patient_wallets')}</p>
+            <CardContent className="p-1.5 pt-0">
+              <div className="text-base font-bold leading-tight">{stats.totalWallets}</div>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('wallet.active_patient_wallets')}</p>
             </CardContent>
           </Card>
           
-          <Card className="relative overflow-hidden border-0 shadow-xl transition-all duration-500 group metric-card-green">
+          <Card className="relative overflow-hidden border-0 shadow-sm transition-all duration-500 group metric-card-green min-h-0">
             <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">{t('wallet.total_balance')}</CardTitle>
-              <CardIcon variant="green">
-                <DollarSign className="h-4 w-4" />
+            <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+              <CardTitle className="text-[11px] font-semibold leading-tight">{t('wallet.total_balance')}</CardTitle>
+              <CardIcon variant="green" className="w-6 h-6">
+                <DollarSign className="h-3.5 w-3.5" />
               </CardIcon>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalBalance)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('wallet.available_funds')}</p>
+            <CardContent className="p-1.5 pt-0">
+              <div className="text-base font-bold text-green-600 leading-tight">{formatCurrency(stats.totalBalance)}</div>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('wallet.available_funds')}</p>
             </CardContent>
           </Card>
           
-          <Card className="relative overflow-hidden border-0 shadow-xl transition-all duration-500 group metric-card-purple">
+          <Card className="relative overflow-hidden border-0 shadow-sm transition-all duration-500 group metric-card-purple min-h-0">
             <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">{t('wallet.total_deposits')}</CardTitle>
-              <CardIcon variant="purple">
-                <TrendingUp className="h-4 w-4" />
+            <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+              <CardTitle className="text-[11px] font-semibold leading-tight">{t('wallet.total_deposits')}</CardTitle>
+              <CardIcon variant="purple" className="w-6 h-6">
+                <TrendingUp className="h-3.5 w-3.5" />
               </CardIcon>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalDeposits)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('wallet.all_time_deposits')}</p>
+            <CardContent className="p-1.5 pt-0">
+              <div className="text-base font-bold leading-tight">{formatCurrency(stats.totalDeposits)}</div>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('wallet.all_time_deposits')}</p>
             </CardContent>
           </Card>
           
-          <Card className="relative overflow-hidden border-0 shadow-xl transition-all duration-500 group metric-card-orange">
+          <Card className="relative overflow-hidden border-0 shadow-sm transition-all duration-500 group metric-card-orange min-h-0">
             <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">{t('wallet.total_payments')}</CardTitle>
-              <CardIcon variant="orange">
-                <Receipt className="h-4 w-4" />
+            <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+              <CardTitle className="text-[11px] font-semibold leading-tight">{t('wallet.total_payments')}</CardTitle>
+              <CardIcon variant="orange" className="w-6 h-6">
+                <Receipt className="h-3.5 w-3.5" />
               </CardIcon>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalPayments)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('wallet.payments_from_wallets')}</p>
+            <CardContent className="p-1.5 pt-0">
+              <div className="text-base font-bold leading-tight">{formatCurrency(stats.totalPayments)}</div>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('wallet.payments_from_wallets')}</p>
             </CardContent>
           </Card>
         </div>

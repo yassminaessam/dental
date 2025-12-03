@@ -448,12 +448,12 @@ export default function TreatmentsPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
           {treatmentPageStats.map((stat, idx) => (
             <Card
               key={stat.title}
               className={cn(
-                "relative overflow-hidden border-0 shadow-xl transition-all duration-500",
+                "relative overflow-hidden border-0 shadow-sm transition-all duration-500 min-h-0",
                 stat.cardStyle
               )}
               role="button"
@@ -473,20 +473,20 @@ export default function TreatmentsPage() {
                 }
               }}
             >
-              <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+              <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                   {stat.title}
                 </CardTitle>
-                <CardIcon variant={(['blue','green','orange','purple'] as const)[idx % 4]} aria-hidden="true">
-                  {idx === 0 && <Stethoscope className="h-5 w-5" />}
-                  {idx === 1 && <CheckCircle className="h-5 w-5" />}
-                  {idx === 2 && <Activity className="h-5 w-5" />}
-                  {idx === 3 && <Clock className="h-5 w-5" />}
+                <CardIcon variant={(['blue','green','orange','purple'] as const)[idx % 4]} className="w-6 h-6" aria-hidden="true">
+                  {idx === 0 && <Stethoscope className="h-3.5 w-3.5" />}
+                  {idx === 1 && <CheckCircle className="h-3.5 w-3.5" />}
+                  {idx === 2 && <Activity className="h-3.5 w-3.5" />}
+                  {idx === 3 && <Clock className="h-3.5 w-3.5" />}
                 </CardIcon>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+              <CardContent className="p-1.5 pt-0">
+                <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">{stat.value}</div>
+                <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                   {stat.description}
                 </p>
               </CardContent>

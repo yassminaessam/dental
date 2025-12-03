@@ -241,7 +241,7 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
           {appointmentPageStats.map((stat, idx) => {
             const variants = ['blue','orange','green','purple'] as const;
             const variant = variants[idx % variants.length];
@@ -249,7 +249,7 @@ export default function AppointmentsPage() {
               <Card
                 key={stat.title}
                 className={cn(
-                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
+                  'relative overflow-hidden border-0 shadow-sm transition-all duration-300 group min-h-0',
                   stat.cardStyle
                 )}
                 role="button"
@@ -265,23 +265,22 @@ export default function AppointmentsPage() {
                   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLDivElement).click(); }
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+                  <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {stat.title}
                   </CardTitle>
-                  <CardIcon variant={variant} aria-hidden="true">
-                    {idx === 0 && <CalendarDays className="h-5 w-5" />}
-                    {idx === 1 && <Clock className="h-5 w-5" />}
-                    {idx === 2 && <CheckCircle2 className="h-5 w-5" />}
-                    {idx === 3 && <CalendarCheck className="h-5 w-5" />}
+                  <CardIcon variant={variant} aria-hidden="true" className="w-6 h-6">
+                    {idx === 0 && <CalendarDays className="h-3.5 w-3.5" />}
+                    {idx === 1 && <Clock className="h-3.5 w-3.5" />}
+                    {idx === 2 && <CheckCircle2 className="h-3.5 w-3.5" />}
+                    {idx === 3 && <CalendarCheck className="h-3.5 w-3.5" />}
                   </CardIcon>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <CardContent className="pt-0 p-1.5">
+                  <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
                     {stat.value}
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>

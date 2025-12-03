@@ -309,7 +309,7 @@ export default function PatientPortalPage() {
         </div>
 
         {/* Ultra Enhanced Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
           {patientPortalPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
@@ -318,46 +318,37 @@ export default function PatientPortalPage() {
               <Card 
                 key={stat.title}
                 className={cn(
-                  "relative overflow-hidden border-0 shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer group",
+                  "relative overflow-hidden border-0 shadow-sm transition-all duration-500 hover:scale-105 cursor-pointer group min-h-0",
                   cardStyle
                 )}
               >
                 {/* Animated Background Layers */}
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 
-                <CardHeader className="pb-4 relative z-10">
+                <CardHeader className="pb-0.5 p-1.5 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+                      <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className={cn("text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-md mb-2 group-hover:scale-110 transition-transform duration-300")}>
+                      <div className={cn("text-base font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300")}>
                         {stat.value}
                       </div>
                     </div>
                     <CardIcon 
                       variant={(['blue', 'green', 'orange', 'purple'] as const)[index % 4]}
-                      size="lg"
-                      className="group-hover:rotate-12"
+                      className="w-6 h-6 group-hover:rotate-12"
                       aria-hidden="true"
                     >
-                      <User className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <User className="h-3.5 w-3.5" />
                     </CardIcon>
                   </div>
                 </CardHeader>
                 
-                <CardContent className="pt-0 relative z-10">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-3">
+                <CardContent className="pt-0 p-1.5 relative z-10">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 animate-pulse" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{t('patient_portal.online')}</span>
-                    <div className="ml-auto">
-                      <div className="text-xs text-white/60 font-bold">↗</div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             );

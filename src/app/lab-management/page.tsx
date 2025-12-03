@@ -396,7 +396,7 @@ export default function LabManagementPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, index) => {
             const cardStyles = ['metric-card-blue','metric-card-orange','metric-card-green','metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
@@ -405,23 +405,23 @@ export default function LabManagementPage() {
               <Card
                 key={stat.title}
                 className={cn(
-                  'relative overflow-hidden border-0 shadow-xl transition-all duration-500 group',
+                  'relative overflow-hidden border-0 shadow-sm transition-all duration-500 group min-h-0',
                   cardStyle
                 )}
               >
-                <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+                  <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {stat.title}
                   </CardTitle>
-                  <CardIcon variant={stat.variant} aria-hidden="true">
-                    <Icon className="h-5 w-5" />
+                  <CardIcon variant={stat.variant} className="w-6 h-6" aria-hidden="true">
+                    <Icon className="h-3.5 w-3.5" />
                   </CardIcon>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className={cn("text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2", stat.valueClassName)}>
+                <CardContent className="pt-0 p-1.5">
+                  <div className={cn("text-base font-bold text-gray-900 dark:text-gray-100 leading-tight", stat.valueClassName)}>
                     {stat.value}
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>
