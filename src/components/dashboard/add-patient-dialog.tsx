@@ -31,6 +31,15 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { listDocuments } from '@/lib/data-client';
+
+type InsuranceProvider = {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+};
 
 const patientSchema = z.object({
   name: z.string().min(1, { message: 'First name is required' }),
@@ -86,6 +95,24 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
+  const [insuranceProviders, setInsuranceProviders] = React.useState<InsuranceProvider[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = React.useState(false);
+
+  // Fetch insurance providers on mount
+  React.useEffect(() => {
+    const fetchProviders = async () => {
+      setIsLoadingProviders(true);
+      try {
+        const providers = await listDocuments<InsuranceProvider>('insurance-providers');
+        setInsuranceProviders(providers);
+      } catch (error) {
+        console.error('Failed to fetch insurance providers:', error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+    fetchProviders();
+  }, []);
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -435,9 +462,21 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">{t('patients.insurance_provider')}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t('patients.insurance_provider_placeholder')} {...field} className="h-10" />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder={isLoadingProviders ? t('common.loading') : t('patients.insurance_provider_placeholder')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">{t('patients.no_insurance')}</SelectItem>
+                            {insuranceProviders.map((provider) => (
+                              <SelectItem key={provider.id} value={provider.name}>
+                                {provider.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

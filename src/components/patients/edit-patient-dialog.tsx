@@ -33,6 +33,15 @@ import type { Patient } from '@/app/patients/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { listDocuments } from '@/lib/data-client';
+
+type InsuranceProvider = {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+};
 
 const buildPatientSchema = (t: (key: string, params?: Record<string, string | number>) => string) =>
   z.object({
@@ -98,6 +107,8 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
   const [dobOpen, setDobOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [hasUserAccount, setHasUserAccount] = React.useState(false);
+  const [insuranceProviders, setInsuranceProviders] = React.useState<InsuranceProvider[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = React.useState(false);
   const form = useForm<PatientFormData>({
     resolver: zodResolver(buildPatientSchema(t)),
   });
@@ -106,6 +117,22 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
     control: form.control,
     name: "medicalHistory",
   });
+
+  // Fetch insurance providers on mount
+  React.useEffect(() => {
+    const fetchProviders = async () => {
+      setIsLoadingProviders(true);
+      try {
+        const providers = await listDocuments<InsuranceProvider>('insurance-providers');
+        setInsuranceProviders(providers);
+      } catch (error) {
+        console.error('Failed to fetch insurance providers:', error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+    fetchProviders();
+  }, []);
 
   // Check if patient has user account
   React.useEffect(() => {
@@ -311,7 +338,24 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
                   <h3 className="mb-4 text-lg font-medium">{t('patients.insurance_information')}</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField control={form.control} name="insuranceProvider" render={({ field }) => (
-                          <FormItem><FormLabel>{t('patients.insurance_provider')}</FormLabel><FormControl><Input placeholder={t('patients.insurance_provider_placeholder')} {...field} /></FormControl></FormItem>
+                          <FormItem>
+                            <FormLabel>{t('patients.insurance_provider')}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={isLoadingProviders ? t('common.loading') : t('patients.insurance_provider_placeholder')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="none">{t('patients.no_insurance')}</SelectItem>
+                                {insuranceProviders.map((provider) => (
+                                  <SelectItem key={provider.id} value={provider.name}>
+                                    {provider.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
                       )}/>
                       <FormField control={form.control} name="policyNumber" render={({ field }) => (
                           <FormItem><FormLabel>{t('patients.policy_number')}</FormLabel><FormControl><Input placeholder={t('patients.policy_number_placeholder')} {...field} /></FormControl></FormItem>

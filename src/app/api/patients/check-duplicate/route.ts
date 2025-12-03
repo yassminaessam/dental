@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Normalize phone number by removing spaces and keeping only digits and + sign
+const normalizePhone = (phone: string) => phone.replace(/[^\d+]/g, '');
+
 export async function POST(request: Request) {
   try {
     const { phone, email, excludeId } = await request.json();
 
     if (phone) {
-      const existing = await prisma.patient.findFirst({
-        where: {
-          phone: phone,
-          ...(excludeId ? { id: { not: excludeId } } : {}),
-        },
-        select: { id: true },
+      const normalizedPhone = normalizePhone(phone);
+      
+      // Find all patients and check with normalized phone comparison
+      const patients = await prisma.patient.findMany({
+        where: excludeId ? { id: { not: excludeId } } : {},
+        select: { id: true, phone: true },
       });
+      
+      const existing = patients.find(p => p.phone && normalizePhone(p.phone) === normalizedPhone);
       
       if (existing) {
         return NextResponse.json({ 

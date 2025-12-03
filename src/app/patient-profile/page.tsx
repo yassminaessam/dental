@@ -8,11 +8,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { User, Mail, Phone, MapPin, Calendar, Shield, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { listDocuments } from '@/lib/data-client';
+
+type InsuranceProvider = {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+};
 
 export default function PatientProfilePage() {
   const { user } = useAuth();
@@ -42,11 +58,29 @@ export default function PatientProfilePage() {
   const [policyNumber, setPolicyNumber] = React.useState('');
   const [groupNumber, setGroupNumber] = React.useState('');
   const [policyHolder, setPolicyHolder] = React.useState('');
+  const [insuranceProviders, setInsuranceProviders] = React.useState<InsuranceProvider[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = React.useState(false);
 
   // Password State
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
+
+  // Fetch insurance providers on mount
+  React.useEffect(() => {
+    const fetchProviders = async () => {
+      setIsLoadingProviders(true);
+      try {
+        const providers = await listDocuments<InsuranceProvider>('insurance-providers');
+        setInsuranceProviders(providers);
+      } catch (error) {
+        console.error('Failed to fetch insurance providers:', error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+    fetchProviders();
+  }, []);
 
   React.useEffect(() => {
     if (user?.email) {
@@ -479,12 +513,19 @@ export default function PatientProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="insuranceProvider">{t('patient_pages.profile.insurance_provider')}</Label>
-                      <Input 
-                        id="insuranceProvider" 
-                        placeholder={t('patient_pages.profile.provider_placeholder')}
-                        value={insuranceProvider}
-                        onChange={(e) => setInsuranceProvider(e.target.value)}
-                      />
+                      <Select onValueChange={setInsuranceProvider} value={insuranceProvider || ''}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingProviders ? t('common.loading') : t('patient_pages.profile.provider_placeholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">{t('patients.no_insurance')}</SelectItem>
+                          {insuranceProviders.map((provider) => (
+                            <SelectItem key={provider.id} value={provider.name}>
+                              {provider.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="policyNumber">{t('patient_pages.profile.policy_number')}</Label>
