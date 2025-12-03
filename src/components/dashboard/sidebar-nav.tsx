@@ -278,23 +278,23 @@ export function SidebarNav() {
 
   if (!user) return null;
 
-  // Static color styles (kept literal so Tailwind doesn't purge)
+  // Static color styles for light mode (kept literal so Tailwind doesn't purge)
   const colorStyles = [
-    { iconBg: 'bg-cyan-500/10', iconText: 'text-cyan-400', ring: 'ring-cyan-400/30' },
-    { iconBg: 'bg-sky-500/10', iconText: 'text-sky-400', ring: 'ring-sky-400/30' },
-    { iconBg: 'bg-teal-500/10', iconText: 'text-teal-400', ring: 'ring-teal-400/30' },
-    { iconBg: 'bg-emerald-500/10', iconText: 'text-emerald-400', ring: 'ring-emerald-400/30' },
-    { iconBg: 'bg-green-500/10', iconText: 'text-green-400', ring: 'ring-green-400/30' },
-    { iconBg: 'bg-lime-500/10', iconText: 'text-lime-400', ring: 'ring-lime-400/30' },
-    { iconBg: 'bg-amber-500/10', iconText: 'text-amber-400', ring: 'ring-amber-400/30' },
-    { iconBg: 'bg-orange-500/10', iconText: 'text-orange-400', ring: 'ring-orange-400/30' },
-    { iconBg: 'bg-rose-500/10', iconText: 'text-rose-400', ring: 'ring-rose-400/30' },
-    { iconBg: 'bg-pink-500/10', iconText: 'text-pink-400', ring: 'ring-pink-400/30' },
-    { iconBg: 'bg-fuchsia-500/10', iconText: 'text-fuchsia-400', ring: 'ring-fuchsia-400/30' },
-    { iconBg: 'bg-violet-500/10', iconText: 'text-violet-400', ring: 'ring-violet-400/30' },
-    { iconBg: 'bg-purple-500/10', iconText: 'text-purple-400', ring: 'ring-purple-400/30' },
-    { iconBg: 'bg-indigo-500/10', iconText: 'text-indigo-400', ring: 'ring-indigo-400/30' },
-    { iconBg: 'bg-blue-500/10', iconText: 'text-blue-400', ring: 'ring-blue-400/30' },
+    { iconBg: 'bg-cyan-100', iconText: 'text-cyan-600', ring: 'ring-cyan-200' },
+    { iconBg: 'bg-sky-100', iconText: 'text-sky-600', ring: 'ring-sky-200' },
+    { iconBg: 'bg-teal-100', iconText: 'text-teal-600', ring: 'ring-teal-200' },
+    { iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', ring: 'ring-emerald-200' },
+    { iconBg: 'bg-green-100', iconText: 'text-green-600', ring: 'ring-green-200' },
+    { iconBg: 'bg-lime-100', iconText: 'text-lime-600', ring: 'ring-lime-200' },
+    { iconBg: 'bg-amber-100', iconText: 'text-amber-600', ring: 'ring-amber-200' },
+    { iconBg: 'bg-orange-100', iconText: 'text-orange-600', ring: 'ring-orange-200' },
+    { iconBg: 'bg-rose-100', iconText: 'text-rose-600', ring: 'ring-rose-200' },
+    { iconBg: 'bg-pink-100', iconText: 'text-pink-600', ring: 'ring-pink-200' },
+    { iconBg: 'bg-fuchsia-100', iconText: 'text-fuchsia-600', ring: 'ring-fuchsia-200' },
+    { iconBg: 'bg-violet-100', iconText: 'text-violet-600', ring: 'ring-violet-200' },
+    { iconBg: 'bg-purple-100', iconText: 'text-purple-600', ring: 'ring-purple-200' },
+    { iconBg: 'bg-indigo-100', iconText: 'text-indigo-600', ring: 'ring-indigo-200' },
+    { iconBg: 'bg-blue-100', iconText: 'text-blue-600', ring: 'ring-blue-200' },
   ];
 
   return (
@@ -316,19 +316,19 @@ export function SidebarNav() {
               >
                 <Link
                   href={item.href as any}
-                  className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-2xl px-4 py-4 min-h-24 border border-sidebar-border/20 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 transition-all duration-300 relative overflow-hidden`}
+                  className={`flex ${direction === 'rtl' ? 'flex-row-reverse text-right' : 'flex-row'} items-stretch gap-4 w-full rounded-xl px-4 py-3 min-h-20 border bg-white/60 dark:bg-sidebar-accent/20 hover:bg-white dark:hover:bg-sidebar-accent/40 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden ${isActive ? 'border-primary/30 bg-primary/5 dark:bg-sidebar-primary/10' : 'border-sidebar-border/30'}`}
                 >
                   {/* Active bar */}
                   <span
-                    className={`absolute ${direction === 'rtl' ? 'right-0' : 'left-0'} top-0 h-full w-1.5 rounded-${direction === 'rtl' ? 'l' : 'r'}-full transition-all duration-300 ${isActive ? 'bg-sidebar-primary opacity-100' : 'bg-sidebar-primary/0 opacity-0 group-hover:opacity-60'}`}
+                    className={`absolute ${direction === 'rtl' ? 'right-0' : 'left-0'} top-0 h-full w-1 rounded-${direction === 'rtl' ? 'l' : 'r'}-full transition-all duration-300 ${isActive ? 'bg-primary opacity-100' : 'bg-primary/0 opacity-0 group-hover:bg-primary/40 group-hover:opacity-60'}`}
                   />
                   {/* Icon */}
-                  <div className={`relative flex-shrink-0 self-center flex items-center justify-center w-14 h-14 rounded-xl ${colors.iconBg} ${colors.ring} ring-1 backdrop-blur-sm transition-all duration-300 group-hover:scale-105`}> 
-                    <IconComponent className={`h-7 w-7 ${colors.iconText}`} />
+                  <div className={`relative flex-shrink-0 self-center flex items-center justify-center w-12 h-12 rounded-xl ${colors.iconBg} ${colors.ring} ring-1 transition-all duration-300 group-hover:scale-105 group-hover:shadow-md`}> 
+                    <IconComponent className={`h-6 w-6 ${colors.iconText}`} />
                     {user?.role === 'patient' && isPatientPortalExternal && (
                       <div
                         title={t('nav.patient_portal')}
-                        className={`absolute -bottom-1 ${direction === 'rtl' ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-sidebar-primary text-sidebar-background flex items-center justify-center ring-2 ring-sidebar-background`}
+                        className={`absolute -bottom-1 ${direction === 'rtl' ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center ring-2 ring-white`}
                       >
                         <User className="w-3 h-3" />
                       </div>
@@ -336,18 +336,18 @@ export function SidebarNav() {
                   </div>
                   {/* Text Block */}
                   <div className={`flex flex-col flex-1 justify-center ${direction === 'rtl' ? 'pr-1' : 'pl-1'} py-1`}> 
-                    <span className={`font-semibold text-sm tracking-wide mb-1 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'} group-hover:text-sidebar-accent-foreground transition-colors`}> 
+                    <span className={`font-semibold text-sm tracking-wide mb-0.5 ${isActive ? 'text-primary dark:text-sidebar-primary' : 'text-slate-700 dark:text-sidebar-foreground'} group-hover:text-primary dark:group-hover:text-sidebar-primary transition-colors`}> 
                       {item.label}
                     </span>
                     {item.subLabel && (
-                      <span className="text-xs font-medium text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground/90 whitespace-normal break-words leading-snug">
+                      <span className="text-xs font-medium text-slate-500 dark:text-sidebar-foreground/70 group-hover:text-slate-600 dark:group-hover:text-sidebar-accent-foreground/90 whitespace-normal break-words leading-snug">
                         {item.subLabel}
                       </span>
                     )}
                   </div>
                   {/* Active pulse dot */}
                   {isActive && (
-                    <div className={`absolute ${direction === 'rtl' ? 'left-2' : 'right-2'} top-2 w-2.5 h-2.5 rounded-full bg-sidebar-primary shadow-[0_0_0_3px_rgba(var(--sidebar-primary-rgb),0.25)] animate-pulse`} />
+                    <div className={`absolute ${direction === 'rtl' ? 'left-2' : 'right-2'} top-2 w-2 h-2 rounded-full bg-primary shadow-[0_0_0_3px_rgba(var(--primary-rgb),0.2)] animate-pulse`} />
                   )}
                 </Link>
               </SidebarMenuButton>
@@ -357,24 +357,24 @@ export function SidebarNav() {
       </SidebarMenu>
       
       {/* Elite User Section */}
-      <div className="mt-auto border-t border-sidebar-border/50 pt-6 space-y-4">
+      <div className="mt-auto border-t border-sidebar-border/40 pt-5 space-y-3">
         {/* User Profile Card */}
-        <div className="px-4 py-3 mx-2 rounded-xl bg-sidebar-accent/30 backdrop-blur-sm border border-sidebar-border/30">
+        <div className="px-3 py-3 mx-2 rounded-xl bg-white/60 dark:bg-sidebar-accent/30 shadow-sm border border-sidebar-border/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sidebar-primary to-sidebar-accent-foreground flex items-center justify-center">
-              <span className="text-sm font-bold text-sidebar-background">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+              <span className="text-sm font-bold text-white">
                 {user.firstName?.[0]}{user.lastName?.[0]}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sidebar-foreground text-sm truncate">
+              <div className="font-semibold text-slate-700 dark:text-sidebar-foreground text-sm truncate">
                 {user.firstName} {user.lastName}
               </div>
-              <div className="text-xs text-sidebar-foreground/70 capitalize font-medium">
+              <div className="text-xs text-slate-500 dark:text-sidebar-foreground/70 capitalize font-medium">
                 {user.role} • Online
               </div>
             </div>
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm" />
           </div>
         </div>
         
@@ -383,10 +383,10 @@ export function SidebarNav() {
           <SidebarMenuButton asChild>
             <Button 
               variant="ghost" 
-              className="w-full justify-start mx-2 px-4 py-3 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive transition-all duration-300 group" 
+              className="w-full justify-start mx-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-destructive/10 hover:bg-red-100 dark:hover:bg-destructive/20 text-red-600 dark:text-destructive hover:text-red-700 dark:hover:text-destructive transition-all duration-300 group border border-red-200/50 dark:border-transparent" 
               onClick={handleSignOut}
             >
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10 group-hover:bg-destructive/20 transition-all duration-300">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 dark:bg-destructive/10 group-hover:bg-red-200 dark:group-hover:bg-destructive/20 transition-all duration-300">
                 <LogOut className="h-4 w-4" />
               </div>
               <span className="font-medium">{t('nav.sign_out')}</span>
@@ -395,7 +395,7 @@ export function SidebarNav() {
         </SidebarMenuItem>
         
         {/* Bottom spacing */}
-        <div className="pb-6" />
+        <div className="pb-4" />
       </div>
     </div>
   );

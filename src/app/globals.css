@@ -35,15 +35,15 @@ body {
     --chart-4: 280 85% 60%; /* Purple */
     --chart-5: 140 70% 45%; /* Green */
     --radius: 0.75rem;
-    /* Elite Sidebar - Dark Professional */
-    --sidebar-background: 220 30% 12%; /* Dark Blue-Gray */
-    --sidebar-foreground: 220 15% 85%; /* Light Gray Text */
-    --sidebar-primary: 195 100% 50%; /* Bright Cyan */
-    --sidebar-primary-foreground: 220 30% 12%;
-    --sidebar-accent: 220 25% 18%; /* Slightly Lighter Dark */
-    --sidebar-accent-foreground: 195 100% 70%;
-    --sidebar-border: 220 25% 20%;
-    --sidebar-ring: 195 100% 50%;
+    /* Elite Sidebar - Light Professional */
+    --sidebar-background: 220 25% 97%; /* Light Blue-Gray */
+    --sidebar-foreground: 220 25% 25%; /* Dark Text */
+    --sidebar-primary: 200 100% 45%; /* Elite Blue */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 92%; /* Light Accent */
+    --sidebar-accent-foreground: 200 100% 35%;
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: 200 100% 45%;
     /* Metric Card Colors */
     --metric-green: 140 70% 45%;
     --metric-blue: 200 100% 40%;
@@ -76,13 +76,13 @@ body {
     --chart-3: 35 90% 60%;
     --chart-4: 280 85% 65%;
     --chart-5: 140 70% 50%;
-    --sidebar-background: 220 30% 6%;
-    --sidebar-foreground: 220 15% 85%;
+    --sidebar-background: 220 25% 14%;
+    --sidebar-foreground: 220 15% 90%;
     --sidebar-primary: 195 100% 60%;
-    --sidebar-primary-foreground: 220 30% 6%;
-    --sidebar-accent: 220 25% 12%;
-    --sidebar-accent-foreground: 195 100% 70%;
-    --sidebar-border: 220 25% 15%;
+    --sidebar-primary-foreground: 220 25% 10%;
+    --sidebar-accent: 220 25% 18%;
+    --sidebar-accent-foreground: 195 100% 75%;
+    --sidebar-border: 220 25% 22%;
     --sidebar-ring: 195 100% 60%;
     --metric-green: 140 70% 50%;
     --metric-blue: 195 100% 60%;
@@ -177,8 +177,12 @@ body {
   
   /* Elite Sidebar */
   .elite-sidebar {
-    background: linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(220 35% 8%) 100%);
+    background: linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(220 25% 94%) 100%);
     border-right: 1px solid hsl(var(--sidebar-border));
+  }
+  
+  .dark .elite-sidebar {
+    background: linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(220 25% 10%) 100%);
   }
   
   /* Elite Button Styles */
