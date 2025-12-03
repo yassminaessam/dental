@@ -65,7 +65,7 @@ const patientSchema = z.object({
 type PatientFormData = z.infer<typeof patientSchema>;
 
 interface AddPatientDialogProps {
-  onSave: (patient: Omit<Patient, 'id'>) => void;
+  onSave: (patient: Omit<Patient, 'id'>) => Promise<{ success: boolean; error?: string }>;
 }
 
 const emergencyContactRelationships = [
@@ -81,6 +81,11 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -106,7 +111,66 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
     name: 'medicalHistory',
   });
 
-  const onSubmit = (data: PatientFormData) => {
+  // Clear phone error when phone field changes
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'phone' && phoneError) {
+        setPhoneError(null);
+      }
+      if (name === 'email' && emailError) {
+        setEmailError(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, phoneError, emailError]);
+
+  // Check for duplicate phone on blur
+  const checkPhoneDuplicate = React.useCallback(async (phone: string) => {
+    if (!phone || phone.length < 3) return;
+    setIsCheckingPhone(true);
+    try {
+      const response = await fetch('/api/patients/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'phone') {
+        setPhoneError(t('patients.phone_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking phone duplicate:', error);
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  }, [t]);
+
+  // Check for duplicate email on blur
+  const checkEmailDuplicate = React.useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    try {
+      const response = await fetch('/api/patients/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'email') {
+        setEmailError(t('patients.email_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking email duplicate:', error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }, [t]);
+
+  const onSubmit = async (data: PatientFormData) => {
+    setPhoneError(null);
+    setEmailError(null);
+    setIsSubmitting(true);
+    
     const currentYear = new Date().getFullYear();
     const birthYear = data.dob.getFullYear();
     const age = currentYear - birthYear;
@@ -128,9 +192,24 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       policyNumber: data.policyNumber || undefined,
       medicalHistory: data.medicalHistory?.map(item => ({ condition: item.condition })).filter(item => Boolean(item.condition)) || [],
     };
-    onSave(patient);
-    setOpen(false);
-    form.reset();
+    
+    try {
+      const result = await onSave(patient);
+      
+      if (result.success) {
+        setOpen(false);
+        form.reset();
+      } else if (result.error?.toLowerCase().includes('phone')) {
+        setPhoneError(t('patients.phone_already_exists'));
+      } else if (result.error?.toLowerCase().includes('email')) {
+        setEmailError(t('patients.email_already_exists'));
+      }
+    } catch (error) {
+      // Handle unexpected errors
+      console.error('Error saving patient:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   console.log('Dialog state:', open);
@@ -200,9 +279,29 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                       <FormItem>
                         <FormLabel className="text-sm font-medium">{t('patients.phone')} *</FormLabel>
                         <FormControl>
-                          <Input placeholder={t('patients.phone_placeholder')} {...field} className="h-10" />
+                          <Input 
+                            placeholder={t('patients.phone_placeholder')} 
+                            {...field} 
+                            className={cn("h-10", phoneError && "border-red-500 focus-visible:ring-red-500")}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              if (phoneError) setPhoneError(null);
+                            }}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              checkPhoneDuplicate(e.target.value);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
+                        {isCheckingPhone && (
+                          <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+                        )}
+                        {phoneError && (
+                          <p className="text-sm font-medium text-red-500 mt-1">
+                            {phoneError}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -448,10 +547,26 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                                 type="email" 
                                 placeholder={t('patients.email_placeholder')} 
                                 {...field} 
-                                className="h-10" 
+                                className={cn("h-10", emailError && "border-red-500 focus-visible:ring-red-500")}
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  if (emailError) setEmailError(null);
+                                }}
+                                onBlur={(e) => {
+                                  field.onBlur();
+                                  checkEmailDuplicate(e.target.value);
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
+                            {isCheckingEmail && (
+                              <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+                            )}
+                            {emailError && (
+                              <p className="text-sm font-medium text-red-500 mt-1">
+                                {emailError}
+                              </p>
+                            )}
                           </FormItem>
                         )}
                       />
@@ -504,15 +619,16 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
             {t('common.cancel')}
           </Button>
           <Button 
             type="button" 
             onClick={form.handleSubmit(onSubmit)}
+            disabled={isSubmitting}
             className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
           >
-            {t('patients.save_patient')}
+            {isSubmitting ? t('common.saving') : t('patients.save_patient')}
           </Button>
         </DialogFooter>
       </DialogContent>

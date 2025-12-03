@@ -132,7 +132,7 @@ export default function UserManagementPage() {
     setFilteredUsers(filtered);
   };
 
-  const handleCreateUser = async (data: RegisterData & { permissions?: UserPermission[] }) => {
+  const handleCreateUser = async (data: RegisterData & { permissions?: UserPermission[] }): Promise<{ success: boolean; error?: string; field?: string }> => {
     try {
       // Create user data with custom permissions if provided
       const userData = {
@@ -146,12 +146,22 @@ export default function UserManagementPage() {
       });
       setIsCreateDialogOpen(false);
       loadUsers();
+      return { success: true };
     } catch (error: any) {
+      // Check if it's a phone/email duplicate error
+      const errorMessage = error.message?.toLowerCase() || '';
+      if (errorMessage.includes('email')) {
+        return { success: false, error: error.message, field: 'email' };
+      }
+      if (errorMessage.includes('phone')) {
+        return { success: false, error: error.message, field: 'phone' };
+      }
       toast({
         title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
+      return { success: false, error: error.message };
     }
   };
 
@@ -496,7 +506,7 @@ export default function UserManagementPage() {
   );
 }
 
-function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permissions?: UserPermission[] }) => void }) {
+function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permissions?: UserPermission[] }) => Promise<{ success: boolean; error?: string; field?: string }> }) {
   const { t } = useLanguage();
   const [formData, setFormData] = useState<RegisterData>({
     email: '',
@@ -512,6 +522,52 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
   });
   const [selectedPermissions, setSelectedPermissions] = useState<UserPermission[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
+  // Check for duplicate email on blur
+  const checkEmailDuplicate = async (email: string) => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    try {
+      const response = await fetch('/api/users/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'email') {
+        setEmailError(t('users.email_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking email duplicate:', error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  // Check for duplicate phone on blur
+  const checkPhoneDuplicate = async (phone: string) => {
+    if (!phone || phone.length < 3) return;
+    setIsCheckingPhone(true);
+    try {
+      const response = await fetch('/api/users/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'phone') {
+        setPhoneError(t('users.phone_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking phone duplicate:', error);
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  };
 
   // Update default permissions when role changes
   useEffect(() => {
@@ -521,9 +577,18 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError(null);
+    setPhoneError(null);
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...formData, permissions: selectedPermissions });
+      const result = await onSubmit({ ...formData, permissions: selectedPermissions });
+      if (!result.success) {
+        if (result.field === 'email' || result.error?.toLowerCase().includes('email')) {
+          setEmailError(t('users.email_already_exists'));
+        } else if (result.field === 'phone' || result.error?.toLowerCase().includes('phone')) {
+          setPhoneError(t('users.phone_already_exists'));
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -644,9 +709,22 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, email: e.target.value }));
+                if (emailError) setEmailError(null);
+              }}
+              onBlur={(e) => checkEmailDuplicate(e.target.value)}
               required
+              className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
+            {isCheckingEmail && (
+              <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+            )}
+            {emailError && (
+              <p className="text-sm font-medium text-red-500 mt-1">
+                {emailError}
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="password">{t('auth.password')}</Label>
@@ -678,8 +756,21 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
             <Input
               id="phone"
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, phone: e.target.value }));
+                if (phoneError) setPhoneError(null);
+              }}
+              onBlur={(e) => checkPhoneDuplicate(e.target.value)}
+              className={phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
+            {isCheckingPhone && (
+              <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+            )}
+            {phoneError && (
+              <p className="text-sm font-medium text-red-500 mt-1">
+                {phoneError}
+              </p>
+            )}
           </div>
           {formData.role === 'doctor' && (
             <>

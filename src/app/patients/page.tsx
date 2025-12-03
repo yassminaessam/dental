@@ -155,7 +155,7 @@ export default function PatientsPage() {
   }, [patients, t]);
 
 
-  const handleSavePatient = async (newPatientData: Omit<Patient, 'id'> & { createUserAccount?: boolean; userPassword?: string }) => {
+  const handleSavePatient = async (newPatientData: Omit<Patient, 'id'> & { createUserAccount?: boolean; userPassword?: string }): Promise<{ success: boolean; error?: string }> => {
     try {
         const response = await fetch('/api/patients', {
           method: 'POST',
@@ -168,7 +168,14 @@ export default function PatientsPage() {
           })
         });
         
-        if (!response.ok) throw new Error('Failed to create patient');
+        if (!response.ok) {
+          const errorData = await response.json();
+          // Return the error message for phone duplicate
+          if (errorData.error?.toLowerCase().includes('phone')) {
+            return { success: false, error: errorData.error };
+          }
+          throw new Error(errorData.error || 'Failed to create patient');
+        }
         
         const data = await response.json();
         const newPatient = { ...data.patient, dob: new Date(data.patient.dob) };
@@ -179,8 +186,10 @@ export default function PatientsPage() {
           : t('patients.patient_added_description');
         
         toast({ title: t('patients.patient_added'), description: successMessage });
-    } catch (error) {
-        toast({ title: t('patients.error_adding'), variant: "destructive" });
+        return { success: true };
+    } catch (error: any) {
+        toast({ title: t('patients.error_adding'), description: error.message, variant: "destructive" });
+        return { success: false, error: error.message };
     }
   };
 

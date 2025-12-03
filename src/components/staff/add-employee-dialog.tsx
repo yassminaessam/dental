@@ -101,11 +101,59 @@ const staffRoles = [
 ];
 
 interface AddEmployeeDialogProps {
-  onSave: (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => void;
+  onSave: (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => Promise<{ success: boolean; error?: string; field?: string }>;
 }
 
 export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   const { t, isRTL } = useLanguage();
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
+  
+  // Check for duplicate phone on blur
+  const checkPhoneDuplicate = React.useCallback(async (phone: string) => {
+    if (!phone || phone.length < 3) return;
+    setIsCheckingPhone(true);
+    try {
+      const response = await fetch('/api/staff/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'phone') {
+        setPhoneError(t('staff.phone_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking phone duplicate:', error);
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  }, [t]);
+
+  // Check for duplicate email on blur (for user account)
+  const checkEmailDuplicate = React.useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    try {
+      const response = await fetch('/api/users/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'email') {
+        setEmailError(t('staff.email_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking email duplicate:', error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }, [t]);
+
   const employeeSchema = React.useMemo(() => z.object({
     firstName: z.string().min(1, t('staff.validation.first_name_required')),
     lastName: z.string().min(1, t('staff.validation.last_name_required')),
@@ -167,6 +215,10 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   });
 
   const onSubmit = async (data: EmployeeFormData) => {
+    setPhoneError(null);
+    setEmailError(null);
+    setIsSubmitting(true);
+    
     try {
       let createdUserId: string | undefined = undefined;
 
@@ -195,11 +247,13 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
           if (!response.ok) {
             const contentType = response.headers.get('content-type');
             let errorMessage = 'Unknown error';
+            let errorField = undefined;
             
             if (contentType && contentType.includes('application/json')) {
               try {
                 const errorData = await response.json();
                 errorMessage = errorData.error || JSON.stringify(errorData);
+                errorField = errorData.field;
               } catch (e) {
                 errorMessage = `HTTP ${response.status}: ${response.statusText}`;
               }
@@ -208,9 +262,21 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
               errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
             }
             
+            // Show inline error for phone/email duplicates
+            if (errorField === 'phone' || errorMessage.toLowerCase().includes('phone')) {
+              setPhoneError(t('staff.phone_already_exists'));
+              setIsSubmitting(false);
+              return;
+            }
+            if (errorField === 'email' || errorMessage.toLowerCase().includes('email')) {
+              setEmailError(t('staff.email_already_exists'));
+              setIsSubmitting(false);
+              return;
+            }
+            
             console.error('Failed to create user account:', { status: response.status, error: errorMessage });
             alert(`${t('staff.user_account_creation_failed')}\n\nError: ${errorMessage}`);
-            // Stop here - don't create staff if user creation failed
+            setIsSubmitting(false);
             return;
           } else {
             const userData = await response.json();
@@ -220,13 +286,13 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
         } catch (error) {
           console.error('Error creating user account:', error);
           alert(`${t('staff.user_account_creation_failed')}\n\nError: ${error instanceof Error ? error.message : 'Network error'}`);
-          // Stop here - don't create staff if user creation failed
+          setIsSubmitting(false);
           return;
         }
       }
 
       // Now save the staff member with the userId (if user was created)
-      onSave({
+      const result = await onSave({
         name: `${data.firstName} ${data.lastName}`,
         role: data.role,
         email: data.email || '',
@@ -236,10 +302,18 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
         userId: createdUserId, // Link to the created user
       });
 
-      form.reset();
-      setOpen(false);
+      if (result.success) {
+        form.reset();
+        setOpen(false);
+      } else if (result.field === 'phone' || result.error?.toLowerCase().includes('phone')) {
+        setPhoneError(t('staff.phone_already_exists'));
+      } else if (result.field === 'email' || result.error?.toLowerCase().includes('email')) {
+        setEmailError(t('staff.email_already_exists'));
+      }
     } catch (error) {
       console.error('Error in onSubmit:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -295,8 +369,29 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 <FormItem>
                   <FormLabel>{t('staff.phone')}</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder={t('staff.phone_placeholder')} {...field} />
+                    <Input 
+                      type="tel" 
+                      placeholder={t('staff.phone_placeholder')} 
+                      {...field}
+                      className={cn(phoneError && "border-red-500 focus-visible:ring-red-500")}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        if (phoneError) setPhoneError(null);
+                      }}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        checkPhoneDuplicate(e.target.value);
+                      }}
+                    />
                   </FormControl>
+                  {isCheckingPhone && (
+                    <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+                  )}
+                  {phoneError && (
+                    <p className="text-sm font-medium text-red-500 mt-1">
+                      {phoneError}
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
@@ -480,12 +575,29 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                             type="email"
                             placeholder={t('staff.email_placeholder')}
                             {...field}
+                            className={cn(emailError && "border-red-500 focus-visible:ring-red-500")}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              if (emailError) setEmailError(null);
+                            }}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              checkEmailDuplicate(e.target.value);
+                            }}
                           />
                         </FormControl>
                         <p className="text-xs text-muted-foreground">
                           {t('staff.email_hint')}
                         </p>
                         <FormMessage />
+                        {isCheckingEmail && (
+                          <p className="text-sm text-muted-foreground mt-1">{t('common.checking')}...</p>
+                        )}
+                        {emailError && (
+                          <p className="text-sm font-medium text-red-500 mt-1">
+                            {emailError}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -573,8 +685,10 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
-              <Button type="submit">{t('staff.save_employee')}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? t('common.loading') : t('staff.save_employee')}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

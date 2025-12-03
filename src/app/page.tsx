@@ -201,7 +201,7 @@ export default function DashboardPage() {
         fetchData();
     }, [language]);
 
-    const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>) => {
+    const handleSavePatient = async (newPatientData: Omit<Patient, 'id'>): Promise<{ success: boolean; error?: string }> => {
         try {
         const response = await fetch('/api/patients', {
           method: 'POST',
@@ -213,14 +213,20 @@ export default function DashboardPage() {
         });
         if (!response.ok) {
           const details = await response.json().catch(() => ({}));
+          // Return the error message for phone duplicate
+          if (details.error?.toLowerCase().includes('phone')) {
+            return { success: false, error: details.error };
+          }
           throw new Error(details.error ?? 'Failed to add patient');
         }
             toast({ title: t('dashboard.toast.patient_added'), description: t('dashboard.toast.patient_added_desc', { name: newPatientData.name }) });
         
         // Refresh the stats to show updated patient count
         setStatsRefreshKey(prev => prev + 1);
-        } catch (error) {
+        return { success: true };
+        } catch (error: any) {
             toast({ title: t('dashboard.toast.error_adding_patient'), variant: "destructive" });
+            return { success: false, error: error.message };
         }
     };
     

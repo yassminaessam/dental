@@ -110,7 +110,7 @@ export default function StaffPage() {
   }, [staff, t]);
 
 
-  const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>) => {
+  const handleSaveEmployee = async (data: Omit<StaffMember, 'id' | 'schedule' | 'status'>): Promise<{ success: boolean; error?: string; field?: string }> => {
     try {
       // ✅ Create via API (Neon database)
       const response = await fetch('/api/staff', {
@@ -131,6 +131,13 @@ export default function StaffPage() {
       
       if (!response.ok) {
         const error = await response.json();
+        // Return field info for inline error display
+        if (error.field === 'phone' || error.error?.toLowerCase().includes('phone')) {
+          return { success: false, error: error.error, field: 'phone' };
+        }
+        if (error.field === 'email' || error.error?.toLowerCase().includes('email')) {
+          return { success: false, error: error.error, field: 'email' };
+        }
         throw new Error(error.error || 'Failed to create staff');
       }
       
@@ -140,12 +147,14 @@ export default function StaffPage() {
         title: t('staff.toast.employee_added'),
         description: t('staff.toast.employee_added_desc'),
       });
+      return { success: true };
     } catch (e: any) {
       toast({ 
         title: t('staff.toast.error_adding'), 
         description: e.message,
         variant: "destructive" 
       });
+      return { success: false, error: e.message };
     }
   };
   
