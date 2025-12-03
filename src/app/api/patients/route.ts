@@ -15,6 +15,9 @@ interface PatientCreatePayload {
   insuranceProvider?: string;
   policyNumber?: string;
   medicalHistory?: any;
+  profilePhotoUrl?: string;
+  allergies?: string[];
+  bloodType?: string;
   createUserAccount?: boolean; // Optional flag to create user account
   userPassword?: string; // Password for user account if createUserAccount is true
 }
@@ -60,6 +63,9 @@ export async function POST(request: NextRequest) {
       insuranceProvider: payload.insuranceProvider,
       policyNumber: payload.policyNumber,
       medicalHistory: payload.medicalHistory,
+      profilePhotoUrl: payload.profilePhotoUrl,
+      allergies: payload.allergies,
+      bloodType: payload.bloodType,
     };
 
     const patient = await PatientsService.create(patientData);

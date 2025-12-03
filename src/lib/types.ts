@@ -162,6 +162,16 @@ export interface PatientMedicalHistoryEntry {
   notes?: string;
 }
 
+export interface PatientFamilyMember {
+  id: string;
+  relativeId: string;
+  relativeName: string;
+  relativePhone?: string;
+  relationship: string;
+  isPrimaryContact: boolean;
+  notes?: string;
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -179,6 +189,10 @@ export interface Patient {
   insuranceProvider?: string;
   policyNumber?: string;
   medicalHistory?: PatientMedicalHistoryEntry[];
+  profilePhotoUrl?: string;
+  allergies?: string[];
+  bloodType?: string;
+  familyMembers?: PatientFamilyMember[];
   createdAt?: Date; // When the patient was added to the system
 }
 

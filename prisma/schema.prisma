@@ -138,13 +138,38 @@ model Patient {
   insuranceProvider String?
   policyNumber      String?
   medicalHistory    Json?
+  profilePhotoUrl   String?       // Profile photo URL
+  allergies         String[]      // List of allergies for visual alerts
+  bloodType         String?       // Blood type
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   invoices          Invoice[]
   settings          PatientSettings?
+  
+  // Family relationships
+  familyMembers     PatientFamily[] @relation("PatientFamilyMembers")
+  familyOf          PatientFamily[] @relation("PatientFamilyRelatives")
 
   @@index([status])
   @@index([lastVisit])
+}
+
+// Patient Family Relationships
+model PatientFamily {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Patient  @relation("PatientFamilyMembers", fields: [patientId], references: [id], onDelete: Cascade)
+  relativeId      String
+  relative        Patient  @relation("PatientFamilyRelatives", fields: [relativeId], references: [id], onDelete: Cascade)
+  relationship    String   // spouse, parent, child, sibling, guardian, dependent
+  isPrimaryContact Boolean @default(false)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([patientId, relativeId])
+  @@index([patientId])
+  @@index([relativeId])
 }
 
 // Typed Treatment model (appointments are linked via Appointment.treatmentId)
