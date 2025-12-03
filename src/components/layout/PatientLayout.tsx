@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home, Activity } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home, Activity, Clock } from 'lucide-react';
 import { DentalProLogo } from '../icons';
 import Link from 'next/link';
 import { Button } from '../ui/button';
@@ -94,6 +94,16 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
   const [chatReplies, setChatReplies] = React.useState<any[]>([]);
   const [readNotificationIds, setReadNotificationIds] = React.useState<Set<string>>(new Set());
+  const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
+  
+  // Update date/time every second
+  React.useEffect(() => {
+    setCurrentDateTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   
   // Initialize from localStorage for instant load
   const [clinicLogo, setClinicLogo] = React.useState<string | null>(() => {
@@ -315,6 +325,33 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               <p className="text-xs text-sidebar-foreground/70 font-medium">{t('roles.patient')} Portal</p>
             </div>
           </div>
+          {/* Live Date & Time Display */}
+          {currentDateTime && (
+            <div className="mt-4 p-3 rounded-xl bg-sidebar-accent/30 backdrop-blur-sm border border-sidebar-border/30">
+              <div className="flex items-center gap-2 text-sidebar-foreground/90">
+                <Calendar className="h-4 w-4 text-sidebar-primary" />
+                <span className="text-sm font-medium">
+                  {currentDateTime.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sidebar-foreground/90 mt-1.5">
+                <Clock className="h-4 w-4 text-sidebar-primary" />
+                <span className="text-lg font-bold tracking-wide" dir="ltr">
+                  {currentDateTime.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true,
+                  })}
+                </span>
+              </div>
+            </div>
+          )}
         </SidebarHeader>
         
         <SidebarContent className="flex flex-col px-3 py-4">
