@@ -601,18 +601,6 @@ export default function InsurancePage() {
             );
           })}
         </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                      {isActive ? t('common.active') || 'Active Filter' : t('common.click_to_filter') || 'Click to filter'}
-                    </span>
-                    <div className="ml-auto">
-                      <div className="text-xs text-white/60 font-bold">↗</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
 
         {/* Ultra Enhanced Tabs */}
         <Tabs defaultValue="claims-management" className="w-full">
