@@ -366,8 +366,8 @@ export default function LoginPage() {
                     <Shield className="h-3 w-3 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Test Accounts</p>
-                    <p className="text-gray-600 text-xs">These are demo accounts for testing different user roles and permissions.</p>
+                    <p className="font-semibold text-white">Test Accounts</p>
+                    <p className="text-gray-300 text-xs">These are demo accounts for testing different user roles and permissions.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -375,8 +375,8 @@ export default function LoginPage() {
                     <Activity className="h-3 w-3 text-green-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Instant Access</p>
-                    <p className="text-gray-600 text-xs">Click any button to instantly login without typing credentials.</p>
+                    <p className="font-semibold text-white">Instant Access</p>
+                    <p className="text-gray-300 text-xs">Click any button to instantly login without typing credentials.</p>
                   </div>
                 </div>
               </div>
