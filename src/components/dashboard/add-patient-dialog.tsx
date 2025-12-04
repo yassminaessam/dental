@@ -89,6 +89,7 @@ const emergencyContactRelationships = [
 export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
   const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
+  const [dobCalendarOpen, setDobCalendarOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const [emailError, setEmailError] = React.useState<string | null>(null);
@@ -335,49 +336,51 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                   <FormField
                     control={form.control}
                     name="dob"
-                    render={({ field }) => {
-                      const [open, setOpen] = React.useState(false);
-                      return (
-                        <FormItem className="sm:col-span-1">
-                          <FormLabel className="text-sm font-medium">{t('patients.date_of_birth')} *</FormLabel>
-                          <Popover open={open} onOpenChange={setOpen}>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal h-10",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>{t('patients.pick_date')}</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                  setOpen(false);
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-1">
+                        <FormLabel className="text-sm font-medium">{t('patients.date_of_birth')} *</FormLabel>
+                        <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                type="button"
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal h-10",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setDobCalendarOpen(true);
                                 }}
-                                disabled={(date) =>
-                                  date > new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>{t('patients.pick_date')}</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setDobCalendarOpen(false);
+                              }}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
                 <div className="mt-4">
