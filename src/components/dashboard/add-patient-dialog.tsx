@@ -339,31 +339,24 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
                     render={({ field }) => (
                       <FormItem className="sm:col-span-1">
                         <FormLabel className="text-sm font-medium">{t('patients.date_of_birth')} *</FormLabel>
-                        <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen}>
+                        <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen} modal={true}>
                           <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                type="button"
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal h-10",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setDobCalendarOpen(true);
-                                }}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>{t('patients.pick_date')}</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                <span>{format(field.value, "PPP")}</span>
+                              ) : (
+                                <span>{t('patients.pick_date')}</span>
+                              )}
+                              <CalendarIcon className="h-4 w-4 opacity-50" />
+                            </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                             <Calendar
                               mode="single"
                               selected={field.value}
