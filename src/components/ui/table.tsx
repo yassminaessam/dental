@@ -9,7 +9,7 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto rounded-xl border-0 shadow-lg bg-gradient-to-br from-background/95 to-muted/20 backdrop-blur-sm">
     <table
       ref={ref}
-      className={cn("elite-table w-full caption-bottom text-sm", className)}
+      className={cn("elite-table w-full caption-bottom text-xs", className)}
       {...props}
     />
   </div>
@@ -73,7 +73,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "elite-table-cell-header h-12 sm:h-14 px-4 sm:px-6 align-middle font-bold text-white [&:has([role=checkbox])]:pr-0 text-xs sm:text-sm uppercase tracking-wider",
+      "elite-table-cell-header h-9 sm:h-10 px-3 sm:px-4 align-middle font-semibold text-slate-700 dark:text-slate-200 [&:has([role=checkbox])]:pr-0 text-[10px] sm:text-[11px] uppercase tracking-wider bg-[rgba(0,255,255,0.15)] dark:bg-[rgba(0,255,255,0.12)] text-left rtl:text-right",
       className
     )}
     {...props}
@@ -87,7 +87,7 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("elite-table-cell p-4 sm:p-6 align-middle [&:has([role=checkbox])]:pr-0 text-xs sm:text-sm font-medium", className)}
+    className={cn("elite-table-cell p-3 sm:p-4 align-middle [&:has([role=checkbox])]:pr-0 text-[11px] sm:text-xs font-medium text-left rtl:text-right", className)}
     {...props}
   />
 ))
@@ -99,7 +99,7 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
+    className={cn("mt-4 text-xs text-muted-foreground", className)}
     {...props}
   />
 ))

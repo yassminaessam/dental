@@ -725,7 +725,7 @@ export function PatientWallet({
                           {t(`wallet.status.${tx.status.toLowerCase()}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground">
                         {formatDate(tx.createdAt)}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">

@@ -336,12 +336,19 @@ body {
 }
 
 .elite-table-header {
-  @apply bg-gradient-to-r from-primary/90 to-accent/90 text-white;
+  @apply bg-[rgba(0,255,255,0.15)] dark:bg-[rgba(0,255,255,0.12)] text-slate-700 dark:text-slate-200;
 }
 
 .elite-table-header th {
-  @apply px-6 py-4 text-left text-sm font-bold uppercase tracking-wider;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  @apply px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider;
+}
+
+[dir="rtl"] .elite-table-header th {
+  text-align: right;
+}
+
+[dir="ltr"] .elite-table-header th {
+  text-align: left;
 }
 
 .elite-table-row {
@@ -362,8 +369,24 @@ body {
   @apply px-6 py-4 text-sm font-medium;
 }
 
+[dir="rtl"] .elite-table-cell {
+  text-align: right;
+}
+
+[dir="ltr"] .elite-table-cell {
+  text-align: left;
+}
+
 .elite-table-cell-header {
-  @apply px-6 py-4 text-sm font-bold text-white uppercase tracking-wide;
+  @apply px-3 py-2.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide;
+}
+
+[dir="rtl"] .elite-table-cell-header {
+  text-align: right;
+}
+
+[dir="ltr"] .elite-table-cell-header {
+  text-align: left;
 }
 
 /* Elite Table Status Badges */

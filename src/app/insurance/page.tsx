@@ -583,7 +583,7 @@ export default function InsurancePage() {
                       )}
                     </div>
                     <CardIcon 
-                      variant={(['blue', 'green', 'teal', 'orange', 'red'] as const)[index % 5]}
+                      variant={(['blue', 'green', 'purple', 'orange', 'red'] as const)[index % 5]}
                       className="w-10 h-10 group-hover:rotate-12"
                       aria-hidden="true"
                     >
