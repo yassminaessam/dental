@@ -16,7 +16,25 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const [month, setMonth] = React.useState<Date>(props.month || new Date());
+  // Determine initial month from selected date or props.month or current date
+  const getInitialMonth = () => {
+    if (props.selected && props.selected instanceof Date) {
+      return props.selected;
+    }
+    if (props.month) {
+      return props.month;
+    }
+    return new Date();
+  };
+  
+  const [month, setMonth] = React.useState<Date>(getInitialMonth());
+  
+  // Sync month state when selected date changes (e.g., when editing an existing value)
+  React.useEffect(() => {
+    if (props.selected && props.selected instanceof Date) {
+      setMonth(props.selected);
+    }
+  }, [props.selected]);
   
   const months = [
     "January", "February", "March", "April", "May", "June",
