@@ -216,40 +216,40 @@ export default function AdminChatsPage() {
         <div className="grid gap-1.5 grid-cols-1 sm:grid-cols-3">
           <Card className="metric-card-blue group hover:scale-105 transition-transform duration-300 min-h-0">
             <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5">
-              <CardTitle className="text-[11px] font-semibold leading-tight">{t('page.admin_chats.active_chats')}</CardTitle>
-              <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
-                <Users className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              <CardTitle className="text-sm font-semibold leading-tight">{t('page.admin_chats.active_chats')}</CardTitle>
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent className="p-1.5 pt-0">
-              <div className="text-base font-bold leading-tight">{activeConversations.length}</div>
-              <p className="text-[10px] text-muted-foreground leading-tight">{t('page.admin_chats.active_chats_desc')}</p>
+              <div className="text-lg font-bold leading-tight">{activeConversations.length}</div>
+              <p className="text-xs text-muted-foreground leading-tight">{t('page.admin_chats.active_chats_desc')}</p>
             </CardContent>
           </Card>
 
           <Card className="metric-card-green group hover:scale-105 transition-transform duration-300 min-h-0">
             <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5">
-              <CardTitle className="text-[11px] font-semibold leading-tight">{t('page.admin_chats.total_chats')}</CardTitle>
-              <div className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
-                <MessageCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <CardTitle className="text-sm font-semibold leading-tight">{t('page.admin_chats.total_chats')}</CardTitle>
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
+                <MessageCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
             </CardHeader>
             <CardContent className="p-1.5 pt-0">
-              <div className="text-base font-bold leading-tight">{conversations.length}</div>
-              <p className="text-[10px] text-muted-foreground leading-tight">{t('page.admin_chats.total_chats_desc')}</p>
+              <div className="text-lg font-bold leading-tight">{conversations.length}</div>
+              <p className="text-xs text-muted-foreground leading-tight">{t('page.admin_chats.total_chats_desc')}</p>
             </CardContent>
           </Card>
 
           <Card className="metric-card-purple group hover:scale-105 transition-transform duration-300 min-h-0">
             <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5">
-              <CardTitle className="text-[11px] font-semibold leading-tight">{t('page.admin_chats.avg_response')}</CardTitle>
-              <div className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
-                <Clock className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+              <CardTitle className="text-sm font-semibold leading-tight">{t('page.admin_chats.avg_response')}</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
+                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
             </CardHeader>
             <CardContent className="p-1.5 pt-0">
-              <div className="text-base font-bold leading-tight">{t('page.admin_chats.avg_response_value')}</div>
-              <p className="text-[10px] text-muted-foreground leading-tight">{t('page.admin_chats.avg_response_desc')}</p>
+              <div className="text-lg font-bold leading-tight">{t('page.admin_chats.avg_response_value')}</div>
+              <p className="text-xs text-muted-foreground leading-tight">{t('page.admin_chats.avg_response_desc')}</p>
             </CardContent>
           </Card>
         </div>

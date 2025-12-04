@@ -199,25 +199,25 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 p-1.5 relative z-10">
               <div className="flex flex-col">
-                <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
+                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                   {stat.title}
                 </CardTitle>
-                <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
                   {stat.value}
                 </div>
               </div>
               <div
                 className={cn(
-                  'flex items-center justify-center w-6 h-6 rounded backdrop-blur-sm',
+                  'flex items-center justify-center w-10 h-10 rounded backdrop-blur-sm',
                   iconTintMap[stat.cardStyle] || 'bg-gray-500/10 text-gray-700 dark:text-gray-300'
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-5 w-5" />
               </div>
             </CardHeader>
             
             <CardContent className="pt-0 p-1.5 relative z-10">
-              <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                 {stat.description}
               </p>
             </CardContent>

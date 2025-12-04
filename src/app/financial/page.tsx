@@ -561,19 +561,19 @@ export default function FinancialPage() {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
-                  <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {t(stat.titleKey as string)}
                   </CardTitle>
-                  <CardIcon variant={variant} className="w-6 h-6" aria-hidden="true">
-                    <Icon className="h-3.5 w-3.5" />
+                  <CardIcon variant={variant} className="w-10 h-10" aria-hidden="true">
+                    <Icon className="h-5 w-5" />
                   </CardIcon>
                 </CardHeader>
                 <CardContent className="pt-0 p-1.5">
-                  <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
                     {stat.value}
                   </div>
                   {stat.descriptionKey && (
-                    <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                       {t(stat.descriptionKey as string)}
                     </p>
                   )}

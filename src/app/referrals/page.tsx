@@ -287,21 +287,21 @@ export default function ReferralsPage() {
                 <CardHeader className="pb-0.5 p-1.5 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
+                      <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className="text-base font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-lg font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
                         {stat.value}
                       </div>
                     </div>
-                    <CardIcon variant={(['blue','green','orange','purple'] as const)[index % 4]} className="w-6 h-6 group-hover:rotate-12">
-                      <Icon className="h-3.5 w-3.5" />
+                    <CardIcon variant={(['blue','green','orange','purple'] as const)[index % 4]} className="w-10 h-10 group-hover:rotate-12">
+                      <Icon className="h-5 w-5" />
                     </CardIcon>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 p-1.5 relative z-10">
-                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>

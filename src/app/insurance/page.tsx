@@ -567,33 +567,33 @@ export default function InsurancePage() {
                 <CardHeader className="pb-0.5 p-1.5 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
+                      <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
                       <div className={cn(
-                        "text-base font-bold drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300",
+                        "text-lg font-bold drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300",
                         stat.valueColor
                       )}>
                         {stat.value}
                       </div>
                       {stat.secondaryValue && (
-                        <div className="text-[10px] font-medium text-white/80 leading-tight">
+                        <div className="text-xs font-medium text-white/80 leading-tight">
                           {stat.secondaryValue}
                         </div>
                       )}
                     </div>
                     <CardIcon 
                       variant={(['blue', 'green', 'teal', 'orange', 'red'] as const)[index % 5]}
-                      className="w-6 h-6 group-hover:rotate-12"
+                      className="w-10 h-10 group-hover:rotate-12"
                       aria-hidden="true"
                     >
-                      <Icon className="h-3.5 w-3.5" />
+                      <Icon className="h-5 w-5" />
                     </CardIcon>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="pt-0 p-1.5 relative z-10">
-                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>

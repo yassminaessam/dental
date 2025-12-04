@@ -410,18 +410,18 @@ export default function LabManagementPage() {
                 )}
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
-                  <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {stat.title}
                   </CardTitle>
-                  <CardIcon variant={stat.variant} className="w-6 h-6" aria-hidden="true">
-                    <Icon className="h-3.5 w-3.5" />
+                  <CardIcon variant={stat.variant} className="w-10 h-10" aria-hidden="true">
+                    <Icon className="h-5 w-5" />
                   </CardIcon>
                 </CardHeader>
                 <CardContent className="pt-0 p-1.5">
-                  <div className={cn("text-base font-bold text-gray-900 dark:text-gray-100 leading-tight", stat.valueClassName)}>
+                  <div className={cn("text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight", stat.valueClassName)}>
                     {stat.value}
                   </div>
-                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>

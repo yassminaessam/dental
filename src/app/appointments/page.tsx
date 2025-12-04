@@ -266,21 +266,21 @@ export default function AppointmentsPage() {
                 }}
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
-                  <CardTitle className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {stat.title}
                   </CardTitle>
-                  <CardIcon variant={variant} aria-hidden="true" className="w-6 h-6">
-                    {idx === 0 && <CalendarDays className="h-3.5 w-3.5" />}
-                    {idx === 1 && <Clock className="h-3.5 w-3.5" />}
-                    {idx === 2 && <CheckCircle2 className="h-3.5 w-3.5" />}
-                    {idx === 3 && <CalendarCheck className="h-3.5 w-3.5" />}
+                  <CardIcon variant={variant} aria-hidden="true" className="w-10 h-10">
+                    {idx === 0 && <CalendarDays className="h-5 w-5" />}
+                    {idx === 1 && <Clock className="h-5 w-5" />}
+                    {idx === 2 && <CheckCircle2 className="h-5 w-5" />}
+                    {idx === 3 && <CalendarCheck className="h-5 w-5" />}
                   </CardIcon>
                 </CardHeader>
                 <CardContent className="pt-0 p-1.5">
-                  <div className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
                     {stat.value}
                   </div>
-                  <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
                     {stat.description}
                   </p>
                 </CardContent>
