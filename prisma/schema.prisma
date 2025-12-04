@@ -2,78 +2,44 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Typed enums (new)
-enum AppointmentStatus {
-  Confirmed
-  Pending
-  Cancelled
-  Completed
-}
-
-enum PatientStatus {
-  Active
-  Inactive
-}
-
-// New enum for treatments
-enum TreatmentStatus {
-  Pending
-  InProgress
-  Completed
-}
-
-enum InvoiceStatus {
-  Draft
-  Sent
-  Paid
-  Overdue
-  Cancelled
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
+  id              String          @id @default(uuid())
+  email           String          @unique
   passwordHash    String
   firstName       String
   lastName        String
   role            UserRole
   permissions     String[]
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   lastLoginAt     DateTime?
   specialization  String?
   licenseNumber   String?
   employeeId      String?
   department      String?
   patientId       String?
-  phone           String?   @unique
+  phone           String?         @unique
   address         String?
   profileImageUrl String?
-
-  // Optional staff linkage for employees
-  staff           Staff?
-  
-  // User notifications
   notifications   Notification[]
-  
-  // Password reset tokens
   passwordResets  PasswordReset[]
+  staff           Staff?
 }
 
 model PasswordReset {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
   used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])
@@ -90,32 +56,31 @@ model CollectionDoc {
   @@index([collection])
 }
 
-// Typed Appointment model
 model Appointment {
-  id               String            @id @default(uuid())
-  dateTime         DateTime
-  patient          String
-  patientId        String?
-  patientEmail     String?
-  patientPhone     String?
-  doctor           String
-  doctorId         String?
-  type             String
-  duration         String
-  status           AppointmentStatus @default(Confirmed)
-  treatmentId      String?
-  treatment        Treatment?        @relation(fields: [treatmentId], references: [id])
-  notes            String?
-  bookedBy         String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  reason           String?
-  urgency          String?
-  confirmedAt      DateTime?
-  confirmedBy      String?
-  rejectedAt       DateTime?
-  rejectionReason  String?
-  rejectedBy       String?
+  id              String            @id @default(uuid())
+  dateTime        DateTime
+  patient         String
+  patientId       String?
+  patientEmail    String?
+  patientPhone    String?
+  doctor          String
+  doctorId        String?
+  type            String
+  duration        String
+  status          AppointmentStatus @default(Confirmed)
+  treatmentId     String?
+  notes           String?
+  bookedBy        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  reason          String?
+  urgency         String?
+  confirmedAt     DateTime?
+  confirmedBy     String?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  rejectedBy      String?
+  treatment       Treatment?        @relation(fields: [treatmentId], references: [id])
 
   @@index([dateTime])
   @@index([status])
@@ -123,14 +88,14 @@ model Appointment {
 }
 
 model Patient {
-  id                String        @id @default(uuid())
+  id                String           @id @default(uuid())
   name              String
   lastName          String
-  email             String        @unique
-  phone             String        @unique
+  email             String           @unique
+  phone             String           @unique
   dob               DateTime
   lastVisit         DateTime?
-  status            PatientStatus @default(Active)
+  status            PatientStatus    @default(Active)
   address           String?
   ecName            String?
   ecPhone           String?
@@ -138,53 +103,49 @@ model Patient {
   insuranceProvider String?
   policyNumber      String?
   medicalHistory    Json?
-  profilePhotoUrl   String?       // Profile photo URL
-  allergies         String[]      // List of allergies for visual alerts
-  bloodType         String?       // Blood type
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  allergies         String[]
+  bloodType         String?
+  profilePhotoUrl   String?
   invoices          Invoice[]
+  familyMembers     PatientFamily[]  @relation("PatientFamilyMembers")
+  familyOf          PatientFamily[]  @relation("PatientFamilyRelatives")
   settings          PatientSettings?
-  
-  // Family relationships
-  familyMembers     PatientFamily[] @relation("PatientFamilyMembers")
-  familyOf          PatientFamily[] @relation("PatientFamilyRelatives")
 
   @@index([status])
   @@index([lastVisit])
 }
 
-// Patient Family Relationships
 model PatientFamily {
-  id              String   @id @default(uuid())
-  patientId       String
-  patient         Patient  @relation("PatientFamilyMembers", fields: [patientId], references: [id], onDelete: Cascade)
-  relativeId      String
-  relative        Patient  @relation("PatientFamilyRelatives", fields: [relativeId], references: [id], onDelete: Cascade)
-  relationship    String   // spouse, parent, child, sibling, guardian, dependent
-  isPrimaryContact Boolean @default(false)
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid())
+  patientId        String
+  relativeId       String
+  relationship     String
+  isPrimaryContact Boolean  @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  patient          Patient  @relation("PatientFamilyMembers", fields: [patientId], references: [id], onDelete: Cascade)
+  relative         Patient  @relation("PatientFamilyRelatives", fields: [relativeId], references: [id], onDelete: Cascade)
 
   @@unique([patientId, relativeId])
   @@index([patientId])
   @@index([relativeId])
 }
 
-// Typed Treatment model (appointments are linked via Appointment.treatmentId)
 model Treatment {
-  id         String         @id @default(uuid())
-  patient    String
-  patientId  String?
-  doctor     String
-  doctorId   String?
-  procedure  String
-  cost       String
-  status     TreatmentStatus @default(Pending)
-  notes      String?
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id           String          @id @default(uuid())
+  patient      String
+  patientId    String?
+  doctor       String
+  doctorId     String?
+  procedure    String
+  cost         String
+  status       TreatmentStatus @default(Pending)
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   appointments Appointment[]
   invoices     Invoice[]
 
@@ -193,23 +154,17 @@ model Treatment {
   @@index([doctorId])
 }
 
-// Medical Records
-enum MedicalRecordStatus {
-  Draft
-  Final
-}
-
 model MedicalRecord {
   id         String              @id @default(uuid())
   patient    String
   patientId  String?
-  type       String              // SOAP, Clinical Note, Treatment Plan, Consultation
+  type       String
   complaint  String?
   provider   String
   providerId String?
   date       DateTime            @default(now())
   status     MedicalRecordStatus @default(Final)
-  notes      String?             @db.Text
+  notes      String?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
@@ -218,33 +173,780 @@ model MedicalRecord {
   @@index([date])
 }
 
-// Clinical Images
 model ClinicalImage {
   id          String   @id @default(uuid())
   patient     String
   patientId   String?
   type        String
   imageUrl    String
-  caption     String?  @db.Text
-  toothNumber Int?
+  caption     String?
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  toothNumber Int?
 
   @@index([patientId])
   @@index([date])
   @@index([toothNumber])
 }
 
-// Dental Charts
 model DentalChart {
-  id         String   @id @default(uuid())
-  patientId  String   @unique
-  chartData  Json     // Stores the entire tooth chart as JSON
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  patientId String   @unique
+  chartData Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([patientId])
+}
+
+model Staff {
+  id                     String                  @id @default(uuid())
+  userId                 String?                 @unique
+  name                   String
+  role                   String
+  email                  String                  @unique
+  phone                  String
+  schedule               String
+  salary                 String
+  hireDate               DateTime
+  status                 StaffStatus             @default(Active)
+  notes                  String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  attendanceRecords      AttendanceRecord[]
+  cashDrawerTransactions CashDrawerTransaction[]
+  leaveRequests          LeaveRequest[]
+  receptionShifts        ReceptionShift[]
+  handoversFrom          ShiftHandover[]         @relation("HandoverFromStaff")
+  handoversTo            ShiftHandover[]         @relation("HandoverToStaff")
+  user                   User?                   @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([role])
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String          @unique
+  address        String?
+  phone          String?
+  email          String?
+  category       String?
+  paymentTerms   String?
+  rating         Float?
+  status         SupplierStatus  @default(Active)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  items          InventoryItem[]
+  purchaseOrders PurchaseOrder[]
+
+  @@index([status])
+}
+
+model InventoryItem {
+  id           String              @id @default(uuid())
+  name         String
+  category     String?
+  supplierId   String?
+  quantity     Int                 @default(0)
+  minQuantity  Int                 @default(0)
+  maxQuantity  Int                 @default(0)
+  unitCost     Decimal             @db.Decimal(12, 2)
+  status       InventoryItemStatus @default(Normal)
+  expires      DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  location     String?
+  supplierName String?
+  supplier     Supplier?           @relation(fields: [supplierId], references: [id])
+  medications  Medication[]
+
+  @@index([status])
+  @@index([category])
+  @@index([quantity])
+  @@index([expires])
+}
+
+model Medication {
+  id              String             @id @default(uuid())
+  name            String
+  fullName        String?
+  strength        String?
+  form            String?
+  category        String?
+  stock           Int                @default(0)
+  unitPrice       Decimal            @db.Decimal(12, 2)
+  expiryDate      DateTime?
+  status          MedicationStatus   @default(InStock)
+  inventoryItemId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  inventoryItem   InventoryItem?     @relation(fields: [inventoryItemId], references: [id])
+  dispensings     PharmacyDispense[]
+  prescriptions   Prescription[]
+
+  @@index([status])
+  @@index([category])
+}
+
+model Prescription {
+  id                String             @id @default(uuid())
+  patientId         String?
+  patientName       String
+  doctorId          String?
+  doctorName        String
+  medicationId      String?
+  medicationName    String
+  strength          String?
+  dosage            String?
+  instructions      String?
+  duration          String?
+  refills           Int                @default(0)
+  status            PrescriptionStatus @default(Active)
+  invoiceId         String?
+  treatmentId       String?
+  dispensedAt       DateTime?
+  dispensedQuantity Int?
+  totalAmount       Decimal?           @db.Decimal(12, 2)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  dispensings       PharmacyDispense[]
+  medication        Medication?        @relation(fields: [medicationId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+}
+
+model PharmacyDispense {
+  id             String        @id @default(uuid())
+  prescriptionId String?
+  medicationId   String?
+  patientId      String?
+  patientName    String
+  doctorId       String?
+  doctorName     String?
+  quantity       Int
+  unitPrice      Decimal       @db.Decimal(12, 2)
+  totalAmount    Decimal       @db.Decimal(12, 2)
+  invoiceId      String?
+  treatmentId    String?
+  notes          String?
+  dispensedBy    String?
+  dispensedAt    DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  medication     Medication?   @relation(fields: [medicationId], references: [id])
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+
+  @@index([prescriptionId])
+  @@index([medicationId])
+}
+
+model PurchaseOrder {
+  id               String              @id @default(uuid())
+  supplierId       String?
+  supplierName     String
+  status           PurchaseOrderStatus @default(Pending)
+  total            Decimal             @db.Decimal(12, 2)
+  orderDate        DateTime
+  expectedDelivery DateTime?
+  items            Json?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  supplier         Supplier?           @relation(fields: [supplierId], references: [id])
+
+  @@index([supplierId])
+  @@index([status])
+}
+
+model PharmacyTransaction {
+  id                String                    @id @default(uuid())
+  date              DateTime                  @default(now())
+  description       String
+  amount            Decimal                   @db.Decimal(12, 2)
+  amountValue       Decimal                   @db.Decimal(12, 2)
+  totalAmount       Decimal?                  @db.Decimal(12, 2)
+  outstandingAmount Decimal?                  @db.Decimal(12, 2)
+  type              PharmacyTransactionType
+  category          String?
+  status            PharmacyTransactionStatus @default(Completed)
+  paymentMethod     String?
+  patientId         String?
+  patientName       String?
+  sourceId          String?
+  sourceType        String?
+  metadata          Json?
+  auto              Boolean                   @default(false)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([patientId])
+}
+
+model Invoice {
+  id                   String        @id @default(uuid())
+  number               String        @unique
+  patientId            String?
+  treatmentId          String?
+  date                 DateTime
+  dueDate              DateTime?
+  amount               Decimal       @db.Decimal(12, 2)
+  status               InvoiceStatus @default(Draft)
+  notes                String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  patientNameSnapshot  String?
+  patientPhoneSnapshot String?
+  amountPaid           Decimal       @default(0) @db.Decimal(12, 2)
+  patient              Patient?      @relation(fields: [patientId], references: [id])
+  treatment            Treatment?    @relation(fields: [treatmentId], references: [id])
+  items                InvoiceItem[]
+
+  @@index([patientId])
+  @@index([treatmentId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(12, 2)
+  total       Decimal @db.Decimal(12, 2)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model ChatConversation {
+  id            String                 @id @default(uuid())
+  patientId     String?
+  patientName   String
+  patientEmail  String?
+  staffId       String?
+  staffName     String?
+  status        ChatConversationStatus @default(Active)
+  lastMessageAt DateTime               @default(now())
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  messages      ChatMessage[]
+
+  @@index([status])
+  @@index([patientId])
+  @@index([staffId])
+  @@index([lastMessageAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  senderType     String
+  senderId       String?
+  senderName     String
+  message        String
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model PatientSettings {
+  id                   String   @id @default(uuid())
+  patientId            String?  @unique
+  userId               String   @unique
+  emailNotifications   Boolean  @default(true)
+  smsNotifications     Boolean  @default(true)
+  appointmentReminders Boolean  @default(true)
+  promotionalEmails    Boolean  @default(false)
+  language             String   @default("en")
+  timezone             String   @default("Africa/Cairo")
+  darkMode             Boolean  @default(false)
+  twoFactorEnabled     Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  patient              Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([patientId])
+}
+
+model PortalContent {
+  id        String   @id @default(uuid())
+  type      String
+  title     String?
+  content   Json
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+}
+
+model ClinicSettings {
+  id                  String   @id @default("main")
+  clinicName          String   @default("")
+  phoneNumber         String   @default("")
+  email               String   @default("")
+  website             String   @default("")
+  address             String   @default("")
+  businessHours       String   @default("mon-fri-8-6")
+  timezone            String   @default("eastern")
+  appointmentDuration String   @default("60")
+  bookingLimit        String   @default("90")
+  allowOnlineBooking  Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  faviconUrl          String?
+  logoUrl             String?
+  weeklySchedule      Json?
+}
+
+model Notification {
+  id          String               @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  relatedId   String?
+  relatedType String?
+  link        String?
+  isRead      Boolean              @default(false)
+  readAt      DateTime?
+  priority    NotificationPriority @default(NORMAL)
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model PatientMessage {
+  id          String          @id @default(uuid())
+  patientId   String
+  patientName String
+  type        MessageType     @default(Email)
+  subject     String
+  content     String
+  snippet     String?
+  status      MessageStatus   @default(Queued)
+  priority    MessagePriority @default(normal)
+  sentAt      DateTime?
+  readAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([type])
+}
+
+model InsuranceClaim {
+  id                String               @id @default(uuid())
+  patientId         String
+  patientName       String
+  insuranceProvider String
+  policyNumber      String?
+  procedure         String
+  procedureCode     String?
+  amount            Decimal              @db.Decimal(12, 2)
+  approvedAmount    Decimal?             @db.Decimal(12, 2)
+  status            InsuranceClaimStatus @default(Pending)
+  submitDate        DateTime             @default(now())
+  responseDate      DateTime?
+  notes             String?
+  treatmentId       String?
+  invoiceId         String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([submitDate])
+}
+
+model Referral {
+  id                String          @id @default(uuid())
+  patientId         String
+  patientName       String
+  specialty         String
+  specialist        String
+  reason            String
+  urgency           ReferralUrgency @default(routine)
+  status            ReferralStatus  @default(pending)
+  referringDoctor   String?
+  referringDoctorId String?
+  referralDate      DateTime        @default(now())
+  appointmentDate   DateTime?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([referralDate])
+}
+
+model ToothImageLink {
+  id          String   @id @default(uuid())
+  patientId   String
+  patientName String
+  imageId     String
+  toothNumber Int
+  condition   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([imageId])
+  @@index([toothNumber])
+}
+
+model Lab {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  address     String?
+  phone       String?
+  email       String?
+  contactName String?
+  specialty   String?
+  rating      Float?
+  isActive    Boolean   @default(true)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cases       LabCase[]
+
+  @@index([isActive])
+}
+
+model LabCase {
+  id            String              @id @default(uuid())
+  caseNumber    String              @unique
+  labId         String?
+  labName       String?
+  patientId     String?
+  patientName   String
+  doctorId      String?
+  doctorName    String
+  treatmentId   String?
+  caseType      String
+  toothNumbers  String?
+  shade         String?
+  material      String?
+  description   String?
+  instructions  String?
+  status        LabCaseStatus       @default(Draft)
+  priority      LabCasePriority     @default(Normal)
+  requestDate   DateTime            @default(now())
+  dueDate       DateTime?
+  sentToLabDate DateTime?
+  receivedDate  DateTime?
+  deliveredDate DateTime?
+  estimatedCost Decimal?            @db.Decimal(12, 2)
+  actualCost    Decimal?            @db.Decimal(12, 2)
+  invoiceId     String?
+  notes         String?
+  createdBy     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  lab           Lab?                @relation(fields: [labId], references: [id])
+  attachments   LabCaseAttachment[]
+  updates       LabCaseUpdate[]
+
+  @@index([labId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([priority])
+  @@index([requestDate])
+  @@index([dueDate])
+}
+
+model LabCaseAttachment {
+  id          String   @id @default(uuid())
+  caseId      String
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  description String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+  case        LabCase  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([fileType])
+}
+
+model LabCaseUpdate {
+  id              String        @id @default(uuid())
+  caseId          String
+  status          LabCaseStatus
+  message         String?
+  updatedBy       String?
+  isSharedWithLab Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  case            LabCase       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([createdAt])
+}
+
+model AttendanceRecord {
+  id                    String           @id @default(uuid())
+  staffId               String
+  date                  DateTime         @db.Date
+  status                AttendanceStatus @default(Present)
+  clockIn               DateTime?
+  clockOut              DateTime?
+  breakStart            DateTime?
+  breakEnd              DateTime?
+  totalBreakMinutes     Int?
+  clockInLocation       Json?
+  clockOutLocation      Json?
+  locationVerified      Boolean          @default(false)
+  scheduledHours        Decimal?         @db.Decimal(4, 2)
+  workedHours           Decimal?         @db.Decimal(4, 2)
+  overtimeHours         Decimal?         @db.Decimal(4, 2)
+  lateMinutes           Int?
+  earlyDepartureMinutes Int?
+  notes                 String?
+  approvedBy            String?
+  approvedAt            DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  staff                 Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, date])
+  @@index([staffId])
+  @@index([date])
+  @@index([status])
+}
+
+model LeaveRequest {
+  id            String      @id @default(uuid())
+  staffId       String
+  leaveType     LeaveType
+  startDate     DateTime    @db.Date
+  endDate       DateTime    @db.Date
+  totalDays     Int
+  reason        String?
+  status        LeaveStatus @default(Pending)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNotes   String?
+  attachmentUrl String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  staff         Staff       @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model AttendanceSettings {
+  id                      String   @id @default("main")
+  workStartTime           String   @default("09:00")
+  workEndTime             String   @default("17:00")
+  lunchBreakMinutes       Int      @default(60)
+  lateGraceMinutes        Int      @default(15)
+  earlyLeaveGraceMinutes  Int      @default(15)
+  overtimeEnabled         Boolean  @default(true)
+  overtimeThresholdHours  Decimal  @default(8) @db.Decimal(4, 2)
+  locationTrackingEnabled Boolean  @default(true)
+  clinicLatitude          Decimal? @db.Decimal(10, 7)
+  clinicLongitude         Decimal? @db.Decimal(10, 7)
+  allowedRadiusMeters     Int      @default(100)
+  workDays                String   @default("1,2,3,4,5")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model ReceptionShift {
+  id                     String                  @id @default(uuid())
+  staffId                String
+  scheduledStart         DateTime
+  scheduledEnd           DateTime
+  actualStart            DateTime?
+  actualEnd              DateTime?
+  status                 ShiftStatus             @default(Active)
+  shiftType              String                  @default("Regular")
+  notes                  String?
+  openingCashAmount      Decimal?                @db.Decimal(12, 2)
+  closingCashAmount      Decimal?                @db.Decimal(12, 2)
+  expectedCashAmount     Decimal?                @db.Decimal(12, 2)
+  cashDiscrepancy        Decimal?                @db.Decimal(12, 2)
+  cashDiscrepancyNotes   String?
+  totalTransactions      Int                     @default(0)
+  totalRevenue           Decimal?                @db.Decimal(12, 2)
+  totalAppointments      Int                     @default(0)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  cashDrawerTransactions CashDrawerTransaction[]
+  staff                  Staff                   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  handoversFrom          ShiftHandover[]         @relation("HandoverFromShift")
+  handoversTo            ShiftHandover[]         @relation("HandoverToShift")
+
+  @@index([staffId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([scheduledEnd])
+}
+
+model ShiftHandover {
+  id              String          @id @default(uuid())
+  fromStaffId     String
+  toStaffId       String
+  fromShiftId     String?
+  toShiftId       String?
+  handoverType    HandoverType    @default(Shift)
+  status          HandoverStatus  @default(Pending)
+  handoverTime    DateTime        @default(now())
+  acceptedAt      DateTime?
+  completedAt     DateTime?
+  handoverNotes   String?
+  acceptanceNotes String?
+  pendingTasks    Json?
+  importantNotes  Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  fromShift       ReceptionShift? @relation("HandoverFromShift", fields: [fromShiftId], references: [id])
+  fromStaff       Staff           @relation("HandoverFromStaff", fields: [fromStaffId], references: [id], onDelete: Cascade)
+  toShift         ReceptionShift? @relation("HandoverToShift", fields: [toShiftId], references: [id])
+  toStaff         Staff           @relation("HandoverToStaff", fields: [toStaffId], references: [id], onDelete: Cascade)
+
+  @@index([fromStaffId])
+  @@index([toStaffId])
+  @@index([status])
+  @@index([handoverType])
+  @@index([handoverTime])
+}
+
+model CashDrawerTransaction {
+  id              String         @id @default(uuid())
+  shiftId         String
+  staffId         String
+  type            String
+  amount          Decimal        @db.Decimal(12, 2)
+  previousBalance Decimal        @db.Decimal(12, 2)
+  newBalance      Decimal        @db.Decimal(12, 2)
+  cashAmount      Decimal?       @db.Decimal(12, 2)
+  cardAmount      Decimal?       @db.Decimal(12, 2)
+  otherAmount     Decimal?       @db.Decimal(12, 2)
+  referenceId     String?
+  referenceType   String?
+  description     String?
+  notes           String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  shift           ReceptionShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  staff           Staff          @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([shiftId])
+  @@index([staffId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PatientWallet {
+  id                String              @id @default(uuid())
+  patientId         String              @unique
+  balance           Decimal             @default(0) @db.Decimal(12, 2)
+  totalDeposits     Decimal             @default(0) @db.Decimal(12, 2)
+  totalWithdrawals  Decimal             @default(0) @db.Decimal(12, 2)
+  totalPayments     Decimal             @default(0) @db.Decimal(12, 2)
+  totalRefunds      Decimal             @default(0) @db.Decimal(12, 2)
+  isActive          Boolean             @default(true)
+  autoPayEnabled    Boolean             @default(false)
+  lowBalanceAlert   Decimal?            @db.Decimal(12, 2)
+  patientName       String?
+  patientPhone      String?
+  patientEmail      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  lastTransactionAt DateTime?
+  transactions      WalletTransaction[]
+
+  @@index([patientId])
+  @@index([balance])
+  @@index([isActive])
+}
+
+model WalletTransaction {
+  id                 String                  @id @default(uuid())
+  walletId           String
+  type               WalletTransactionType
+  status             WalletTransactionStatus @default(Completed)
+  amount             Decimal                 @db.Decimal(12, 2)
+  balanceBefore      Decimal                 @db.Decimal(12, 2)
+  balanceAfter       Decimal                 @db.Decimal(12, 2)
+  referenceId        String?
+  referenceType      String?
+  paymentMethod      String?
+  description        String
+  notes              String?
+  processedBy        String?
+  processedByName    String?
+  createdAt          DateTime                @default(now())
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancelledBy        String?
+  cancellationReason String?
+  wallet             PatientWallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
+enum AppointmentStatus {
+  Confirmed
+  Pending
+  Cancelled
+  Completed
+}
+
+enum PatientStatus {
+  Active
+  Inactive
+}
+
+enum TreatmentStatus {
+  Pending
+  InProgress
+  Completed
+}
+
+enum InvoiceStatus {
+  Draft
+  Sent
+  Paid
+  Overdue
+  Cancelled
+}
+
+enum MedicalRecordStatus {
+  Draft
+  Final
 }
 
 enum UserRole {
@@ -259,37 +961,6 @@ enum StaffStatus {
   Inactive
 }
 
-model Staff {
-  id         String      @id @default(uuid())
-  userId     String?     @unique
-  user       User?       @relation(fields: [userId], references: [id])
-  name       String
-  role       String
-  email      String       @unique
-  phone      String
-  schedule   String
-  salary     String
-  hireDate   DateTime
-  status     StaffStatus  @default(Active)
-  notes      String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-
-  // Attendance relations
-  attendanceRecords AttendanceRecord[]
-  leaveRequests     LeaveRequest[]
-  
-  // Reception Shift relations
-  receptionShifts       ReceptionShift[]
-  handoversFrom         ShiftHandover[] @relation("HandoverFromStaff")
-  handoversTo           ShiftHandover[] @relation("HandoverToStaff")
-  cashDrawerTransactions CashDrawerTransaction[]
-
-  @@index([status])
-  @@index([role])
-}
-
-// Inventory & Suppliers
 enum SupplierStatus {
   Active
   Inactive
@@ -329,322 +1000,10 @@ enum PharmacyTransactionStatus {
   Completed
 }
 
-model Supplier {
-  id           String         @id @default(uuid())
-  name         String         @unique
-  address      String?
-  phone        String?
-  email        String?
-  category     String?
-  paymentTerms String?
-  rating       Float?
-  status       SupplierStatus @default(Active)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  items        InventoryItem[]
-  purchaseOrders PurchaseOrder[]
-
-  @@index([status])
-}
-
-model InventoryItem {
-  id           String               @id @default(uuid())
-  name         String
-  category     String?
-  supplierId   String?
-  supplier     Supplier?            @relation(fields: [supplierId], references: [id])
-  supplierName String?
-  quantity     Int                  @default(0)
-  minQuantity  Int                  @default(0)
-  maxQuantity  Int                  @default(0)
-  unitCost     Decimal              @db.Decimal(12,2)
-  status       InventoryItemStatus  @default(Normal)
-  expires      DateTime?
-  location     String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-
-  medications  Medication[]
-
-  @@index([status])
-  @@index([category])
-  @@index([quantity])
-  @@index([expires])
-
-}
-
-model Medication {
-  id              String           @id @default(uuid())
-  name            String
-  fullName        String?
-  strength        String?
-  form            String?
-  category        String?
-  stock           Int              @default(0)
-  unitPrice       Decimal          @db.Decimal(12, 2)
-  expiryDate      DateTime?
-  status          MedicationStatus @default(InStock)
-  inventoryItemId String?
-  inventoryItem   InventoryItem?   @relation(fields: [inventoryItemId], references: [id])
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-
-  prescriptions   Prescription[]
-  dispensings     PharmacyDispense[]
-
-  @@index([status])
-  @@index([category])
-}
-
-model Prescription {
-  id                String             @id @default(uuid())
-  patientId         String?
-  patientName       String
-  doctorId          String?
-  doctorName        String
-  medicationId      String?
-  medication        Medication?        @relation(fields: [medicationId], references: [id])
-  medicationName    String
-  strength          String?
-  dosage            String?
-  instructions      String?
-  duration          String?
-  refills           Int                @default(0)
-  status            PrescriptionStatus @default(Active)
-  invoiceId         String?
-  treatmentId       String?
-  dispensedAt       DateTime?
-  dispensedQuantity Int?
-  totalAmount       Decimal?           @db.Decimal(12, 2)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
-  dispensings       PharmacyDispense[]
-
-  @@index([patientId])
-  @@index([doctorId])
-  @@index([status])
-}
-
-model PharmacyDispense {
-  id             String    @id @default(uuid())
-  prescriptionId String?
-  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
-  medicationId   String?
-  medication     Medication? @relation(fields: [medicationId], references: [id])
-  patientId      String?
-  patientName    String
-  doctorId       String?
-  doctorName     String?
-  quantity       Int
-  unitPrice      Decimal   @db.Decimal(12, 2)
-  totalAmount    Decimal   @db.Decimal(12, 2)
-  invoiceId      String?
-  treatmentId    String?
-  notes          String?
-  dispensedBy    String?
-  dispensedAt    DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-
-  @@index([prescriptionId])
-  @@index([medicationId])
-}
-
-model PurchaseOrder {
-  id               String               @id @default(uuid())
-  supplierId       String?
-  supplier         Supplier?            @relation(fields: [supplierId], references: [id])
-  supplierName     String
-  status           PurchaseOrderStatus  @default(Pending)
-  total            Decimal              @db.Decimal(12, 2)
-  orderDate        DateTime
-  expectedDelivery DateTime?
-  items            Json?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-
-  @@index([supplierId])
-  @@index([status])
-}
-
-model PharmacyTransaction {
-  id               String                     @id @default(uuid())
-  date             DateTime                   @default(now())
-  description      String
-  amount           Decimal                    @db.Decimal(12, 2)
-  amountValue      Decimal                    @db.Decimal(12, 2)
-  totalAmount      Decimal?                   @db.Decimal(12, 2)
-  outstandingAmount Decimal?                  @db.Decimal(12, 2)
-  type             PharmacyTransactionType
-  category         String?
-  status           PharmacyTransactionStatus  @default(Completed)
-  paymentMethod    String?
-  patientId        String?
-  patientName      String?
-  sourceId         String?
-  sourceType       String?
-  metadata         Json?
-  auto             Boolean                    @default(false)
-  createdAt        DateTime                   @default(now())
-  updatedAt        DateTime                   @updatedAt
-
-  @@index([type])
-  @@index([status])
-  @@index([patientId])
-}
-model Invoice {
-  id          String        @id @default(uuid())
-  number      String        @unique
-  patientId   String?
-  patient     Patient?      @relation(fields: [patientId], references: [id])
-  patientNameSnapshot String?
-  patientPhoneSnapshot String?
-  treatmentId String?
-  treatment   Treatment?    @relation(fields: [treatmentId], references: [id])
-  date        DateTime
-  dueDate     DateTime?
-  amount      Decimal        @db.Decimal(12,2)
-  amountPaid  Decimal        @db.Decimal(12,2) @default(0)
-  status      InvoiceStatus  @default(Draft)
-  notes       String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  items       InvoiceItem[]
-
-  @@index([patientId])
-  @@index([treatmentId])
-  @@index([status])
-  @@index([dueDate])
-}
-
-model InvoiceItem {
-  id         String   @id @default(uuid())
-  invoiceId  String
-  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
-  description String
-  quantity    Int
-  unitPrice   Decimal  @db.Decimal(12,2)
-  total       Decimal  @db.Decimal(12,2)
-}
-
-// Chat models for live chat functionality
 enum ChatConversationStatus {
   Active
   Closed
   Archived
-}
-
-model ChatConversation {
-  id            String                  @id @default(uuid())
-  patientId     String?
-  patientName   String
-  patientEmail  String?
-  staffId       String?
-  staffName     String?
-  status        ChatConversationStatus  @default(Active)
-  lastMessageAt DateTime                @default(now())
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  messages      ChatMessage[]
-
-  @@index([status])
-  @@index([patientId])
-  @@index([staffId])
-  @@index([lastMessageAt])
-}
-
-model ChatMessage {
-  id             String           @id @default(uuid())
-  conversationId String
-  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderType     String           // 'patient' or 'staff'
-  senderId       String?
-  senderName     String
-  message        String           @db.Text
-  isRead         Boolean          @default(false)
-  readAt         DateTime?
-  createdAt      DateTime         @default(now())
-
-  @@index([conversationId])
-  @@index([isRead])
-  @@index([createdAt])
-}
-
-model PatientSettings {
-  id                    String   @id @default(uuid())
-  patientId             String?  @unique
-  patient               Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  userId                String   @unique
-  emailNotifications    Boolean  @default(true)
-  smsNotifications      Boolean  @default(true)
-  appointmentReminders  Boolean  @default(true)
-  promotionalEmails     Boolean  @default(false)
-  language              String   @default("en")
-  timezone              String   @default("Africa/Cairo")
-  darkMode              Boolean  @default(false)
-  twoFactorEnabled      Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  @@index([userId])
-  @@index([patientId])
-}
-
-model PortalContent {
-  id          String   @id @default(uuid())
-  type        String   // health_tips, promotions, welcome_message, etc.
-  title       String?
-  content     Json     // Flexible JSON content for different types
-  active      Boolean  @default(true)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([type])
-  @@index([active])
-}
-
-model ClinicSettings {
-  id                   String   @id @default("main")
-  clinicName           String   @default("")
-  phoneNumber          String   @default("")
-  email                String   @default("")
-  website              String   @default("")
-  address              String   @default("")
-  logoUrl              String?
-  faviconUrl           String?
-  businessHours        String   @default("mon-fri-8-6")
-  weeklySchedule       Json?
-  timezone             String   @default("eastern")
-  appointmentDuration  String   @default("60")
-  bookingLimit         String   @default("90")
-  allowOnlineBooking   Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-}
-
-model Notification {
-  id              String              @id @default(uuid())
-  userId          String
-  type            NotificationType
-  title           String
-  message         String
-  relatedId       String?             // ID of related entity (appointment, inventory, message, chat)
-  relatedType     String?             // Type of related entity
-  link            String?             // Navigation link when clicked
-  isRead          Boolean             @default(false)
-  readAt          DateTime?
-  priority        NotificationPriority @default(NORMAL)
-  metadata        Json?               // Additional data (patient name, stock level, etc.)
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([userId, isRead])
-  @@index([createdAt])
-  @@index([type])
 }
 
 enum NotificationType {
@@ -666,7 +1025,6 @@ enum NotificationPriority {
   URGENT
 }
 
-// Patient Messages/Communications
 enum MessageType {
   Email
   SMS
@@ -688,27 +1046,6 @@ enum MessagePriority {
   high
 }
 
-model PatientMessage {
-  id          String          @id @default(uuid())
-  patientId   String
-  patientName String
-  type        MessageType     @default(Email)
-  subject     String
-  content     String          @db.Text
-  snippet     String?
-  status      MessageStatus   @default(Queued)
-  priority    MessagePriority @default(normal)
-  sentAt      DateTime?
-  readAt      DateTime?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  @@index([patientId])
-  @@index([status])
-  @@index([type])
-}
-
-// Insurance Claims
 enum InsuranceClaimStatus {
   Processing
   Approved
@@ -716,31 +1053,6 @@ enum InsuranceClaimStatus {
   Pending
 }
 
-model InsuranceClaim {
-  id              String                @id @default(uuid())
-  patientId       String
-  patientName     String
-  insuranceProvider String
-  policyNumber    String?
-  procedure       String
-  procedureCode   String?
-  amount          Decimal               @db.Decimal(12, 2)
-  approvedAmount  Decimal?              @db.Decimal(12, 2)
-  status          InsuranceClaimStatus  @default(Pending)
-  submitDate      DateTime              @default(now())
-  responseDate    DateTime?
-  notes           String?               @db.Text
-  treatmentId     String?
-  invoiceId       String?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-
-  @@index([patientId])
-  @@index([status])
-  @@index([submitDate])
-}
-
-// Referrals
 enum ReferralStatus {
   pending
   scheduled
@@ -754,46 +1066,6 @@ enum ReferralUrgency {
   emergency
 }
 
-model Referral {
-  id            String          @id @default(uuid())
-  patientId     String
-  patientName   String
-  specialty     String
-  specialist    String
-  reason        String          @db.Text
-  urgency       ReferralUrgency @default(routine)
-  status        ReferralStatus  @default(pending)
-  referringDoctor String?
-  referringDoctorId String?
-  referralDate  DateTime        @default(now())
-  appointmentDate DateTime?
-  notes         String?         @db.Text
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  @@index([patientId])
-  @@index([status])
-  @@index([referralDate])
-}
-
-// Tooth Image Links (linking clinical images to specific teeth)
-model ToothImageLink {
-  id            String   @id @default(uuid())
-  patientId     String
-  patientName   String
-  imageId       String
-  toothNumber   Int
-  condition     String?
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([patientId])
-  @@index([imageId])
-  @@index([toothNumber])
-}
-
-// Lab Management
 enum LabCaseStatus {
   Draft
   Submitted
@@ -810,111 +1082,6 @@ enum LabCasePriority {
   High
   Urgent
 }
-
-model Lab {
-  id           String      @id @default(uuid())
-  name         String      @unique
-  address      String?
-  phone        String?
-  email        String?
-  contactName  String?
-  specialty    String?     // Crown & Bridge, Orthodontics, Implants, etc.
-  rating       Float?
-  isActive     Boolean     @default(true)
-  notes        String?     @db.Text
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  cases        LabCase[]
-
-  @@index([isActive])
-}
-
-model LabCase {
-  id              String          @id @default(uuid())
-  caseNumber      String          @unique
-  labId           String?
-  lab             Lab?            @relation(fields: [labId], references: [id])
-  labName         String?
-  patientId       String?
-  patientName     String
-  doctorId        String?
-  doctorName      String
-  treatmentId     String?
-  
-  // Case Details
-  caseType        String          // Crown, Bridge, Denture, Implant, Orthodontic, etc.
-  toothNumbers    String?         // Comma-separated tooth numbers
-  shade           String?         // Tooth shade
-  material        String?         // Material type (Zirconia, PFM, etc.)
-  description     String?         @db.Text
-  instructions    String?         @db.Text
-  
-  // Dates & Tracking
-  status          LabCaseStatus   @default(Draft)
-  priority        LabCasePriority @default(Normal)
-  requestDate     DateTime        @default(now())
-  dueDate         DateTime?
-  sentToLabDate   DateTime?
-  receivedDate    DateTime?
-  deliveredDate   DateTime?
-  
-  // Financial
-  estimatedCost   Decimal?        @db.Decimal(12, 2)
-  actualCost      Decimal?        @db.Decimal(12, 2)
-  invoiceId       String?
-  
-  // Tracking
-  notes           String?         @db.Text
-  createdBy       String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  
-  // Related
-  attachments     LabCaseAttachment[]
-  updates         LabCaseUpdate[]
-
-  @@index([labId])
-  @@index([patientId])
-  @@index([doctorId])
-  @@index([status])
-  @@index([priority])
-  @@index([requestDate])
-  @@index([dueDate])
-}
-
-model LabCaseAttachment {
-  id          String   @id @default(uuid())
-  caseId      String
-  case        LabCase  @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  fileName    String
-  fileUrl     String
-  fileType    String   // image, document, prescription, scan, etc.
-  fileSize    Int?
-  description String?
-  uploadedBy  String?
-  createdAt   DateTime @default(now())
-
-  @@index([caseId])
-  @@index([fileType])
-}
-
-model LabCaseUpdate {
-  id          String        @id @default(uuid())
-  caseId      String
-  case        LabCase       @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  status      LabCaseStatus
-  message     String?       @db.Text
-  updatedBy   String?
-  isSharedWithLab Boolean   @default(false)
-  createdAt   DateTime      @default(now())
-
-  @@index([caseId])
-  @@index([createdAt])
-}
-
-// ============================================
-// Attendance Management System
-// ============================================
 
 enum AttendanceStatus {
   Present
@@ -944,110 +1111,6 @@ enum LeaveStatus {
   Cancelled
 }
 
-model AttendanceRecord {
-  id            String           @id @default(uuid())
-  staffId       String
-  staff         Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  date          DateTime         @db.Date
-  status        AttendanceStatus @default(Present)
-  
-  // Clock In/Out Times
-  clockIn       DateTime?
-  clockOut      DateTime?
-  
-  // Break Times
-  breakStart    DateTime?
-  breakEnd      DateTime?
-  totalBreakMinutes Int?
-  
-  // Location Tracking
-  clockInLocation   Json?        // { latitude, longitude, address }
-  clockOutLocation  Json?        // { latitude, longitude, address }
-  locationVerified  Boolean      @default(false)
-  
-  // Work Hours Calculation
-  scheduledHours    Decimal?     @db.Decimal(4, 2)
-  workedHours       Decimal?     @db.Decimal(4, 2)
-  overtimeHours     Decimal?     @db.Decimal(4, 2)
-  
-  // Late/Early Tracking
-  lateMinutes       Int?
-  earlyDepartureMinutes Int?
-  
-  // Notes and Metadata
-  notes             String?      @db.Text
-  approvedBy        String?
-  approvedAt        DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-
-  @@unique([staffId, date])
-  @@index([staffId])
-  @@index([date])
-  @@index([status])
-}
-
-model LeaveRequest {
-  id            String       @id @default(uuid())
-  staffId       String
-  staff         Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  leaveType     LeaveType
-  startDate     DateTime     @db.Date
-  endDate       DateTime     @db.Date
-  totalDays     Int
-  reason        String?      @db.Text
-  status        LeaveStatus  @default(Pending)
-  
-  // Approval
-  reviewedBy    String?
-  reviewedAt    DateTime?
-  reviewNotes   String?      @db.Text
-  
-  // Attachment (medical certificate, etc.)
-  attachmentUrl String?
-  
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@index([staffId])
-  @@index([status])
-  @@index([startDate])
-  @@index([endDate])
-}
-
-model AttendanceSettings {
-  id                    String   @id @default("main")
-  
-  // Work Hours
-  workStartTime         String   @default("09:00")   // Expected start time
-  workEndTime           String   @default("17:00")   // Expected end time
-  lunchBreakMinutes     Int      @default(60)
-  
-  // Grace Period
-  lateGraceMinutes      Int      @default(15)        // Minutes before marked late
-  earlyLeaveGraceMinutes Int     @default(15)        // Minutes before marked early leave
-  
-  // Overtime
-  overtimeEnabled       Boolean  @default(true)
-  overtimeThresholdHours Decimal @default(8) @db.Decimal(4, 2)
-  
-  // Location
-  locationTrackingEnabled Boolean @default(true)
-  clinicLatitude        Decimal? @db.Decimal(10, 7)
-  clinicLongitude       Decimal? @db.Decimal(10, 7)
-  allowedRadiusMeters   Int      @default(100)       // Radius for valid clock-in
-  
-  // Work Days
-  workDays              String   @default("1,2,3,4,5") // Mon=1, Sun=0
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-}
-
-// ============================================
-// Reception Shift Management System
-// ============================================
-
 enum ShiftStatus {
   Active
   Completed
@@ -1055,9 +1118,9 @@ enum ShiftStatus {
 }
 
 enum HandoverType {
-  Shift      // Regular shift handover
-  CashDrawer // Cash drawer handover
-  Emergency  // Emergency handover
+  Shift
+  CashDrawer
+  Emergency
 }
 
 enum HandoverStatus {
@@ -1067,130 +1130,13 @@ enum HandoverStatus {
   Completed
 }
 
-model ReceptionShift {
-  id               String       @id @default(uuid())
-  staffId          String
-  staff            Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  
-  // Shift Timing
-  scheduledStart   DateTime
-  scheduledEnd     DateTime
-  actualStart      DateTime?
-  actualEnd        DateTime?
-  
-  // Shift Details
-  status           ShiftStatus  @default(Active)
-  shiftType        String       @default("Regular") // Regular, Morning, Evening, Night, Weekend
-  notes            String?      @db.Text
-  
-  // Cash Drawer
-  openingCashAmount    Decimal?     @db.Decimal(12, 2)
-  closingCashAmount    Decimal?     @db.Decimal(12, 2)
-  expectedCashAmount   Decimal?     @db.Decimal(12, 2)
-  cashDiscrepancy      Decimal?     @db.Decimal(12, 2)
-  cashDiscrepancyNotes String?      @db.Text
-  
-  // Summary
-  totalTransactions    Int          @default(0)
-  totalRevenue         Decimal?     @db.Decimal(12, 2)
-  totalAppointments    Int          @default(0)
-  
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  
-  // Relations
-  handoversFrom    ShiftHandover[] @relation("HandoverFromShift")
-  handoversTo      ShiftHandover[] @relation("HandoverToShift")
-  cashDrawerTransactions CashDrawerTransaction[]
-
-  @@index([staffId])
-  @@index([status])
-  @@index([scheduledStart])
-  @@index([scheduledEnd])
-}
-
-model ShiftHandover {
-  id               String         @id @default(uuid())
-  
-  // Staff involved
-  fromStaffId      String
-  fromStaff        Staff          @relation("HandoverFromStaff", fields: [fromStaffId], references: [id], onDelete: Cascade)
-  toStaffId        String
-  toStaff          Staff          @relation("HandoverToStaff", fields: [toStaffId], references: [id], onDelete: Cascade)
-  
-  // Shift references
-  fromShiftId      String?
-  fromShift        ReceptionShift? @relation("HandoverFromShift", fields: [fromShiftId], references: [id])
-  toShiftId        String?
-  toShift          ReceptionShift? @relation("HandoverToShift", fields: [toShiftId], references: [id])
-  
-  // Handover Details
-  handoverType     HandoverType   @default(Shift)
-  status           HandoverStatus @default(Pending)
-  handoverTime     DateTime       @default(now())
-  acceptedAt       DateTime?
-  completedAt      DateTime?
-  
-  // Notes and Communication
-  handoverNotes    String?        @db.Text  // Notes from outgoing staff
-  acceptanceNotes  String?        @db.Text  // Notes from incoming staff
-  pendingTasks     Json?          // List of pending tasks to hand over
-  importantNotes   Json?          // Critical items requiring attention
-  
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-
-  @@index([fromStaffId])
-  @@index([toStaffId])
-  @@index([status])
-  @@index([handoverType])
-  @@index([handoverTime])
-}
-
-model CashDrawerTransaction {
-  id               String       @id @default(uuid())
-  shiftId          String
-  shift            ReceptionShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  staffId          String
-  staff            Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  
-  // Transaction Details
-  type             String       // Opening, Closing, Deposit, Withdrawal, Adjustment, FloatAdded, FloatRemoved
-  amount           Decimal      @db.Decimal(12, 2)
-  previousBalance  Decimal      @db.Decimal(12, 2)
-  newBalance       Decimal      @db.Decimal(12, 2)
-  
-  // Payment Method breakdown (for deposits/withdrawals)
-  cashAmount       Decimal?     @db.Decimal(12, 2)
-  cardAmount       Decimal?     @db.Decimal(12, 2)
-  otherAmount      Decimal?     @db.Decimal(12, 2)
-  
-  // Reference
-  referenceId      String?      // Invoice ID, Payment ID, etc.
-  referenceType    String?      // Invoice, Payment, Adjustment
-  description      String?
-  notes            String?      @db.Text
-  
-  // Verification
-  verifiedBy       String?
-  verifiedAt       DateTime?
-  
-  createdAt        DateTime     @default(now())
-
-  @@index([shiftId])
-  @@index([staffId])
-  @@index([type])
-  @@index([createdAt])
-}
-
-// Patient Wallet System
 enum WalletTransactionType {
-  Deposit           // Patient adds money to wallet
-  Withdrawal        // Patient withdraws money
-  Payment           // Payment for invoice/treatment
-  Refund            // Refund back to wallet
-  Adjustment        // Manual adjustment by staff
-  Transfer          // Transfer between wallets (future)
+  Deposit
+  Withdrawal
+  Payment
+  Refund
+  Adjustment
+  Transfer
 }
 
 enum WalletTransactionStatus {
@@ -1200,81 +1146,3 @@ enum WalletTransactionStatus {
   Cancelled
   Refunded
 }
-
-model PatientWallet {
-  id               String              @id @default(uuid())
-  patientId        String              @unique
-  
-  // Balance Information
-  balance          Decimal             @db.Decimal(12, 2) @default(0)
-  totalDeposits    Decimal             @db.Decimal(12, 2) @default(0)
-  totalWithdrawals Decimal             @db.Decimal(12, 2) @default(0)
-  totalPayments    Decimal             @db.Decimal(12, 2) @default(0)
-  totalRefunds     Decimal             @db.Decimal(12, 2) @default(0)
-  
-  // Wallet Settings
-  isActive         Boolean             @default(true)
-  autoPayEnabled   Boolean             @default(false)  // Auto-pay invoices from wallet
-  lowBalanceAlert  Decimal?            @db.Decimal(12, 2)  // Alert when balance drops below
-  
-  // Patient Info (denormalized for quick access)
-  patientName      String?
-  patientPhone     String?
-  patientEmail     String?
-  
-  // Timestamps
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  lastTransactionAt DateTime?
-  
-  // Relations
-  transactions     WalletTransaction[]
-
-  @@index([patientId])
-  @@index([balance])
-  @@index([isActive])
-}
-
-model WalletTransaction {
-  id               String                    @id @default(uuid())
-  walletId         String
-  wallet           PatientWallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  
-  // Transaction Details
-  type             WalletTransactionType
-  status           WalletTransactionStatus   @default(Completed)
-  amount           Decimal                   @db.Decimal(12, 2)
-  balanceBefore    Decimal                   @db.Decimal(12, 2)
-  balanceAfter     Decimal                   @db.Decimal(12, 2)
-  
-  // Reference (for payments/refunds)
-  referenceId      String?           // Invoice ID, Treatment ID, etc.
-  referenceType    String?           // Invoice, Treatment, Manual, etc.
-  
-  // Payment Method (for deposits)
-  paymentMethod    String?           // Cash, Card, BankTransfer, etc.
-  
-  // Description and Notes
-  description      String
-  notes            String?           @db.Text
-  
-  // Staff who processed the transaction
-  processedBy      String?
-  processedByName  String?
-  
-  // Timestamps
-  createdAt        DateTime          @default(now())
-  completedAt      DateTime?
-  cancelledAt      DateTime?
-  
-  // Cancellation/Refund info
-  cancelledBy      String?
-  cancellationReason String?
-
-  @@index([walletId])
-  @@index([type])
-  @@index([status])
-  @@index([referenceId])
-  @@index([createdAt])
-}
-

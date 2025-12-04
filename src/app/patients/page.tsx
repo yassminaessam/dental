@@ -181,11 +181,25 @@ export default function PatientsPage() {
         const newPatient = { ...data.patient, dob: new Date(data.patient.dob) };
         setPatients(prev => [newPatient, ...prev]);
         
-        const successMessage = newPatientData.createUserAccount 
-          ? 'Patient and user account created successfully'
-          : t('patients.patient_added_description');
+        // Check if user account was created when requested
+        if (newPatientData.createUserAccount) {
+          if (data.userCreated) {
+            toast({ 
+              title: t('patients.patient_added'), 
+              description: t('patients.patient_and_user_created')
+            });
+          } else {
+            // Patient created but user account failed
+            toast({ 
+              title: t('patients.patient_added'), 
+              description: data.userError || t('patients.user_account_creation_failed'),
+              variant: "destructive"
+            });
+          }
+        } else {
+          toast({ title: t('patients.patient_added'), description: t('patients.patient_added_description') });
+        }
         
-        toast({ title: t('patients.patient_added'), description: successMessage });
         return { success: true };
     } catch (error: any) {
         toast({ title: t('patients.error_adding'), description: error.message, variant: "destructive" });
@@ -193,7 +207,7 @@ export default function PatientsPage() {
     }
   };
 
-  const handleUpdatePatient = async (updatedPatient: Patient) => {
+  const handleUpdatePatient = async (updatedPatient: Patient & { createUserAccount?: boolean; userPassword?: string }) => {
     try {
         const response = await fetch(`/api/patient/profile`, {
           method: 'PATCH',
@@ -202,14 +216,22 @@ export default function PatientsPage() {
             patientId: updatedPatient.id,
             ...updatedPatient,
             dob: updatedPatient.dob,
+            createUserAccount: updatedPatient.createUserAccount,
+            userPassword: updatedPatient.userPassword,
           })
         });
         
         if (!response.ok) throw new Error('Failed to update patient');
         
-        setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
+        // Remove user account fields before updating state
+        const { createUserAccount, userPassword, ...patientData } = updatedPatient;
+        setPatients(prev => prev.map(p => p.id === updatedPatient.id ? patientData : p));
         setPatientToEdit(null);
-        toast({ title: t('patients.patient_updated'), description: t('patients.patient_updated_description') });
+        
+        const successMessage = createUserAccount 
+          ? t('patients.patient_and_user_updated')
+          : t('patients.patient_updated_description');
+        toast({ title: t('patients.patient_updated'), description: successMessage });
     } catch (error) {
         toast({ title: t('patients.error_updating'), variant: "destructive" });
     }

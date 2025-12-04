@@ -71,14 +71,23 @@ export async function POST(request: NextRequest) {
     const patient = await PatientsService.create(patientData);
 
     // Optionally create user account for the patient
+    let userCreated = false;
+    let userError: string | null = null;
+    
     if (payload.createUserAccount && payload.userPassword) {
-      const user = await PatientUserSyncService.createUserFromPatient(
-        patient,
-        payload.userPassword
-      );
-      
-      if (user) {
-        console.log(`[api/patients] Created user account for patient ${patient.email}`);
+      try {
+        const user = await PatientUserSyncService.createUserFromPatient(
+          patient,
+          payload.userPassword
+        );
+        
+        if (user) {
+          console.log(`[api/patients] Created user account for patient ${patient.email}, userId: ${user.id}`);
+          userCreated = true;
+        }
+      } catch (error: any) {
+        console.error(`[api/patients] Failed to create user account for patient ${patient.email}:`, error);
+        userError = error.message || 'Failed to create user account';
       }
     }
 
@@ -89,7 +98,11 @@ export async function POST(request: NextRequest) {
       createdAt: patient.createdAt?.toISOString() || null,
     };
 
-    return NextResponse.json({ patient: serialized }, { status: 201 });
+    return NextResponse.json({ 
+      patient: serialized,
+      userCreated,
+      userError 
+    }, { status: 201 });
   } catch (error: any) {
     console.error('[api/patients] POST error', error);
     

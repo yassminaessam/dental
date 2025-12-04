@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PatientsService } from '@/services/patients';
+import { PatientUserSyncService } from '@/services/patient-user-sync';
 import prisma from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { patientId, ...updates } = body;
+    const { patientId, createUserAccount, userPassword, ...updates } = body;
 
     if (!patientId) {
       return NextResponse.json({ error: 'Patient ID is required.' }, { status: 400 });
@@ -52,6 +53,30 @@ export async function PATCH(request: NextRequest) {
 
     // Update patient profile
     const updatedPatient = await PatientsService.update(patientId, updates);
+
+    // Sync user account if patient has one
+    await PatientUserSyncService.updateUserFromPatient(patientId, updates);
+
+    // If creating new user account
+    if (createUserAccount && userPassword) {
+      const hasAccount = await PatientUserSyncService.hasUserAccount(patientId);
+      if (!hasAccount) {
+        const user = await PatientUserSyncService.createUserFromPatient(updatedPatient, userPassword);
+        if (user) {
+          console.log(`[api/patient/profile] Created user account for patient ${updatedPatient.email}`);
+        }
+      }
+    }
+
+    // Update user password if provided and user exists
+    if (userPassword && !createUserAccount) {
+      const user = await PatientUserSyncService.getUserForPatient(patientId);
+      if (user) {
+        const { UsersService } = await import('@/services/users');
+        await UsersService.update(user.id, { password: userPassword });
+        console.log(`[api/patient/profile] Updated password for user ${user.email}`);
+      }
+    }
 
     // Serialize dates
     const serialized = {
@@ -93,10 +118,18 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Patient ID is required.' }, { status: 400 });
     }
 
+    // First, delete associated user account if exists
+    const userDeleted = await PatientUserSyncService.deleteUserForPatient(patientId);
+    console.log(`[api/patient/profile] User account deleted: ${userDeleted}`);
+
     // Delete patient
     await PatientsService.remove(patientId);
 
-    return NextResponse.json({ success: true, message: 'Patient deleted successfully' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Patient deleted successfully',
+      userDeleted 
+    });
   } catch (error) {
     console.error('[api/patient/profile] DELETE error', error);
     return NextResponse.json({ error: 'Failed to delete patient.' }, { status: 500 });

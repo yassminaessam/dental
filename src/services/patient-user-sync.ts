@@ -10,7 +10,8 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { PatientsService } from './patients';
 import { UsersService } from './users';
-import type { User, Patient } from '@/lib/types';
+import type { User, Patient, UserPermission } from '@/lib/types';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 export interface PatientUserSyncOptions {
   createUserAccount?: boolean; // Whether to create a user account for the patient
@@ -73,14 +74,22 @@ export const PatientUserSyncService = {
     options?: PatientUserSyncOptions
   ): Promise<User | null> {
     try {
+      console.log(`[PatientUserSync] Creating user account for patient: ${patient.email}`);
+      
       // Check if user already exists
       const existingUser = await UsersService.getByEmail(patient.email);
       
       if (existingUser) {
-        // Update patient with userId
-        await PatientsService.update(patient.id, {});
+        console.log(`[PatientUserSync] User already exists for ${patient.email}, linking patientId`);
+        // Link user to patient if not already linked
+        if (!existingUser.patientId) {
+          await UsersService.update(existingUser.id, { patientId: patient.id });
+        }
         return existingUser;
       }
+
+      // Get proper permissions for patient role
+      const patientPermissions: UserPermission[] = ROLE_PERMISSIONS.patient || ['view_own_data'];
 
       // Create new user account
       const userData = {
@@ -89,20 +98,24 @@ export const PatientUserSyncService = {
         firstName: patient.name,
         lastName: patient.lastName,
         role: 'patient' as const,
-        phone: patient.phone,
-        address: patient.address,
-        permissions: ['view_own_data'] as any, // Default patient permissions as UserPermission[]
-      } as any;
+        phone: patient.phone || undefined,
+        address: patient.address || undefined,
+        permissions: patientPermissions,
+      };
 
+      console.log(`[PatientUserSync] Creating user with data:`, { ...userData, password: '***' });
       const newUser = await UsersService.create(userData);
+      console.log(`[PatientUserSync] User created successfully: ${newUser.id}`);
 
-      // Update patient with userId (store in patientId field in User table)
+      // Update user with patientId to link the records
       await UsersService.update(newUser.id, { patientId: patient.id });
+      console.log(`[PatientUserSync] Linked user ${newUser.id} to patient ${patient.id}`);
 
       return newUser;
-    } catch (error) {
+    } catch (error: any) {
       console.error('[PatientUserSync] Error creating user from patient:', error);
-      return null;
+      console.error('[PatientUserSync] Error details:', error.message, error.code);
+      throw error; // Re-throw to allow caller to handle
     }
   },
 
@@ -245,6 +258,61 @@ export const PatientUserSyncService = {
       return UsersService.getByEmail(patient.email);
     } catch (error) {
       console.error('[PatientUserSync] Error getting user for patient:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Delete user account for a patient
+   */
+  async deleteUserForPatient(patientId: string): Promise<boolean> {
+    try {
+      const patient = await PatientsService.get(patientId);
+      if (!patient) return false;
+
+      const user = await UsersService.getByEmail(patient.email);
+      if (!user) return true; // No user to delete
+
+      // Delete user from database
+      await prisma.user.delete({ where: { id: user.id } });
+      console.log(`[PatientUserSync] Deleted user account for patient ${patient.email}`);
+      return true;
+    } catch (error) {
+      console.error('[PatientUserSync] Error deleting user for patient:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Update user account when patient is updated
+   */
+  async updateUserFromPatient(patientId: string, updates: Partial<Patient>): Promise<User | null> {
+    try {
+      const patient = await PatientsService.get(patientId);
+      if (!patient) return null;
+
+      const user = await UsersService.getByEmail(patient.email);
+      if (!user) return null; // No user to update
+
+      // Update user with patient changes
+      const userUpdates: any = {};
+      if (updates.name) userUpdates.firstName = updates.name;
+      if (updates.lastName) userUpdates.lastName = updates.lastName;
+      if (updates.phone) userUpdates.phone = updates.phone;
+      if (updates.address) userUpdates.address = updates.address;
+      if (updates.email && updates.email !== patient.email) {
+        userUpdates.email = updates.email;
+      }
+
+      if (Object.keys(userUpdates).length > 0) {
+        const updatedUser = await UsersService.update(user.id, userUpdates);
+        console.log(`[PatientUserSync] Updated user account for patient ${patient.email}`);
+        return updatedUser;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('[PatientUserSync] Error updating user for patient:', error);
       return null;
     }
   }

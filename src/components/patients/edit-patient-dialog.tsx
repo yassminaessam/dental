@@ -87,7 +87,7 @@ type PatientFormData = z.infer<ReturnType<typeof buildPatientSchema>>;
 
 interface EditPatientDialogProps {
   patient: Patient;
-  onSave: (data: Patient) => void;
+  onSave: (data: Patient & { createUserAccount?: boolean; userPassword?: string }) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -175,10 +175,12 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
   }, [patient, form]);
 
   const onSubmit = (data: PatientFormData) => {
-    const updatedPatient: Patient = {
+    const updatedPatient: Patient & { createUserAccount?: boolean; userPassword?: string } = {
       ...patient,
       ...data,
       age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
+      createUserAccount: data.createUserAccount,
+      userPassword: data.userPassword,
     };
     onSave(updatedPatient);
   };
