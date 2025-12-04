@@ -176,7 +176,7 @@ export default function OverviewStats({ refreshKey }: OverviewStatsProps) {
   };
 
   return (
-    <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-1.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {stats.map((stat, index) => {
         const Icon = iconMap[stat.icon as IconKey];
         return (
