@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neonAuth } from '@/services/neon-auth';
 import { prisma } from '@/lib/prisma';
+import { PatientUserSyncService } from '@/services/patient-user-sync';
 
 export async function POST(request: NextRequest, context: { params: Promise<Record<string, string>> }) {
   try {
@@ -11,6 +12,10 @@ export async function POST(request: NextRequest, context: { params: Promise<Reco
     if (!currentUser || currentUser.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const updated = await prisma.user.update({ where: { id: params.id }, data: { isActive: true } });
+    
+    // Sync status to patient record if user has patient role
+    await PatientUserSyncService.syncUserStatusToPatient(params.id, true);
+    
     return NextResponse.json({ success: true, userId: updated.id });
   } catch (error) {
     console.error('POST activate user error:', error);

@@ -359,5 +359,94 @@ export const PatientUserSyncService = {
       console.error('[PatientUserSync] Error updating patient for user:', error);
       return null;
     }
+  },
+
+  /**
+   * Sync user isActive status to patient status
+   * When user is deactivated -> Patient status = 'Inactive'
+   * When user is activated -> Patient status = 'Active'
+   */
+  async syncUserStatusToPatient(userId: string, isActive: boolean): Promise<Patient | null> {
+    try {
+      const user = await UsersService.getById(userId);
+      if (!user) {
+        console.log(`[PatientUserSync] User ${userId} not found`);
+        return null;
+      }
+      
+      // Only sync for patient role users
+      if (user.role !== 'patient') {
+        console.log(`[PatientUserSync] User ${userId} is not a patient, skipping status sync`);
+        return null;
+      }
+
+      let patientId = user.patientId;
+      
+      // If no patientId link, try to find by email
+      if (!patientId) {
+        const patient = await prisma.patient.findUnique({ where: { email: user.email } });
+        if (patient) {
+          patientId = patient.id;
+          // Link them for future syncs
+          await UsersService.update(user.id, { patientId: patient.id });
+          console.log(`[PatientUserSync] Linked user ${user.id} to patient ${patient.id}`);
+        }
+      }
+
+      if (!patientId) {
+        console.log(`[PatientUserSync] No patient record found for user ${userId}`);
+        return null;
+      }
+
+      const newStatus = isActive ? 'Active' : 'Inactive';
+      const updatedPatient = await PatientsService.update(patientId, { status: newStatus as any });
+      console.log(`[PatientUserSync] Synced user ${userId} isActive=${isActive} to patient ${patientId} status=${newStatus}`);
+      return updatedPatient;
+    } catch (error) {
+      console.error('[PatientUserSync] Error syncing user status to patient:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Sync patient status to user isActive
+   * When patient status = 'Inactive' -> User isActive = false
+   * When patient status = 'Active' -> User isActive = true
+   */
+  async syncPatientStatusToUser(patientId: string, status: 'Active' | 'Inactive'): Promise<User | null> {
+    try {
+      // Find user by patientId link first
+      let user = await UsersService.getByPatientId(patientId);
+      
+      // Fallback: find by email
+      if (!user) {
+        const patient = await PatientsService.get(patientId);
+        if (!patient) {
+          console.log(`[PatientUserSync] Patient ${patientId} not found`);
+          return null;
+        }
+        user = await UsersService.getByEmail(patient.email);
+      }
+
+      if (!user) {
+        console.log(`[PatientUserSync] No user account found for patient ${patientId}`);
+        return null;
+      }
+
+      const isActive = status === 'Active';
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { isActive }
+      });
+      console.log(`[PatientUserSync] Synced patient ${patientId} status=${status} to user ${user.id} isActive=${isActive}`);
+      
+      return {
+        ...user,
+        isActive: updatedUser.isActive
+      };
+    } catch (error) {
+      console.error('[PatientUserSync] Error syncing patient status to user:', error);
+      return null;
+    }
   }
 };

@@ -51,11 +51,21 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Patient ID is required.' }, { status: 400 });
     }
 
+    // Get current patient to check if status is changing
+    const currentPatient = await PatientsService.get(patientId);
+    const statusChanged = currentPatient && updates.status && currentPatient.status !== updates.status;
+
     // Update patient profile
     const updatedPatient = await PatientsService.update(patientId, updates);
 
     // Sync user account if patient has one
     await PatientUserSyncService.updateUserFromPatient(patientId, updates);
+
+    // If status changed, sync to user account
+    if (statusChanged && updates.status) {
+      await PatientUserSyncService.syncPatientStatusToUser(patientId, updates.status);
+      console.log(`[api/patient/profile] Synced patient status ${updates.status} to user account`);
+    }
 
     // If creating new user account
     if (createUserAccount && userPassword) {
