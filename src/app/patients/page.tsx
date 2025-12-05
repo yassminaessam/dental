@@ -104,6 +104,8 @@ export default function PatientsPage() {
   const [patientForUserAccount, setPatientForUserAccount] = React.useState<Patient | null>(null);
   const [userAccountPassword, setUserAccountPassword] = React.useState('');
   const [creatingUserAccount, setCreatingUserAccount] = React.useState(false);
+  const [patientHasExistingAccount, setPatientHasExistingAccount] = React.useState(false);
+  const [checkingAccount, setCheckingAccount] = React.useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const isCompact = useMaxWidth(1024); // treat tablets/smaller laptops as compact for this page
@@ -255,6 +257,25 @@ export default function PatientsPage() {
     }
   };
 
+  const handleOpenCreateUserAccountDialog = async (patient: Patient) => {
+    setPatientForUserAccount(patient);
+    setCheckingAccount(true);
+    setPatientHasExistingAccount(false);
+    
+    try {
+      // Check if patient already has a user account
+      const response = await fetch(`/api/patients/${patient.id}/check-account`);
+      if (response.ok) {
+        const data = await response.json();
+        setPatientHasExistingAccount(data.hasAccount);
+      }
+    } catch (error) {
+      console.error('Error checking account:', error);
+    } finally {
+      setCheckingAccount(false);
+    }
+  };
+
   const handleCreateUserAccount = async () => {
     if (!patientForUserAccount || !userAccountPassword) return;
     
@@ -277,6 +298,7 @@ export default function PatientsPage() {
       });
       setPatientForUserAccount(null);
       setUserAccountPassword('');
+      setPatientHasExistingAccount(false);
     } catch (error: any) {
       toast({ 
         title: t('patients.error_creating_user_account'), 
@@ -613,9 +635,9 @@ export default function PatientsPage() {
                                     <Pencil className="mr-2 h-4 w-4" />
                                     {t('table.edit')}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setPatientForUserAccount(patient)}>
+                                  <DropdownMenuItem onClick={() => handleOpenCreateUserAccountDialog(patient)}>
                                     <KeyRound className="mr-2 h-4 w-4" />
-                                    {t('patients.create_user_account')}
+                                    {t('patients.user_account')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setPatientToDelete(patient)} className="text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -682,60 +704,94 @@ export default function PatientsPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Create User Account Dialog */}
+        {/* User Account Dialog */}
         <AlertDialog open={!!patientForUserAccount} onOpenChange={(isOpen) => {
           if (!isOpen) {
             setPatientForUserAccount(null);
             setUserAccountPassword('');
+            setPatientHasExistingAccount(false);
           }
         }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('patients.create_user_account')}</AlertDialogTitle>
+              <AlertDialogTitle>
+                {patientHasExistingAccount ? t('patients.user_account') : t('patients.create_user_account')}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                {t('patients.create_user_account_description', { name: patientForUserAccount?.name || '' })}
+                {patientHasExistingAccount 
+                  ? t('patients.user_account_exists_description', { name: patientForUserAccount?.name || '' })
+                  : t('patients.create_user_account_description', { name: patientForUserAccount?.name || '' })
+                }
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4">
-              <div className="space-y-4">
-                <div>
-                  <Label>{t('patients.email')}</Label>
-                  <Input 
-                    value={patientForUserAccount?.email || ''} 
-                    disabled 
-                    className="mt-1"
-                  />
+              {checkingAccount ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-                <div>
-                  <Label htmlFor="password">{t('auth.password')} *</Label>
-                  <Input 
-                    id="password"
-                    type="password" 
-                    value={userAccountPassword}
-                    onChange={(e) => setUserAccountPassword(e.target.value)}
-                    placeholder={t('patients.enter_password')}
-                    className="mt-1"
-                    minLength={6}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{t('patients.password_hint')}</p>
+              ) : patientHasExistingAccount ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 p-4">
+                    <div className="flex items-center gap-2 text-green-800 dark:text-green-400">
+                      <UserCheck className="h-5 w-5" />
+                      <p className="font-medium">{t('patients.user_account_exists')}</p>
+                    </div>
+                    <p className="text-sm text-green-700 dark:text-green-500 mt-2">
+                      {t('patients.user_account_exists_info')}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>{t('patients.email')}</Label>
+                    <Input 
+                      value={patientForUserAccount?.email || ''} 
+                      disabled 
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <Label>{t('patients.email')}</Label>
+                    <Input 
+                      value={patientForUserAccount?.email || ''} 
+                      disabled 
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">{t('auth.password')} *</Label>
+                    <Input 
+                      id="password"
+                      type="password" 
+                      value={userAccountPassword}
+                      onChange={(e) => setUserAccountPassword(e.target.value)}
+                      placeholder={t('patients.enter_password')}
+                      className="mt-1"
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">{t('patients.password_hint')}</p>
+                  </div>
+                </div>
+              )}
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleCreateUserAccount}
-                disabled={!userAccountPassword || userAccountPassword.length < 6 || creatingUserAccount}
-              >
-                {creatingUserAccount ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('common.creating')}
-                  </>
-                ) : (
-                  t('patients.create_account')
-                )}
-              </AlertDialogAction>
+              {!checkingAccount && !patientHasExistingAccount && (
+                <AlertDialogAction 
+                  onClick={handleCreateUserAccount}
+                  disabled={!userAccountPassword || userAccountPassword.length < 6 || creatingUserAccount}
+                >
+                  {creatingUserAccount ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('common.creating')}
+                    </>
+                  ) : (
+                    t('patients.create_account')
+                  )}
+                </AlertDialogAction>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

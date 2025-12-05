@@ -70,6 +70,7 @@ export default function UserManagementPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -213,6 +214,39 @@ export default function UserManagementPage() {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleUpdateUser = async (userId: string, updates: { email?: string; password?: string; firstName?: string; lastName?: string; phone?: string }): Promise<{ success: boolean; error?: string; field?: string }> => {
+    try {
+      const response = await fetch(`/api/auth/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.field === 'email') {
+          return { success: false, error: data.error, field: 'email' };
+        }
+        throw new Error(data.error || 'Failed to update user');
+      }
+      
+      toast({
+        title: t('common.success'),
+        description: t('users.toast.updated'),
+      });
+      setIsEditDialogOpen(false);
+      loadUsers();
+      return { success: true };
+    } catch (error: any) {
+      toast({
+        title: t('common.error'),
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: error.message };
     }
   };
 
@@ -496,6 +530,23 @@ export default function UserManagementPage() {
                 onEditPermissions={() => setIsEditingPermissions(true)}
                 onCancelEdit={() => setIsEditingPermissions(false)}
                 onUpdatePermissions={handleUpdatePermissions}
+                onEditUser={() => {
+                  setIsViewDialogOpen(false);
+                  setIsEditDialogOpen(true);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            {selectedUser && (
+              <EditUserForm 
+                user={selectedUser}
+                onSubmit={(updates) => handleUpdateUser(selectedUser.id, updates)}
+                onCancel={() => setIsEditDialogOpen(false)}
               />
             )}
           </DialogContent>
@@ -859,13 +910,15 @@ function UserDetailsView({
   isEditingPermissions, 
   onEditPermissions, 
   onCancelEdit, 
-  onUpdatePermissions 
+  onUpdatePermissions,
+  onEditUser 
 }: { 
   user: User;
   isEditingPermissions: boolean;
   onEditPermissions: () => void;
   onCancelEdit: () => void;
   onUpdatePermissions: (userId: string, permissions: UserPermission[]) => void;
+  onEditUser: () => void;
 }) {
   const { t } = useLanguage();
   const [selectedPermissions, setSelectedPermissions] = useState<UserPermission[]>(user.permissions);
@@ -967,6 +1020,13 @@ function UserDetailsView({
         <DialogDescription>{t('users.details_and_permissions')}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4">
+        {/* Edit User Details Button */}
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={onEditUser}>
+            <Edit className="h-3 w-3 mr-1" />
+            {t('users.edit_details')}
+          </Button>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-medium">{t('staff.role')}</Label>
@@ -1097,4 +1157,169 @@ function getRoleIcon(role: UserRole) {
     case 'patient': return <Users className="h-4 w-4" />;
     default: return <Users className="h-4 w-4" />;
   }
+}
+
+function EditUserForm({ 
+  user, 
+  onSubmit, 
+  onCancel 
+}: { 
+  user: User;
+  onSubmit: (updates: { email?: string; password?: string; firstName?: string; lastName?: string; phone?: string }) => Promise<{ success: boolean; error?: string; field?: string }>;
+  onCancel: () => void;
+}) {
+  const { t } = useLanguage();
+  const [formData, setFormData] = useState({
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone || '',
+    password: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setEmailError(null);
+
+    // Only include fields that changed
+    const updates: any = {};
+    if (formData.email !== user.email) updates.email = formData.email;
+    if (formData.firstName !== user.firstName) updates.firstName = formData.firstName;
+    if (formData.lastName !== user.lastName) updates.lastName = formData.lastName;
+    if (formData.phone !== (user.phone || '')) updates.phone = formData.phone;
+    if (formData.password) updates.password = formData.password;
+
+    if (Object.keys(updates).length === 0) {
+      onCancel();
+      return;
+    }
+
+    const result = await onSubmit(updates);
+    
+    if (!result.success) {
+      if (result.field === 'email') {
+        setEmailError(result.error || t('users.email_already_exists'));
+      }
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Edit className="h-5 w-5" />
+          {t('users.edit_user')}
+        </DialogTitle>
+        <DialogDescription>
+          {t('users.edit_user_desc', { name: `${user.firstName} ${user.lastName}` })}
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="editFirstName">{t('patients.first_name')}</Label>
+              <Input
+                id="editFirstName"
+                value={formData.firstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editLastName">{t('patients.last_name')}</Label>
+              <Input
+                id="editLastName"
+                value={formData.lastName}
+                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="editEmail">{t('patients.email')}</Label>
+            <Input
+              id="editEmail"
+              type="email"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, email: e.target.value }));
+                setEmailError(null);
+              }}
+              required
+            />
+            {emailError && (
+              <p className="text-sm text-red-500 mt-1">{emailError}</p>
+            )}
+            {user.patientId && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('users.email_sync_patient_note')}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="editPhone">{t('common.phone')}</Label>
+            <Input
+              id="editPhone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="editPassword">{t('users.new_password')}</Label>
+            <div className="relative">
+              <Input
+                id="editPassword"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                placeholder={t('users.leave_blank_password')}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              >
+                {showPassword ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('users.password_change_hint')}
+            </p>
+          </div>
+
+          {user.role === 'patient' && user.patientId && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
+              <p className="text-sm text-blue-800 dark:text-blue-400">
+                ℹ️ {t('users.patient_sync_note')}
+              </p>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save_changes')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
+  );
 }

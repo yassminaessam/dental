@@ -51,6 +51,11 @@ export const UsersService = {
     return u ? mapDbUser(u) : null;
   },
 
+  async getByPatientId(patientId: string): Promise<User | null> {
+    const u = await prisma.user.findFirst({ where: { patientId } });
+    return u ? mapDbUser(u) : null;
+  },
+
   async listAll(): Promise<User[]> {
     const rows = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
     return rows.map(mapDbUser);

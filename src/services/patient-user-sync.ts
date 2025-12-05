@@ -248,10 +248,15 @@ export const PatientUserSyncService = {
   },
 
   /**
-   * Get user account for a patient
+   * Get user account for a patient (by patientId link or email fallback)
    */
   async getUserForPatient(patientId: string): Promise<User | null> {
     try {
+      // First try to find by patientId link (most reliable)
+      const userByPatientId = await UsersService.getByPatientId(patientId);
+      if (userByPatientId) return userByPatientId;
+
+      // Fallback: find by email
       const patient = await PatientsService.get(patientId);
       if (!patient) return null;
 
@@ -267,15 +272,21 @@ export const PatientUserSyncService = {
    */
   async deleteUserForPatient(patientId: string): Promise<boolean> {
     try {
-      const patient = await PatientsService.get(patientId);
-      if (!patient) return false;
-
-      const user = await UsersService.getByEmail(patient.email);
+      // First try to find by patientId link
+      let user = await UsersService.getByPatientId(patientId);
+      
+      // Fallback: find by email
+      if (!user) {
+        const patient = await PatientsService.get(patientId);
+        if (!patient) return false;
+        user = await UsersService.getByEmail(patient.email);
+      }
+      
       if (!user) return true; // No user to delete
 
       // Delete user from database
       await prisma.user.delete({ where: { id: user.id } });
-      console.log(`[PatientUserSync] Deleted user account for patient ${patient.email}`);
+      console.log(`[PatientUserSync] Deleted user account for patient ${patientId}`);
       return true;
     } catch (error) {
       console.error('[PatientUserSync] Error deleting user for patient:', error);
@@ -288,10 +299,16 @@ export const PatientUserSyncService = {
    */
   async updateUserFromPatient(patientId: string, updates: Partial<Patient>): Promise<User | null> {
     try {
-      const patient = await PatientsService.get(patientId);
-      if (!patient) return null;
-
-      const user = await UsersService.getByEmail(patient.email);
+      // Find user by patientId link (more reliable than email which may have changed)
+      let user = await UsersService.getByPatientId(patientId);
+      
+      // Fallback: find by email if no patientId link
+      if (!user) {
+        const patient = await PatientsService.get(patientId);
+        if (!patient) return null;
+        user = await UsersService.getByEmail(patient.email);
+      }
+      
       if (!user) return null; // No user to update
 
       // Update user with patient changes
@@ -300,19 +317,46 @@ export const PatientUserSyncService = {
       if (updates.lastName) userUpdates.lastName = updates.lastName;
       if (updates.phone) userUpdates.phone = updates.phone;
       if (updates.address) userUpdates.address = updates.address;
-      if (updates.email && updates.email !== patient.email) {
-        userUpdates.email = updates.email;
-      }
+      if (updates.email) userUpdates.email = updates.email;
 
       if (Object.keys(userUpdates).length > 0) {
         const updatedUser = await UsersService.update(user.id, userUpdates);
-        console.log(`[PatientUserSync] Updated user account for patient ${patient.email}`);
+        console.log(`[PatientUserSync] Updated user account for patient ${patientId}, email: ${updates.email || 'unchanged'}`);
         return updatedUser;
       }
 
       return user;
     } catch (error) {
       console.error('[PatientUserSync] Error updating user for patient:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Update patient record when user is updated
+   */
+  async updatePatientFromUser(userId: string, updates: Partial<User>): Promise<Patient | null> {
+    try {
+      const user = await UsersService.getById(userId);
+      if (!user || !user.patientId) return null;
+
+      // Update patient with user changes
+      const patientUpdates: any = {};
+      if (updates.firstName) patientUpdates.name = updates.firstName;
+      if (updates.lastName) patientUpdates.lastName = updates.lastName;
+      if (updates.phone) patientUpdates.phone = updates.phone;
+      if (updates.address) patientUpdates.address = updates.address;
+      if (updates.email) patientUpdates.email = updates.email;
+
+      if (Object.keys(patientUpdates).length > 0) {
+        const updatedPatient = await PatientsService.update(user.patientId, patientUpdates);
+        console.log(`[PatientUserSync] Updated patient record for user ${userId}, email: ${updates.email || 'unchanged'}`);
+        return updatedPatient;
+      }
+
+      return await PatientsService.get(user.patientId);
+    } catch (error) {
+      console.error('[PatientUserSync] Error updating patient for user:', error);
       return null;
     }
   }
