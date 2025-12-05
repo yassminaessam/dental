@@ -451,7 +451,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                           <SelectItem key={role.value} value={role.value} className="py-3">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-accent" />
+                                <div className="w-2 h-2 rounded-full bg-primary" />
                                 <span className="font-medium">{t(role.labelKey)}</span>
                               </div>
                               <span className="text-xs text-muted-foreground">
@@ -459,7 +459,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                               </span>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {role.permissions.slice(0, 2).map((permission, index) => (
-                                  <span key={index} className="text-xs bg-accent/10 text-accent-foreground px-1 py-0.5 rounded">
+                                  <span key={index} className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">
                                     {permission}
                                   </span>
                                 ))}
@@ -482,24 +482,24 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>{t('staff.hire_date')} *</FormLabel>
-                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen} modal={true}>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            <CalendarIcon className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
-                            {field.value ? format(field.value, "PPP") : <span>{t('staff.pick_date')}</span>}
-                          </Button>
-                        </FormControl>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            <span>{format(field.value, "PPP")}</span>
+                          ) : (
+                            <span>{t('staff.pick_date')}</span>
+                          )}
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </button>
                       </PopoverTrigger>
-                      <PopoverContent 
-                        className="w-auto p-0" 
-                        style={{ zIndex: 20000 }}
-                        side="bottom"
-                        align="start"
-                      >
+                      <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                         <Calendar
                           mode="single"
                           selected={field.value}

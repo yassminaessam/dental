@@ -135,22 +135,24 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className="text-sm font-medium">{t('billing.issue_date')} *</FormLabel>
-                    <Popover>
+                    <Popover modal={true}>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "h-9 sm:h-10 justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                            {field.value ? field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : <span>{t('appointments.pick_date')}</span>}
-                          </Button>
-                        </FormControl>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex h-9 sm:h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            <span>{field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}</span>
+                          ) : (
+                            <span>{t('appointments.pick_date')}</span>
+                          )}
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                         <Calendar
                           mode="single"
                           selected={field.value}
@@ -170,22 +172,24 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className="text-sm font-medium">{t('billing.due_date')} *</FormLabel>
-                    <Popover>
+                    <Popover modal={true}>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "h-9 sm:h-10 justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                            {field.value ? field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : <span>{t('appointments.pick_date')}</span>}
-                          </Button>
-                        </FormControl>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex h-9 sm:h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            <span>{field.value.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}</span>
+                          ) : (
+                            <span>{t('appointments.pick_date')}</span>
+                          )}
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                         <Calendar
                           mode="single"
                           selected={field.value}

@@ -164,19 +164,25 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>{t('common.date')} *</FormLabel>
-                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen} modal={true}>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full justify-start font-normal", !field.value && "text-muted-foreground", isRTL ? 'flex-row-reverse text-right' : 'text-left')}
-                          >
-                            <CalendarIcon className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                            {field.value ? format(field.value, "PPP") : <span>{t('appointments.pick_date')}</span>}
-                          </Button>
-                        </FormControl>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            !field.value && "text-muted-foreground",
+                            isRTL && "flex-row-reverse"
+                          )}
+                        >
+                          {field.value ? (
+                            <span>{format(field.value, "PPP")}</span>
+                          ) : (
+                            <span>{t('appointments.pick_date')}</span>
+                          )}
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                         <Calendar mode="single" selected={field.value} onSelect={(date) => {
                           if(date) field.onChange(date)
                           setDateOpen(false)

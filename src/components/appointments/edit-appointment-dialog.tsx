@@ -207,22 +207,24 @@ export function EditAppointmentDialog({ appointment, onSave, open, onOpenChange 
               render={({ field }) => (
                 <FormItem className="flex flex-col">
       <FormLabel>{t('appointments.date')} *</FormLabel>
-                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <Popover open={dateOpen} onOpenChange={setDateOpen} modal={true}>
                     <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-          {field.value ? field.value.toLocaleDateString(language) : <span>{t('patients.dob_placeholder')}</span>}
-                        </Button>
-                      </FormControl>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          <span>{field.value.toLocaleDateString(language)}</span>
+                        ) : (
+                          <span>{t('patients.dob_placeholder')}</span>
+                        )}
+                        <CalendarIcon className="h-4 w-4 opacity-50" />
+                      </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
                       <Calendar
                         mode="single"
                         selected={field.value}
