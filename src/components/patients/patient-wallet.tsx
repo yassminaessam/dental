@@ -460,6 +460,38 @@ export function PatientWallet({
               {t('wallet.low_balance_warning')}
             </p>
           )}
+
+          {/* Recent Transactions */}
+          {transactions.length > 0 && (
+            <div className="mt-4 pt-3 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                <History className="h-3 w-3" />
+                {t('wallet.recent_transactions')}
+              </p>
+              <div className="space-y-2">
+                {transactions.slice(0, 5).map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      {transactionTypeIcons[tx.type]}
+                      <span>{t(`wallet.type.${tx.type.toLowerCase()}`)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "font-medium",
+                        tx.type === 'Deposit' || tx.type === 'Refund' ? "text-green-600" : "text-red-600"
+                      )}>
+                        {tx.type === 'Deposit' || tx.type === 'Refund' ? '+' : '-'}
+                        {formatCurrency(tx.amount)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {formatDate(tx.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
 
         {/* Deposit Dialog */}
@@ -707,7 +739,7 @@ export function PatientWallet({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {transactionTypeIcons[tx.type]}
-                          <span>{t(`wallet.types.${tx.type.toLowerCase()}`)}</span>
+                          <span>{t(`wallet.type.${tx.type.toLowerCase()}`)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
