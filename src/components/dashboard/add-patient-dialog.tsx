@@ -74,7 +74,7 @@ const patientSchema = z.object({
 type PatientFormData = z.infer<typeof patientSchema>;
 
 interface AddPatientDialogProps {
-  onSave: (patient: Omit<Patient, 'id'>) => Promise<{ success: boolean; error?: string }>;
+  onSave: (patient: Omit<Patient, 'id'> & { createUserAccount?: boolean; userPassword?: string }) => Promise<{ success: boolean; error?: string }>;
 }
 
 const emergencyContactRelationships = [
@@ -203,7 +203,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
     const birthYear = data.dob.getFullYear();
     const age = currentYear - birthYear;
     
-    const patient: Omit<Patient, 'id'> = {
+    const patient: Omit<Patient, 'id'> & { createUserAccount?: boolean; userPassword?: string } = {
       name: data.name,
       lastName: data.lastName,
       email: data.email || '',
@@ -219,6 +219,8 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       insuranceProvider: data.insuranceProvider || undefined,
       policyNumber: data.policyNumber || undefined,
       medicalHistory: data.medicalHistory?.map(item => ({ condition: item.condition })).filter(item => Boolean(item.condition)) || [],
+      createUserAccount: data.createUserAccount || false,
+      userPassword: data.userPassword || undefined,
     };
     
     try {
