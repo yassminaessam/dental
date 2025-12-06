@@ -28,6 +28,7 @@ function mapRow(row: any): StaffMember {
     hireDate: row.hireDate.toISOString().slice(0, 10),
     status: row.status,
     notes: row.notes ?? undefined,
+    userId: row.userId ?? undefined,
   };
 }
 
@@ -82,4 +83,20 @@ async function remove(id: string): Promise<void> {
   await prisma.staff.delete({ where: { id } });
 }
 
-export const StaffService = { list, get, create, update, remove };
+async function getByUserId(userId: string): Promise<StaffMember | null> {
+  const row = await prisma.staff.findFirst({ where: { userId } });
+  return row ? mapRow(row) : null;
+}
+
+async function updateStatusByUserId(userId: string, status: StaffStatus): Promise<StaffMember | null> {
+  const staff = await prisma.staff.findFirst({ where: { userId } });
+  if (!staff) return null;
+  
+  const updated = await prisma.staff.update({
+    where: { id: staff.id },
+    data: { status },
+  });
+  return mapRow(updated);
+}
+
+export const StaffService = { list, get, create, update, remove, getByUserId, updateStatusByUserId };

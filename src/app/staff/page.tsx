@@ -4,7 +4,7 @@
 
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { formatEGP } from '@/lib/currency';
+import { formatEGP, toEnglishNumerals } from '@/lib/currency';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -482,7 +482,9 @@ export default function StaffPage() {
                             </div>
                           </TableCell>
                           <TableCell>{member.schedule}</TableCell>
-                          <TableCell>{member.salary}</TableCell>
+                          <TableCell>
+                            <span dir="ltr" className="inline-block">{toEnglishNumerals(member.salary)}</span>
+                          </TableCell>
                           <TableCell>{member.hireDate}</TableCell>
                           <TableCell>
                             <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>

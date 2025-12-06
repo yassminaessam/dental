@@ -170,12 +170,32 @@ export default function UserManagementPage() {
     try {
       if (isActive) {
         await AuthService.deactivateUser(userId);
+        // Sync staff status to Inactive
+        try {
+          await fetch(`/api/staff/by-user/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Inactive' }),
+          });
+        } catch (e) {
+          console.log('No linked staff member to update');
+        }
         toast({
           title: t('common.success'),
           description: t('users.toast.deactivated'),
         });
       } else {
         await AuthService.activateUser(userId);
+        // Sync staff status to Active
+        try {
+          await fetch(`/api/staff/by-user/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Active' }),
+          });
+        } catch (e) {
+          console.log('No linked staff member to update');
+        }
         toast({
           title: t('common.success'),
           description: t('users.toast.activated'),

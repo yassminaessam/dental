@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { StaffMember } from '@/app/staff/page';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatEGP } from '@/lib/currency';
+import { formatEGP, toEnglishNumerals } from '@/lib/currency';
 
 type EmployeeFormData = {
   firstName: string;
@@ -226,7 +226,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
         phone: staffMember.phone,
         role: staffMember.role,
         hireDate: new Date(staffMember.hireDate),
-        salary: staffMember.salary.replace(/[^0-9.-]+/g,""),
+        salary: toEnglishNumerals(staffMember.salary).replace(/[^0-9.-]+/g,""),
         status: staffMember.status,
         notes: staffMember.notes || '',
         hasUserAccount: !!(staffMember as any).userId,
@@ -246,7 +246,7 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
         email: data.email || '',
         phone: data.phone || '',
         role: data.role,
-        hireDate: new Date(data.hireDate).toLocaleDateString(),
+        hireDate: new Date(data.hireDate).toISOString().slice(0, 10),
         salary: formatEGP(parseInt(data.salary), true, language),
         status: data.status,
         notes: data.notes || '',
@@ -313,6 +313,8 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
             firstName: data.firstName,
             lastName: data.lastName,
             phone: data.phone || '',
+            // Sync isActive status with staff status
+            isActive: data.status === 'Active',
           };
           
           // Add specialization and department for doctors

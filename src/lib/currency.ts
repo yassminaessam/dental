@@ -3,6 +3,22 @@
  */
 
 /**
+ * Convert Arabic-Indic numerals to Western Arabic (English) numerals
+ * @param str - String that may contain Arabic numerals
+ * @returns String with all numerals converted to English
+ */
+export function toEnglishNumerals(str: string): string {
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  let result = str;
+  arabicNumerals.forEach((arabic, index) => {
+    result = result.replace(new RegExp(arabic, 'g'), index.toString());
+  });
+  // Also convert Arabic comma (٬) to English comma
+  result = result.replace(/٬/g, ',');
+  return result;
+}
+
+/**
  * Format a number as Egyptian Pounds
  * @param amount - The amount to format
  * @param showSymbol - Whether to show the currency symbol (default: true)
@@ -17,9 +33,9 @@ export function formatEGP(amount: number | string, showSymbol: boolean = true, l
     return showSymbol ? `0.00 ${symbol}` : '0.00';
   }
   
-  // Use proper locale for number formatting
-  const locale = language === 'ar' ? 'ar-EG' : 'en-US';
-  const formatted = numAmount.toLocaleString(locale, {
+  // Always use English numerals (en-US) for consistency in data display
+  // Only change the currency symbol based on language
+  const formatted = numAmount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
