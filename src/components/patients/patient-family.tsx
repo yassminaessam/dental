@@ -216,6 +216,16 @@ export function PatientFamily({
 
       if (!createResponse.ok) {
         const error = await createResponse.json();
+        // Handle 409 conflict (duplicate phone/email)
+        if (createResponse.status === 409) {
+          const field = error.field || '';
+          if (field === 'phone') {
+            throw new Error(t('patients.error_duplicate_phone'));
+          } else if (field === 'email') {
+            throw new Error(t('patients.error_duplicate_email'));
+          }
+          throw new Error(error.error || t('patients.error_duplicate_patient'));
+        }
         throw new Error(error.error || 'Failed to create patient');
       }
 
