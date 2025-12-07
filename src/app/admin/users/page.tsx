@@ -182,13 +182,15 @@ export default function UserManagementPage() {
         }
         // Sync patient status to Inactive
         try {
-          await fetch(`/api/patient/sync-status`, {
+          const patientSyncRes = await fetch(`/api/patient/sync-status`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, isActive: false }),
           });
+          const patientSyncData = await patientSyncRes.json();
+          console.log('[UserManagement] Patient sync result:', patientSyncData);
         } catch (e) {
-          console.log('No linked patient to update');
+          console.log('No linked patient to update or sync failed:', e);
         }
         toast({
           title: t('common.success'),
@@ -208,13 +210,15 @@ export default function UserManagementPage() {
         }
         // Sync patient status to Active
         try {
-          await fetch(`/api/patient/sync-status`, {
+          const patientSyncRes = await fetch(`/api/patient/sync-status`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, isActive: true }),
           });
+          const patientSyncData = await patientSyncRes.json();
+          console.log('[UserManagement] Patient sync result:', patientSyncData);
         } catch (e) {
-          console.log('No linked patient to update');
+          console.log('No linked patient to update or sync failed:', e);
         }
         toast({
           title: t('common.success'),

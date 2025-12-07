@@ -86,28 +86,37 @@ export const PatientsService = {
     return mapRow(created);
   },
   async update(id: string, patch: Partial<Patient>): Promise<Patient> {
+    console.log(`[PatientsService.update] Updating patient ${id} with:`, patch);
+    
+    // Build update data, only including fields that are explicitly set
+    const updateData: any = {};
+    
+    if (patch.name !== undefined) updateData.name = patch.name;
+    if (patch.lastName !== undefined) updateData.lastName = patch.lastName;
+    if (patch.email !== undefined) updateData.email = patch.email;
+    if (patch.phone !== undefined) updateData.phone = patch.phone;
+    if (patch.dob !== undefined) updateData.dob = patch.dob;
+    if (patch.lastVisit !== undefined) updateData.lastVisit = new Date(patch.lastVisit);
+    if (patch.status !== undefined) updateData.status = patch.status;
+    if (patch.address !== undefined) updateData.address = patch.address;
+    if (patch.ecName !== undefined) updateData.ecName = patch.ecName;
+    if (patch.ecPhone !== undefined) updateData.ecPhone = patch.ecPhone;
+    if (patch.ecRelationship !== undefined) updateData.ecRelationship = patch.ecRelationship;
+    if (patch.insuranceProvider !== undefined) updateData.insuranceProvider = patch.insuranceProvider;
+    if (patch.policyNumber !== undefined) updateData.policyNumber = patch.policyNumber;
+    if (patch.medicalHistory !== undefined) updateData.medicalHistory = patch.medicalHistory;
+    if (patch.profilePhotoUrl !== undefined) updateData.profilePhotoUrl = patch.profilePhotoUrl;
+    if (patch.allergies !== undefined) updateData.allergies = patch.allergies;
+    if (patch.bloodType !== undefined) updateData.bloodType = patch.bloodType;
+    
+    console.log(`[PatientsService.update] Prisma update data:`, updateData);
+    
     const updated = await prisma.patient.update({
       where: { id },
-      data: {
-        name: patch.name,
-        lastName: patch.lastName,
-        email: patch.email,
-        phone: patch.phone,
-        dob: patch.dob,
-        lastVisit: patch.lastVisit ? new Date(patch.lastVisit) : undefined,
-        status: (patch.status as any) ?? undefined,
-        address: patch.address,
-        ecName: patch.ecName,
-        ecPhone: patch.ecPhone,
-        ecRelationship: patch.ecRelationship,
-        insuranceProvider: patch.insuranceProvider,
-        policyNumber: patch.policyNumber,
-        medicalHistory: (patch.medicalHistory as any) ?? undefined,
-        profilePhotoUrl: patch.profilePhotoUrl,
-        allergies: patch.allergies,
-        bloodType: patch.bloodType,
-      }
+      data: updateData,
     });
+    
+    console.log(`[PatientsService.update] Updated patient result:`, { id: updated.id, status: updated.status });
     return mapRow(updated);
   },
   async remove(id: string): Promise<void> {

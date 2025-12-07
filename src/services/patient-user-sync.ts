@@ -368,15 +368,19 @@ export const PatientUserSyncService = {
    */
   async syncUserStatusToPatient(userId: string, isActive: boolean): Promise<Patient | null> {
     try {
+      console.log(`[PatientUserSync] syncUserStatusToPatient called: userId=${userId}, isActive=${isActive}`);
+      
       const user = await UsersService.getById(userId);
       if (!user) {
         console.log(`[PatientUserSync] User ${userId} not found`);
         return null;
       }
       
+      console.log(`[PatientUserSync] User found: role=${user.role}, patientId=${user.patientId}, email=${user.email}`);
+      
       // Only sync for patient role users
       if (user.role !== 'patient') {
-        console.log(`[PatientUserSync] User ${userId} is not a patient, skipping status sync`);
+        console.log(`[PatientUserSync] User ${userId} role is '${user.role}', not 'patient' - skipping status sync`);
         return null;
       }
 
@@ -384,23 +388,27 @@ export const PatientUserSyncService = {
       
       // If no patientId link, try to find by email
       if (!patientId) {
+        console.log(`[PatientUserSync] No patientId link, searching by email: ${user.email}`);
         const patient = await prisma.patient.findUnique({ where: { email: user.email } });
         if (patient) {
           patientId = patient.id;
           // Link them for future syncs
           await UsersService.update(user.id, { patientId: patient.id });
           console.log(`[PatientUserSync] Linked user ${user.id} to patient ${patient.id}`);
+        } else {
+          console.log(`[PatientUserSync] No patient found with email ${user.email}`);
         }
       }
 
       if (!patientId) {
-        console.log(`[PatientUserSync] No patient record found for user ${userId}`);
+        console.log(`[PatientUserSync] No patient record found for user ${userId} - cannot sync`);
         return null;
       }
 
       const newStatus = isActive ? 'Active' : 'Inactive';
+      console.log(`[PatientUserSync] Updating patient ${patientId} status to ${newStatus}`);
       const updatedPatient = await PatientsService.update(patientId, { status: newStatus as any });
-      console.log(`[PatientUserSync] Synced user ${userId} isActive=${isActive} to patient ${patientId} status=${newStatus}`);
+      console.log(`[PatientUserSync] Successfully synced: patient ${patientId} status is now ${updatedPatient.status}`);
       return updatedPatient;
     } catch (error) {
       console.error('[PatientUserSync] Error syncing user status to patient:', error);
