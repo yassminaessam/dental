@@ -449,7 +449,7 @@ export function PatientFamily({
                       <CalendarIcon className="h-4 w-4 opacity-50" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
+                  <PopoverContent className="w-[220px] p-2" align="start" sideOffset={4}>
                     <Calendar
                       mode="single"
                       selected={newMemberDob}
@@ -461,7 +461,31 @@ export function PatientFamily({
                         date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
-                      className="scale-[0.7] origin-top-left"
+                      classNames={{
+                        months: "flex flex-col space-y-2",
+                        month: "space-y-2",
+                        caption: "flex justify-center pt-1 relative items-center",
+                        caption_label: "text-xs font-medium",
+                        caption_dropdowns: "flex gap-1",
+                        dropdown: "text-xs",
+                        dropdown_month: "text-xs",
+                        dropdown_year: "text-xs",
+                        nav: "space-x-1 flex items-center",
+                        nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse",
+                        head_row: "flex",
+                        head_cell: "text-muted-foreground rounded-md w-7 font-normal text-[0.65rem]",
+                        row: "flex w-full mt-0.5",
+                        cell: "h-7 w-7 text-center text-xs p-0 relative",
+                        day: "h-7 w-7 p-0 font-normal text-xs hover:bg-accent hover:text-accent-foreground rounded-md",
+                        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                        day_today: "bg-accent text-accent-foreground",
+                        day_outside: "text-muted-foreground opacity-50",
+                        day_disabled: "text-muted-foreground opacity-50",
+                        day_hidden: "invisible",
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
