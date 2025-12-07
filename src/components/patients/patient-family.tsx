@@ -30,9 +30,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import {
   Users,
   UserPlus,
@@ -44,6 +47,7 @@ import {
   Loader2,
   Mail,
   User,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import type { Patient, PatientFamilyMember } from '@/lib/types';
 
@@ -93,8 +97,9 @@ export function PatientFamily({
   const [newMemberLastName, setNewMemberLastName] = React.useState('');
   const [newMemberPhone, setNewMemberPhone] = React.useState('');
   const [newMemberEmail, setNewMemberEmail] = React.useState('');
-  const [newMemberDob, setNewMemberDob] = React.useState('');
+  const [newMemberDob, setNewMemberDob] = React.useState<Date | undefined>(undefined);
   const [newMemberGender, setNewMemberGender] = React.useState<'male' | 'female'>('male');
+  const [dobCalendarOpen, setDobCalendarOpen] = React.useState(false);
   
   // Common fields
   const [relationship, setRelationship] = React.useState('');
@@ -174,8 +179,9 @@ export function PatientFamily({
     setNewMemberLastName('');
     setNewMemberPhone('');
     setNewMemberEmail('');
-    setNewMemberDob('');
+    setNewMemberDob(undefined);
     setNewMemberGender('male');
+    setDobCalendarOpen(false);
     setActiveTab('new');
   };
 
@@ -202,7 +208,7 @@ export function PatientFamily({
           lastName: newMemberLastName || '',
           phone: newMemberPhone,
           email: newMemberEmail,
-          dob: newMemberDob,
+          dob: newMemberDob?.toISOString(),
           gender: newMemberGender,
           status: 'Active',
         }),
@@ -426,13 +432,38 @@ export function PatientFamily({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('patients.date_of_birth')} *</Label>
-                <Input
-                  type="date"
-                  value={newMemberDob}
-                  onChange={(e) => setNewMemberDob(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  dir="ltr"
-                />
+                <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen} modal={true}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                        !newMemberDob && "text-muted-foreground"
+                      )}
+                    >
+                      {newMemberDob ? (
+                        <span>{format(newMemberDob, "PPP")}</span>
+                      ) : (
+                        <span>{t('patients.pick_date')}</span>
+                      )}
+                      <CalendarIcon className="h-4 w-4 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
+                    <Calendar
+                      mode="single"
+                      selected={newMemberDob}
+                      onSelect={(date) => {
+                        setNewMemberDob(date);
+                        setDobCalendarOpen(false);
+                      }}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>{t('patients.gender')}</Label>
