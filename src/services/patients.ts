@@ -95,19 +95,25 @@ export const PatientsService = {
     if (patch.lastName !== undefined) updateData.lastName = patch.lastName;
     if (patch.email !== undefined) updateData.email = patch.email;
     if (patch.phone !== undefined) updateData.phone = patch.phone;
-    if (patch.dob !== undefined) updateData.dob = patch.dob;
-    if (patch.lastVisit !== undefined) updateData.lastVisit = new Date(patch.lastVisit);
+    if (patch.dob !== undefined) {
+      // Handle dob - convert string to Date if needed
+      updateData.dob = patch.dob instanceof Date ? patch.dob : new Date(patch.dob);
+    }
+    if (patch.lastVisit !== undefined && patch.lastVisit !== '') {
+      // Handle lastVisit - convert string to Date if needed, skip empty strings
+      updateData.lastVisit = new Date(patch.lastVisit);
+    }
     if (patch.status !== undefined) updateData.status = patch.status;
-    if (patch.address !== undefined) updateData.address = patch.address;
-    if (patch.ecName !== undefined) updateData.ecName = patch.ecName;
-    if (patch.ecPhone !== undefined) updateData.ecPhone = patch.ecPhone;
-    if (patch.ecRelationship !== undefined) updateData.ecRelationship = patch.ecRelationship;
-    if (patch.insuranceProvider !== undefined) updateData.insuranceProvider = patch.insuranceProvider;
-    if (patch.policyNumber !== undefined) updateData.policyNumber = patch.policyNumber;
+    if (patch.address !== undefined) updateData.address = patch.address || null;
+    if (patch.ecName !== undefined) updateData.ecName = patch.ecName || null;
+    if (patch.ecPhone !== undefined) updateData.ecPhone = patch.ecPhone || null;
+    if (patch.ecRelationship !== undefined) updateData.ecRelationship = patch.ecRelationship || null;
+    if (patch.insuranceProvider !== undefined) updateData.insuranceProvider = patch.insuranceProvider || null;
+    if (patch.policyNumber !== undefined) updateData.policyNumber = patch.policyNumber || null;
     if (patch.medicalHistory !== undefined) updateData.medicalHistory = patch.medicalHistory;
-    if (patch.profilePhotoUrl !== undefined) updateData.profilePhotoUrl = patch.profilePhotoUrl;
+    if (patch.profilePhotoUrl !== undefined) updateData.profilePhotoUrl = patch.profilePhotoUrl || null;
     if (patch.allergies !== undefined) updateData.allergies = patch.allergies;
-    if (patch.bloodType !== undefined) updateData.bloodType = patch.bloodType;
+    if (patch.bloodType !== undefined) updateData.bloodType = patch.bloodType || null;
     
     console.log(`[PatientsService.update] Prisma update data:`, updateData);
     
