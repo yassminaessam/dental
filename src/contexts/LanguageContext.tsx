@@ -793,6 +793,7 @@ const translations: Translations = {
   'patients.hint.scroll_images_multi': 'Scroll horizontally and vertically to see all {count} images',
   'patients.tabs.timeline': 'Timeline',
   'patients.tabs.personal': 'Personal',
+  'patients.tabs.family': 'Family',
   'patients.tabs.medical': 'Medical',
   'patients.tabs.dental': 'Dental',
   'patients.tabs.billing': 'Billing',
@@ -2452,6 +2453,7 @@ const translations: Translations = {
   'patients.family.create_new': 'Create New',
   'patients.family.link_existing': 'Link Existing',
   'patients.family.enter_name_and_relationship': 'Please enter name and select relationship',
+  'patients.family.enter_required_fields': 'Please fill in all required fields (name, phone, email, date of birth, and relationship)',
   'patients.family.description': 'Manage family relationships for this patient',
   'patients.family.no_members_desc': 'Add family members to link related patients together',
   
@@ -4416,6 +4418,7 @@ const translations: Translations = {
   'patients.hint.scroll_images_multi': 'قم بالتمرير أفقيًا وعموديًا لرؤية جميع {count} من الصور',
   'patients.tabs.timeline': 'المخطط الزمني',
   'patients.tabs.personal': 'شخصي',
+  'patients.tabs.family': 'العائلة',
   'patients.tabs.medical': 'طبي',
   'patients.tabs.dental': 'أسنان',
   'patients.tabs.billing': 'فواتير',
@@ -5972,6 +5975,7 @@ const translations: Translations = {
   'patients.family.create_new': 'إنشاء جديد',
   'patients.family.link_existing': 'ربط موجود',
   'patients.family.enter_name_and_relationship': 'يرجى إدخال الاسم واختيار صلة القرابة',
+  'patients.family.enter_required_fields': 'يرجى ملء جميع الحقول المطلوبة (الاسم، الهاتف، البريد الإلكتروني، تاريخ الميلاد، وصلة القرابة)',
   'patients.family.description': 'إدارة علاقات العائلة لهذا المريض',
   'patients.family.no_members_desc': 'أضف أفراد العائلة لربط المرضى ذوي الصلة معًا',
   

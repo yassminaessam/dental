@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/tooltip';
 import { 
   User, 
+  Users,
   Calendar, 
   FileText, 
   Image, 
@@ -62,6 +63,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatEGP } from '@/lib/currency';
+import { PatientFamily } from './patient-family';
 
 // Add custom styles for visible scrollbars
 const scrollAreaStyles = `
@@ -505,6 +507,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                       <TabsList className={cn("inline-flex h-10 items-center rounded-none bg-transparent p-0 w-max", isRTL ? "justify-end" : "justify-start")}> 
             <TabsTrigger value="timeline" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.timeline')}</TabsTrigger>
             <TabsTrigger value="personal" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.personal')}</TabsTrigger>
+            <TabsTrigger value="family" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.family')}</TabsTrigger>
             <TabsTrigger value="medical" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.medical')}</TabsTrigger>
             <TabsTrigger value="dental" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.dental')}</TabsTrigger>
             <TabsTrigger value="billing" className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap">{t('patients.tabs.billing')}</TabsTrigger>
@@ -703,6 +706,16 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              {/* Family Members */}
+              <TabsContent value="family" className="space-y-3 sm:space-y-4 mt-4">
+                <PatientFamily
+                  patientId={patient.id}
+                  patientName={`${patient.name} ${patient.lastName}`}
+                  familyMembers={patient.familyMembers || []}
+                  compact={false}
+                />
               </TabsContent>
 
               {/* Medical Records */}

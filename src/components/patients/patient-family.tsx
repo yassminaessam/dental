@@ -93,6 +93,7 @@ export function PatientFamily({
   const [newMemberLastName, setNewMemberLastName] = React.useState('');
   const [newMemberPhone, setNewMemberPhone] = React.useState('');
   const [newMemberEmail, setNewMemberEmail] = React.useState('');
+  const [newMemberDob, setNewMemberDob] = React.useState('');
   const [newMemberGender, setNewMemberGender] = React.useState<'male' | 'female'>('male');
   
   // Common fields
@@ -173,16 +174,17 @@ export function PatientFamily({
     setNewMemberLastName('');
     setNewMemberPhone('');
     setNewMemberEmail('');
+    setNewMemberDob('');
     setNewMemberGender('male');
     setActiveTab('new');
   };
 
   // Add new family member (creates patient first, then links)
   const handleAddNewFamilyMember = async () => {
-    if (!newMemberName || !relationship) {
+    if (!newMemberName || !relationship || !newMemberDob || !newMemberPhone || !newMemberEmail) {
       toast({
         title: t('common.error'),
-        description: t('patients.family.enter_name_and_relationship'),
+        description: t('patients.family.enter_required_fields'),
         variant: 'destructive',
       });
       return;
@@ -198,8 +200,9 @@ export function PatientFamily({
         body: JSON.stringify({
           name: newMemberName,
           lastName: newMemberLastName || '',
-          phone: newMemberPhone || '',
-          email: newMemberEmail || '',
+          phone: newMemberPhone,
+          email: newMemberEmail,
+          dob: newMemberDob,
           gender: newMemberGender,
           status: 'Active',
         }),
@@ -381,7 +384,7 @@ export function PatientFamily({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>{t('patients.last_name')}</Label>
+                <Label>{t('patients.last_name')} *</Label>
                 <Input
                   placeholder={t('patients.last_name')}
                   value={newMemberLastName}
@@ -392,7 +395,7 @@ export function PatientFamily({
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('patients.phone')}</Label>
+                <Label>{t('patients.phone')} *</Label>
                 <div className="relative">
                   <Phone className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
                   <Input
@@ -405,7 +408,7 @@ export function PatientFamily({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>{t('patients.email')}</Label>
+                <Label>{t('patients.email')} *</Label>
                 <div className="relative">
                   <Mail className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
                   <Input
@@ -419,18 +422,30 @@ export function PatientFamily({
                 </div>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label>{t('patients.gender')}</Label>
-              <Select value={newMemberGender} onValueChange={(v) => setNewMemberGender(v as 'male' | 'female')}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">{t('patients.male')}</SelectItem>
-                  <SelectItem value="female">{t('patients.female')}</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('patients.date_of_birth')} *</Label>
+                <Input
+                  type="date"
+                  value={newMemberDob}
+                  onChange={(e) => setNewMemberDob(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('patients.gender')}</Label>
+                <Select value={newMemberGender} onValueChange={(v) => setNewMemberGender(v as 'male' | 'female')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">{t('patients.male')}</SelectItem>
+                    <SelectItem value="female">{t('patients.female')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </TabsContent>
           
@@ -547,7 +562,7 @@ export function PatientFamily({
           </Button>
           <Button 
             onClick={handleAddFamilyMember} 
-            disabled={processing || (activeTab === 'new' ? !newMemberName || !relationship : !selectedPatient || !relationship)}
+            disabled={processing || (activeTab === 'new' ? !newMemberName || !newMemberLastName || !newMemberPhone || !newMemberEmail || !newMemberDob || !relationship : !selectedPatient || !relationship)}
           >
             {processing ? (
               <>
