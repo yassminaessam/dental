@@ -461,6 +461,7 @@ export function PatientFamily({
                         date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
+                      className="scale-90 origin-top-left"
                     />
                   </PopoverContent>
                 </Popover>
