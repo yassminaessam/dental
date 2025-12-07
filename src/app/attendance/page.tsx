@@ -414,20 +414,39 @@ export default function AttendancePage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-1.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {stats.map((stat) => {
             const IconComponent = stat.icon;
+            const cardStyles: Record<string, string> = {
+              blue: 'metric-card-blue',
+              green: 'metric-card-green',
+              red: 'metric-card-orange',
+              orange: 'metric-card-orange',
+              purple: 'metric-card-purple',
+            };
             return (
-              <Card key={stat.title} className="relative overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <CardIcon variant={stat.variant}>
-                    <IconComponent className="h-4 w-4" />
+              <Card 
+                key={stat.title} 
+                className={cn(
+                  'relative overflow-hidden border-0 shadow-sm transition-all duration-300 group min-h-0',
+                  cardStyles[stat.variant] || 'metric-card-blue'
+                )}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
+                    {stat.title}
+                  </CardTitle>
+                  <CardIcon variant={stat.variant} className="w-10 h-10">
+                    <IconComponent className="h-5 w-5" />
                   </CardIcon>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <CardContent className="pt-0 p-1.5">
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                    {stat.value}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">
+                    {stat.description}
+                  </p>
                 </CardContent>
               </Card>
             );

@@ -303,14 +303,13 @@ export default function StaffPage() {
               <Card
                 key={stat.title}
                 className={cn(
-                  'relative overflow-hidden border-0 shadow-sm transition-all duration-500 group min-h-0',
+                  'relative overflow-hidden border-0 shadow-sm transition-all duration-300 group min-h-0',
                   cardStyle
                 )}
                 role="button"
                 tabIndex={0}
                 aria-label={stat.title}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-0.5 p-1.5 space-y-0">
                   <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight">
                     {stat.title}
@@ -335,7 +334,7 @@ export default function StaffPage() {
         </div>
 
         {/* Enhanced Role Breakdown */}
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid gap-1.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {staffRoles.map((role, index) => {
             const icons = [Stethoscope, Heart, UserPlus, ClipboardList, Briefcase, Heart, ShieldCheck];
             const Icon = icons[index % icons.length];
@@ -347,38 +346,36 @@ export default function StaffPage() {
                 key={role.name} 
                 onClick={() => setSelectedRole(isSelected ? null : role.name)}
                 className={cn(
-                  "group relative border-2 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-gradient-to-br from-background via-background cursor-pointer hover:scale-105",
+                  "group relative border-0 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden bg-gradient-to-br from-background via-background cursor-pointer min-h-0",
                   isSelected 
-                    ? "border-violet-500 dark:border-violet-400 ring-2 ring-violet-500/50 dark:ring-violet-400/50 to-violet-100/30 dark:to-violet-900/20 scale-105" 
-                    : "border-muted hover:border-violet-200 dark:hover:border-violet-900 to-violet-50/10 dark:to-violet-950/5"
+                    ? "ring-2 ring-violet-500/50 dark:ring-violet-400/50 to-violet-100/30 dark:to-violet-900/20" 
+                    : "to-violet-50/10 dark:to-violet-950/5"
                 )}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                
-                <CardContent className="relative z-10 p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <CardContent className="relative z-10 p-2">
+                  <div className="flex items-center justify-between mb-1">
                     <div className={cn(
-                      "p-2 rounded-xl transition-colors",
+                      "p-1.5 rounded-lg transition-colors",
                       isSelected 
                         ? "bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30" 
-                        : "bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 group-hover:from-violet-500/20 group-hover:to-fuchsia-500/20"
+                        : "bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10"
                     )}>
                       <Icon className={cn(
-                        "h-5 w-5",
+                        "h-4 w-4",
                         isSelected 
                           ? "text-violet-700 dark:text-violet-300" 
                           : "text-violet-600 dark:text-violet-400"
                       )} />
                     </div>
-                    <Badge className={cn("text-xs font-semibold", role.color)}>
+                    <Badge className={cn("text-[10px] font-semibold px-1.5 py-0", role.color)}>
                       {isSelected ? t('common.filtered') : t('common.active')}
                     </Badge>
                   </div>
                   
-                  <div className="space-y-1">
-                    <div className="text-sm font-bold text-muted-foreground">{t(`roles.${role.name}`)}</div>
+                  <div className="space-y-0">
+                    <div className="text-xs font-bold text-muted-foreground leading-tight">{t(`roles.${role.name}`)}</div>
                     <div className={cn(
-                      "text-2xl font-black bg-clip-text text-transparent",
+                      "text-lg font-black bg-clip-text text-transparent leading-tight",
                       isSelected 
                         ? "bg-gradient-to-r from-violet-700 to-fuchsia-700 dark:from-violet-300 dark:to-fuchsia-300" 
                         : "bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400"
@@ -387,12 +384,12 @@ export default function StaffPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-1 mt-1">
                     <div className={cn(
-                      "w-2 h-2 rounded-full",
+                      "w-1.5 h-1.5 rounded-full",
                       isSelected ? "bg-violet-600 animate-pulse" : "bg-violet-500 animate-pulse"
                     )} />
-                    <span className="text-xs text-muted-foreground font-medium">
+                    <span className="text-[10px] text-muted-foreground font-medium">
                       {isSelected ? t('common.click_to_clear') : t('common.click_to_filter')}
                     </span>
                   </div>
