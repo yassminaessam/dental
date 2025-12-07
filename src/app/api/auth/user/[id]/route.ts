@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, context: { params: Promise<Recor
       lastLoginAt: (user as any).lastLoginAt,
       createdAt: (user as any).createdAt,
       phone: (user as any).phone || null,
+      profileImageUrl: (user as any).profileImageUrl || null,
     };
     return NextResponse.json({ user: sanitized });
   } catch (error) {
@@ -53,7 +54,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<Recor
 
     const body = await request.json();
     const allowed: any = {};
-    ['firstName','lastName','phone'].forEach(k => { if (body[k] !== undefined) allowed[k] = body[k]; });
+    ['firstName','lastName','phone','profileImageUrl'].forEach(k => { if (body[k] !== undefined) allowed[k] = body[k]; });
 
     if (Object.keys(allowed).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
@@ -71,6 +72,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<Recor
       lastLoginAt: (updated as any).lastLoginAt,
       createdAt: (updated as any).createdAt,
       phone: (updated as any).phone || null,
+      profileImageUrl: (updated as any).profileImageUrl || null,
     }});
   } catch (error) {
     console.error('PUT /api/auth/user/[id] error:', error);

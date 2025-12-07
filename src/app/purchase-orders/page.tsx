@@ -455,6 +455,39 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const purchaseOrderLabel = useMemo(() => (language === 'ar' ? 'أمر شراء' : 'Purchase Order'), [language]);
+
+  const recordPurchaseOrderExpense = useCallback(async (order: PurchaseOrder) => {
+    try {
+      const amount = Number(order.total ?? 0);
+      if (!amount) return;
+      const deliveryDateIso = order.deliveryDate ?? new Date().toISOString();
+      await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: `TRX-PO-${order.id}`,
+          description: `${purchaseOrderLabel} ${order.id} - ${order.supplierName}`,
+          amount,
+          type: 'Expense',
+          category: 'Supplies',
+          status: 'Completed',
+          date: deliveryDateIso,
+          sourceId: order.id,
+          sourceType: 'purchase-order',
+          metadata: {
+            supplier: order.supplierName,
+            orderDate: order.orderDate,
+            deliveryDate: order.deliveryDate,
+            items: order.items,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error('[PurchaseOrdersPage] failed to record purchase order expense', error);
+    }
+  }, [purchaseOrderLabel]);
+
   const updateOrderStatus = async (orderId: string, newStatus: PurchaseOrderStatus) => {
     try {
       const response = await fetch(`/api/purchase-orders/${orderId}`, {
@@ -463,6 +496,15 @@ export default function PurchaseOrdersPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!response.ok) throw new Error('Failed to update order status');
+      
+      // If status is Delivered, record the expense transaction
+      if (newStatus === 'Delivered') {
+        const order = purchaseOrders.find(po => po.id === orderId);
+        if (order) {
+          await recordPurchaseOrderExpense({ ...order, status: 'Delivered' });
+        }
+      }
+      
       fetchData();
       toast({
         title: t('suppliers.toast.status_updated'),

@@ -118,11 +118,12 @@ export function PatientProfilePhoto({
       // Create form data
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('category', 'profile-photos');
       formData.append('patientId', patientId);
-      formData.append('type', 'profile');
+      formData.append('imageType', 'profile');
 
-      // Upload to file API
-      const uploadResponse = await fetch('/api/files/upload', {
+      // Upload to FTP-enabled uploads API
+      const uploadResponse = await fetch('/api/uploads', {
         method: 'POST',
         body: formData,
       });

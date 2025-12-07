@@ -15,12 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { User, Mail, Phone, MapPin, Calendar, Shield, Bell } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Shield, Bell, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { listDocuments } from '@/lib/data-client';
+import { PatientProfilePhoto } from '@/components/patients/patient-profile-photo';
 
 type InsuranceProvider = {
   id: string;
@@ -65,6 +66,15 @@ export default function PatientProfilePage() {
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [changingPassword, setChangingPassword] = React.useState(false);
+
+  // Profile Photo State
+  const [profilePhotoUrl, setProfilePhotoUrl] = React.useState<string | undefined>(undefined);
+
+  // Notification Preferences State
+  const [emailNotifications, setEmailNotifications] = React.useState(true);
+  const [appointmentReminders, setAppointmentReminders] = React.useState(true);
+  const [savingNotifications, setSavingNotifications] = React.useState(false);
 
   // Fetch insurance providers on mount
   React.useEffect(() => {
@@ -114,6 +124,10 @@ export default function PatientProfilePage() {
       setEmergencyPhone(patient.ecPhone || '');
       setInsuranceProvider(patient.insuranceProvider || '');
       setPolicyNumber(patient.policyNumber || '');
+      setProfilePhotoUrl(patient.profilePhotoUrl || undefined);
+      // Load notification preferences if available
+      setEmailNotifications(patient.emailNotifications !== false);
+      setAppointmentReminders(patient.appointmentReminders !== false);
     } catch (error) {
       console.error('Error fetching patient profile:', error);
     } finally {
@@ -245,10 +259,19 @@ export default function PatientProfilePage() {
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast({
+        title: t('common.error'),
+        description: t('patient_pages.profile.current_password_required'),
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({
-        title: 'Password Mismatch',
-        description: 'New password and confirmation do not match',
+        title: t('common.error'),
+        description: t('patient_pages.profile.password_mismatch'),
         variant: 'destructive'
       });
       return;
@@ -256,34 +279,102 @@ export default function PatientProfilePage() {
 
     if (newPassword.length < 8) {
       toast({
-        title: 'Password Too Short',
-        description: 'Password must be at least 8 characters long',
+        title: t('common.error'),
+        description: t('patient_pages.profile.password_too_short'),
         variant: 'destructive'
       });
       return;
     }
 
-    setSaving(true);
+    if (!user?.id) {
+      toast({
+        title: t('common.error'),
+        description: 'User not found',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setChangingPassword(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          currentPassword,
+          newPassword,
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to change password');
+      }
       
       toast({
         title: t('patient_pages.profile.password_changed'),
-        description: 'Your password has been changed successfully'
+        description: t('patient_pages.profile.password_changed_desc')
       });
       
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: 'Error',
-        description: 'Failed to change password',
+        title: t('common.error'),
+        description: error.message === 'Current password is incorrect' 
+          ? t('patient_pages.profile.current_password_incorrect')
+          : t('patient_pages.profile.password_change_error'),
         variant: 'destructive'
       });
     } finally {
-      setSaving(false);
+      setChangingPassword(false);
     }
+  };
+
+  const handleSaveNotifications = async () => {
+    if (!patientId) {
+      toast({
+        title: t('common.error'),
+        description: 'Patient profile not found',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSavingNotifications(true);
+    try {
+      const response = await fetch('/api/patient/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId,
+          emailNotifications,
+          appointmentReminders,
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update notification preferences');
+      
+      toast({
+        title: t('patient_pages.profile.notifications_updated'),
+        description: t('patient_pages.profile.notifications_updated_desc')
+      });
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('patient_pages.profile.notifications_update_error'),
+        variant: 'destructive'
+      });
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
+
+  const handlePhotoUpdated = (newUrl: string | null) => {
+    setProfilePhotoUrl(newUrl || undefined);
   };
 
   if (loading) {
@@ -318,10 +409,23 @@ export default function PatientProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center">
-                    <div className="h-32 w-32 rounded-full bg-primary text-white flex items-center justify-center text-4xl font-bold mb-4">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </div>
-                    <Button variant="outline" size="sm">{t('patient_pages.profile.change_photo')}</Button>
+                    {patientId ? (
+                      <PatientProfilePhoto
+                        patientId={patientId}
+                        patientName={`${firstName} ${lastName}`}
+                        currentPhotoUrl={profilePhotoUrl}
+                        onPhotoUpdated={handlePhotoUpdated}
+                        size="xl"
+                        editable={true}
+                      />
+                    ) : (
+                      <div className="h-32 w-32 rounded-full bg-primary text-white flex items-center justify-center text-4xl font-bold">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </div>
+                    )}
+                    <p className="mt-3 text-sm text-muted-foreground text-center">
+                      {t('patient_pages.profile.photo_hint')}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -336,16 +440,35 @@ export default function PatientProfilePage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="email-notifications">{t('patient_pages.profile.email_notifications')}</Label>
-                    <Switch id="email-notifications" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sms-notifications">{t('patient_pages.profile.sms_notifications')}</Label>
-                    <Switch id="sms-notifications" defaultChecked />
+                    <Switch 
+                      id="email-notifications" 
+                      checked={emailNotifications}
+                      onCheckedChange={setEmailNotifications}
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="appointment-reminders">{t('patient_pages.profile.appointment_reminders')}</Label>
-                    <Switch id="appointment-reminders" defaultChecked />
+                    <Switch 
+                      id="appointment-reminders" 
+                      checked={appointmentReminders}
+                      onCheckedChange={setAppointmentReminders}
+                    />
                   </div>
+                  <Button 
+                    className="w-full mt-2"
+                    onClick={handleSaveNotifications}
+                    disabled={savingNotifications}
+                    variant="outline"
+                  >
+                    {savingNotifications ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        {t('common.saving')}
+                      </>
+                    ) : (
+                      t('patient_pages.profile.save_notifications')
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -606,9 +729,16 @@ export default function PatientProfilePage() {
                   <Button 
                     className="mt-4"
                     onClick={handleChangePassword}
-                    disabled={saving}
+                    disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
                   >
-                    {saving ? t('common.uploading') : t('patient_pages.profile.save_changes')}
+                    {changingPassword ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        {t('common.saving')}
+                      </>
+                    ) : (
+                      t('patient_pages.profile.update_password')
+                    )}
                   </Button>
                 </CardContent>
               </Card>

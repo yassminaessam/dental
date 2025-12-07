@@ -536,17 +536,25 @@ export default function DashboardLayout({
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/staff" className="flex items-center gap-2">
+                    <Link href="/profile" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       {t('header.profile')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
+                    <Link href="/user-settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
-                      {t('nav.settings')}
+                      {t('user_settings.title')}
                     </Link>
                   </DropdownMenuItem>
+                  {user?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        {t('nav.settings')}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleLogout}
