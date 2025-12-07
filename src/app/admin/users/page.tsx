@@ -180,6 +180,16 @@ export default function UserManagementPage() {
         } catch (e) {
           console.log('No linked staff member to update');
         }
+        // Sync patient status to Inactive
+        try {
+          await fetch(`/api/patient/sync-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, isActive: false }),
+          });
+        } catch (e) {
+          console.log('No linked patient to update');
+        }
         toast({
           title: t('common.success'),
           description: t('users.toast.deactivated'),
@@ -195,6 +205,16 @@ export default function UserManagementPage() {
           });
         } catch (e) {
           console.log('No linked staff member to update');
+        }
+        // Sync patient status to Active
+        try {
+          await fetch(`/api/patient/sync-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, isActive: true }),
+          });
+        } catch (e) {
+          console.log('No linked patient to update');
         }
         toast({
           title: t('common.success'),
