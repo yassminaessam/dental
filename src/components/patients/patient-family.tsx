@@ -148,8 +148,10 @@ export function PatientFamily({
   // Duplicate checking
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [ecPhoneError, setEcPhoneError] = React.useState<string | null>(null);
   const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
+  const [isCheckingEcPhone, setIsCheckingEcPhone] = React.useState(false);
   
   // Common fields
   const [relationship, setRelationship] = React.useState('');
@@ -237,6 +239,28 @@ export function PatientFamily({
     }
   }, [t]);
 
+  // Check for duplicate emergency contact phone on blur
+  const checkEcPhoneDuplicate = React.useCallback(async (phone: string) => {
+    if (!phone || phone.length < 3) return;
+    setIsCheckingEcPhone(true);
+    setEcPhoneError(null);
+    try {
+      const response = await fetch('/api/patients/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'phone') {
+        setEcPhoneError(t('patients.ec_phone_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking EC phone duplicate:', error);
+    } finally {
+      setIsCheckingEcPhone(false);
+    }
+  }, [t]);
+
   // Search for patients
   const searchPatients = async (term: string) => {
     if (!term || term.length < 2) {
@@ -311,6 +335,7 @@ export function PatientFamily({
     // Errors
     setPhoneError(null);
     setEmailError(null);
+    setEcPhoneError(null);
     setActiveTab('new');
   };
 
@@ -740,9 +765,23 @@ export function PatientFamily({
                     <Input
                       placeholder={t('patients.emergency_contact_phone_placeholder')}
                       value={ecPhone}
-                      onChange={(e) => setEcPhone(e.target.value)}
+                      onChange={(e) => {
+                        setEcPhone(e.target.value);
+                        if (ecPhoneError) setEcPhoneError(null);
+                      }}
+                      onBlur={(e) => checkEcPhoneDuplicate(e.target.value)}
+                      className={cn(ecPhoneError && "border-red-500 focus-visible:ring-red-500")}
                       dir="ltr"
                     />
+                    {isCheckingEcPhone && (
+                      <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
+                    )}
+                    {ecPhoneError && (
+                      <p className="text-sm font-medium text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {ecPhoneError}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4">
