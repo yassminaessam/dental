@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { listDocuments } from '@/lib/data-client';
 import {
   Users,
   UserPlus,
@@ -48,8 +49,30 @@ import {
   Mail,
   User,
   Calendar as CalendarIcon,
+  MapPin,
+  Eye,
+  EyeOff,
+  Plus,
+  AlertCircle,
 } from 'lucide-react';
 import type { Patient, PatientFamilyMember } from '@/lib/types';
+
+type InsuranceProvider = {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+};
+
+const emergencyContactRelationships = [
+  'Spouse',
+  'Parent',
+  'Child',
+  'Sibling',
+  'Friend',
+  'Other'
+];
 
 interface PatientFamilyProps {
   patientId: string;
@@ -92,20 +115,63 @@ export function PatientFamily({
   const [searching, setSearching] = React.useState(false);
   const [selectedPatient, setSelectedPatient] = React.useState<Patient | null>(null);
   
-  // For creating new family member
+  // For creating new family member - Personal Information
   const [newMemberName, setNewMemberName] = React.useState('');
   const [newMemberLastName, setNewMemberLastName] = React.useState('');
   const [newMemberPhone, setNewMemberPhone] = React.useState('');
   const [newMemberEmail, setNewMemberEmail] = React.useState('');
   const [newMemberDob, setNewMemberDob] = React.useState<Date | undefined>(undefined);
   const [newMemberGender, setNewMemberGender] = React.useState<'male' | 'female'>('male');
+  const [newMemberAddress, setNewMemberAddress] = React.useState('');
   const [dobCalendarOpen, setDobCalendarOpen] = React.useState(false);
+  
+  // Emergency Contact
+  const [ecName, setEcName] = React.useState('');
+  const [ecPhone, setEcPhone] = React.useState('');
+  const [ecRelationship, setEcRelationship] = React.useState('');
+  
+  // Insurance Information
+  const [insuranceProvider, setInsuranceProvider] = React.useState('');
+  const [policyNumber, setPolicyNumber] = React.useState('');
+  const [insuranceProviders, setInsuranceProviders] = React.useState<InsuranceProvider[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = React.useState(false);
+  
+  // Medical History
+  const [medicalConditions, setMedicalConditions] = React.useState<string[]>([]);
+  const [newCondition, setNewCondition] = React.useState('');
+  
+  // User Account
+  const [createUserAccount, setCreateUserAccount] = React.useState(false);
+  const [userPassword, setUserPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+  
+  // Duplicate checking
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
   
   // Common fields
   const [relationship, setRelationship] = React.useState('');
   const [isPrimaryContact, setIsPrimaryContact] = React.useState(false);
   const [notes, setNotes] = React.useState('');
   const [processing, setProcessing] = React.useState(false);
+
+  // Fetch insurance providers on mount
+  React.useEffect(() => {
+    const fetchProviders = async () => {
+      setIsLoadingProviders(true);
+      try {
+        const providers = await listDocuments<InsuranceProvider>('insurance-providers');
+        setInsuranceProviders(providers);
+      } catch (error) {
+        console.error('Failed to fetch insurance providers:', error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+    fetchProviders();
+  }, []);
 
   // Fetch family members on mount
   React.useEffect(() => {
@@ -126,6 +192,50 @@ export function PatientFamily({
       setLoading(false);
     }
   };
+
+  // Check for duplicate phone on blur
+  const checkPhoneDuplicate = React.useCallback(async (phone: string) => {
+    if (!phone || phone.length < 3) return;
+    setIsCheckingPhone(true);
+    setPhoneError(null);
+    try {
+      const response = await fetch('/api/patients/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'phone') {
+        setPhoneError(t('patients.phone_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking phone duplicate:', error);
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  }, [t]);
+
+  // Check for duplicate email on blur
+  const checkEmailDuplicate = React.useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    setEmailError(null);
+    try {
+      const response = await fetch('/api/patients/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.exists && data.field === 'email') {
+        setEmailError(t('patients.email_already_exists'));
+      }
+    } catch (error) {
+      console.error('Error checking email duplicate:', error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }, [t]);
 
   // Search for patients
   const searchPatients = async (term: string) => {
@@ -175,14 +285,46 @@ export function PatientFamily({
     setNotes('');
     setSearchTerm('');
     setSearchResults([]);
+    // Personal Information
     setNewMemberName('');
     setNewMemberLastName('');
     setNewMemberPhone('');
     setNewMemberEmail('');
     setNewMemberDob(undefined);
     setNewMemberGender('male');
+    setNewMemberAddress('');
     setDobCalendarOpen(false);
+    // Emergency Contact
+    setEcName('');
+    setEcPhone('');
+    setEcRelationship('');
+    // Insurance
+    setInsuranceProvider('');
+    setPolicyNumber('');
+    // Medical History
+    setMedicalConditions([]);
+    setNewCondition('');
+    // User Account
+    setCreateUserAccount(false);
+    setUserPassword('');
+    setShowPassword(false);
+    // Errors
+    setPhoneError(null);
+    setEmailError(null);
     setActiveTab('new');
+  };
+
+  // Add medical condition
+  const addMedicalCondition = () => {
+    if (newCondition.trim()) {
+      setMedicalConditions(prev => [...prev, newCondition.trim()]);
+      setNewCondition('');
+    }
+  };
+
+  // Remove medical condition
+  const removeMedicalCondition = (index: number) => {
+    setMedicalConditions(prev => prev.filter((_, i) => i !== index));
   };
 
   // Add new family member (creates patient first, then links)
@@ -196,10 +338,30 @@ export function PatientFamily({
       return;
     }
 
+    // Check for duplicate errors before submitting
+    if (phoneError || emailError) {
+      toast({
+        title: t('common.error'),
+        description: phoneError || emailError,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate password if creating user account
+    if (createUserAccount && (!userPassword || userPassword.length < 8)) {
+      toast({
+        title: t('common.error'),
+        description: t('patients.password_requirements'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setProcessing(true);
       
-      // Step 1: Create the new patient
+      // Step 1: Create the new patient with all fields
       const createResponse = await fetch('/api/patients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,6 +373,17 @@ export function PatientFamily({
           dob: newMemberDob?.toISOString(),
           gender: newMemberGender,
           status: 'Active',
+          address: newMemberAddress || undefined,
+          ecName: ecName || undefined,
+          ecPhone: ecPhone || undefined,
+          ecRelationship: ecRelationship || undefined,
+          insuranceProvider: insuranceProvider || undefined,
+          policyNumber: policyNumber || undefined,
+          medicalHistory: medicalConditions.length > 0 
+            ? medicalConditions.map(c => ({ condition: c })) 
+            : undefined,
+          createUserAccount: createUserAccount,
+          userPassword: createUserAccount ? userPassword : undefined,
         }),
       });
 
@@ -220,16 +393,19 @@ export function PatientFamily({
         if (createResponse.status === 409) {
           const field = error.field || '';
           if (field === 'phone') {
-            throw new Error(t('patients.error_duplicate_phone'));
+            setPhoneError(t('patients.phone_already_exists'));
+            throw new Error(t('patients.phone_already_exists'));
           } else if (field === 'email') {
-            throw new Error(t('patients.error_duplicate_email'));
+            setEmailError(t('patients.email_already_exists'));
+            throw new Error(t('patients.email_already_exists'));
           }
           throw new Error(error.error || t('patients.error_duplicate_patient'));
         }
         throw new Error(error.error || 'Failed to create patient');
       }
 
-      const newPatient = await createResponse.json();
+      const result = await createResponse.json();
+      const newPatient = result.patient || result;
       
       // Step 2: Link as family member
       const linkResponse = await fetch(`/api/patients/${patientId}/family`, {
@@ -251,11 +427,17 @@ export function PatientFamily({
       const data = await linkResponse.json();
       setFamilyMembers(prev => [...prev, data.familyMember]);
       
+      // Show success message with user account info if created
+      let successDesc = t('patients.family.member_added_desc', { 
+        name: `${newMemberName} ${newMemberLastName}`.trim() 
+      });
+      if (result.userCreated) {
+        successDesc += ` ${t('patients.user_account_created')}`;
+      }
+      
       toast({
         title: t('patients.family.member_added'),
-        description: t('patients.family.member_added_desc', { 
-          name: `${newMemberName} ${newMemberLastName}`.trim() 
-        }),
+        description: successDesc,
       });
 
       resetForm();
@@ -366,7 +548,7 @@ export function PatientFamily({
   // Shared dialog component
   const renderAddFamilyDialog = () => (
     <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-      <DialogContent dir={isRTL ? 'rtl' : 'ltr'} className="sm:max-w-lg">
+      <DialogContent dir={isRTL ? 'rtl' : 'ltr'} className="sm:max-w-[700px] lg:max-w-[800px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{t('patients.family.add_member')}</DialogTitle>
           <DialogDescription>
@@ -378,144 +560,347 @@ export function PatientFamily({
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'existing')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="new">{t('patients.family.create_new')}</TabsTrigger>
-            <TabsTrigger value="existing">{t('patients.family.link_existing')}</TabsTrigger>
-          </TabsList>
-          
-          {/* Create New Family Member Tab */}
-          <TabsContent value="new" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('patients.first_name')} *</Label>
-                <div className="relative">
-                  <User className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
-                  <Input
-                    placeholder={t('patients.first_name')}
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    className={isRTL ? 'pr-10' : 'pl-10'}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('patients.last_name')} *</Label>
-                <Input
-                  placeholder={t('patients.last_name')}
-                  value={newMemberLastName}
-                  onChange={(e) => setNewMemberLastName(e.target.value)}
-                />
-              </div>
-            </div>
+        <div className="overflow-y-auto max-h-[calc(90vh-200px)] pr-2 thin-scrollbar">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'existing')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="new">{t('patients.family.create_new')}</TabsTrigger>
+              <TabsTrigger value="existing">{t('patients.family.link_existing')}</TabsTrigger>
+            </TabsList>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('patients.phone')} *</Label>
-                <div className="relative">
-                  <Phone className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
-                  <Input
-                    placeholder={t('patients.phone')}
-                    value={newMemberPhone}
-                    onChange={(e) => setNewMemberPhone(e.target.value)}
-                    className={isRTL ? 'pr-10' : 'pl-10'}
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('patients.email')} *</Label>
-                <div className="relative">
-                  <Mail className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
-                  <Input
-                    type="email"
-                    placeholder={t('patients.email')}
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    className={isRTL ? 'pr-10' : 'pl-10'}
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('patients.date_of_birth')} *</Label>
-                <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen} modal={true}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                        !newMemberDob && "text-muted-foreground"
-                      )}
-                    >
-                      {newMemberDob ? (
-                        <span>{format(newMemberDob, "PPP")}</span>
-                      ) : (
-                        <span>{t('patients.pick_date')}</span>
-                      )}
-                      <CalendarIcon className="h-4 w-4 opacity-50" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[220px] p-2" align="start" sideOffset={4}>
-                    <Calendar
-                      mode="single"
-                      selected={newMemberDob}
-                      onSelect={(date) => {
-                        setNewMemberDob(date);
-                        setDobCalendarOpen(false);
-                      }}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      classNames={{
-                        months: "flex flex-col space-y-2",
-                        month: "space-y-2",
-                        caption: "flex justify-center pt-1 relative items-center",
-                        caption_label: "text-xs font-medium",
-                        caption_dropdowns: "flex gap-1",
-                        dropdown: "text-xs",
-                        dropdown_month: "text-xs",
-                        dropdown_year: "text-xs",
-                        nav: "space-x-1 flex items-center",
-                        nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100",
-                        nav_button_previous: "absolute left-1",
-                        nav_button_next: "absolute right-1",
-                        table: "w-full border-collapse",
-                        head_row: "flex",
-                        head_cell: "text-muted-foreground rounded-md w-7 font-normal text-[0.65rem]",
-                        row: "flex w-full mt-0.5",
-                        cell: "h-7 w-7 text-center text-xs p-0 relative",
-                        day: "h-7 w-7 p-0 font-normal text-xs hover:bg-accent hover:text-accent-foreground rounded-md",
-                        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                        day_today: "bg-accent text-accent-foreground",
-                        day_outside: "text-muted-foreground opacity-50",
-                        day_disabled: "text-muted-foreground opacity-50",
-                        day_hidden: "invisible",
-                      }}
+            {/* Create New Family Member Tab */}
+            <TabsContent value="new" className="space-y-6 mt-4">
+              {/* Personal Information Section */}
+              <div>
+                <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t('patients.personal_information')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('patients.first_name')} *</Label>
+                    <div className="relative">
+                      <User className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        placeholder={t('patients.first_name')}
+                        value={newMemberName}
+                        onChange={(e) => setNewMemberName(e.target.value)}
+                        className={isRTL ? 'pr-10' : 'pl-10'}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('patients.last_name')} *</Label>
+                    <Input
+                      placeholder={t('patients.last_name')}
+                      value={newMemberLastName}
+                      onChange={(e) => setNewMemberLastName(e.target.value)}
                     />
-                  </PopoverContent>
-                </Popover>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>{t('patients.phone')} *</Label>
+                    <div className="relative">
+                      <Phone className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        placeholder={t('patients.phone')}
+                        value={newMemberPhone}
+                        onChange={(e) => {
+                          setNewMemberPhone(e.target.value);
+                          if (phoneError) setPhoneError(null);
+                        }}
+                        onBlur={(e) => checkPhoneDuplicate(e.target.value)}
+                        className={cn(isRTL ? 'pr-10' : 'pl-10', phoneError && "border-red-500 focus-visible:ring-red-500")}
+                        dir="ltr"
+                      />
+                    </div>
+                    {isCheckingPhone && (
+                      <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
+                    )}
+                    {phoneError && (
+                      <p className="text-sm font-medium text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {phoneError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('patients.email')} *</Label>
+                    <div className="relative">
+                      <Mail className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                      <Input
+                        type="email"
+                        placeholder={t('patients.email')}
+                        value={newMemberEmail}
+                        onChange={(e) => {
+                          setNewMemberEmail(e.target.value);
+                          if (emailError) setEmailError(null);
+                        }}
+                        onBlur={(e) => checkEmailDuplicate(e.target.value)}
+                        className={cn(isRTL ? 'pr-10' : 'pl-10', emailError && "border-red-500 focus-visible:ring-red-500")}
+                        dir="ltr"
+                      />
+                    </div>
+                    {isCheckingEmail && (
+                      <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
+                    )}
+                    {emailError && (
+                      <p className="text-sm font-medium text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {emailError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>{t('patients.date_of_birth')} *</Label>
+                    <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen} modal={true}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            !newMemberDob && "text-muted-foreground"
+                          )}
+                        >
+                          {newMemberDob ? (
+                            <span>{format(newMemberDob, "PPP")}</span>
+                          ) : (
+                            <span>{t('patients.pick_date')}</span>
+                          )}
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[220px] p-2" align="start" sideOffset={4}>
+                        <Calendar
+                          mode="single"
+                          selected={newMemberDob}
+                          onSelect={(date) => {
+                            setNewMemberDob(date);
+                            setDobCalendarOpen(false);
+                          }}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          classNames={{
+                            months: "flex flex-col space-y-2",
+                            month: "space-y-2",
+                            caption: "flex justify-center pt-1 relative items-center",
+                            caption_label: "text-xs font-medium",
+                            caption_dropdowns: "flex gap-1",
+                            dropdown: "text-xs",
+                            dropdown_month: "text-xs",
+                            dropdown_year: "text-xs",
+                            nav: "space-x-1 flex items-center",
+                            nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            table: "w-full border-collapse",
+                            head_row: "flex",
+                            head_cell: "text-muted-foreground rounded-md w-7 font-normal text-[0.65rem]",
+                            row: "flex w-full mt-0.5",
+                            cell: "h-7 w-7 text-center text-xs p-0 relative",
+                            day: "h-7 w-7 p-0 font-normal text-xs hover:bg-accent hover:text-accent-foreground rounded-md",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                            day_hidden: "invisible",
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('patients.gender')}</Label>
+                    <Select value={newMemberGender} onValueChange={(v) => setNewMemberGender(v as 'male' | 'female')}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">{t('patients.male')}</SelectItem>
+                        <SelectItem value="female">{t('patients.female')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Label>{t('patients.address')}</Label>
+                  <div className="relative mt-2">
+                    <MapPin className={cn("absolute top-3 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                    <Textarea
+                      placeholder={t('patients.address_placeholder')}
+                      value={newMemberAddress}
+                      onChange={(e) => setNewMemberAddress(e.target.value)}
+                      className={cn("min-h-[60px]", isRTL ? 'pr-10' : 'pl-10')}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t('patients.gender')}</Label>
-                <Select value={newMemberGender} onValueChange={(v) => setNewMemberGender(v as 'male' | 'female')}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">{t('patients.male')}</SelectItem>
-                    <SelectItem value="female">{t('patients.female')}</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {/* Emergency Contact Section */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t('patients.emergency_contact')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('patients.emergency_contact_name')}</Label>
+                    <Input
+                      placeholder={t('patients.emergency_contact_name_placeholder')}
+                      value={ecName}
+                      onChange={(e) => setEcName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('patients.emergency_contact_phone')}</Label>
+                    <Input
+                      placeholder={t('patients.emergency_contact_phone_placeholder')}
+                      value={ecPhone}
+                      onChange={(e) => setEcPhone(e.target.value)}
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Label>{t('patients.emergency_contact_relationship')}</Label>
+                  <Select value={ecRelationship} onValueChange={setEcRelationship}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder={t('patients.emergency_contact_relationship_placeholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {emergencyContactRelationships.map((rel) => (
+                        <SelectItem key={rel} value={rel}>
+                          {t(`patients.relationships.${rel.toLowerCase()}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </TabsContent>
-          
-          {/* Link Existing Patient Tab */}
+
+              {/* Insurance Information Section */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t('patients.insurance_information')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('patients.insurance_provider')}</Label>
+                    <Select value={insuranceProvider} onValueChange={setInsuranceProvider}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingProviders ? t('common.loading') : t('patients.insurance_provider_placeholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t('patients.no_insurance')}</SelectItem>
+                        {insuranceProviders.map((provider) => (
+                          <SelectItem key={provider.id} value={provider.name}>
+                            {provider.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('patients.policy_number')}</Label>
+                    <Input
+                      placeholder={t('patients.policy_number_placeholder')}
+                      value={policyNumber}
+                      onChange={(e) => setPolicyNumber(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Medical History Section */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground">{t('patients.medical_history')}</h3>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={t('patients.medical_condition_placeholder')}
+                    value={newCondition}
+                    onChange={(e) => setNewCondition(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addMedicalCondition();
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addMedicalCondition}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {medicalConditions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {medicalConditions.map((condition, index) => (
+                      <Badge key={index} variant="secondary" className="px-3 py-1">
+                        {condition}
+                        <button
+                          type="button"
+                          onClick={() => removeMedicalCondition(index)}
+                          className="ml-2 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* User Account Section */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t('patients.user_account')}</h3>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-base font-medium">
+                      {t('patients.create_user_account')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('patients.create_user_account_description')}
+                    </p>
+                  </div>
+                  <Checkbox
+                    checked={createUserAccount}
+                    onCheckedChange={(checked) => setCreateUserAccount(checked === true)}
+                  />
+                </div>
+                
+                {createUserAccount && (
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label>{t('patients.user_password')} *</Label>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder={t('patients.user_password_placeholder')}
+                          value={userPassword}
+                          onChange={(e) => setUserPassword(e.target.value)}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t('patients.password_requirements')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            {/* Link Existing Patient Tab */}
           <TabsContent value="existing" className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label>{t('patients.family.search_patient')}</Label>
@@ -621,6 +1006,7 @@ export function PatientFamily({
             />
           </div>
         </div>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={resetForm}>
@@ -628,7 +1014,14 @@ export function PatientFamily({
           </Button>
           <Button 
             onClick={handleAddFamilyMember} 
-            disabled={processing || (activeTab === 'new' ? !newMemberName || !newMemberLastName || !newMemberPhone || !newMemberEmail || !newMemberDob || !relationship : !selectedPatient || !relationship)}
+            disabled={
+              processing || 
+              phoneError !== null || 
+              emailError !== null ||
+              (activeTab === 'new' 
+                ? !newMemberName || !newMemberLastName || !newMemberPhone || !newMemberEmail || !newMemberDob || !relationship || (createUserAccount && (!userPassword || userPassword.length < 8))
+                : !selectedPatient || !relationship)
+            }
           >
             {processing ? (
               <>
