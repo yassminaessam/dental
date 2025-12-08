@@ -65,15 +65,6 @@ type InsuranceProvider = {
   address?: string;
 };
 
-const emergencyContactRelationships = [
-  'Spouse',
-  'Parent',
-  'Child',
-  'Sibling',
-  'Friend',
-  'Other'
-];
-
 interface PatientFamilyProps {
   patientId: string;
   patientName?: string;
@@ -125,11 +116,6 @@ export function PatientFamily({
   const [newMemberAddress, setNewMemberAddress] = React.useState('');
   const [dobCalendarOpen, setDobCalendarOpen] = React.useState(false);
   
-  // Emergency Contact
-  const [ecName, setEcName] = React.useState('');
-  const [ecPhone, setEcPhone] = React.useState('');
-  const [ecRelationship, setEcRelationship] = React.useState('');
-  
   // Insurance Information
   const [insuranceProvider, setInsuranceProvider] = React.useState('');
   const [policyNumber, setPolicyNumber] = React.useState('');
@@ -148,10 +134,8 @@ export function PatientFamily({
   // Duplicate checking
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const [emailError, setEmailError] = React.useState<string | null>(null);
-  const [ecPhoneError, setEcPhoneError] = React.useState<string | null>(null);
   const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = React.useState(false);
-  const [isCheckingEcPhone, setIsCheckingEcPhone] = React.useState(false);
   
   // Common fields
   const [relationship, setRelationship] = React.useState('');
@@ -239,28 +223,6 @@ export function PatientFamily({
     }
   }, [t]);
 
-  // Check for duplicate emergency contact phone on blur
-  const checkEcPhoneDuplicate = React.useCallback(async (phone: string) => {
-    if (!phone || phone.length < 3) return;
-    setIsCheckingEcPhone(true);
-    setEcPhoneError(null);
-    try {
-      const response = await fetch('/api/patients/check-duplicate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const data = await response.json();
-      if (data.exists && data.field === 'phone') {
-        setEcPhoneError(t('patients.ec_phone_already_exists'));
-      }
-    } catch (error) {
-      console.error('Error checking EC phone duplicate:', error);
-    } finally {
-      setIsCheckingEcPhone(false);
-    }
-  }, [t]);
-
   // Search for patients
   const searchPatients = async (term: string) => {
     if (!term || term.length < 2) {
@@ -318,10 +280,6 @@ export function PatientFamily({
     setNewMemberGender('male');
     setNewMemberAddress('');
     setDobCalendarOpen(false);
-    // Emergency Contact
-    setEcName('');
-    setEcPhone('');
-    setEcRelationship('');
     // Insurance
     setInsuranceProvider('');
     setPolicyNumber('');
@@ -335,7 +293,6 @@ export function PatientFamily({
     // Errors
     setPhoneError(null);
     setEmailError(null);
-    setEcPhoneError(null);
     setActiveTab('new');
   };
 
@@ -409,9 +366,6 @@ export function PatientFamily({
           gender: newMemberGender,
           status: 'Active',
           address: newMemberAddress || undefined,
-          ecName: ecName || undefined,
-          ecPhone: ecPhone || undefined,
-          ecRelationship: ecRelationship || undefined,
           insuranceProvider: insuranceProvider || undefined,
           policyNumber: policyNumber || undefined,
           medicalHistory: medicalConditions.length > 0 
@@ -745,59 +699,6 @@ export function PatientFamily({
                       className={cn("min-h-[60px]", isRTL ? 'pr-10' : 'pl-10')}
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Emergency Contact Section */}
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t('patients.emergency_contact')}</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('patients.emergency_contact_name')}</Label>
-                    <Input
-                      placeholder={t('patients.emergency_contact_name_placeholder')}
-                      value={ecName}
-                      onChange={(e) => setEcName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('patients.emergency_contact_phone')}</Label>
-                    <Input
-                      placeholder={t('patients.emergency_contact_phone_placeholder')}
-                      value={ecPhone}
-                      onChange={(e) => {
-                        setEcPhone(e.target.value);
-                        if (ecPhoneError) setEcPhoneError(null);
-                      }}
-                      onBlur={(e) => checkEcPhoneDuplicate(e.target.value)}
-                      className={cn(ecPhoneError && "border-red-500 focus-visible:ring-red-500")}
-                      dir="ltr"
-                    />
-                    {isCheckingEcPhone && (
-                      <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
-                    )}
-                    {ecPhoneError && (
-                      <p className="text-sm font-medium text-amber-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {ecPhoneError}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Label>{t('patients.emergency_contact_relationship')}</Label>
-                  <Select value={ecRelationship} onValueChange={setEcRelationship}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder={t('patients.emergency_contact_relationship_placeholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {emergencyContactRelationships.map((rel) => (
-                        <SelectItem key={rel} value={rel}>
-                          {t(`patients.relationships.${rel.toLowerCase()}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
