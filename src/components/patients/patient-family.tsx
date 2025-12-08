@@ -329,10 +329,20 @@ export function PatientFamily({
 
   // Add new family member (creates patient first, then links)
   const handleAddNewFamilyMember = async () => {
-    if (!newMemberName || !relationship || !newMemberDob || !newMemberPhone || !newMemberEmail) {
+    if (!newMemberName || !relationship || !newMemberDob || !newMemberPhone) {
       toast({
         title: t('common.error'),
         description: t('patients.family.enter_required_fields'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Email is required only when creating user account
+    if (createUserAccount && !newMemberEmail) {
+      toast({
+        title: t('common.error'),
+        description: t('patients.email_required_for_account'),
         variant: 'destructive',
       });
       return;
@@ -369,7 +379,7 @@ export function PatientFamily({
           name: newMemberName,
           lastName: newMemberLastName || '',
           phone: newMemberPhone,
-          email: newMemberEmail,
+          email: newMemberEmail || `${newMemberPhone.replace(/[^0-9]/g, '')}@placeholder.local`,
           dob: newMemberDob?.toISOString(),
           gender: newMemberGender,
           status: 'Active',
@@ -595,7 +605,7 @@ export function PatientFamily({
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="mt-4">
                   <div className="space-y-2">
                     <Label>{t('patients.phone')} *</Label>
                     <div className="relative">
@@ -619,33 +629,6 @@ export function PatientFamily({
                       <p className="text-sm font-medium text-red-500 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
                         {phoneError}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('patients.email')} *</Label>
-                    <div className="relative">
-                      <Mail className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
-                      <Input
-                        type="email"
-                        placeholder={t('patients.email')}
-                        value={newMemberEmail}
-                        onChange={(e) => {
-                          setNewMemberEmail(e.target.value);
-                          if (emailError) setEmailError(null);
-                        }}
-                        onBlur={(e) => checkEmailDuplicate(e.target.value)}
-                        className={cn(isRTL ? 'pr-10' : 'pl-10', emailError && "border-red-500 focus-visible:ring-red-500")}
-                        dir="ltr"
-                      />
-                    </div>
-                    {isCheckingEmail && (
-                      <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
-                    )}
-                    {emailError && (
-                      <p className="text-sm font-medium text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {emailError}
                       </p>
                     )}
                   </div>
@@ -870,6 +853,33 @@ export function PatientFamily({
                 {createUserAccount && (
                   <div className="mt-4 space-y-4">
                     <div className="space-y-2">
+                      <Label>{t('patients.email')} *</Label>
+                      <div className="relative">
+                        <Mail className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? 'right-3' : 'left-3')} />
+                        <Input
+                          type="email"
+                          placeholder={t('patients.email')}
+                          value={newMemberEmail}
+                          onChange={(e) => {
+                            setNewMemberEmail(e.target.value);
+                            if (emailError) setEmailError(null);
+                          }}
+                          onBlur={(e) => checkEmailDuplicate(e.target.value)}
+                          className={cn(isRTL ? 'pr-10' : 'pl-10', emailError && "border-red-500 focus-visible:ring-red-500")}
+                          dir="ltr"
+                        />
+                      </div>
+                      {isCheckingEmail && (
+                        <p className="text-sm text-muted-foreground">{t('common.checking')}...</p>
+                      )}
+                      {emailError && (
+                        <p className="text-sm font-medium text-red-500 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {emailError}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
                       <Label>{t('patients.user_password')} *</Label>
                       <div className="relative">
                         <Input
@@ -1019,7 +1029,7 @@ export function PatientFamily({
               phoneError !== null || 
               emailError !== null ||
               (activeTab === 'new' 
-                ? !newMemberName || !newMemberLastName || !newMemberPhone || !newMemberEmail || !newMemberDob || !relationship || (createUserAccount && (!userPassword || userPassword.length < 8))
+                ? !newMemberName || !newMemberLastName || !newMemberPhone || !newMemberDob || !relationship || (createUserAccount && (!newMemberEmail || !userPassword || userPassword.length < 8))
                 : !selectedPatient || !relationship)
             }
           >
