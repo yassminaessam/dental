@@ -137,15 +137,18 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
   // Check if patient has user account
   React.useEffect(() => {
     const checkUserAccount = async () => {
-      if (patient && patient.email) {
+      if (patient && patient.id) {
         try {
-          const response = await fetch(`/api/patient/profile?email=${encodeURIComponent(patient.email)}`);
+          const response = await fetch(`/api/patients/${patient.id}/check-account`);
           if (response.ok) {
             const data = await response.json();
-            setHasUserAccount(!!data.patient);
+            setHasUserAccount(!!data.hasAccount);
+          } else {
+            setHasUserAccount(false);
           }
         } catch (error) {
           console.log('Could not check user account status');
+          setHasUserAccount(false);
         }
       }
     };
