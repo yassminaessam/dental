@@ -3,14 +3,16 @@ import { StaffService, type StaffCreateInput } from '@/services/staff';
 
 const parseCreate = async (req: Request): Promise<StaffCreateInput> => {
   const b = await req.json();
-  if (!b?.name || !b?.role || !b?.email || !b?.phone || !b?.schedule || !b?.salary || !b?.hireDate) {
-    throw new Error('Missing required staff fields.');
+  // Required fields: name, role, schedule, salary, hireDate
+  // Optional fields: email, phone (can be empty strings)
+  if (!b?.name || !b?.role || !b?.schedule || !b?.salary || !b?.hireDate) {
+    throw new Error('Missing required staff fields (name, role, schedule, salary, hireDate).');
   }
   return {
     name: String(b.name),
     role: String(b.role),
-    email: String(b.email),
-    phone: String(b.phone),
+    email: b.email ? String(b.email) : '',
+    phone: b.phone ? String(b.phone) : '',
     schedule: String(b.schedule),
     salary: String(b.salary),
     hireDate: new Date(b.hireDate),

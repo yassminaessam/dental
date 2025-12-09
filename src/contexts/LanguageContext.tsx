@@ -2906,6 +2906,7 @@ const translations: Translations = {
   'staff.staff_roles': 'Staff Roles',
   'staff.user_account': 'User Account',
   'staff.user_account_exists': 'This employee has a user account already',
+  'staff.user_account_required_desc': 'A user account is required for all employees to access the system.',
   'staff.create_login_account': 'Create login account for system access',
   'staff.create_login_account_desc': 'Allow this employee to login to the system with their email and password',
   'staff.existing_user_account': 'Has existing user account',
@@ -2922,6 +2923,8 @@ const translations: Translations = {
   'staff.department_placeholder': 'e.g., Dental Surgery, Orthodontics',
   'staff.user_account_creation_failed': 'Staff created but user account failed. You can create it later from User Management.',
   'staff.validation.email_required': 'Email is required',
+  'staff.validation.email_invalid': 'Please enter a valid email address',
+  'staff.validation.password_min_length': 'Password must be at least 8 characters',
   // Suppliers (en)
   'suppliers.active_orders': 'Active Orders',
   'suppliers.add_new_supplier': 'Add New Supplier',
@@ -6434,6 +6437,7 @@ const translations: Translations = {
   'staff.staff_roles': 'أدوار الموظفين',
   'staff.user_account': 'حساب المستخدم',
   'staff.user_account_exists': 'لدى هذا الموظف حساب مستخدم بالفعل',
+  'staff.user_account_required_desc': 'حساب المستخدم مطلوب لجميع الموظفين للوصول إلى النظام.',
   'staff.create_login_account': 'إنشاء حساب دخول للنظام',
   'staff.create_login_account_desc': 'السماح لهذا الموظف بتسجيل الدخول إلى النظام باستخدام بريده الإلكتروني وكلمة المرور',
   'staff.existing_user_account': 'لديه حساب مستخدم موجود',
@@ -6450,6 +6454,8 @@ const translations: Translations = {
   'staff.department_placeholder': 'مثال: جراحة الأسنان، تقويم الأسنان',
   'staff.user_account_creation_failed': 'تم إنشاء الموظف ولكن فشل إنشاء حساب المستخدم. يمكنك إنشاؤه لاحقًا من إدارة المستخدمين.',
   'staff.validation.email_required': 'البريد الإلكتروني مطلوب',
+  'staff.validation.email_invalid': 'يرجى إدخال بريد إلكتروني صالح',
+  'staff.validation.password_min_length': 'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
   // Suppliers (ar)
   'suppliers.active_orders': 'الطلبات النشطة',
   'suppliers.add_new_supplier': 'إضافة مورد جديد',

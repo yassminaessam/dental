@@ -28,7 +28,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Plus, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -157,44 +156,15 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
   const employeeSchema = React.useMemo(() => z.object({
     firstName: z.string().min(1, t('staff.validation.first_name_required')),
     lastName: z.string().min(1, t('staff.validation.last_name_required')),
-    email: z.string().optional(),
+    email: z.string().min(1, t('staff.validation.email_required')).email(t('staff.validation.email_invalid')),
     phone: z.string().optional(),
     role: z.string({ required_error: t('staff.validation.role_required') }),
     hireDate: z.date({ required_error: t('staff.validation.hire_date_required') }),
     salary: z.string().min(1, t('staff.validation.salary_required')),
-    createUserAccount: z.boolean().optional(),
-    userPassword: z.string().optional(),
+    createUserAccount: z.boolean().default(true),
+    userPassword: z.string().min(8, t('staff.validation.password_min_length')),
     userSpecialization: z.string().optional(),
     userDepartment: z.string().optional(),
-  }).refine((data) => {
-    // If createUserAccount is true, email is required
-    if (data.createUserAccount && !data.email) {
-      return false;
-    }
-    // If email is provided, it should be valid
-    if (data.email && data.email.length > 0) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(data.email)) {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: t('staff.validation.email_required'),
-    path: ['email'],
-  }).refine((data) => {
-    // If createUserAccount is true, password is required
-    if (data.createUserAccount && !data.userPassword) {
-      return false;
-    }
-    // If password is provided, it should be at least 8 characters
-    if (data.userPassword && data.userPassword.length < 8) {
-      return false;
-    }
-    return true;
-  }, {
-    message: 'Password must be at least 8 characters when creating user account',
-    path: ['userPassword'],
   }), [t]);
   const [open, setOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
@@ -207,7 +177,7 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
       email: '',
       phone: '',
       salary: '',
-      createUserAccount: false,
+      createUserAccount: true, // User account is required
       userPassword: '',
       userSpecialization: '',
       userDepartment: '',
@@ -222,14 +192,13 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
     try {
       let createdUserId: string | undefined = undefined;
 
-      // If user account creation is requested, create it FIRST
-      if (data.createUserAccount && data.userPassword) {
-        const userRole = ['admin', 'doctor', 'receptionist'].includes(data.role.toLowerCase()) 
-          ? data.role.toLowerCase() 
-          : 'receptionist'; // Default to receptionist for other staff roles
+      // User account creation is required - create it FIRST
+      const userRole = ['admin', 'doctor', 'receptionist'].includes(data.role.toLowerCase()) 
+        ? data.role.toLowerCase() 
+        : 'receptionist'; // Default to receptionist for other staff roles
 
-        try {
-          const response = await fetch('/api/auth/register', {
+      try {
+        const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -279,19 +248,18 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
             setIsSubmitting(false);
             return;
           } else {
-            const userData = await response.json();
-            createdUserId = userData.user.id;
-            console.log('User account created successfully with ID:', createdUserId);
-          }
-        } catch (error) {
-          console.error('Error creating user account:', error);
-          alert(`${t('staff.user_account_creation_failed')}\n\nError: ${error instanceof Error ? error.message : 'Network error'}`);
-          setIsSubmitting(false);
-          return;
+          const userData = await response.json();
+          createdUserId = userData.user.id;
+          console.log('User account created successfully with ID:', createdUserId);
         }
+      } catch (error) {
+        console.error('Error creating user account:', error);
+        alert(`${t('staff.user_account_creation_failed')}\n\nError: ${error instanceof Error ? error.message : 'Network error'}`);
+        setIsSubmitting(false);
+        return;
       }
 
-      // Now save the staff member with the userId (if user was created)
+      // Now save the staff member with the userId
       const result = await onSave({
         name: `${data.firstName} ${data.lastName}`,
         role: data.role,
@@ -530,38 +498,20 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
               )}
             />
 
-            {/* User Account Section */}
+            {/* User Account Section - Required */}
             <div className="space-y-4 border-t pt-4">
               <h3 className="text-sm font-semibold flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary" />
-                {t('staff.user_account')}
+                {t('staff.user_account')} *
               </h3>
               
-              <FormField
-                control={form.control}
-                name="createUserAccount"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/30">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none flex-1">
-                      <FormLabel className="text-sm font-medium cursor-pointer">
-                        {t('staff.create_login_account')}
-                      </FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        {t('staff.create_login_account_desc')}
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
+              <div className="rounded-md border p-4 bg-muted/30">
+                <p className="text-sm text-muted-foreground">
+                  {t('staff.user_account_required_desc')}
+                </p>
+              </div>
 
-              {form.watch('createUserAccount') && (
-                <div className="space-y-4 pl-7 animate-in slide-in-from-top-2">
+              <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="email"
@@ -640,48 +590,47 @@ export function AddEmployeeDialog({ onSave }: AddEmployeeDialogProps) {
                     )}
                   />
 
-                  {['admin', 'doctor', 'dentist'].includes(form.watch('role')?.toLowerCase() || '') && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="userSpecialization"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">
-                              {t('staff.specialization')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder={t('staff.specialization_placeholder')}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="userDepartment"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">
-                              {t('staff.department')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder={t('staff.department_placeholder')}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
+                {['admin', 'doctor', 'dentist'].includes(form.watch('role')?.toLowerCase() || '') && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="userSpecialization"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">
+                            {t('staff.specialization')}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t('staff.specialization_placeholder')}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="userDepartment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">
+                            {t('staff.department')}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t('staff.department_placeholder')}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             <DialogFooter>
