@@ -23,9 +23,10 @@ interface ViewPatientDialogProps {
   patient: Patient | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPatientsUpdated?: () => void;
 }
 
-export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDialogProps) {
+export function ViewPatientDialog({ patient, open, onOpenChange, onPatientsUpdated }: ViewPatientDialogProps) {
   const { t, isRTL } = useLanguage();
   if (!patient) return null;
 
@@ -179,6 +180,7 @@ export function ViewPatientDialog({ patient, open, onOpenChange }: ViewPatientDi
               patientId={patient.id}
               patientName={`${patient.name} ${patient.lastName}`}
               familyMembers={patient.familyMembers || []}
+              onFamilyUpdated={onPatientsUpdated}
               compact={true}
             />
           </div>

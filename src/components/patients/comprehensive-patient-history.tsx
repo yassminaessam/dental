@@ -104,9 +104,10 @@ interface ComprehensivePatientHistoryProps {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onPatientsUpdated?: () => void;
 }
 
-export function ComprehensivePatientHistory({ patient, children, open: externalOpen, onOpenChange: externalOnOpenChange }: ComprehensivePatientHistoryProps) {
+export function ComprehensivePatientHistory({ patient, children, open: externalOpen, onOpenChange: externalOnOpenChange, onPatientsUpdated }: ComprehensivePatientHistoryProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [historyData, setHistoryData] = React.useState<PatientHistoryData | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -714,6 +715,7 @@ export function ComprehensivePatientHistory({ patient, children, open: externalO
                   patientId={patient.id}
                   patientName={`${patient.name} ${patient.lastName}`}
                   familyMembers={patient.familyMembers || []}
+                  onFamilyUpdated={onPatientsUpdated}
                   compact={false}
                 />
               </TabsContent>

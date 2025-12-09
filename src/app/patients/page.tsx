@@ -261,6 +261,7 @@ export default function PatientsPage() {
 
   const handleOpenCreateUserAccountDialog = async (patient: Patient) => {
     setPatientForUserAccount(patient);
+    setUserAccountEmail(patient.email || '');
     setCheckingAccount(true);
     setPatientHasExistingAccount(false);
     
@@ -279,14 +280,28 @@ export default function PatientsPage() {
   };
 
   const handleCreateUserAccount = async () => {
-    if (!patientForUserAccount || !userAccountPassword) return;
+    if (!patientForUserAccount || !userAccountPassword || !userAccountEmail) return;
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userAccountEmail)) {
+      toast({ 
+        title: t('common.error'), 
+        description: t('patients.invalid_email'),
+        variant: "destructive" 
+      });
+      return;
+    }
     
     setCreatingUserAccount(true);
     try {
       const response = await fetch(`/api/patients/${patientForUserAccount.id}/create-account`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: userAccountPassword })
+        body: JSON.stringify({ 
+          password: userAccountPassword,
+          email: userAccountEmail 
+        })
       });
       
       if (!response.ok) {
@@ -294,12 +309,22 @@ export default function PatientsPage() {
         throw new Error(data.error || 'Failed to create user account');
       }
       
+      // Update the patient in local state with new email if changed
+      if (userAccountEmail !== patientForUserAccount.email) {
+        setPatients(prev => prev.map(p => 
+          p.id === patientForUserAccount.id 
+            ? { ...p, email: userAccountEmail } 
+            : p
+        ));
+      }
+      
       toast({ 
         title: t('patients.user_account_created'), 
-        description: t('patients.user_account_created_description', { email: patientForUserAccount.email })
+        description: t('patients.user_account_created_description', { email: userAccountEmail })
       });
       setPatientForUserAccount(null);
       setUserAccountPassword('');
+      setUserAccountEmail('');
       setPatientHasExistingAccount(false);
     } catch (error: any) {
       toast({ 
@@ -672,6 +697,7 @@ export default function PatientsPage() {
           patient={patientToView}
           open={!!patientToView}
           onOpenChange={(isOpen) => !isOpen && setPatientToView(null)}
+          onPatientsUpdated={fetchPatients}
         />
 
         {patientForHistory && (
@@ -679,6 +705,7 @@ export default function PatientsPage() {
             patient={patientForHistory}
             open={!!patientForHistory}
             onOpenChange={(isOpen) => !isOpen && setPatientForHistory(null)}
+            onPatientsUpdated={fetchPatients}
           />
         )}
 
@@ -711,6 +738,7 @@ export default function PatientsPage() {
           if (!isOpen) {
             setPatientForUserAccount(null);
             setUserAccountPassword('');
+            setUserAccountEmail('');
             setPatientHasExistingAccount(false);
           }
         }}>
@@ -754,10 +782,13 @@ export default function PatientsPage() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <Label>{t('patients.email')}</Label>
+                    <Label htmlFor="userEmail">{t('patients.email')} *</Label>
                     <Input 
-                      value={patientForUserAccount?.email || ''} 
-                      disabled 
+                      id="userEmail"
+                      type="email"
+                      value={userAccountEmail}
+                      onChange={(e) => setUserAccountEmail(e.target.value)}
+                      placeholder={t('patients.email_placeholder')}
                       className="mt-1"
                     />
                   </div>
@@ -782,7 +813,7 @@ export default function PatientsPage() {
               {!checkingAccount && !patientHasExistingAccount && (
                 <AlertDialogAction 
                   onClick={handleCreateUserAccount}
-                  disabled={!userAccountPassword || userAccountPassword.length < 6 || creatingUserAccount}
+                  disabled={!userAccountEmail || !userAccountPassword || userAccountPassword.length < 6 || creatingUserAccount}
                 >
                   {creatingUserAccount ? (
                     <>

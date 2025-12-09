@@ -13,7 +13,7 @@ export async function POST(
   try {
     const { id } = await context.params;
     const body = await request.json();
-    const { password } = body;
+    const { password, email } = body;
 
     if (!password) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(
     }
 
     // Check if patient exists
-    const patient = await PatientsService.get(id);
+    let patient = await PatientsService.get(id);
     if (!patient) {
       return NextResponse.json(
         { error: 'Patient not found' },
@@ -38,6 +38,11 @@ export async function POST(
         { error: 'User account already exists for this patient' },
         { status: 409 }
       );
+    }
+
+    // If email is provided and different from current, update patient email first
+    if (email && email !== patient.email) {
+      patient = await PatientsService.update(id, { email });
     }
 
     // Create user account
