@@ -103,6 +103,7 @@ export default function PatientsPage() {
   const [showHistory, setShowHistory] = React.useState(false);
   const [patientForUserAccount, setPatientForUserAccount] = React.useState<Patient | null>(null);
   const [userAccountPassword, setUserAccountPassword] = React.useState('');
+  const [userAccountEmail, setUserAccountEmail] = React.useState('');
   const [creatingUserAccount, setCreatingUserAccount] = React.useState(false);
   const [patientHasExistingAccount, setPatientHasExistingAccount] = React.useState(false);
   const [checkingAccount, setCheckingAccount] = React.useState(false);
@@ -111,26 +112,27 @@ export default function PatientsPage() {
   const isCompact = useMaxWidth(1024); // treat tablets/smaller laptops as compact for this page
   const { t, isRTL } = useLanguage();
 
-  React.useEffect(() => {
-    async function fetchPatients() {
-      try {
-        const response = await fetch('/api/patients');
-        if (!response.ok) throw new Error('Failed to fetch patients');
-        
-        const data = await response.json();
-        setPatients(data.patients.map((p: any) => ({
-          ...p, 
-          dob: new Date(p.dob),
-          createdAt: p.createdAt ? new Date(p.createdAt) : undefined
-        })));
-      } catch (error) {
-        toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
-      } finally {
-        setLoading(false);
-      }
+  const fetchPatients = React.useCallback(async () => {
+    try {
+      const response = await fetch('/api/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      
+      const data = await response.json();
+      setPatients(data.patients.map((p: any) => ({
+        ...p, 
+        dob: new Date(p.dob),
+        createdAt: p.createdAt ? new Date(p.createdAt) : undefined
+      })));
+    } catch (error) {
+      toast({ title: t('patients.error_fetching'), description: t('patients.error_fetching_description'), variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-    fetchPatients();
   }, [toast, t]);
+
+  React.useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
   
   const patientPageStats = React.useMemo(() => {
     const totalPatients = patients.length;
