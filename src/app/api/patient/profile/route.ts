@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // If creating new user account
-    if (createUserAccount && userPassword) {
+    if (createUserAccount && userPassword && userPassword.trim().length > 0) {
       const hasAccount = await PatientUserSyncService.hasUserAccount(patientId);
       if (!hasAccount) {
         const user = await PatientUserSyncService.createUserFromPatient(updatedPatient, userPassword);

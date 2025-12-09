@@ -180,7 +180,7 @@ export function EditPatientDialog({ patient, onSave, open, onOpenChange }: EditP
       ...data,
       age: new Date().getFullYear() - new Date(data.dob).getFullYear(),
       createUserAccount: data.createUserAccount,
-      userPassword: data.userPassword,
+      userPassword: (data.createUserAccount && data.userPassword) ? data.userPassword : undefined,
     };
     onSave(updatedPatient);
   };

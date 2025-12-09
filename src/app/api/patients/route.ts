@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     let userCreated = false;
     let userError: string | null = null;
     
-    if (payload.createUserAccount && payload.userPassword) {
+    if (payload.createUserAccount && payload.userPassword && payload.userPassword.trim().length > 0) {
       try {
         const user = await PatientUserSyncService.createUserFromPatient(
           patient,

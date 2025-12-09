@@ -220,7 +220,7 @@ export function AddPatientDialog({ onSave }: AddPatientDialogProps) {
       policyNumber: data.policyNumber || undefined,
       medicalHistory: data.medicalHistory?.map(item => ({ condition: item.condition })).filter(item => Boolean(item.condition)) || [],
       createUserAccount: data.createUserAccount || false,
-      userPassword: data.userPassword || undefined,
+      userPassword: (data.createUserAccount && data.userPassword) ? data.userPassword : undefined,
     };
     
     try {
