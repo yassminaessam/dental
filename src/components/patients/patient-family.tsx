@@ -124,7 +124,6 @@ export function PatientFamily({
   
   // Medical History
   const [medicalConditions, setMedicalConditions] = React.useState<string[]>([]);
-  const [newCondition, setNewCondition] = React.useState('');
   
   // User Account
   const [createUserAccount, setCreateUserAccount] = React.useState(false);
@@ -285,7 +284,6 @@ export function PatientFamily({
     setPolicyNumber('');
     // Medical History
     setMedicalConditions([]);
-    setNewCondition('');
     // User Account
     setCreateUserAccount(false);
     setUserPassword('');
@@ -298,10 +296,12 @@ export function PatientFamily({
 
   // Add medical condition
   const addMedicalCondition = () => {
-    if (newCondition.trim()) {
-      setMedicalConditions(prev => [...prev, newCondition.trim()]);
-      setNewCondition('');
-    }
+    setMedicalConditions(prev => [...prev, '']);
+  };
+
+  // Update medical condition at index
+  const updateMedicalCondition = (index: number, value: string) => {
+    setMedicalConditions(prev => prev.map((c, i) => i === index ? value : c));
   };
 
   // Remove medical condition
@@ -368,8 +368,8 @@ export function PatientFamily({
           address: newMemberAddress || undefined,
           insuranceProvider: insuranceProvider || undefined,
           policyNumber: policyNumber || undefined,
-          medicalHistory: medicalConditions.length > 0 
-            ? medicalConditions.map(c => ({ condition: c })) 
+          medicalHistory: medicalConditions.filter(c => c.trim()).length > 0 
+            ? medicalConditions.filter(c => c.trim()).map(c => ({ condition: c.trim() })) 
             : undefined,
           createUserAccount: createUserAccount,
           userPassword: createUserAccount ? userPassword : undefined,
@@ -737,36 +737,37 @@ export function PatientFamily({
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-muted-foreground">{t('patients.medical_history')}</h3>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={t('patients.medical_condition_placeholder')}
-                    value={newCondition}
-                    onChange={(e) => setNewCondition(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addMedicalCondition();
-                      }
-                    }}
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={addMedicalCondition}>
-                    <Plus className="h-4 w-4" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addMedicalCondition}
+                    className="h-8"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {t('patients.add_condition')}
                   </Button>
                 </div>
                 {medicalConditions.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="space-y-2">
                     {medicalConditions.map((condition, index) => (
-                      <Badge key={index} variant="secondary" className="px-3 py-1">
-                        {condition}
-                        <button
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          placeholder={t('patients.medical_condition_placeholder')}
+                          value={condition}
+                          onChange={(e) => updateMedicalCondition(index, e.target.value)}
+                          className="h-9"
+                        />
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => removeMedicalCondition(index)}
-                          className="ml-2 hover:text-destructive"
+                          className="h-9 w-9 p-0"
                         >
-                          ×
-                        </button>
-                      </Badge>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 )}
