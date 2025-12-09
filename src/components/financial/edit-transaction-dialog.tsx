@@ -76,7 +76,7 @@ export function EditTransactionDialog({ transaction, onSave, open, onOpenChange 
     async function fetchPatients() {
         if(open) {
             // ✅ Fetch patients from Neon database
-            const response = await fetch('/api/patients');
+            const response = await fetch('/api/patients?activeOnly=true');
             if (!response.ok) throw new Error('Failed to fetch patients');
             const { patients: patientData } = await response.json();
             

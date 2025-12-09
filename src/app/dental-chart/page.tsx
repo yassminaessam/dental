@@ -282,7 +282,7 @@ export default function DentalChartPage() {
     React.useEffect(() => {
         async function fetchPatients() {
             try {
-                const response = await fetch('/api/patients');
+                const response = await fetch('/api/patients?activeOnly=true');
                 if (!response.ok) throw new Error('Failed to fetch patients');
                 
                 const data = await response.json();

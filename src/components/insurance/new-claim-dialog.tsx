@@ -92,7 +92,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
     async function fetchData() {
         if (open) {
             // ✅ Fetch patients from Neon database
-            const patientsResponse = await fetch('/api/patients');
+            const patientsResponse = await fetch('/api/patients?activeOnly=true');
             if (!patientsResponse.ok) throw new Error('Failed to fetch patients');
             const { patients: patientData } = await patientsResponse.json();
             

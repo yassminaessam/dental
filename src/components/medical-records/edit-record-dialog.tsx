@@ -79,8 +79,8 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
         setLoading(true);
         try {
           const [patientsRes, staffRes] = await Promise.all([
-            fetch('/api/patients'),
-            fetch('/api/staff')
+            fetch('/api/patients?activeOnly=true'),
+            fetch('/api/staff?activeOnly=true')
           ]);
           
           if (patientsRes.ok) {

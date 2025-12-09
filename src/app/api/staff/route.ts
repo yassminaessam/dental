@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { StaffService, type StaffCreateInput } from '@/services/staff';
 
 const parseCreate = async (req: Request): Promise<StaffCreateInput> => {
@@ -20,10 +20,19 @@ const parseCreate = async (req: Request): Promise<StaffCreateInput> => {
   } satisfies StaffCreateInput;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const activeOnly = searchParams.get('activeOnly') === 'true';
+    
     const staff = await StaffService.list();
-    return NextResponse.json({ staff });
+    
+    // Filter to only active staff if requested
+    const filteredStaff = activeOnly 
+      ? staff.filter(s => s.status === 'Active')
+      : staff;
+    
+    return NextResponse.json({ staff: filteredStaff });
   } catch (e) {
     console.error('[api/staff] GET error', e);
     return NextResponse.json({ error: 'Failed to load staff.' }, { status: 500 });

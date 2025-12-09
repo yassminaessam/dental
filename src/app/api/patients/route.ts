@@ -24,10 +24,18 @@ interface PatientCreatePayload {
 
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const activeOnly = searchParams.get('activeOnly') === 'true';
+    
     const patients = await PatientsService.list();
     
+    // Filter to only active patients if requested
+    const filteredPatients = activeOnly 
+      ? patients.filter(p => p.status === 'Active')
+      : patients;
+    
     // Serialize dates
-    const serialized = patients.map(p => ({
+    const serialized = filteredPatients.map(p => ({
       ...p,
       dob: p.dob.toISOString(),
       createdAt: p.createdAt?.toISOString() || null,

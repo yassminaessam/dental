@@ -83,7 +83,7 @@ export function NewMessageDialog({
   React.useEffect(() => {
     async function fetchPatients() {
       // ✅ Fetch patients from Neon database
-      const response = await fetch('/api/patients');
+      const response = await fetch('/api/patients?activeOnly=true');
       if (!response.ok) throw new Error('Failed to fetch patients');
       const { patients: data } = await response.json();
       

@@ -147,7 +147,7 @@ export function AddLabCaseDialog({ open, onOpenChange, onSave, labs }: AddLabCas
     const fetchData = async () => {
       try {
         const [patientsRes, doctorsRes] = await Promise.all([
-          fetch('/api/patients'),
+          fetch('/api/patients?activeOnly=true'),
           fetch('/api/doctors'),
         ]);
         if (patientsRes.ok) {
