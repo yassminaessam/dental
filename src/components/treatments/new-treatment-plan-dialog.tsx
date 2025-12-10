@@ -172,11 +172,19 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
   const handleDateSelect = (days: Date[] | undefined) => {
     const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());
     
+    // Get current form values for appointments (not fields which may be stale)
+    const currentAppointments = form.getValues('appointments') || [];
+    
     // Create a map of existing appointments by date string for reliable comparison
     const existingMap = new Map<string, { time: string; duration: string }>();
-    fields.forEach(f => {
-      const dateKey = f.date.toDateString(); // Use toDateString for date-only comparison
-      existingMap.set(dateKey, { time: f.time, duration: f.duration });
+    currentAppointments.forEach((f, index) => {
+      const dateKey = f.date.toDateString();
+      // Also check fields for the date in case form values haven't updated yet
+      const fieldData = fields[index];
+      existingMap.set(dateKey, { 
+        time: f.time || fieldData?.time || '09:00', 
+        duration: f.duration || fieldData?.duration || '1 hour' 
+      });
     });
     
     const newAppointments = sortedDays.map(day => {
@@ -330,7 +338,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                 <FormItem>
                     <FormLabel>{t('appointments.appointment_dates')} *</FormLabel>
                     <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex justify-center">
+                        <div className="flex justify-center flex-shrink-0">
                           <Calendar
                               mode="multiple"
                               selected={selectedDates}
@@ -339,18 +347,18 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                               disabled={(date) => date < today}
                               />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-[320px]">
                             <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
-                             <ScrollArea className="h-auto max-h-[350px] rounded-md border p-2">
+                             <ScrollArea className="h-auto max-h-[350px] rounded-md border p-3">
                                {fields.length > 0 ? (
                                 fields.map((field, index) => (
-                                    <div key={field.id} className="flex flex-wrap md:grid md:grid-cols-12 gap-2 items-center mb-3 md:mb-2 pb-2 md:pb-0 border-b md:border-b-0">
-                                       <p className="w-full md:w-auto md:col-span-4 text-sm font-medium">{field.date.toLocaleDateString(locale, { dateStyle: 'medium' })}</p>
+                                    <div key={field.id} className="flex flex-wrap items-center gap-3 mb-3 pb-3 border-b last:border-b-0 last:mb-0 last:pb-0">
+                                       <p className="w-[130px] text-sm font-medium flex-shrink-0">{field.date.toLocaleDateString(locale, { dateStyle: 'medium' })}</p>
                                        <FormField
                                             control={form.control}
                                             name={`appointments.${index}.time`}
                                             render={({ field: timeField }) => (
-                                                <FormItem className="flex-1 md:flex-none md:col-span-3">
+                                                <FormItem className="w-[100px] flex-shrink-0">
                                                     <Select onValueChange={timeField.onChange} value={timeField.value}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>{availableTimeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -362,7 +370,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                                             control={form.control}
                                             name={`appointments.${index}.duration`}
                                             render={({ field: durationField }) => (
-                                                <FormItem className="flex-1 md:flex-none md:col-span-4">
+                                                <FormItem className="w-[120px] flex-shrink-0">
                                                      <Select onValueChange={durationField.onChange} value={durationField.value}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>{appointmentDurations.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
@@ -370,7 +378,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                                                 </FormItem>
                                             )}
                                         />
-                                        <Button type="button" variant="ghost" size="icon" className="md:col-span-1" onClick={() => remove(index)}>
+                                        <Button type="button" variant="ghost" size="icon" className="flex-shrink-0" onClick={() => remove(index)}>
                                             <Trash2 className="h-4 w-4 text-destructive"/>
                                         </Button>
                                     </div>
