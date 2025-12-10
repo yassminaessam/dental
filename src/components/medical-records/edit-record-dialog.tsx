@@ -46,6 +46,10 @@ type RecordFormData = z.infer<typeof recordSchema>;
 
 const medicalRecordTypes = ['SOAP', 'Clinical Note', 'Treatment Plan', 'Consultation'];
 
+// System providers that are not actual staff members
+const SYSTEM_PROVIDER_ID = '__system__dental';
+const SYSTEM_PROVIDER = { id: SYSTEM_PROVIDER_ID, name: 'Dental System', role: 'System' };
+
 interface EditRecordDialogProps {
   record: MedicalRecord | null;
   onSave: (data: MedicalRecord) => void;
@@ -101,6 +105,8 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
             fetchedDoctors = staffList.filter((s: { role: string }) => 
               s.role === 'Dentist' || s.role === 'Doctor' || s.role === 'dentist' || s.role === 'doctor'
             );
+            // Add system provider to the list
+            fetchedDoctors = [SYSTEM_PROVIDER, ...fetchedDoctors];
             setDoctors(fetchedDoctors);
           }
           
@@ -139,22 +145,35 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
     );
     const matchedPatient = patientById || patientByExactName || patientByNameCaseInsensitive || patientByPartialMatch;
     
+    // Check if provider is a system provider (like "Dental System")
+    const isSystemProvider = recordData.provider === 'Dental System' || 
+                             recordData.provider?.toLowerCase().includes('system') ||
+                             !recordData.providerId;
+    
     // Find provider by ID first, then by name (case-insensitive), then by partial match
-    const providerById = doctorList.find(d => d.id === recordData.providerId);
-    const providerByExactName = doctorList.find(d => d.name === recordData.provider);
-    const providerByNameCaseInsensitive = doctorList.find(d => 
-      d.name?.toLowerCase() === recordData.provider?.toLowerCase()
-    );
-    const providerByPartialMatch = doctorList.find(d => 
-      d.name?.toLowerCase().includes(recordData.provider?.toLowerCase() || '') ||
-      (recordData.provider?.toLowerCase() || '').includes(d.name?.toLowerCase() || '')
-    );
-    const matchedProvider = providerById || providerByExactName || providerByNameCaseInsensitive || providerByPartialMatch;
+    let matchedProvider: { id: string; name: string; role: string } | undefined;
+    
+    if (isSystemProvider && recordData.provider === 'Dental System') {
+      // Use the system provider
+      matchedProvider = doctorList.find(d => d.id === SYSTEM_PROVIDER_ID);
+    } else {
+      const providerById = doctorList.find(d => d.id === recordData.providerId);
+      const providerByExactName = doctorList.find(d => d.name === recordData.provider);
+      const providerByNameCaseInsensitive = doctorList.find(d => 
+        d.name?.toLowerCase() === recordData.provider?.toLowerCase()
+      );
+      const providerByPartialMatch = doctorList.find(d => 
+        d.name?.toLowerCase().includes(recordData.provider?.toLowerCase() || '') ||
+        (recordData.provider?.toLowerCase() || '').includes(d.name?.toLowerCase() || '')
+      );
+      matchedProvider = providerById || providerByExactName || providerByNameCaseInsensitive || providerByPartialMatch;
+    }
     
     console.log('Edit Record - Matching data:', {
       record: { patient: recordData.patient, patientId: recordData.patientId, provider: recordData.provider, providerId: recordData.providerId },
       matchedPatient: matchedPatient ? { id: matchedPatient.id, name: matchedPatient.name } : null,
       matchedProvider: matchedProvider ? { id: matchedProvider.id, name: matchedProvider.name } : null,
+      isSystemProvider,
       patientsCount: patientList.length,
       doctorsCount: doctorList.length
     });
@@ -195,13 +214,18 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
 
     const selectedPatient = patients.find(p => p.id === data.patient);
     const selectedProvider = doctors.find(d => d.id === data.provider);
+    
+    // Handle system provider specially
+    const isSystemProvider = data.provider === SYSTEM_PROVIDER_ID;
+    const providerName = isSystemProvider ? 'Dental System' : (selectedProvider?.name || record.provider);
+    const providerId = isSystemProvider ? null : (data.provider || record.providerId);
 
     const updatedRecord: MedicalRecord = {
       ...record,
       patient: selectedPatient?.name || record.patient,
       patientId: data.patient || record.patientId,
-      provider: selectedProvider?.name || record.provider,
-      providerId: data.provider || record.providerId,
+      provider: providerName,
+      providerId: providerId || undefined,
       type: data.type,
       date: new Date(data.date).toLocaleDateString(),
       complaint: data.complaint || '',
