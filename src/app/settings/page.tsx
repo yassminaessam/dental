@@ -386,24 +386,42 @@ export default function SettingsPage() {
       const faviconUrl = `${fullUrl}?v=${Date.now()}`;
       console.log('🌐 Full favicon URL:', faviconUrl);
       
-      // Find existing favicon and update it (SAFE - no removal)
-      let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      // Update all favicon link types for cross-browser compatibility (including Safari)
+      const faviconSelectors = [
+        "link[rel='icon']",
+        "link[rel='shortcut icon']",
+        "link[rel='apple-touch-icon']",
+        "link[rel='mask-icon']"
+      ];
       
-      if (!link) {
-        console.log('➕ Creating new favicon link');
-        // Create new favicon link if none exists
-        link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/x-icon';
-        document.head.appendChild(link);
-      } else {
-        console.log('♻️ Updating existing favicon link');
-      }
+      faviconSelectors.forEach((selector, index) => {
+        let link = document.querySelector(selector) as HTMLLinkElement;
+        
+        if (!link) {
+          console.log(`➕ Creating new favicon link for: ${selector}`);
+          link = document.createElement('link');
+          // Set appropriate rel attribute
+          if (selector.includes('shortcut')) {
+            link.rel = 'shortcut icon';
+          } else if (selector.includes('apple-touch')) {
+            link.rel = 'apple-touch-icon';
+          } else if (selector.includes('mask-icon')) {
+            link.rel = 'mask-icon';
+            link.setAttribute('color', '#2563eb');
+          } else {
+            link.rel = 'icon';
+            link.type = 'image/svg+xml';
+          }
+          document.head.appendChild(link);
+        } else {
+          console.log(`♻️ Updating existing favicon link: ${selector}`);
+        }
+        
+        // Update href with cache-busting timestamp to force browser reload
+        link.href = faviconUrl;
+      });
       
-      // Update href with cache-busting timestamp to force browser reload
-      link.href = faviconUrl;
-      
-      console.log('✅ Favicon updated successfully');
+      console.log('✅ All favicons updated successfully (including Safari)');
     } catch (error) {
       console.error('❌ Failed to update favicon:', error);
     }

@@ -121,14 +121,37 @@ export default function LoginPage() {
 
   const updateFavicon = (url: string) => {
     try {
-      let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/x-icon';
-        document.head.appendChild(link);
-      }
-      link.href = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
+      const fullUrl = `${getClientFtpProxyUrl(url)}?v=${Date.now()}`;
+      
+      // Update all favicon link types for cross-browser compatibility (including Safari)
+      const faviconSelectors = [
+        "link[rel='icon']",
+        "link[rel='shortcut icon']",
+        "link[rel='apple-touch-icon']",
+        "link[rel='mask-icon']"
+      ];
+      
+      faviconSelectors.forEach((selector) => {
+        let link = document.querySelector(selector) as HTMLLinkElement;
+        
+        if (!link) {
+          link = document.createElement('link');
+          if (selector.includes('shortcut')) {
+            link.rel = 'shortcut icon';
+          } else if (selector.includes('apple-touch')) {
+            link.rel = 'apple-touch-icon';
+          } else if (selector.includes('mask-icon')) {
+            link.rel = 'mask-icon';
+            link.setAttribute('color', '#2563eb');
+          } else {
+            link.rel = 'icon';
+            link.type = 'image/svg+xml';
+          }
+          document.head.appendChild(link);
+        }
+        
+        link.href = fullUrl;
+      });
     } catch (error) {
       console.warn('Failed to update favicon:', error);
     }
