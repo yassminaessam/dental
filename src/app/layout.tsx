@@ -24,15 +24,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-        {/* Default favicons as fallback - will be replaced dynamically by clinic settings */}
+        {/* Favicons - using API endpoint that serves from database settings or fallback */}
         {/* Standard favicon for modern browsers */}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/api/favicon" type="image/svg+xml" />
         {/* Shortcut icon for older browsers and Safari */}
-        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/api/favicon" />
         {/* Apple Touch Icon for iOS Safari (home screen bookmark) */}
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <link rel="apple-touch-icon" href="/api/favicon" />
         {/* Safari Pinned Tab */}
-        <link rel="mask-icon" href="/favicon.svg" color="#2563eb" />
+        <link rel="mask-icon" href="/api/favicon" color="#2563eb" />
       </head>
       <body className="font-body antialiased">
         <LanguageProvider>
