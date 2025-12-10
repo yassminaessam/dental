@@ -129,7 +129,10 @@ const mapTreatmentRow = async (row: any): Promise<Treatment> => {
 };
 
 async function list(): Promise<Treatment[]> {
-  const rows = await prisma.treatment.findMany({ include: { appointments: true } });
+  const rows = await prisma.treatment.findMany({ 
+    include: { appointments: true },
+    orderBy: { createdAt: 'desc' }  // Newest first
+  });
   return Promise.all(rows.map(mapTreatmentRow));
 }
 
