@@ -176,6 +176,12 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
               setExistingUser(data.user);
               setHasExistingUser(true);
               console.log('[EditEmployeeDialog] Set hasExistingUser to true');
+              
+              // Populate form with user's specialization and department
+              if (data.user) {
+                form.setValue('userSpecialization', data.user.specialization || '');
+                form.setValue('userDepartment', data.user.department || '');
+              }
             } else {
               console.log('[EditEmployeeDialog] Response not OK, setting hasExistingUser to false');
               setHasExistingUser(false);
@@ -197,6 +203,10 @@ export function EditEmployeeDialog({ staffMember, onSave, open, onOpenChange }: 
                 setExistingUser(data.user);
                 setHasExistingUser(true);
                 console.log('[EditEmployeeDialog] Found user by phone, set hasExistingUser to true');
+                
+                // Populate form with user's specialization and department
+                form.setValue('userSpecialization', data.user.specialization || '');
+                form.setValue('userDepartment', data.user.department || '');
               } else {
                 setHasExistingUser(false);
                 setExistingUser(null);
