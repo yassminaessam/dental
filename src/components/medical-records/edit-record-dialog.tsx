@@ -109,16 +109,38 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
 
   // Populate form with record data when record and reference data are loaded
   React.useEffect(() => {
-    if (record && !loading) {
-      // Find patient by ID first, then by name
+    if (record && !loading && patients.length > 0 && doctors.length > 0) {
+      // Find patient by ID first, then by name (case-insensitive), then by partial match
       const patientById = patients.find(p => p.id === record.patientId);
-      const patientByName = patients.find(p => p.name === record.patient);
-      const matchedPatient = patientById || patientByName;
+      const patientByExactName = patients.find(p => p.name === record.patient);
+      const patientByNameCaseInsensitive = patients.find(p => 
+        p.name?.toLowerCase() === record.patient?.toLowerCase()
+      );
+      const patientByPartialMatch = patients.find(p => 
+        p.name?.toLowerCase().includes(record.patient?.toLowerCase()) ||
+        record.patient?.toLowerCase().includes(p.name?.toLowerCase())
+      );
+      const matchedPatient = patientById || patientByExactName || patientByNameCaseInsensitive || patientByPartialMatch;
       
-      // Find provider by ID first, then by name
+      // Find provider by ID first, then by name (case-insensitive), then by partial match
       const providerById = doctors.find(d => d.id === record.providerId);
-      const providerByName = doctors.find(d => d.name === record.provider);
-      const matchedProvider = providerById || providerByName;
+      const providerByExactName = doctors.find(d => d.name === record.provider);
+      const providerByNameCaseInsensitive = doctors.find(d => 
+        d.name?.toLowerCase() === record.provider?.toLowerCase()
+      );
+      const providerByPartialMatch = doctors.find(d => 
+        d.name?.toLowerCase().includes(record.provider?.toLowerCase()) ||
+        record.provider?.toLowerCase().includes(d.name?.toLowerCase())
+      );
+      const matchedProvider = providerById || providerByExactName || providerByNameCaseInsensitive || providerByPartialMatch;
+      
+      console.log('Edit Record - Matching data:', {
+        record: { patient: record.patient, patientId: record.patientId, provider: record.provider, providerId: record.providerId },
+        matchedPatient: matchedPatient ? { id: matchedPatient.id, name: matchedPatient.name } : null,
+        matchedProvider: matchedProvider ? { id: matchedProvider.id, name: matchedProvider.name } : null,
+        patientsCount: patients.length,
+        doctorsCount: doctors.length
+      });
       
       form.reset({
         patient: matchedPatient?.id || '',
@@ -135,13 +157,15 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
   const onSubmit = (data: RecordFormData) => {
     if (!record) return;
 
-    const patientName = patients.find(p => p.id === data.patient)?.name;
-    const providerName = doctors.find(d => d.id === data.provider)?.name;
+    const selectedPatient = patients.find(p => p.id === data.patient);
+    const selectedProvider = doctors.find(d => d.id === data.provider);
 
     const updatedRecord: MedicalRecord = {
       ...record,
-      patient: patientName || record.patient,
-      provider: providerName || record.provider,
+      patient: selectedPatient?.name || record.patient,
+      patientId: data.patient || record.patientId,
+      provider: selectedProvider?.name || record.provider,
+      providerId: data.provider || record.providerId,
       type: data.type,
       date: new Date(data.date).toLocaleDateString(),
       complaint: data.complaint || '',
