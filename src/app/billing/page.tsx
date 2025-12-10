@@ -749,9 +749,9 @@ export default function BillingPage() {
         {/* Enhanced Header Section */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
-          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border-2 border-muted/50 p-4 sm:p-6 lg:p-8 shadow-xl">
-            <div className="flex flex-col gap-4 lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-3 sm:gap-4">
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border-2 border-muted/50 p-4 sm:p-6 xl:p-8 shadow-xl">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex items-start gap-3 sm:gap-4 shrink-0">
                 <div className="relative shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl sm:rounded-2xl blur-lg opacity-40 animate-pulse"></div>
                   <div className="relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-xl">
@@ -768,7 +768,7 @@ export default function BillingPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 sm:gap-3 w-full sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:items-center">
+              <div className="flex flex-wrap gap-2 sm:gap-3 w-full xl:w-auto xl:flex-nowrap xl:justify-end">
                 <InsuranceIntegrationDialog 
                   claims={insuranceClaims} 
                   onClaimProcessed={handleApplyInsuranceCredit}
@@ -779,11 +779,11 @@ export default function BillingPage() {
                   disabled={treatments.filter(t => 
                     t.status === 'Completed' && !invoices.some(inv => inv.treatmentId === t.id)
                   ).length === 0}
-                  className="flex-1 sm:flex-initial h-11 px-4 sm:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base"
+                  className="flex-1 sm:flex-none h-11 px-3 sm:px-4 lg:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <FileText className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-2' : 'mr-2')} />
-                  <span className="hidden sm:inline">{t('billing.bill_all_completed_treatments')}</span>
-                  <span className="sm:hidden">{t('billing.bill_all_short') || 'Bill All'}</span>
+                  <FileText className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2')} />
+                  <span className="hidden md:inline">{t('billing.bill_all_completed_treatments')}</span>
+                  <span className="md:hidden">{t('billing.bill_all_short') || 'Bill All'}</span>
                 </Button>
                 <NewInvoiceDialog onSave={handleSaveInvoice} patients={patients} />
               </div>

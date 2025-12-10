@@ -93,7 +93,7 @@ export function NewInvoiceDialog({ onSave, patients }: NewInvoiceDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex-1 sm:flex-initial h-11 px-4 sm:px-6 rounded-xl font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+        <Button className="flex-1 sm:flex-none h-11 px-3 sm:px-4 lg:px-6 rounded-xl font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-xs sm:text-sm whitespace-nowrap">
           <Plus className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-2' : 'mr-2')} />
           <span className="hidden sm:inline">{t('billing.new_invoice')}</span>
           <span className="sm:hidden">{t('billing.invoice') || 'Invoice'}</span>

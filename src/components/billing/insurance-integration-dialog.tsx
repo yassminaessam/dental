@@ -125,7 +125,7 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex-1 sm:flex-initial h-11 px-4 sm:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+        <Button variant="outline" className="flex-1 sm:flex-none h-11 px-3 sm:px-4 lg:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-xs sm:text-sm whitespace-nowrap">
           <Shield className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-2' : 'mr-2')} />
           <span className="hidden sm:inline">{t('insurance.integration')}</span>
           <span className="sm:hidden">{t('insurance.integration_short') || 'Insurance'}</span>
