@@ -171,10 +171,24 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
 
   const handleDateSelect = (days: Date[] | undefined) => {
     const sortedDays = (days || []).sort((a,b) => a.getTime() - b.getTime());
-    const newAppointments = sortedDays.map(day => {
-        const existing = fields.find(f => f.date.getTime() === day.getTime());
-        return existing || { date: day, time: '09:00', duration: '1 hour' };
+    
+    // Create a map of existing appointments by date string for reliable comparison
+    const existingMap = new Map<string, { time: string; duration: string }>();
+    fields.forEach(f => {
+      const dateKey = f.date.toDateString(); // Use toDateString for date-only comparison
+      existingMap.set(dateKey, { time: f.time, duration: f.duration });
     });
+    
+    const newAppointments = sortedDays.map(day => {
+      const dateKey = day.toDateString();
+      const existing = existingMap.get(dateKey);
+      return {
+        date: day,
+        time: existing?.time || '09:00',
+        duration: existing?.duration || '1 hour'
+      };
+    });
+    
     replace(newAppointments);
   };
 
@@ -327,7 +341,7 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
-                             <ScrollArea className="h-64 md:h-80 rounded-md border p-2">
+                             <ScrollArea className="h-auto max-h-[350px] rounded-md border p-2">
                                {fields.length > 0 ? (
                                 fields.map((field, index) => (
                                     <div key={field.id} className="flex flex-wrap md:grid md:grid-cols-12 gap-2 items-center mb-3 md:mb-2 pb-2 md:pb-0 border-b md:border-b-0">
@@ -335,9 +349,9 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                                        <FormField
                                             control={form.control}
                                             name={`appointments.${index}.time`}
-                                            render={({ field }) => (
+                                            render={({ field: timeField }) => (
                                                 <FormItem className="flex-1 md:flex-none md:col-span-3">
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select onValueChange={timeField.onChange} value={timeField.value}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>{availableTimeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                                     </Select>
@@ -347,9 +361,9 @@ export function NewTreatmentPlanDialog({ onSave }: NewTreatmentPlanDialogProps) 
                                        <FormField
                                             control={form.control}
                                             name={`appointments.${index}.duration`}
-                                            render={({ field }) => (
+                                            render={({ field: durationField }) => (
                                                 <FormItem className="flex-1 md:flex-none md:col-span-4">
-                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                     <Select onValueChange={durationField.onChange} value={durationField.value}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>{appointmentDurations.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                                                     </Select>

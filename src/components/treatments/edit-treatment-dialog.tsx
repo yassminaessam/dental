@@ -188,8 +188,16 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
         .sort((a, b) => a.getTime() - b.getTime())
         .filter((date, idx, arr) => idx === 0 || date.getTime() !== arr[idx - 1].getTime());
 
+      // Create a map of existing appointments by date string for reliable comparison
+      const existingMap = new Map<string, TreatmentFormAppointment>();
+      fields.forEach(field => {
+        const dateKey = toDate(field.date).toDateString();
+        existingMap.set(dateKey, field);
+      });
+
       const nextAppointments = normalized.map((date) => {
-        const existing = fields.find((field) => toDate(field.date).getTime() === date.getTime());
+        const dateKey = date.toDateString();
+        const existing = existingMap.get(dateKey);
 
         return {
           date,
@@ -347,7 +355,7 @@ export function EditTreatmentDialog({ treatment, onSave, open, onOpenChange }: E
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="mb-2 text-sm font-medium">{t('treatments.selected_appointments')}</h4>
-                    <ScrollArea className="h-64 md:h-80 rounded-md border p-2">
+                    <ScrollArea className="h-auto max-h-[350px] rounded-md border p-2">
                       {fields.length > 0 ? (
                         fields.map((field, index) => {
                           const fieldDate = toDate(field.date);
