@@ -59,6 +59,7 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
   const [patients, setPatients] = React.useState<Array<{ id: string; name: string; lastName?: string; phone?: string }>>([]);
   const [doctors, setDoctors] = React.useState<Array<{ id: string; name: string; role: string }>>([]);
   const [loading, setLoading] = React.useState(false);
+  const [dataFetched, setDataFetched] = React.useState(false);
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
@@ -77,25 +78,38 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
+        setDataFetched(false);
         try {
           const [patientsRes, staffRes] = await Promise.all([
             fetch('/api/patients?activeOnly=true'),
             fetch('/api/staff?activeOnly=true')
           ]);
           
+          let fetchedPatients: Array<{ id: string; name: string; lastName?: string; phone?: string }> = [];
+          let fetchedDoctors: Array<{ id: string; name: string; role: string }> = [];
+          
           if (patientsRes.ok) {
             const data = await patientsRes.json();
-            setPatients(data.patients || []);
+            fetchedPatients = data.patients || [];
+            setPatients(fetchedPatients);
           }
           
           if (staffRes.ok) {
             const data = await staffRes.json();
             // Filter to only include doctors/dentists
             const staffList = data.staff || [];
-            setDoctors(staffList.filter((s: { role: string }) => 
+            fetchedDoctors = staffList.filter((s: { role: string }) => 
               s.role === 'Dentist' || s.role === 'Doctor' || s.role === 'dentist' || s.role === 'doctor'
-            ));
+            );
+            setDoctors(fetchedDoctors);
           }
+          
+          // Populate form immediately after fetching data
+          if (record) {
+            populateForm(record, fetchedPatients, fetchedDoctors);
+          }
+          
+          setDataFetched(true);
         } catch (error) {
           console.error('Error fetching data for edit dialog:', error);
         } finally {
@@ -107,52 +121,74 @@ export function EditRecordDialog({ record, onSave, open, onOpenChange }: EditRec
     }
   }, [open]);
 
-  // Populate form with record data when record and reference data are loaded
-  React.useEffect(() => {
-    if (record && !loading && patients.length > 0 && doctors.length > 0) {
-      // Find patient by ID first, then by name (case-insensitive), then by partial match
-      const patientById = patients.find(p => p.id === record.patientId);
-      const patientByExactName = patients.find(p => p.name === record.patient);
-      const patientByNameCaseInsensitive = patients.find(p => 
-        p.name?.toLowerCase() === record.patient?.toLowerCase()
-      );
-      const patientByPartialMatch = patients.find(p => 
-        p.name?.toLowerCase().includes(record.patient?.toLowerCase()) ||
-        record.patient?.toLowerCase().includes(p.name?.toLowerCase())
-      );
-      const matchedPatient = patientById || patientByExactName || patientByNameCaseInsensitive || patientByPartialMatch;
-      
-      // Find provider by ID first, then by name (case-insensitive), then by partial match
-      const providerById = doctors.find(d => d.id === record.providerId);
-      const providerByExactName = doctors.find(d => d.name === record.provider);
-      const providerByNameCaseInsensitive = doctors.find(d => 
-        d.name?.toLowerCase() === record.provider?.toLowerCase()
-      );
-      const providerByPartialMatch = doctors.find(d => 
-        d.name?.toLowerCase().includes(record.provider?.toLowerCase()) ||
-        record.provider?.toLowerCase().includes(d.name?.toLowerCase())
-      );
-      const matchedProvider = providerById || providerByExactName || providerByNameCaseInsensitive || providerByPartialMatch;
-      
-      console.log('Edit Record - Matching data:', {
-        record: { patient: record.patient, patientId: record.patientId, provider: record.provider, providerId: record.providerId },
-        matchedPatient: matchedPatient ? { id: matchedPatient.id, name: matchedPatient.name } : null,
-        matchedProvider: matchedProvider ? { id: matchedProvider.id, name: matchedProvider.name } : null,
-        patientsCount: patients.length,
-        doctorsCount: doctors.length
-      });
-      
-      form.reset({
-        patient: matchedPatient?.id || '',
-        provider: matchedProvider?.id || '',
-        type: record.type,
-        date: new Date(record.date),
-        complaint: record.complaint || '',
-        status: record.status,
-        notes: record.notes || '',
-      });
+  // Helper function to populate form with record data
+  const populateForm = React.useCallback((
+    recordData: MedicalRecord,
+    patientList: Array<{ id: string; name: string; lastName?: string; phone?: string }>,
+    doctorList: Array<{ id: string; name: string; role: string }>
+  ) => {
+    // Find patient by ID first, then by name (case-insensitive), then by partial match
+    const patientById = patientList.find(p => p.id === recordData.patientId);
+    const patientByExactName = patientList.find(p => p.name === recordData.patient);
+    const patientByNameCaseInsensitive = patientList.find(p => 
+      p.name?.toLowerCase() === recordData.patient?.toLowerCase()
+    );
+    const patientByPartialMatch = patientList.find(p => 
+      p.name?.toLowerCase().includes(recordData.patient?.toLowerCase() || '') ||
+      (recordData.patient?.toLowerCase() || '').includes(p.name?.toLowerCase() || '')
+    );
+    const matchedPatient = patientById || patientByExactName || patientByNameCaseInsensitive || patientByPartialMatch;
+    
+    // Find provider by ID first, then by name (case-insensitive), then by partial match
+    const providerById = doctorList.find(d => d.id === recordData.providerId);
+    const providerByExactName = doctorList.find(d => d.name === recordData.provider);
+    const providerByNameCaseInsensitive = doctorList.find(d => 
+      d.name?.toLowerCase() === recordData.provider?.toLowerCase()
+    );
+    const providerByPartialMatch = doctorList.find(d => 
+      d.name?.toLowerCase().includes(recordData.provider?.toLowerCase() || '') ||
+      (recordData.provider?.toLowerCase() || '').includes(d.name?.toLowerCase() || '')
+    );
+    const matchedProvider = providerById || providerByExactName || providerByNameCaseInsensitive || providerByPartialMatch;
+    
+    console.log('Edit Record - Matching data:', {
+      record: { patient: recordData.patient, patientId: recordData.patientId, provider: recordData.provider, providerId: recordData.providerId },
+      matchedPatient: matchedPatient ? { id: matchedPatient.id, name: matchedPatient.name } : null,
+      matchedProvider: matchedProvider ? { id: matchedProvider.id, name: matchedProvider.name } : null,
+      patientsCount: patientList.length,
+      doctorsCount: doctorList.length
+    });
+    
+    // Parse the date carefully
+    let parsedDate = new Date();
+    try {
+      if (recordData.date) {
+        parsedDate = new Date(recordData.date);
+        if (isNaN(parsedDate.getTime())) {
+          parsedDate = new Date();
+        }
+      }
+    } catch {
+      console.error('Error parsing date:', recordData.date);
     }
-  }, [record, form, patients, doctors, loading]);
+    
+    form.reset({
+      patient: matchedPatient?.id || '',
+      provider: matchedProvider?.id || '',
+      type: recordData.type || '',
+      date: parsedDate,
+      complaint: recordData.complaint || '',
+      status: recordData.status || 'Final',
+      notes: recordData.notes || '',
+    });
+  }, [form]);
+
+  // Also populate form when record changes and data is already fetched
+  React.useEffect(() => {
+    if (record && dataFetched && !loading) {
+      populateForm(record, patients, doctors);
+    }
+  }, [record, dataFetched, loading, patients, doctors, populateForm]);
 
   const onSubmit = (data: RecordFormData) => {
     if (!record) return;
