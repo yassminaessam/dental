@@ -749,26 +749,26 @@ export default function BillingPage() {
         {/* Enhanced Header Section */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-cyan-500/5 rounded-3xl blur-2xl"></div>
-          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border-2 border-muted/50 p-4 sm:p-6 md:p-8 shadow-xl">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
-                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-xl">
-                    <DollarSign className="h-8 w-8" />
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="relative shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl sm:rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-xl">
+                    <DollarSign className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-600 dark:from-blue-400 dark:via-cyan-400 dark:to-sky-400 bg-clip-text text-transparent animate-gradient">
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black mb-1 sm:mb-2 bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-600 dark:from-blue-400 dark:via-cyan-400 dark:to-sky-400 bg-clip-text text-transparent animate-gradient">
                     {t('billing.title')}
                   </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    {t('page.billing.subtitle')}
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{t('page.billing.subtitle')}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 w-full md:w-auto md:flex-row md:items-center">
                 <InsuranceIntegrationDialog 
                   claims={insuranceClaims} 
                   onClaimProcessed={handleApplyInsuranceCredit}
@@ -779,11 +779,11 @@ export default function BillingPage() {
                   disabled={treatments.filter(t => 
                     t.status === 'Completed' && !invoices.some(inv => inv.treatmentId === t.id)
                   ).length === 0}
-                  className="h-11 px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="h-11 px-4 sm:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base"
                 >
-                  <FileText className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                  <FileText className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-2' : 'mr-2')} />
                   <span className="hidden sm:inline">{t('billing.bill_all_completed_treatments')}</span>
-                  <span className="sm:hidden">Bill All</span>
+                  <span className="sm:hidden">{t('billing.bill_all_short') || 'Bill All'}</span>
                 </Button>
                 <NewInvoiceDialog onSave={handleSaveInvoice} patients={patients} />
               </div>

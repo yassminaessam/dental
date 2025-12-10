@@ -125,11 +125,12 @@ export function InsuranceIntegrationDialog({ claims, onClaimProcessed }: Insuran
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <Shield className={isRTL ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
-          {t('insurance.integration')}
+        <Button variant="outline" className="w-full md:w-auto h-11 px-4 sm:px-6 rounded-xl font-semibold bg-background/60 backdrop-blur-sm border-border/50 hover:bg-accent hover:text-accent-foreground hover:border-accent/50 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+          <Shield className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-2' : 'mr-2')} />
+          <span className="hidden sm:inline">{t('insurance.integration')}</span>
+          <span className="sm:hidden">{t('insurance.integration_short') || 'Insurance'}</span>
           {processableClaims.length > 0 && (
-            <Badge className="ml-2" variant="secondary">
+            <Badge className={cn("shrink-0", isRTL ? 'mr-2' : 'ml-2')} variant="secondary">
               {processableClaims.length}
             </Badge>
           )}
