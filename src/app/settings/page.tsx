@@ -334,6 +334,21 @@ export default function SettingsPage() {
       console.log('📤 Favicon upload response:', data);
       console.log('📁 Favicon URL:', data.url);
       
+      // Also try to save favicon locally to /public/ folder (for fallback)
+      // This will only work on writable filesystems (local dev, self-hosted)
+      try {
+        const localFormData = new FormData();
+        localFormData.append('file', file);
+        const localResponse = await fetch('/api/favicon', {
+          method: 'POST',
+          body: localFormData,
+        });
+        const localResult = await localResponse.json();
+        console.log('📁 Local favicon save result:', localResult);
+      } catch (localError) {
+        console.warn('⚠️ Could not save favicon locally (expected on serverless):', localError);
+      }
+      
       // Update settings state and database immediately
       const updatedSettings = { ...settings, faviconUrl: data.url };
       console.log('💾 Updated settings:', updatedSettings);
