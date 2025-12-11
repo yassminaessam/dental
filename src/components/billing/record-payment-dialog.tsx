@@ -25,14 +25,16 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Invoice } from '@/app/billing/page';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wallet, AlertCircle } from 'lucide-react';
+import { Wallet, AlertCircle, Shield } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { listDocuments, updateDocument } from '@/lib/data-client';
 
-const paymentMethods = ['billing.payment_method_cash', 'billing.payment_method_vodafone', 'billing.payment_method_fawry', 'billing.payment_method_instapay', 'billing.payment_method_bank', 'wallet.pay_from_wallet'];
+const paymentMethods = ['billing.payment_method_cash', 'billing.payment_method_vodafone', 'billing.payment_method_fawry', 'billing.payment_method_instapay', 'billing.payment_method_bank', 'wallet.pay_from_wallet', 'insurance.pay_from_insurance'];
 
 const paymentSchema = z.object({
   amount: z.coerce.number().positive('billing.validation.amount_positive'),
   paymentMethod: z.string({ required_error: 'billing.validation.payment_method_required' }),
+  selectedClaimId: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -42,6 +44,25 @@ interface WalletData {
   id: string;
   balance: number;
   isActive: boolean;
+}
+
+interface InsuranceClaim {
+  id: string;
+  patient: string;
+  patientId: string;
+  insurance: string;
+  procedure: string;
+  amount: string;
+  approvedAmount: string | null;
+  paidAmount?: string | null;
+  status: 'Approved' | 'Processing' | 'Denied' | 'Paid';
+}
+
+interface PatientInsuranceData {
+  insuranceProvider?: string;
+  policyNumber?: string;
+  approvedClaims: InsuranceClaim[];
+  totalApprovedBalance: number;
 }
 
 interface RecordPaymentDialogProps {
@@ -57,9 +78,13 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
   });
 
   const [walletData, setWalletData] = React.useState<WalletData | null>(null);
+  const [insuranceData, setInsuranceData] = React.useState<PatientInsuranceData | null>(null);
   const [loadingWallet, setLoadingWallet] = React.useState(false);
+  const [loadingInsurance, setLoadingInsurance] = React.useState(false);
   const [isWalletPayment, setIsWalletPayment] = React.useState(false);
+  const [isInsurancePayment, setIsInsurancePayment] = React.useState(false);
   const [walletPaymentProcessing, setWalletPaymentProcessing] = React.useState(false);
+  const [insurancePaymentProcessing, setInsurancePaymentProcessing] = React.useState(false);
 
   const amountDue = invoice.totalAmount - invoice.amountPaid;
   const { t, language } = useLanguage();
@@ -86,19 +111,67 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
     fetchWallet();
   }, [open, invoice.patientId]);
 
+  // Fetch insurance data when dialog opens
+  React.useEffect(() => {
+    const fetchInsurance = async () => {
+      if (!open || !invoice.patientId) return;
+      
+      setLoadingInsurance(true);
+      try {
+        // Fetch patient data to get insurance provider
+        const patientResponse = await fetch(`/api/patients/${invoice.patientId}`);
+        let patientInsurance: { insuranceProvider?: string; policyNumber?: string } = {};
+        
+        if (patientResponse.ok) {
+          const { patient } = await patientResponse.json();
+          patientInsurance = {
+            insuranceProvider: patient?.insuranceProvider,
+            policyNumber: patient?.policyNumber,
+          };
+        }
+
+        // Fetch approved insurance claims for this patient
+        const allClaims = await listDocuments<InsuranceClaim>('insurance-claims');
+        const approvedClaims = allClaims.filter(
+          claim => claim.patientId === invoice.patientId && claim.status === 'Approved' && claim.approvedAmount
+        );
+        
+        const totalApprovedBalance = approvedClaims.reduce((acc, claim) => {
+          const amount = claim.approvedAmount ? parseFloat(claim.approvedAmount.replace(/[^0-9.-]+/g, '')) : 0;
+          return acc + amount;
+        }, 0);
+
+        setInsuranceData({
+          ...patientInsurance,
+          approvedClaims,
+          totalApprovedBalance,
+        });
+      } catch (error) {
+        console.error('Failed to fetch insurance:', error);
+      } finally {
+        setLoadingInsurance(false);
+      }
+    };
+
+    fetchInsurance();
+  }, [open, invoice.patientId]);
+
   React.useEffect(() => {
     form.reset({
       amount: amountDue,
       paymentMethod: 'Cash',
+      selectedClaimId: '',
       notes: ''
     });
     setIsWalletPayment(false);
+    setIsInsurancePayment(false);
   }, [invoice, amountDue, form]);
 
   // Watch payment method changes
   const watchedPaymentMethod = form.watch('paymentMethod');
   React.useEffect(() => {
     setIsWalletPayment(watchedPaymentMethod === 'wallet.pay_from_wallet');
+    setIsInsurancePayment(watchedPaymentMethod === 'insurance.pay_from_insurance');
   }, [watchedPaymentMethod]);
 
   const handleWalletPayment = async (amount: number) => {
@@ -135,6 +208,59 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
     }
   };
 
+  const handleInsurancePayment = async (amount: number, selectedClaimId?: string) => {
+    if (!insuranceData || !invoice.patientId) return;
+
+    setInsurancePaymentProcessing(true);
+    try {
+      // If a specific claim is selected, use its amount
+      let claimToUse: InsuranceClaim | undefined;
+      let paymentAmount = amount;
+
+      if (selectedClaimId) {
+        claimToUse = insuranceData.approvedClaims.find(c => c.id === selectedClaimId);
+        if (claimToUse && claimToUse.approvedAmount) {
+          paymentAmount = Math.min(
+            parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, '')),
+            amountDue
+          );
+        }
+      } else {
+        // Use the first available approved claim
+        claimToUse = insuranceData.approvedClaims[0];
+        if (claimToUse && claimToUse.approvedAmount) {
+          paymentAmount = Math.min(
+            parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, '')),
+            amountDue
+          );
+        }
+      }
+
+      if (!claimToUse) {
+        throw new Error(t('insurance.no_approved_claims'));
+      }
+
+      // Mark the claim as paid
+      await updateDocument('insurance-claims', claimToUse.id, {
+        status: 'Paid',
+        paidAmount: `EGP ${paymentAmount.toFixed(2)}`,
+        paidDate: new Date().toLocaleDateString(),
+      });
+
+      // Call onSave with insurance payment method
+      onSave(invoice.id, paymentAmount, 'Insurance');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Insurance payment failed:', error);
+      form.setError('paymentMethod', {
+        type: 'manual',
+        message: error instanceof Error ? error.message : t('insurance.no_approved_claims'),
+      });
+    } finally {
+      setInsurancePaymentProcessing(false);
+    }
+  };
+
   const onSubmit = (data: PaymentFormData) => {
     if (data.amount > amountDue) {
         form.setError("amount", {
@@ -157,11 +283,26 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
       return;
     }
 
+    // Handle insurance payment separately
+    if (data.paymentMethod === 'insurance.pay_from_insurance') {
+      if (!insuranceData || insuranceData.approvedClaims.length === 0) {
+        form.setError('paymentMethod', {
+          type: 'manual',
+          message: t('insurance.no_approved_claims'),
+        });
+        return;
+      }
+      handleInsurancePayment(data.amount, data.selectedClaimId);
+      return;
+    }
+
     onSave(invoice.id, data.amount);
   };
 
   const canPayFromWallet = walletData && walletData.isActive && walletData.balance >= amountDue;
   const insufficientWalletBalance = walletData && walletData.isActive && walletData.balance < amountDue;
+  const canPayFromInsurance = insuranceData && insuranceData.approvedClaims.length > 0 && insuranceData.totalApprovedBalance > 0;
+  const hasInsuranceProvider = insuranceData && insuranceData.insuranceProvider && insuranceData.insuranceProvider !== 'none';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -191,12 +332,41 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
           </div>
         )}
 
+        {/* Insurance Balance Info */}
+        {hasInsuranceProvider && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+            <Shield className="h-5 w-5 text-cyan-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium">{t('insurance.approved_claims_balance')}</p>
+              <p className="text-xs text-muted-foreground">{insuranceData?.insuranceProvider}</p>
+              <p className="text-lg font-bold text-cyan-600">
+                {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(insuranceData?.totalApprovedBalance || 0)}
+              </p>
+            </div>
+            {canPayFromInsurance && (
+              <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">
+                {insuranceData?.approvedClaims.length} {t('insurance.status.approved')}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Insufficient Balance Warning */}
         {isWalletPayment && insufficientWalletBalance && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               {t('wallet.toast.insufficient_balance_desc')}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* No Insurance Claims Warning */}
+        {isInsurancePayment && !canPayFromInsurance && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {t('insurance.no_approved_claims')}
             </AlertDescription>
           </Alert>
         )}
@@ -231,7 +401,10 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
                         <SelectItem 
                           key={method} 
                           value={method}
-                          disabled={method === 'wallet.pay_from_wallet' && (!walletData || !walletData.isActive)}
+                          disabled={
+                            (method === 'wallet.pay_from_wallet' && (!walletData || !walletData.isActive)) ||
+                            (method === 'insurance.pay_from_insurance' && !canPayFromInsurance)
+                          }
                         >
                           {method === 'wallet.pay_from_wallet' ? (
                             <span className="flex items-center gap-2">
@@ -240,6 +413,16 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
                               {walletData && walletData.isActive && (
                                 <span className="text-xs text-muted-foreground">
                                   ({new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(walletData.balance)})
+                                </span>
+                              )}
+                            </span>
+                          ) : method === 'insurance.pay_from_insurance' ? (
+                            <span className="flex items-center gap-2">
+                              <Shield className="h-4 w-4" />
+                              {t(method)}
+                              {canPayFromInsurance && (
+                                <span className="text-xs text-muted-foreground">
+                                  ({new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(insuranceData?.totalApprovedBalance || 0)})
                                 </span>
                               )}
                             </span>
@@ -254,6 +437,33 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
                 </FormItem>
               )}
             />
+            
+            {/* Insurance Claim Selection */}
+            {isInsurancePayment && canPayFromInsurance && insuranceData && insuranceData.approvedClaims.length > 1 && (
+              <FormField
+                control={form.control}
+                name="selectedClaimId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('insurance.select_claim_to_apply')}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder={t('insurance.select_claim_to_apply')} /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {insuranceData.approvedClaims.map(claim => (
+                          <SelectItem key={claim.id} value={claim.id}>
+                            {claim.procedure} - {claim.approvedAmount}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="notes"
@@ -270,9 +480,14 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
               <Button 
                 type="submit" 
-                disabled={walletPaymentProcessing || (isWalletPayment && !!insufficientWalletBalance)}
+                disabled={
+                  walletPaymentProcessing || 
+                  insurancePaymentProcessing ||
+                  (isWalletPayment && !!insufficientWalletBalance) ||
+                  (isInsurancePayment && !canPayFromInsurance)
+                }
               >
-                {walletPaymentProcessing ? t('common.processing') : t('billing.record_payment')}
+                {(walletPaymentProcessing || insurancePaymentProcessing) ? t('common.processing') : t('billing.record_payment')}
               </Button>
             </DialogFooter>
           </form>

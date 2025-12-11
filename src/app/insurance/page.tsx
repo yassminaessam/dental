@@ -43,8 +43,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2, UserPlus, Pencil, Trash2, Sparkles, Shield, TrendingUp, FileText, AlertCircle, DollarSign } from "lucide-react";
+import { Download, Search, CheckCircle2, Clock, XCircle, Eye, MoreHorizontal, Loader2, UserPlus, Pencil, Trash2, Sparkles, Shield, TrendingUp, FileText, AlertCircle, DollarSign, Users, Plus } from "lucide-react";
 import { NewClaimDialog } from "@/components/insurance/new-claim-dialog";
+import type { Patient } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ViewClaimDialog } from '@/components/insurance/view-claim-dialog';
 // Use client-safe data client to ensure array shape and avoid server-only imports
@@ -133,6 +134,8 @@ export default function InsurancePage() {
   const [providerSearchTerm, setProviderSearchTerm] = React.useState('');
   const [claimToApprove, setClaimToApprove] = React.useState<Claim | null>(null);
   const [patientDirectory, setPatientDirectory] = React.useState<Record<string, { phone?: string }>>({});
+  const [insuredPatients, setInsuredPatients] = React.useState<Patient[]>([]);
+  const [insuredPatientsSearchTerm, setInsuredPatientsSearchTerm] = React.useState('');
 
   const { toast } = useToast();
 
@@ -154,6 +157,15 @@ export default function InsurancePage() {
             return acc;
           }, {});
           setPatientDirectory(directory);
+          
+          // Filter patients with insurance provider
+          const patientsWithInsurance = (patientData ?? [])
+            .filter((patient: any) => patient.insuranceProvider && patient.insuranceProvider !== 'none' && patient.insuranceProvider.trim() !== '')
+            .map((patient: any) => ({
+              ...patient,
+              dob: patient.dob ? new Date(patient.dob) : new Date(),
+            }));
+          setInsuredPatients(patientsWithInsurance);
         } else {
           throw new Error('Failed to fetch patients');
         }
@@ -487,6 +499,18 @@ export default function InsurancePage() {
     return providers.filter(provider => provider.name.toLowerCase().includes(providerSearchTerm.toLowerCase()));
   }, [providers, providerSearchTerm]);
 
+  const filteredInsuredPatients = React.useMemo(() => {
+    if (!insuredPatientsSearchTerm) return insuredPatients;
+    const lowercasedTerm = insuredPatientsSearchTerm.toLowerCase();
+    return insuredPatients.filter(patient => {
+      const fullName = `${patient.name} ${patient.lastName}`.toLowerCase();
+      return fullName.includes(lowercasedTerm) ||
+        patient.phone?.toLowerCase().includes(lowercasedTerm) ||
+        patient.insuranceProvider?.toLowerCase().includes(lowercasedTerm) ||
+        patient.policyNumber?.toLowerCase().includes(lowercasedTerm);
+    });
+  }, [insuredPatients, insuredPatientsSearchTerm]);
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -606,26 +630,33 @@ export default function InsurancePage() {
         <Tabs defaultValue="claims-management" className="w-full">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-pink-500/5 rounded-2xl blur-xl"></div>
-            <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-3 shadow-lg">
+            <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-4 shadow-lg">
               <TabsTrigger 
                 value="claims-management" 
-                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+                className="rounded-xl px-2 sm:px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
               >
-                <FileText className="h-4 w-4 mr-2 hidden sm:inline" />
+                <FileText className="h-4 w-4 mr-1 sm:mr-2 hidden sm:inline" />
                 {t('insurance.claims_management')}
               </TabsTrigger>
               <TabsTrigger 
-                value="insurance-providers" 
-                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+                value="insured-patients" 
+                className="rounded-xl px-2 sm:px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
               >
-                <Shield className="h-4 w-4 mr-2 hidden sm:inline" />
+                <Users className="h-4 w-4 mr-1 sm:mr-2 hidden sm:inline" />
+                {t('insurance.insured_patients')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insurance-providers" 
+                className="rounded-xl px-2 sm:px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+              >
+                <Shield className="h-4 w-4 mr-1 sm:mr-2 hidden sm:inline" />
                 {t('insurance.insurance_providers')}
               </TabsTrigger>
               <TabsTrigger 
                 value="claims-reports" 
-                className="rounded-xl px-3 sm:px-6 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
+                className="rounded-xl px-2 sm:px-4 py-3 font-bold transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-muted/50 text-xs sm:text-sm"
               >
-                <TrendingUp className="h-4 w-4 mr-2 hidden sm:inline" />
+                <TrendingUp className="h-4 w-4 mr-1 sm:mr-2 hidden sm:inline" />
                 {t('insurance.claims_reports')}
               </TabsTrigger>
             </TabsList>
@@ -797,6 +828,127 @@ export default function InsurancePage() {
                       <TableRow>
         <TableCell colSpan={9} className="h-24 text-center">
           {t('insurance.no_claims_found')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="insured-patients" className="mt-0">
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+              <CardHeader className="flex flex-col gap-4 p-4 sm:p-6 md:flex-row md:items-center md:justify-between border-b-2 border-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+                    <Users className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
+                    {t('insurance.insured_patients')}
+                  </CardTitle>
+                  <Badge variant="secondary" className="ml-2 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                    {insuredPatients.length}
+                  </Badge>
+                </div>
+                <div className="relative w-full md:w-auto">
+                  <Search className={cn("absolute top-2.5 h-4 w-4 text-muted-foreground", isRTL ? 'right-2.5' : 'left-2.5')} />
+                  <Input
+                    type="search"
+                    placeholder={t('insurance.search_insured_patients')}
+                    className={cn("w-full rounded-lg bg-background lg:w-[336px]", isRTL ? 'pr-8 text-right' : 'pl-8')}
+                    value={insuredPatientsSearchTerm}
+                    onChange={(e) => setInsuredPatientsSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  className={cn(
+                    isRTL
+                      ? 'text-right [&_th]:text-right [&_td]:text-right'
+                      : 'text-left [&_th]:text-left [&_td]:text-left'
+                  )}
+                >
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('common.patient')}</TableHead>
+                      <TableHead>{t('common.phone')}</TableHead>
+                      <TableHead>{t('patients.insurance_provider')}</TableHead>
+                      <TableHead>{t('patients.policy_number')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className={cn(isRTL ? 'text-left' : 'text-right')}>{t('table.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    ) : filteredInsuredPatients.length > 0 ? (
+                      filteredInsuredPatients.map((patient) => {
+                        // Check if patient has any pending/approved claims
+                        const patientClaims = claims.filter(c => c.patientId === patient.id);
+                        const approvedClaimsBalance = patientClaims
+                          .filter(c => c.status === 'Approved' && c.approvedAmount)
+                          .reduce((acc, c) => acc + parseFloat(c.approvedAmount!.replace(/[^0-9.-]+/g, '')), 0);
+                        
+                        return (
+                          <TableRow key={patient.id}>
+                            <TableCell className="font-medium">
+                              <div>{patient.name} {patient.lastName}</div>
+                              <div className="text-xs text-muted-foreground">{patient.email}</div>
+                            </TableCell>
+                            <TableCell dir="ltr">{patient.phone || t('common.na')}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+                                {patient.insuranceProvider}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{patient.policyNumber || t('common.na')}</TableCell>
+                            <TableCell>
+                              {approvedClaimsBalance > 0 ? (
+                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                  {formatEGP(approvedClaimsBalance, true, language)} {t('common.available')}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">
+                                  {t('common.no_balance')}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className={cn(isRTL ? 'text-left' : 'text-right')}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
+                                  <DropdownMenuItem onClick={() => window.location.href = `/patients?id=${patient.id}`}>
+                                    <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('insurance.view_patient')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => {
+                                      // Navigate to new claim with patient pre-selected
+                                      const claimButton = document.querySelector('[data-new-claim-trigger]') as HTMLButtonElement;
+                                      if (claimButton) claimButton.click();
+                                    }}
+                                    className="text-green-600"
+                                  >
+                                    <Plus className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('insurance.create_claim')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          {t('insurance.no_insured_patients')}
                         </TableCell>
                       </TableRow>
                     )}
