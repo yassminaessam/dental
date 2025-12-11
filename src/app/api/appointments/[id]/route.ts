@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AppointmentsService, type AppointmentUpdateInput } from '@/services/appointments';
+import { checkAndCreateInvoiceForCompletedTreatment } from '@/services/treatments';
 import type { Appointment } from '@/lib/types';
 
 const DATE_FIELDS: Array<keyof AppointmentUpdateInput> = [
@@ -38,10 +39,22 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
 
   const { id } = await context.params;
+  
+  // Get appointment before update to check if status is changing to Completed
+  const appointmentBefore = await AppointmentsService.get(id);
+  const wasCompleted = appointmentBefore?.status === 'Completed';
+  const willBeCompleted = patch.status === 'Completed';
+  
   await AppointmentsService.patch(id, patch);
   const updated = await AppointmentsService.get(id);
     if (!updated) {
       return NextResponse.json({ error: 'Appointment not found.' }, { status: 404 });
+    }
+
+    // If appointment was just marked as completed and belongs to a treatment,
+    // check if all treatment appointments are now completed
+    if (!wasCompleted && willBeCompleted && updated.treatmentId) {
+      await checkAndCreateInvoiceForCompletedTreatment(updated.treatmentId);
     }
 
     return NextResponse.json({ appointment: serializeAppointment(updated) });

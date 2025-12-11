@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { AppointmentsService, type AppointmentCreateInput } from '@/services/appointments';
+import { InvoicesService } from '@/services/invoices';
+import { syncInvoiceTransaction } from '@/services/transactions.server';
 import type { Appointment, AppointmentStatus, Treatment, TreatmentAppointment, TreatmentStatus } from '@/lib/types';
 
 // Inputs kept consistent with previous API layer
@@ -99,6 +101,106 @@ const mapPrismaStatusToTreatment = (status: PrismaTreatmentStatus): TreatmentSta
   return status === 'InProgress' ? 'In Progress' : status;
 };
 
+/**
+ * Parse cost string (e.g., "EGP 1,500" or "1500") to numeric value
+ */
+const parseCostToNumber = (cost: string): number => {
+  const match = cost.replace(/,/g, '').match(/[\d.]+/);
+  return match ? parseFloat(match[0]) : 0;
+};
+
+/**
+ * Automatically creates an invoice when a treatment is completed.
+ * This function checks if an invoice already exists for the treatment,
+ * and if not, creates one with the treatment cost as the invoice amount.
+ */
+async function autoCreateInvoiceForCompletedTreatment(
+  treatmentId: string,
+  previousStatus: TreatmentStatus,
+  newStatus: TreatmentStatus
+): Promise<void> {
+  // Only trigger when status changes TO 'Completed'
+  if (newStatus !== 'Completed' || previousStatus === 'Completed') {
+    return;
+  }
+
+  try {
+    // Check if invoice already exists for this treatment
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: { treatmentId },
+    });
+
+    if (existingInvoice) {
+      console.log(`[auto-invoice] Invoice already exists for treatment ${treatmentId}`);
+      return;
+    }
+
+    // Get full treatment details
+    const treatment = await prisma.treatment.findUnique({
+      where: { id: treatmentId },
+      include: { appointments: true },
+    });
+
+    if (!treatment || !treatment.patientId) {
+      console.log(`[auto-invoice] Cannot create invoice: treatment or patientId missing`);
+      return;
+    }
+
+    // Get patient details
+    const patient = await prisma.patient.findUnique({
+      where: { id: treatment.patientId },
+    });
+
+    if (!patient) {
+      console.log(`[auto-invoice] Cannot create invoice: patient not found`);
+      return;
+    }
+
+    // Parse cost from treatment
+    const amount = parseCostToNumber(treatment.cost);
+    if (amount <= 0) {
+      console.log(`[auto-invoice] Cannot create invoice: invalid cost amount`);
+      return;
+    }
+
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}`;
+
+    // Create the invoice
+    const invoice = await InvoicesService.create({
+      number: invoiceNumber,
+      patientId: treatment.patientId,
+      patientNameSnapshot: `${patient.name} ${patient.lastName ?? ''}`.trim(),
+      patientPhoneSnapshot: patient.phone,
+      treatmentId: treatment.id,
+      date: new Date(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      status: 'Sent', // Auto-created invoices are immediately sent
+      notes: `Auto-generated invoice for completed treatment: ${treatment.procedure}`,
+      amountPaid: 0,
+      items: [
+        {
+          description: treatment.procedure,
+          quantity: 1,
+          unitPrice: amount,
+        },
+      ],
+    });
+
+    // Sync with transactions
+    try {
+      await syncInvoiceTransaction(invoice);
+    } catch (error) {
+      console.error('[auto-invoice] Transaction sync error:', error);
+    }
+
+    console.log(`[auto-invoice] Successfully created invoice ${invoice.number} for treatment ${treatmentId}`);
+  } catch (error) {
+    console.error('[auto-invoice] Error creating invoice:', error);
+    // Don't throw - we don't want to fail the treatment update
+  }
+}
+
 const mapTreatmentRow = async (row: any): Promise<Treatment> => {
   // row is a Prisma Treatment with appointments included
   const appointments: TreatmentAppointment[] = (row.appointments || []).map((ap: any) => ({
@@ -193,6 +295,9 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
   const existing = await prisma.treatment.findUnique({ where: { id: input.id }, include: { appointments: true } });
   if (!existing) throw new Error(`Treatment not found: ${input.id}`);
 
+  // Get previous status for auto-invoice check
+  const previousStatus = mapPrismaStatusToTreatment(existing.status as PrismaTreatmentStatus);
+
   // Fetch existing linked appointments via service for consistent mapping
   const existingAppointments = await Promise.all(
     existing.appointments.map(async (ap) => AppointmentsService.get(ap.id))
@@ -238,6 +343,9 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
     include: { appointments: true },
   });
 
+  // Auto-create invoice when treatment is completed
+  await autoCreateInvoiceForCompletedTreatment(input.id, previousStatus, updatedStatus);
+
   return {
     id: updatedTreatment.id,
     date: updatedTreatment.createdAt.toISOString(),
@@ -261,6 +369,44 @@ async function remove(id: string): Promise<void> {
     }
   }
   await prisma.treatment.delete({ where: { id } }).catch(() => {});
+}
+
+/**
+ * Check if a treatment is now completed (all appointments completed)
+ * and automatically create an invoice if so.
+ * This is called when an appointment status is changed to Completed.
+ */
+export async function checkAndCreateInvoiceForCompletedTreatment(treatmentId: string): Promise<void> {
+  try {
+    const treatment = await prisma.treatment.findUnique({
+      where: { id: treatmentId },
+      include: { appointments: true },
+    });
+
+    if (!treatment) return;
+
+    // Check if all appointments are completed
+    const allCompleted = treatment.appointments.length > 0 && 
+      treatment.appointments.every((ap) => ap.status === 'Completed');
+
+    if (!allCompleted) return;
+
+    // Get the previous status before this might have made it complete
+    const previousStatus = mapPrismaStatusToTreatment(treatment.status as PrismaTreatmentStatus);
+    
+    // Update treatment status to Completed if not already
+    if (previousStatus !== 'Completed') {
+      await prisma.treatment.update({
+        where: { id: treatmentId },
+        data: { status: 'Completed' },
+      });
+    }
+
+    // Create invoice for the completed treatment
+    await autoCreateInvoiceForCompletedTreatment(treatmentId, previousStatus, 'Completed');
+  } catch (error) {
+    console.error('[checkAndCreateInvoiceForCompletedTreatment] Error:', error);
+  }
 }
 
 export const TreatmentsService = { list, get, create, update, remove };
