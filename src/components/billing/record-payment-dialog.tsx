@@ -332,20 +332,26 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
           </div>
         )}
 
-        {/* Insurance Balance Info */}
-        {hasInsuranceProvider && (
+        {/* Insurance Balance Info - Show when patient has insurance OR has approved claims */}
+        {(hasInsuranceProvider || canPayFromInsurance) && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
             <Shield className="h-5 w-5 text-cyan-600" />
             <div className="flex-1">
-              <p className="text-sm font-medium">{t('insurance.approved_claims_balance')}</p>
-              <p className="text-xs text-muted-foreground">{insuranceData?.insuranceProvider}</p>
+              <p className="text-sm font-medium">{t('insurance.insurance_balance')}</p>
+              {insuranceData?.insuranceProvider && (
+                <p className="text-xs text-muted-foreground">{insuranceData.insuranceProvider}</p>
+              )}
               <p className="text-lg font-bold text-cyan-600">
                 {new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US', { style: 'currency', currency: 'EGP' }).format(insuranceData?.totalApprovedBalance || 0)}
               </p>
             </div>
-            {canPayFromInsurance && (
+            {canPayFromInsurance ? (
               <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">
                 {insuranceData?.approvedClaims.length} {t('insurance.status.approved')}
+              </span>
+            ) : (
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                {t('common.no_balance')}
               </span>
             )}
           </div>
