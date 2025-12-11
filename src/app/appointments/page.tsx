@@ -364,19 +364,23 @@ export default function AppointmentsPage() {
                                   <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
                                     {t('appointments.menu.view_details')}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
+                                  <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)} disabled={appt.status === 'Completed'}>
                                     <Pencil className="mr-2 h-4 w-4" /> {t('appointments.menu.edit')}
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
-                                    {t('appointments.menu.mark_confirmed')}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
-                                    <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.complete')}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
-                                    {t('appointments.menu.cancel')}
-                                  </DropdownMenuItem>
+                                  {appt.status !== 'Completed' && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
+                                        {t('appointments.menu.mark_confirmed')}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
+                                        <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.complete')}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
+                                        {t('appointments.menu.cancel')}
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
@@ -496,22 +500,26 @@ export default function AppointmentsPage() {
                                     <DropdownMenuItem onClick={() => setAppointmentToView(appt)}>
                                       {t('appointments.menu.view_details')}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)}>
+                                    <DropdownMenuItem onClick={() => setAppointmentToEdit(appt)} disabled={appt.status === 'Completed'}>
                                       <Pencil className="mr-2 h-4 w-4" /> {t('appointments.menu.edit')}
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
-                                      {t('appointments.menu.mark_confirmed')}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
-                                      {t('appointments.menu.mark_pending')}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
-                                      <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.mark_completed')}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
-                                      {t('appointments.menu.mark_cancelled')}
-                                    </DropdownMenuItem>
+                                    {appt.status !== 'Completed' && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Confirmed')}>
+                                          {t('appointments.menu.mark_confirmed')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Pending')}>
+                                          {t('appointments.menu.mark_pending')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Completed')}>
+                                          <CheckCircle className="mr-2 h-4 w-4" /> {t('appointments.menu.mark_completed')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(appt.id, 'Cancelled')} className="text-destructive">
+                                          {t('appointments.menu.mark_cancelled')}
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </TableCell>
