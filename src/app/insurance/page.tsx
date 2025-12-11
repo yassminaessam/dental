@@ -55,6 +55,7 @@ import { EditProviderDialog } from '@/components/insurance/edit-provider-dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ApproveClaimDialog } from '@/components/insurance/approve-claim-dialog';
+import { AddBalanceDialog } from '@/components/insurance/add-balance-dialog';
 
 // Pricing structure for insurance provider
 export type ProcedurePricing = {
@@ -136,6 +137,7 @@ export default function InsurancePage() {
   const [patientDirectory, setPatientDirectory] = React.useState<Record<string, { phone?: string }>>({});
   const [insuredPatients, setInsuredPatients] = React.useState<Patient[]>([]);
   const [insuredPatientsSearchTerm, setInsuredPatientsSearchTerm] = React.useState('');
+  const [patientToAddBalance, setPatientToAddBalance] = React.useState<Patient | null>(null);
 
   const { toast } = useToast();
 
@@ -448,6 +450,46 @@ export default function InsurancePage() {
       });
     } catch(e) {
       toast({ title: t('insurance.toast.error_approving'), variant: 'destructive' });
+      throw e;
+    }
+  };
+
+  // Handle adding balance directly (creates an auto-approved claim)
+  const handleAddBalance = async (data: {
+    patientId: string;
+    patientName: string;
+    insuranceProvider: string;
+    amount: number;
+    notes: string;
+  }) => {
+    try {
+      const formattedAmount = `EGP ${data.amount.toFixed(2)}`;
+      const newClaim: Claim = {
+        id: `CLM-${Date.now()}`,
+        patient: data.patientName,
+        patientId: data.patientId,
+        insurance: data.insuranceProvider,
+        procedure: data.notes || 'Insurance Balance',
+        procedureCode: 'BAL-ADD',
+        amount: formattedAmount,
+        approvedAmount: formattedAmount,
+        status: 'Approved',
+        submitDate: new Date().toLocaleDateString(),
+        approvedDate: new Date().toLocaleDateString(),
+      };
+      
+      await setDocument('insurance-claims', newClaim.id, newClaim);
+      setClaims(prev => [newClaim, ...prev]);
+      
+      toast({ 
+        title: t('insurance.balance_added_success'), 
+        description: t('insurance.balance_added_desc', { 
+          amount: formattedAmount, 
+          patient: data.patientName 
+        })
+      });
+    } catch(e) {
+      toast({ title: t('insurance.error_adding_balance'), variant: 'destructive' });
       throw e;
     }
   };
@@ -929,12 +971,18 @@ export default function InsurancePage() {
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
+                                    onClick={() => setPatientToAddBalance(patient)}
+                                    className="text-green-600 font-medium"
+                                  >
+                                    <DollarSign className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('insurance.add_balance')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
                                     onClick={() => {
                                       // Navigate to new claim with patient pre-selected
                                       const claimButton = document.querySelector('[data-new-claim-trigger]') as HTMLButtonElement;
                                       if (claimButton) claimButton.click();
                                     }}
-                                    className="text-green-600"
                                   >
                                     <Plus className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                                     {t('insurance.create_claim')}
@@ -1312,6 +1360,18 @@ export default function InsurancePage() {
           procedure={claimToApprove.procedure}
           claimAmount={claimToApprove.amount}
           onApprove={handleApproveWithAmount}
+        />
+      )}
+
+      {patientToAddBalance && (
+        <AddBalanceDialog
+          open={!!patientToAddBalance}
+          onOpenChange={(isOpen) => !isOpen && setPatientToAddBalance(null)}
+          patientId={patientToAddBalance.id}
+          patientName={`${patientToAddBalance.name} ${patientToAddBalance.lastName || ''}`}
+          insuranceProvider={patientToAddBalance.insuranceProvider || ''}
+          policyNumber={patientToAddBalance.policyNumber}
+          onAddBalance={handleAddBalance}
         />
       )}
 

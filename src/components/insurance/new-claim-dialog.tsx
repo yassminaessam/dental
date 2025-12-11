@@ -88,6 +88,24 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
     }
   });
 
+  // Watch for patient selection to auto-fill insurance
+  const selectedPatientId = form.watch('patient');
+  
+  React.useEffect(() => {
+    if (selectedPatientId && patients.length > 0 && providers.length > 0) {
+      const selectedPatient = patients.find(p => p.id === selectedPatientId);
+      if (selectedPatient?.insuranceProvider && selectedPatient.insuranceProvider !== 'none') {
+        // Find the provider by name (since patient stores provider name, not ID)
+        const matchingProvider = providers.find(
+          p => p.name.toLowerCase() === selectedPatient.insuranceProvider?.toLowerCase()
+        );
+        if (matchingProvider) {
+          form.setValue('insurance', matchingProvider.id);
+        }
+      }
+    }
+  }, [selectedPatientId, patients, providers, form]);
+
   React.useEffect(() => {
     async function fetchData() {
         if (open) {
@@ -170,7 +188,7 @@ export function NewClaimDialog({ onSave }: NewClaimDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('patients.insurance_provider')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className={cn(isRTL ? 'justify-end text-right' : 'text-left')}>
                           <SelectValue placeholder={t('insurance.select_provider')} />

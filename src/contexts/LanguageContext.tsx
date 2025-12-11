@@ -1598,6 +1598,16 @@ const translations: Translations = {
   'insurance.patient_insurance_info': 'Patient Insurance Information',
   'insurance.view_patient': 'View Patient',
   'insurance.create_claim': 'Create Claim',
+  // Add Balance
+  'insurance.add_balance': 'Add Balance',
+  'insurance.add_balance_desc': 'Add insurance balance for this patient. The balance will be immediately available for payments.',
+  'insurance.balance_amount': 'Balance Amount',
+  'insurance.balance_notes_placeholder': 'e.g., Insurance coverage for dental procedures',
+  'insurance.will_add_balance': 'Balance to add',
+  'insurance.balance_auto_approved': 'This balance will be auto-approved and available immediately',
+  'insurance.error_adding_balance': 'Failed to add balance',
+  'insurance.balance_added_success': 'Insurance Balance Added',
+  'insurance.balance_added_desc': 'Insurance balance of {amount} has been added for {patient}',
   // Insurance Payment
   'insurance.pay_from_insurance': 'Pay from Insurance',
   'insurance.insurance_balance': 'Insurance Balance',
@@ -4369,6 +4379,16 @@ const translations: Translations = {
   'insurance.patient_insurance_info': 'معلومات تأمين المريض',
   'insurance.view_patient': 'عرض المريض',
   'insurance.create_claim': 'إنشاء مطالبة',
+  // Add Balance
+  'insurance.add_balance': 'إضافة رصيد',
+  'insurance.add_balance_desc': 'إضافة رصيد تأمين لهذا المريض. سيكون الرصيد متاحًا فورًا للمدفوعات.',
+  'insurance.balance_amount': 'مبلغ الرصيد',
+  'insurance.balance_notes_placeholder': 'مثال: تغطية تأمينية لإجراءات الأسنان',
+  'insurance.will_add_balance': 'الرصيد المراد إضافته',
+  'insurance.balance_auto_approved': 'سيتم اعتماد هذا الرصيد تلقائيًا وسيكون متاحًا فورًا',
+  'insurance.error_adding_balance': 'فشل في إضافة الرصيد',
+  'insurance.balance_added_success': 'تمت إضافة رصيد التأمين',
+  'insurance.balance_added_desc': 'تمت إضافة رصيد تأمين بمبلغ {amount} للمريض {patient}',
   // Insurance Payment (Arabic)
   'insurance.pay_from_insurance': 'الدفع من التأمين',
   'insurance.insurance_balance': 'رصيد التأمين',
