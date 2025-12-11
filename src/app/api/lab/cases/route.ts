@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { LabManagementService, LabCaseStatus, LabCasePriority } from '@/services/lab-management';
+import { InvoicesService } from '@/services/invoices';
 
 export async function GET(request: Request) {
   try {
@@ -37,7 +38,39 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const labCase = await LabManagementService.createCase(data);
+    let labCase = await LabManagementService.createCase(data);
+    
+    // Auto-create invoice if cost is provided
+    const cost = data.estimatedCost || data.actualCost;
+    if (cost && cost > 0 && data.patientId) {
+      try {
+        const invoice = await InvoicesService.create({
+          number: `INV-LAB-${Date.now()}`,
+          patientId: data.patientId,
+          patientNameSnapshot: data.patientName,
+          date: new Date(),
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+          status: 'Draft',
+          notes: `Lab Case: ${labCase.caseNumber} - ${data.caseType}${data.labName ? ` (${data.labName})` : ''}`,
+          items: [{
+            description: `Lab Work: ${data.caseType}${data.toothNumbers ? ` - Teeth: ${data.toothNumbers}` : ''}`,
+            quantity: 1,
+            unitPrice: cost,
+          }],
+          createdBy: data.createdBy,
+        });
+        
+        // Link the invoice to the lab case
+        labCase = await LabManagementService.updateCase({
+          id: labCase.id,
+          invoiceId: invoice.id,
+        });
+      } catch (invoiceError) {
+        console.error('Error creating invoice for lab case:', invoiceError);
+        // Don't fail the case creation if invoice fails
+      }
+    }
+    
     return NextResponse.json(labCase);
   } catch (error) {
     console.error('Error creating lab case:', error);
