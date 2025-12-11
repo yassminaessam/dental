@@ -43,12 +43,16 @@ const buildAppointmentDateTime = (appointment: TreatmentAppointmentInput): Date 
 const buildAppointmentCreateInput = (
   data: TreatmentCreateInput | TreatmentUpdateInput,
   appointment: TreatmentAppointmentInput,
-  treatmentId: string
+  treatmentId: string,
+  patientPhone?: string,
+  patientEmail?: string
 ): AppointmentCreateInput => ({
   id: appointment.appointmentId,
   dateTime: buildAppointmentDateTime(appointment),
   patient: data.patientName,
   patientId: data.patientId,
+  patientPhone,
+  patientEmail,
   doctor: data.doctorName,
   doctorId: data.doctorId,
   type: data.procedure,
@@ -59,11 +63,15 @@ const buildAppointmentCreateInput = (
 
 const buildAppointmentPatchInput = (
   data: TreatmentUpdateInput,
-  appointment: TreatmentAppointmentInput
+  appointment: TreatmentAppointmentInput,
+  patientPhone?: string,
+  patientEmail?: string
 ) => ({
   dateTime: buildAppointmentDateTime(appointment),
   patient: data.patientName,
   patientId: data.patientId,
+  patientPhone,
+  patientEmail,
   doctor: data.doctorName,
   doctorId: data.doctorId,
   type: data.procedure,
@@ -246,6 +254,18 @@ async function get(id: string): Promise<Treatment | null> {
 async function create(input: TreatmentCreateInput): Promise<Treatment> {
   const requestedStatus = input.status ?? 'Pending';
 
+  // Look up patient phone and email from the database
+  let patientPhone: string | undefined;
+  let patientEmail: string | undefined;
+  if (input.patientId) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: input.patientId },
+      select: { phone: true, email: true },
+    });
+    patientPhone = patient?.phone ?? undefined;
+    patientEmail = patient?.email ?? undefined;
+  }
+
   const treatment = await prisma.treatment.create({
     data: {
       patient: input.patientName,
@@ -262,7 +282,7 @@ async function create(input: TreatmentCreateInput): Promise<Treatment> {
   const createdAppointments: TreatmentAppointment[] = [];
   for (const ap of input.appointments) {
     const created = await AppointmentsService.create(
-      buildAppointmentCreateInput(input, ap, treatment.id)
+      buildAppointmentCreateInput(input, ap, treatment.id, patientPhone, patientEmail)
     );
     createdAppointments.push(normalizeAppointment(created, ap));
   }
@@ -298,6 +318,18 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
   // Get previous status for auto-invoice check
   const previousStatus = mapPrismaStatusToTreatment(existing.status as PrismaTreatmentStatus);
 
+  // Look up patient phone and email from the database
+  let patientPhone: string | undefined;
+  let patientEmail: string | undefined;
+  if (input.patientId) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: input.patientId },
+      select: { phone: true, email: true },
+    });
+    patientPhone = patient?.phone ?? undefined;
+    patientEmail = patient?.email ?? undefined;
+  }
+
   // Fetch existing linked appointments via service for consistent mapping
   const existingAppointments = await Promise.all(
     existing.appointments.map(async (ap) => AppointmentsService.get(ap.id))
@@ -315,12 +347,12 @@ async function update(input: TreatmentUpdateInput): Promise<Treatment> {
   const nextAppointments: TreatmentAppointment[] = [];
   for (const ap of input.appointments) {
     if (ap.appointmentId) {
-      await AppointmentsService.patch(ap.appointmentId, buildAppointmentPatchInput(input, ap));
+      await AppointmentsService.patch(ap.appointmentId, buildAppointmentPatchInput(input, ap, patientPhone, patientEmail));
       const updated = await AppointmentsService.get(ap.appointmentId);
       if (updated) nextAppointments.push(normalizeAppointment(updated, ap));
     } else {
       const created = await AppointmentsService.create(
-        buildAppointmentCreateInput(input, ap, input.id)
+        buildAppointmentCreateInput(input, ap, input.id, patientPhone, patientEmail)
       );
       nextAppointments.push(normalizeAppointment(created, ap));
     }
