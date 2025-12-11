@@ -735,11 +735,18 @@ export class PatientWalletService {
       });
     }
 
-    // Enrich wallets with patient info from lookup
+    // Enrich wallets with patient info from lookup and convert Decimal to number
     const enrichedWallets = wallets.map(wallet => {
       const patientInfo = patientInfoMap.get(wallet.patientId);
       return {
         ...wallet,
+        // Convert Prisma Decimal types to numbers for proper JSON serialization
+        balance: Number(wallet.balance),
+        totalDeposits: Number(wallet.totalDeposits),
+        totalWithdrawals: Number(wallet.totalWithdrawals),
+        totalPayments: Number(wallet.totalPayments),
+        totalRefunds: Number(wallet.totalRefunds),
+        lowBalanceAlert: wallet.lowBalanceAlert ? Number(wallet.lowBalanceAlert) : null,
         patientName: wallet.patientName || patientInfo?.name || null,
         patientPhone: wallet.patientPhone || patientInfo?.phone || null,
         patientEmail: wallet.patientEmail || patientInfo?.email || null,
