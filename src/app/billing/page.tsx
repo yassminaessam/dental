@@ -663,6 +663,12 @@ export default function BillingPage() {
         <p><strong>${t('common.last_modified_by')}:</strong> ${invoice.lastModifiedBy || t('common.na')}</p>
         <p><strong>${t('common.last_modified_at')}:</strong> ${invoice.lastModifiedAt || t('common.na')}</p>
       </div>
+      ${invoice.paymentMethod ? `
+      <div class="meta-card">
+        <h4>${t('billing.payment_method')}</h4>
+        <p style="font-weight: 600; color: #0f172a;">${invoice.paymentMethod}</p>
+      </div>
+      ` : ''}
     </div>
 
     <table>
@@ -1037,13 +1043,14 @@ export default function BillingPage() {
                   <TableHead>{t('billing.total_amount')}</TableHead>
                   <TableHead>{t('billing.amount_paid')}</TableHead>
                   <TableHead>{t('billing.status')}</TableHead>
+                  <TableHead>{t('billing.payment_method')}</TableHead>
                   <TableHead>{t('billing.source')}</TableHead>
                   <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                    <TableRow><TableCell colSpan={12} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={13} className="h-24 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></TableRow>
                 ) : filteredInvoices.length > 0 ? (
                   filteredInvoices.map((invoice) => {
                     const patient = resolvePatientRecord(invoice);
@@ -1087,6 +1094,13 @@ export default function BillingPage() {
                         >
                           {invoice.status === 'Paid' ? t('billing.paid') : invoice.status === 'Overdue' ? t('billing.overdue') : invoice.status === 'Partially Paid' ? t('billing.partial') : t('billing.unpaid')}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invoice.paymentMethod ? (
+                          <span className="text-sm">{invoice.paymentMethod}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">{t('common.na')}</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {invoice.treatmentId ? (
@@ -1134,7 +1148,7 @@ export default function BillingPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={12} className="h-24 text-center">
+                    <TableCell colSpan={13} className="h-24 text-center">
                       {t('billing.no_invoices_found')}
                     </TableCell>
                   </TableRow>

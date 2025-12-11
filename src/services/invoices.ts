@@ -176,6 +176,8 @@ async function update(input: InvoiceUpdateInput): Promise<Invoice> {
       notes: input.notes ?? existing.notes,
       amount,
       amountPaid: clampedAmountPaid,
+      lastModifiedBy: input.lastModifiedBy ?? existing.lastModifiedBy,
+      paymentMethod: input.paymentMethod ?? existing.paymentMethod,
       items: itemsMutation,
     },
     include: { items: true }
