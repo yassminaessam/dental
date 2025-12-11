@@ -49,6 +49,10 @@ import {
   Calendar,
   DollarSign,
   FlaskConical,
+  PlayCircle,
+  ClipboardCheck,
+  Truck,
+  XCircle,
 } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
 import {
@@ -56,6 +60,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -586,7 +592,7 @@ export default function LabManagementPage() {
                               <span className="sr-only">{t('table.actions')}</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem onClick={() => setCaseToView(labCase)}>
                               <Eye className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                               {t('common.view')}
@@ -595,12 +601,56 @@ export default function LabManagementPage() {
                               <Pencil className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                               {t('common.edit')}
                             </DropdownMenuItem>
-                            {labCase.status === 'Draft' && (
-                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Submitted')}>
-                                <Send className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                                {t('lab.send_to_lab')}
+                            
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">
+                              {t('lab.change_status')}
+                            </DropdownMenuLabel>
+                            
+                            {labCase.status !== 'Draft' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Draft')}>
+                                <FileText className={cn("h-4 w-4 text-gray-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.draft')}
                               </DropdownMenuItem>
                             )}
+                            {labCase.status !== 'Submitted' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Submitted')}>
+                                <Send className={cn("h-4 w-4 text-blue-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.submitted')}
+                              </DropdownMenuItem>
+                            )}
+                            {labCase.status !== 'InProgress' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'InProgress')}>
+                                <PlayCircle className={cn("h-4 w-4 text-amber-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.in_progress')}
+                              </DropdownMenuItem>
+                            )}
+                            {labCase.status !== 'QualityCheck' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'QualityCheck')}>
+                                <ClipboardCheck className={cn("h-4 w-4 text-purple-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.quality_check')}
+                              </DropdownMenuItem>
+                            )}
+                            {labCase.status !== 'Completed' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Completed')}>
+                                <CheckCircle2 className={cn("h-4 w-4 text-green-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.completed')}
+                              </DropdownMenuItem>
+                            )}
+                            {labCase.status !== 'Delivered' && labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Delivered')}>
+                                <Truck className={cn("h-4 w-4 text-emerald-500", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.delivered')}
+                              </DropdownMenuItem>
+                            )}
+                            {labCase.status !== 'Cancelled' && (
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(labCase.id, 'Cancelled')} className="text-red-500">
+                                <XCircle className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                {t('lab.status.cancelled')}
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setCaseToDelete(labCase)} className="text-destructive">
                               <Trash2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                               {t('common.delete')}
