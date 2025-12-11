@@ -718,7 +718,35 @@ export class PatientWalletService {
       prisma.patientWallet.count({ where }),
     ]);
 
-    return { wallets, total };
+    // Get patient IDs that need info lookup (missing name or phone)
+    const patientIdsNeedingLookup = wallets
+      .filter(w => !w.patientName || !w.patientPhone)
+      .map(w => w.patientId);
+
+    // Fetch patient info from Patient table for wallets missing info
+    const patientInfoMap = new Map<string, { name: string; phone: string | null; email: string | null }>();
+    if (patientIdsNeedingLookup.length > 0) {
+      const patients = await prisma.patient.findMany({
+        where: { id: { in: patientIdsNeedingLookup } },
+        select: { id: true, name: true, phone: true, email: true }
+      });
+      patients.forEach(p => {
+        patientInfoMap.set(p.id, { name: p.name, phone: p.phone, email: p.email });
+      });
+    }
+
+    // Enrich wallets with patient info from lookup
+    const enrichedWallets = wallets.map(wallet => {
+      const patientInfo = patientInfoMap.get(wallet.patientId);
+      return {
+        ...wallet,
+        patientName: wallet.patientName || patientInfo?.name || null,
+        patientPhone: wallet.patientPhone || patientInfo?.phone || null,
+        patientEmail: wallet.patientEmail || patientInfo?.email || null,
+      };
+    });
+
+    return { wallets: enrichedWallets, total };
   }
 
   /**
