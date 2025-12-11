@@ -3,14 +3,15 @@ import type { Appointment, AppointmentStatus } from '@/lib/types';
 import type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
 export type { AppointmentCreateInput, AppointmentUpdateInput } from '@/services/appointments.types';
 
-function mapRowToAppointment(row: any): Appointment {
+function mapRowToAppointment(row: any, patientPhoneLookup?: string): Appointment {
   return {
     id: row.id,
     dateTime: new Date(row.dateTime),
     patient: row.patient,
     patientId: row.patientId ?? undefined,
     patientEmail: row.patientEmail ?? undefined,
-    patientPhone: row.patientPhone ?? undefined,
+    // Use patientPhone from appointment if available, otherwise use lookup from Patient table
+    patientPhone: row.patientPhone ?? patientPhoneLookup ?? undefined,
     doctor: row.doctor,
     doctorId: row.doctorId ?? undefined,
     type: row.type,
@@ -33,12 +34,45 @@ function mapRowToAppointment(row: any): Appointment {
 
 async function get(id: string): Promise<Appointment | null> {
   const row = await prisma.appointment.findUnique({ where: { id } });
-  return row ? mapRowToAppointment(row) : null;
+  if (!row) return null;
+  
+  // If patientPhone is missing but we have patientId, look it up from Patient table
+  let patientPhoneLookup: string | undefined;
+  if (!row.patientPhone && row.patientId) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: row.patientId },
+      select: { phone: true }
+    });
+    patientPhoneLookup = patient?.phone ?? undefined;
+  }
+  
+  return mapRowToAppointment(row, patientPhoneLookup);
 }
 
 async function list(): Promise<Appointment[]> {
   const rows = await prisma.appointment.findMany({ orderBy: { dateTime: 'desc' } });
-  return rows.map(mapRowToAppointment);
+  
+  // Get all patient IDs that need phone lookup
+  const patientIdsNeedingLookup = rows
+    .filter(row => !row.patientPhone && row.patientId)
+    .map(row => row.patientId as string);
+  
+  // Fetch all patient phones in one query
+  const patientPhoneMap = new Map<string, string>();
+  if (patientIdsNeedingLookup.length > 0) {
+    const patients = await prisma.patient.findMany({
+      where: { id: { in: patientIdsNeedingLookup } },
+      select: { id: true, phone: true }
+    });
+    patients.forEach(p => {
+      if (p.phone) patientPhoneMap.set(p.id, p.phone);
+    });
+  }
+  
+  return rows.map(row => {
+    const lookupPhone = row.patientId ? patientPhoneMap.get(row.patientId) : undefined;
+    return mapRowToAppointment(row, lookupPhone);
+  });
 }
 
 async function create(input: AppointmentCreateInput): Promise<Appointment> {
@@ -131,7 +165,28 @@ async function updateStatus(
 
 async function listPending(): Promise<Appointment[]> {
   const rows = await prisma.appointment.findMany({ where: { status: 'Pending' as any }, orderBy: { dateTime: 'asc' } });
-  return rows.map(mapRowToAppointment);
+  
+  // Get all patient IDs that need phone lookup
+  const patientIdsNeedingLookup = rows
+    .filter(row => !row.patientPhone && row.patientId)
+    .map(row => row.patientId as string);
+  
+  // Fetch all patient phones in one query
+  const patientPhoneMap = new Map<string, string>();
+  if (patientIdsNeedingLookup.length > 0) {
+    const patients = await prisma.patient.findMany({
+      where: { id: { in: patientIdsNeedingLookup } },
+      select: { id: true, phone: true }
+    });
+    patients.forEach(p => {
+      if (p.phone) patientPhoneMap.set(p.id, p.phone);
+    });
+  }
+  
+  return rows.map(row => {
+    const lookupPhone = row.patientId ? patientPhoneMap.get(row.patientId) : undefined;
+    return mapRowToAppointment(row, lookupPhone);
+  });
 }
 
 async function remove(id: string): Promise<void> {
