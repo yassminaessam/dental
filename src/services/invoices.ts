@@ -20,11 +20,14 @@ export interface InvoiceCreateInput {
   notes?: string;
   items: InvoiceItemInput[];
   amountPaid?: number;
+  createdBy?: string;
+  paymentMethod?: string;
 }
 
 export interface InvoiceUpdateInput extends Partial<Omit<InvoiceCreateInput, 'number' | 'date' | 'items'>> {
   id: string;
   items?: InvoiceItemInput[]; // allow replacing items set
+  lastModifiedBy?: string;
 }
 
 export interface InvoiceItem {
@@ -50,6 +53,9 @@ export interface Invoice {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  createdBy?: string;
+  lastModifiedBy?: string;
+  paymentMethod?: string;
   items: InvoiceItem[];
 }
 
@@ -80,6 +86,9 @@ function mapRow(row: any): Invoice {
     notes: row.notes ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    createdBy: row.createdBy ?? undefined,
+    lastModifiedBy: row.lastModifiedBy ?? undefined,
+    paymentMethod: row.paymentMethod ?? undefined,
     items: (row.items || []).map((it: any) => ({
       id: it.id,
       description: it.description,
@@ -116,6 +125,8 @@ async function create(input: InvoiceCreateInput): Promise<Invoice> {
       amountPaid: initialAmountPaid,
       status: input.status ?? 'Draft',
       notes: input.notes ?? null,
+      createdBy: input.createdBy ?? null,
+      paymentMethod: input.paymentMethod ?? null,
       items: {
         create: input.items.map(it => ({
           description: it.description,
@@ -188,6 +199,8 @@ async function patch(id: string, data: Partial<InvoiceUpdateInput>): Promise<Inv
       status: data.status ?? existing.status,
       notes: data.notes ?? existing.notes,
       amountPaid: clampedAmountPaid,
+      lastModifiedBy: data.lastModifiedBy ?? existing.lastModifiedBy,
+      paymentMethod: data.paymentMethod ?? existing.paymentMethod,
     },
     include: { items: true }
   });

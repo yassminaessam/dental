@@ -75,6 +75,7 @@ export type Invoice = {
   createdAt?: string; // Timestamp when invoice was created
   lastModifiedBy?: string; // User who last modified the invoice
   lastModifiedAt?: string; // Timestamp when invoice was last modified
+  paymentMethod?: string; // Payment method used
 };
 
 export default function BillingPage() {
@@ -176,7 +177,11 @@ export default function BillingPage() {
                 totalAmount,
                 amountPaid: normalizedAmountPaid,
                 items: invoice.items || [],
+                createdBy: invoice.createdBy || undefined,
                 createdAt: invoice.createdAt ? new Date(invoice.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+                lastModifiedBy: invoice.lastModifiedBy || undefined,
+                lastModifiedAt: invoice.updatedAt ? new Date(invoice.updatedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US') : '',
+                paymentMethod: invoice.paymentMethod || undefined,
               };
             });
 
@@ -342,6 +347,7 @@ export default function BillingPage() {
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           status: 'Draft',
           notes: `Generated from treatment: ${treatment.procedure} on ${treatment.date}`,
+          createdBy: user ? `${user.firstName} ${user.lastName}` : undefined,
           items: [{
             description: treatment.procedure,
             quantity: 1,
@@ -511,7 +517,7 @@ export default function BillingPage() {
     }
   };
 
-  const handleRecordPayment = async (invoiceId: string, paymentAmount: number) => {
+  const handleRecordPayment = async (invoiceId: string, paymentAmount: number, paymentMethod?: string) => {
     try {
       const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId);
       if (!invoiceToUpdate) return;
@@ -520,6 +526,7 @@ export default function BillingPage() {
       // Use 'Paid' if fully paid, otherwise 'Sent' (since API doesn't support 'Partially Paid')
       const apiStatus = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Sent';
       const displayStatus: Invoice['status'] = newAmountPaid >= invoiceToUpdate.totalAmount ? 'Paid' : 'Partially Paid';
+      const currentUserName = user ? `${user.firstName} ${user.lastName}` : undefined;
       
       // Update via Neon API
       const response = await fetch(`/api/invoices/${invoiceId}`, {
@@ -528,9 +535,11 @@ export default function BillingPage() {
         body: JSON.stringify({
           status: apiStatus,
           amountPaid: newAmountPaid,
+          lastModifiedBy: currentUserName,
+          paymentMethod: paymentMethod || invoiceToUpdate.paymentMethod,
           notes: invoiceToUpdate.notes 
-            ? `${invoiceToUpdate.notes}\nPayment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`
-            : `Payment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}`,
+            ? `${invoiceToUpdate.notes}\nPayment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}${paymentMethod ? ` (${paymentMethod})` : ''}`
+            : `Payment recorded: ${paymentAmount} EGP on ${new Date().toLocaleDateString()}${paymentMethod ? ` (${paymentMethod})` : ''}`,
         }),
       });
 
@@ -541,7 +550,8 @@ export default function BillingPage() {
       const updatedData = { 
         amountPaid: newAmountPaid, 
         status: displayStatus,
-        lastModifiedBy: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        paymentMethod: paymentMethod || invoiceToUpdate.paymentMethod,
+        lastModifiedBy: currentUserName || 'Unknown User',
         lastModifiedAt: new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
       };
       

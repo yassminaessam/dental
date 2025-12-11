@@ -399,6 +399,9 @@ model Invoice {
   notes                String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  createdBy            String?
+  lastModifiedBy       String?
+  paymentMethod        String?
   patientNameSnapshot  String?
   patientPhoneSnapshot String?
   amountPaid           Decimal       @default(0) @db.Decimal(12, 2)

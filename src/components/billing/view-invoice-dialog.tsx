@@ -113,6 +113,14 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
       <p>{invoice.lastModifiedAt || t('common.na')}</p>
         </div>
         </div>
+        
+        {/* Payment Method */}
+        {invoice.paymentMethod && (
+        <div className="py-4 border-t border-border">
+          <h4 className="font-semibold text-muted-foreground">{t('billing.payment_method')}</h4>
+          <p className="font-medium">{invoice.paymentMethod}</p>
+        </div>
+        )}
         <Table>
         <TableHeader>
             <TableRow>

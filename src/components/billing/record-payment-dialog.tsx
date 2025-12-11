@@ -296,7 +296,9 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
       return;
     }
 
-    onSave(invoice.id, data.amount);
+    // Get the readable payment method name from the translation key
+    const paymentMethodName = t(data.paymentMethod).replace('billing.payment_method_', '');
+    onSave(invoice.id, data.amount, paymentMethodName);
   };
 
   const canPayFromWallet = walletData && walletData.isActive && walletData.balance >= amountDue;

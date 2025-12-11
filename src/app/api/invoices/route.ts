@@ -24,6 +24,8 @@ const parseCreatePayload = async (request: Request): Promise<InvoiceCreateInput>
     status: body.status,
     notes: body.notes,
     amountPaid: amountPaid ?? 0,
+    createdBy: typeof body.createdBy === 'string' ? body.createdBy : undefined,
+    paymentMethod: typeof body.paymentMethod === 'string' ? body.paymentMethod : undefined,
     items: body.items.map((it: any) => ({
       description: String(it.description),
       quantity: Number(it.quantity),

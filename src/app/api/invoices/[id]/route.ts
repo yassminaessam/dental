@@ -32,6 +32,8 @@ const parsePatchPayload = async (request: Request, id: string): Promise<InvoiceU
     status: body.status,
     notes: body.notes,
     amountPaid,
+    lastModifiedBy: typeof body.lastModifiedBy === 'string' ? body.lastModifiedBy : undefined,
+    paymentMethod: typeof body.paymentMethod === 'string' ? body.paymentMethod : undefined,
     items: Array.isArray(body.items)
       ? body.items.map((it: any) => ({
           description: String(it.description),
