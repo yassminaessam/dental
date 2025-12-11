@@ -490,6 +490,15 @@ export default function BillingPage() {
         )
       );
 
+      // Update the insurance claims state to reflect the applied status
+      setInsuranceClaims(prev => 
+        prev.map(c => 
+          c.id === claimId 
+            ? { ...c, statusReason: t('insurance.applied_to_account') }
+            : c
+        )
+      );
+
       toast({
         title: t('billing.toast.insurance_applied'),
         description: `${formatEGP(creditToApply, true, language)} ${t('billing.amount_paid')} - ${oldestInvoice.id}`,
