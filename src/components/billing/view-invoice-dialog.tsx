@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Invoice } from '@/app/billing/page';
 import type { Patient } from '@/app/patients/page';
-import { Printer, Calendar, CreditCard, User, Clock, FileText, Phone, Hash, Building2 } from 'lucide-react';
+import { Printer, CreditCard, FileText, Phone, Hash, Building2 } from 'lucide-react';
 import { DentalProLogo } from '../icons';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
@@ -79,24 +79,174 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
     if (typeof window === 'undefined') return;
     const content = document.getElementById(`printable-invoice-${invoice.id}`);
     if (content) {
-      const printWindow = window.open('', '', 'height=800,width=800');
-      printWindow?.document.write(`<html><head><title>${t('billing.print_invoice')}</title>`);
-
-      // copy styles from parent window
-      const styles = Array.from(document.styleSheets)
-        .map((style) => style.href ? `<link rel="stylesheet" href="${style.href}">` : `<style>${Array.from(style.cssRules).map(rule => rule.cssText).join('')}</style>`)
-        .join('\n');
+      const printWindow = window.open('', '', 'height=842,width=595');
+      const logoUrl = clinicLogo ? getClientFtpProxyUrl(clinicLogo) : '';
       
-      printWindow?.document.write(styles);
-      printWindow?.document.write('</head><body class="bg-white">');
-      printWindow?.document.write(content.innerHTML);
-      printWindow?.document.write('</body></html>');
+      printWindow?.document.write(`<!DOCTYPE html>
+<html lang="${language}" dir="${isRTL ? 'rtl' : 'ltr'}">
+<head>
+  <meta charset="utf-8" />
+  <title>${t('billing.print_invoice')} - ${invoice.id}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      font-size: 11px; 
+      line-height: 1.4; 
+      color: #1a1a1a;
+      background: white;
+    }
+    .invoice-container { max-width: 100%; padding: 0; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e5e5e5; }
+    .logo-section { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; border: 1px solid #e5e5e5; }
+    .clinic-name { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+    .invoice-label { font-size: 10px; color: #666; margin-top: 2px; }
+    .invoice-meta { text-align: ${isRTL ? 'left' : 'right'}; }
+    .invoice-number { font-size: 14px; font-weight: 700; font-family: monospace; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+    .status-paid { background: #dcfce7; color: #166534; }
+    .status-unpaid { background: #f3f4f6; color: #374151; }
+    .status-partial { background: #fef3c7; color: #92400e; }
+    .status-overdue { background: #fee2e2; color: #991b1b; }
+    
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    .info-box { padding: 12px; border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; }
+    .info-box-title { font-size: 9px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .info-box-content { font-size: 11px; }
+    .info-box-content strong { font-size: 13px; display: block; margin-bottom: 3px; }
+    .info-row { display: flex; justify-content: space-between; margin-top: 4px; }
+    
+    .payment-method { margin-bottom: 15px; padding: 10px 12px; border: 1px solid #0891b2; border-radius: 8px; background: #ecfeff; }
+    .payment-method-title { font-size: 9px; font-weight: 600; text-transform: uppercase; color: #0e7490; margin-bottom: 4px; }
+    .payment-method-value { font-size: 13px; font-weight: 600; color: #164e63; }
+    
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th { background: #f3f4f6; padding: 8px 10px; font-size: 9px; font-weight: 600; text-transform: uppercase; text-align: ${isRTL ? 'right' : 'left'}; border-bottom: 2px solid #e5e5e5; }
+    th:nth-child(2) { text-align: center; }
+    th:nth-child(3), th:nth-child(4) { text-align: ${isRTL ? 'left' : 'right'}; }
+    td { padding: 8px 10px; font-size: 11px; border-bottom: 1px solid #e5e5e5; }
+    td:nth-child(2) { text-align: center; }
+    td:nth-child(3), td:nth-child(4) { text-align: ${isRTL ? 'left' : 'right'}; }
+    tr:nth-child(even) { background: #fafafa; }
+    
+    .summary { margin-${isRTL ? 'right' : 'left'}: auto; width: 200px; }
+    .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 11px; }
+    .summary-row.total { border-top: 2px solid #1a1a1a; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
+    .amount-due { color: #dc2626; }
+    .amount-paid-color { color: #16a34a; }
+    
+    .audit-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 9px; color: #666; }
+    .audit-item span { display: block; }
+    .audit-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    
+    .notes { margin-top: 15px; padding: 10px; border: 1px solid #e5e5e5; border-radius: 6px; background: #fafafa; }
+    .notes-title { font-size: 9px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 4px; }
+    .notes-content { font-size: 10px; white-space: pre-wrap; }
+    
+    .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e5e5; text-align: center; }
+    .footer p { font-size: 10px; color: #666; }
+    .footer .clinic { font-size: 9px; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="logo-section">
+        ${logoUrl ? `<img src="${logoUrl}" alt="${displayClinicName}" class="logo" />` : ''}
+        <div>
+          <div class="clinic-name">${displayClinicName}</div>
+          <div class="invoice-label">${t('billing.invoice')}</div>
+        </div>
+      </div>
+      <div class="invoice-meta">
+        <div class="invoice-number">#${invoice.id}</div>
+        <div class="status-badge status-${invoice.status.toLowerCase().replace(' ', '-')}">${
+          invoice.status === 'Paid' ? t('billing.paid') : 
+          invoice.status === 'Overdue' ? t('billing.overdue') : 
+          invoice.status === 'Partially Paid' ? t('billing.partial') : t('billing.unpaid')
+        }</div>
+      </div>
+    </div>
+    
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-box-title">${t('billing.bill_to')}</div>
+        <div class="info-box-content">
+          <strong>${invoice.patient}</strong>
+          ${invoice.patientId ? `<div>${t('patients.patient_id')}: ${invoice.patientId}</div>` : ''}
+          ${resolvedPhone ? `<div>${t('common.phone')}: <span dir="ltr">${resolvedPhone}</span></div>` : ''}
+        </div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-title">${t('billing.dates')}</div>
+        <div class="info-box-content">
+          <div class="info-row"><span>${t('billing.issue_date')}:</span><span>${invoice.issueDate || t('common.na')}</span></div>
+          <div class="info-row"><span>${t('billing.due_date')}:</span><span>${invoice.dueDate || t('common.na')}</span></div>
+        </div>
+      </div>
+    </div>
+    
+    ${invoice.paymentMethod ? `
+    <div class="payment-method">
+      <div class="payment-method-title">${t('billing.payment_method')}</div>
+      <div class="payment-method-value">${invoice.paymentMethod}</div>
+    </div>
+    ` : ''}
+    
+    <table>
+      <thead>
+        <tr>
+          <th>${t('billing.service_product')}</th>
+          <th>${t('billing.quantity')}</th>
+          <th>${t('billing.unit_price')}</th>
+          <th>${t('common.total')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${invoice.items.map(item => `
+          <tr>
+            <td>${item.description}</td>
+            <td>${item.quantity}</td>
+            <td>${currency.format(item.unitPrice)}</td>
+            <td>${currency.format(item.quantity * item.unitPrice)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    
+    <div class="summary">
+      <div class="summary-row"><span>${t('billing.subtotal')}:</span><span>${currency.format(invoice.totalAmount)}</span></div>
+      <div class="summary-row"><span>${t('billing.amount_paid')}:</span><span class="amount-paid-color">- ${currency.format(invoice.amountPaid)}</span></div>
+      <div class="summary-row total"><span>${t('billing.amount_due')}:</span><span class="${amountDue > 0 ? 'amount-due' : 'amount-paid-color'}">${currency.format(amountDue)}</span></div>
+    </div>
+    
+    <div class="audit-info">
+      <div class="audit-item"><span class="audit-label">${t('common.created_by')}:</span><span>${invoice.createdBy || t('common.na')}</span><span>${invoice.createdAt || ''}</span></div>
+      <div class="audit-item"><span class="audit-label">${t('common.last_modified_by')}:</span><span>${invoice.lastModifiedBy || t('common.na')}</span><span>${invoice.lastModifiedAt || ''}</span></div>
+    </div>
+    
+    ${invoice.notes ? `
+    <div class="notes">
+      <div class="notes-title">${t('common.notes')}</div>
+      <div class="notes-content">${invoice.notes}</div>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+      <p>${t('billing.thank_you_message')}</p>
+      <p class="clinic">${displayClinicName}</p>
+    </div>
+  </div>
+</body>
+</html>`);
       printWindow?.document.close();
       printWindow?.focus();
       setTimeout(() => {
         printWindow?.print();
         printWindow?.close();
-      }, 250);
+      }, 300);
     }
   };
 
@@ -110,13 +260,13 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   const getStatusBadge = (status: Invoice['status']) => {
     switch (status) {
       case 'Paid':
-        return <Badge variant="success" className="text-sm">{t('billing.paid')}</Badge>;
+        return <Badge variant="success" className="text-xs">{t('billing.paid')}</Badge>;
       case 'Overdue':
-        return <Badge variant="destructive" className="text-sm">{t('billing.overdue')}</Badge>;
+        return <Badge variant="destructive" className="text-xs">{t('billing.overdue')}</Badge>;
       case 'Partially Paid':
-        return <Badge variant="warning" className="text-sm">{t('billing.partial')}</Badge>;
+        return <Badge variant="warning" className="text-xs">{t('billing.partial')}</Badge>;
       default:
-        return <Badge variant="secondary" className="text-sm">{t('billing.unpaid')}</Badge>;
+        return <Badge variant="secondary" className="text-xs">{t('billing.unpaid')}</Badge>;
     }
   };
 
@@ -125,233 +275,166 @@ export function ViewInvoiceDialog({ invoice, open, onOpenChange, patients = [] }
   const InvoiceContent = () => (
     <div
       id={`printable-invoice-${invoice.id}`}
-      className="px-4 sm:px-8 py-6 print:px-6"
+      className="px-4 py-4 text-sm"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {/* Header with Logo and Invoice Info */}
-      <div className="relative mb-8">
-        {/* Decorative background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-2xl -z-10"></div>
+      <div className="flex items-start justify-between gap-3 mb-4 pb-3 border-b-2 border-border">
+        {/* Logo and Clinic Name */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden">
+            {isHydrated && clinicLogo ? (
+              <Image
+                src={getClientFtpProxyUrl(clinicLogo)}
+                alt={displayClinicName}
+                width={48}
+                height={48}
+                className="object-contain w-full h-full"
+                unoptimized
+              />
+            ) : (
+              <DentalProLogo className="h-8 w-8 text-primary" />
+            )}
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground">{displayClinicName}</h2>
+            <p className="text-xs text-muted-foreground">{t('billing.invoice')}</p>
+          </div>
+        </div>
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl border border-border/50 bg-gradient-to-br from-background to-muted/20">
-          {/* Logo and Clinic Name */}
-          <div className="flex items-center gap-4">
-            <div className="relative shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl blur-sm"></div>
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-background border-2 border-primary/20 flex items-center justify-center overflow-hidden shadow-lg">
-                {isHydrated && clinicLogo ? (
-                  <Image
-                    src={getClientFtpProxyUrl(clinicLogo)}
-                    alt={displayClinicName}
-                    width={80}
-                    height={80}
-                    className="object-contain w-full h-full p-1"
-                    unoptimized
-                  />
-                ) : (
-                  <DentalProLogo className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
-                )}
-              </div>
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {displayClinicName}
-              </h2>
-              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                <FileText className="h-3.5 w-3.5" />
-                {t('billing.invoice')}
-              </p>
-            </div>
-          </div>
-          
-          {/* Invoice Number and Status */}
-          <div className={cn("flex flex-col gap-2", isRTL ? "sm:items-start" : "sm:items-end")}>
-            <div className="flex items-center gap-2">
-              <Hash className="h-4 w-4 text-muted-foreground" />
-              <span className="font-mono text-lg font-bold text-foreground">{invoice.id}</span>
-            </div>
-            {getStatusBadge(invoice.status)}
-          </div>
+        {/* Invoice Number and Status */}
+        <div className={cn("flex flex-col gap-1", isRTL ? "items-start" : "items-end")}>
+          <span className="font-mono text-sm font-bold">#{invoice.id}</span>
+          {getStatusBadge(invoice.status)}
         </div>
       </div>
 
-      {/* Dates and Bill To Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+      {/* Info Grid - 2 columns */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {/* Bill To */}
-        <div className="p-4 rounded-xl border border-border/50 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-950/20 dark:to-transparent">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-blue-500/10">
-              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h4 className="font-semibold text-blue-700 dark:text-blue-300">{t('billing.bill_to')}</h4>
-          </div>
-          <div className="space-y-2">
-            <p className="font-medium text-foreground text-lg">{invoice.patient}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Hash className="h-3.5 w-3.5" />
-              {t('patients.patient_id')}: <span className="font-mono">{invoice.patientId || t('common.na')}</span>
+        <div className="p-3 rounded-lg border border-border bg-muted/30">
+          <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t('billing.bill_to')}</h4>
+          <p className="font-semibold text-sm">{invoice.patient}</p>
+          {invoice.patientId && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Hash className="h-3 w-3" />{invoice.patientId}
             </p>
-            {resolvedPhone && (
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5" />
-                {t('common.phone')}: <span dir="ltr" className="font-mono tracking-tight">{resolvedPhone}</span>
-              </p>
-            )}
-          </div>
+          )}
+          {resolvedPhone && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Phone className="h-3 w-3" /><span dir="ltr">{resolvedPhone}</span>
+            </p>
+          )}
         </div>
 
         {/* Dates */}
-        <div className="p-4 rounded-xl border border-border/50 bg-gradient-to-br from-emerald-50/50 to-transparent dark:from-emerald-950/20 dark:to-transparent">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10">
-              <Calendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h4 className="font-semibold text-emerald-700 dark:text-emerald-300">{t('billing.dates')}</h4>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t('billing.issue_date')}:</span>
+        <div className="p-3 rounded-lg border border-border bg-muted/30">
+          <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t('billing.dates')}</h4>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('billing.issue_date')}:</span>
               <span className="font-medium">{invoice.issueDate || t('common.na')}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t('billing.due_date')}:</span>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('billing.due_date')}:</span>
               <span className="font-medium">{invoice.dueDate || t('common.na')}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Audit Trail Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-        {/* Created Info */}
-        <div className="p-4 rounded-xl border border-border/50 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-950/20 dark:to-transparent">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-purple-500/10">
-              <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h4 className="font-semibold text-purple-700 dark:text-purple-300">{t('common.created_by')}</h4>
-          </div>
-          <div className="space-y-2">
-            <p className="font-medium">{invoice.createdBy || t('common.na')}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5" />
-              {invoice.createdAt || t('common.na')}
-            </p>
-          </div>
-        </div>
-
-        {/* Modified Info */}
-        <div className="p-4 rounded-xl border border-border/50 bg-gradient-to-br from-orange-50/50 to-transparent dark:from-orange-950/20 dark:to-transparent">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-orange-500/10">
-              <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-            </div>
-            <h4 className="font-semibold text-orange-700 dark:text-orange-300">{t('common.last_modified_by')}</h4>
-          </div>
-          <div className="space-y-2">
-            <p className="font-medium">{invoice.lastModifiedBy || t('common.na')}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5" />
-              {invoice.lastModifiedAt || t('common.na')}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Method */}
+      {/* Payment Method - Always show if exists */}
       {invoice.paymentMethod && (
-        <div className="mb-8 p-4 rounded-xl border border-border/50 bg-gradient-to-br from-cyan-50/50 to-transparent dark:from-cyan-950/20 dark:to-transparent">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 rounded-lg bg-cyan-500/10">
-              <CreditCard className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-            </div>
-            <h4 className="font-semibold text-cyan-700 dark:text-cyan-300">{t('billing.payment_method')}</h4>
+        <div className="mb-4 p-3 rounded-lg border border-cyan-500/50 bg-cyan-50/50 dark:bg-cyan-950/20">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-cyan-600" />
+            <span className="text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 uppercase">{t('billing.payment_method')}:</span>
+            <span className="font-semibold text-cyan-800 dark:text-cyan-200">{invoice.paymentMethod}</span>
           </div>
-          <p className="font-medium text-lg">{invoice.paymentMethod}</p>
         </div>
       )}
 
-      {/* Items Table */}
-      <div className="mb-8 rounded-xl border border-border/50 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-3 border-b border-border/50">
-          <h4 className="font-semibold flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {t('billing.invoice_items')}
-          </h4>
-        </div>
+      {/* Items Table - Compact */}
+      <div className="mb-4 rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="font-semibold">{t('billing.service_product')}</TableHead>
-              <TableHead className="text-center font-semibold">{t('billing.quantity')}</TableHead>
-              <TableHead className={cn("font-semibold", isRTL ? "text-left" : "text-right")}>{t('billing.unit_price')}</TableHead>
-              <TableHead className={cn("font-semibold", isRTL ? "text-left" : "text-right")}>{t('common.total')}</TableHead>
+            <TableRow className="bg-muted/50">
+              <TableHead className="text-[10px] font-semibold py-2">{t('billing.service_product')}</TableHead>
+              <TableHead className="text-[10px] font-semibold text-center py-2">{t('billing.quantity')}</TableHead>
+              <TableHead className={cn("text-[10px] font-semibold py-2", isRTL ? "text-left" : "text-right")}>{t('billing.unit_price')}</TableHead>
+              <TableHead className={cn("text-[10px] font-semibold py-2", isRTL ? "text-left" : "text-right")}>{t('common.total')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {invoice.items.map((item, index) => (
-              <TableRow key={item.id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                <TableCell className="font-medium">{item.description}</TableCell>
-                <TableCell className="text-center">{item.quantity}</TableCell>
-                <TableCell className={isRTL ? "text-left" : "text-right"}>{currency.format(item.unitPrice)}</TableCell>
-                <TableCell className={cn("font-medium", isRTL ? "text-left" : "text-right")}>{currency.format(item.quantity * item.unitPrice)}</TableCell>
+              <TableRow key={item.id} className={index % 2 === 0 ? '' : 'bg-muted/20'}>
+                <TableCell className="py-2 text-xs">{item.description}</TableCell>
+                <TableCell className="py-2 text-xs text-center">{item.quantity}</TableCell>
+                <TableCell className={cn("py-2 text-xs", isRTL ? "text-left" : "text-right")}>{currency.format(item.unitPrice)}</TableCell>
+                <TableCell className={cn("py-2 text-xs font-medium", isRTL ? "text-left" : "text-right")}>{currency.format(item.quantity * item.unitPrice)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      {/* Summary Section */}
-      <div className="flex justify-end">
-        <div className="w-full sm:w-80 space-y-3 p-4 rounded-xl border border-border/50 bg-gradient-to-br from-muted/30 to-muted/10">
-          <div className="flex justify-between items-center text-sm">
+      {/* Summary Section - Compact */}
+      <div className="flex justify-end mb-4">
+        <div className="w-48 space-y-1 p-3 rounded-lg border border-border bg-muted/30">
+          <div className="flex justify-between items-center text-xs">
             <span className="text-muted-foreground">{t('billing.subtotal')}:</span>
             <span className="font-medium">{currency.format(invoice.totalAmount)}</span>
           </div>
-          <div className="flex justify-between items-center text-sm">
+          <div className="flex justify-between items-center text-xs">
             <span className="text-muted-foreground">{t('billing.amount_paid')}:</span>
-            <span className="font-medium text-green-600 dark:text-green-400">- {currency.format(invoice.amountPaid)}</span>
+            <span className="font-medium text-green-600">- {currency.format(invoice.amountPaid)}</span>
           </div>
-          <Separator />
+          <Separator className="my-1" />
           <div className="flex justify-between items-center">
-            <span className="font-bold text-lg">{t('billing.amount_due')}:</span>
-            <span className={cn(
-              "font-bold text-xl",
-              amountDue > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
-            )}>
+            <span className="font-bold text-xs">{t('billing.amount_due')}:</span>
+            <span className={cn("font-bold text-sm", amountDue > 0 ? "text-red-600" : "text-green-600")}>
               {currency.format(amountDue)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Audit Info - Compact grid */}
+      <div className="grid grid-cols-2 gap-2 mb-4 text-[10px] text-muted-foreground">
+        <div>
+          <span className="font-semibold uppercase">{t('common.created_by')}:</span> {invoice.createdBy || t('common.na')}
+          {invoice.createdAt && <span className="block">{invoice.createdAt}</span>}
+        </div>
+        <div>
+          <span className="font-semibold uppercase">{t('common.last_modified_by')}:</span> {invoice.lastModifiedBy || t('common.na')}
+          {invoice.lastModifiedAt && <span className="block">{invoice.lastModifiedAt}</span>}
+        </div>
+      </div>
+
+      {/* Notes - Compact */}
       {invoice.notes && (
-        <div className="mt-8 p-4 rounded-xl border border-border/50 bg-muted/20">
-          <h4 className="font-semibold text-muted-foreground mb-2">{t('common.notes')}:</h4>
-          <p className="text-sm whitespace-pre-wrap">{invoice.notes}</p>
+        <div className="mb-4 p-2 rounded-lg border border-border bg-muted/20">
+          <h4 className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{t('common.notes')}</h4>
+          <p className="text-xs whitespace-pre-wrap">{invoice.notes}</p>
         </div>
       )}
 
       {/* Footer */}
-      <div className="mt-8 pt-4 border-t border-border/50 text-center">
-        <p className="text-xs text-muted-foreground">
-          {t('billing.thank_you_message')}
+      <div className="pt-3 border-t border-border text-center">
+        <p className="text-[10px] text-muted-foreground">{t('billing.thank_you_message')}</p>
+        <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1 mt-1">
+          <Building2 className="h-3 w-3" />{displayClinicName}
         </p>
-        <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
-          <Building2 className="h-3 w-3" />
-          <span>{displayClinicName}</span>
-        </div>
       </div>
     </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto px-0">
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto px-0">
         <InvoiceContent />
-        <DialogFooter className="px-6 pb-4">
-          <Button variant="outline" onClick={handlePrint} className="gap-2">
+        <DialogFooter className="px-4 pb-3">
+          <Button variant="outline" onClick={handlePrint} size="sm" className="gap-2">
             <Printer className="h-4 w-4" />
             {t('billing.print_invoice')}
           </Button>
