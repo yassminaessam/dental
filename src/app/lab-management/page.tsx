@@ -347,48 +347,51 @@ export default function LabManagementPage() {
         {/* Page Header */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-cyan-500/5 to-blue-500/5 rounded-3xl blur-2xl"></div>
-          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-3xl border-2 border-muted/50 p-6 md:p-8 shadow-xl">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl blur-lg opacity-40 animate-pulse"></div>
-                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-xl">
-                    <FlaskConical className="h-8 w-8" />
+          <div className="relative bg-gradient-to-br from-background/80 via-background/90 to-background/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border-2 border-muted/50 p-4 sm:p-6 lg:p-8 shadow-xl">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex items-start gap-3 sm:gap-4 shrink-0">
+                <div className="relative shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl sm:rounded-2xl blur-lg opacity-40 animate-pulse"></div>
+                  <div className="relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-xl">
+                    <FlaskConical className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 dark:from-teal-400 dark:via-cyan-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black mb-1 sm:mb-2 bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 dark:from-teal-400 dark:via-cyan-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                     {t('lab.title')}
                   </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground font-medium flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    {t('lab.subtitle')}
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium flex items-center gap-2">
+                    <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{t('lab.subtitle')}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-wrap gap-2 sm:gap-3 w-full xl:w-auto xl:flex-nowrap xl:justify-end">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsAnalyticsOpen(true)}
-                  className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-xs sm:text-sm"
                 >
-                  <BarChart3 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                  {t('nav.analytics')}
+                  <BarChart3 className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2')} />
+                  <span className="hidden xs:inline">{t('nav.analytics')}</span>
+                  <span className="xs:hidden">{t('nav.analytics')}</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setIsManageLabsOpen(true)}
-                  className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-xs sm:text-sm"
                 >
-                  <Building2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                  {t('lab.manage_labs')}
+                  <Building2 className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2')} />
+                  <span className="hidden md:inline">{t('lab.manage_labs')}</span>
+                  <span className="md:hidden">{t('lab.manage_labs_short') || t('lab.manage_labs')}</span>
                 </Button>
                 <Button 
                   onClick={() => setIsAddCaseDialogOpen(true)}
-                  className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Plus className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
-                  {t('lab.new_case')}
+                  <Plus className={cn("h-4 w-4 shrink-0", isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2')} />
+                  <span className="hidden sm:inline">{t('lab.new_case')}</span>
+                  <span className="sm:hidden">{t('common.new')}</span>
                 </Button>
               </div>
             </div>
