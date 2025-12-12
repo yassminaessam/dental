@@ -318,6 +318,7 @@ export const PatientUserSyncService = {
       if (updates.phone) userUpdates.phone = updates.phone;
       if (updates.address) userUpdates.address = updates.address;
       if (updates.email) userUpdates.email = updates.email;
+      if (updates.profilePhotoUrl !== undefined) userUpdates.profileImageUrl = updates.profilePhotoUrl;
 
       if (Object.keys(userUpdates).length > 0) {
         const updatedUser = await UsersService.update(user.id, userUpdates);
@@ -347,6 +348,7 @@ export const PatientUserSyncService = {
       if (updates.phone) patientUpdates.phone = updates.phone;
       if (updates.address) patientUpdates.address = updates.address;
       if (updates.email) patientUpdates.email = updates.email;
+      if (updates.profileImageUrl !== undefined) patientUpdates.profilePhotoUrl = updates.profileImageUrl;
 
       if (Object.keys(patientUpdates).length > 0) {
         const updatedPatient = await PatientsService.update(user.patientId, patientUpdates);

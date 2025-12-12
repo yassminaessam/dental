@@ -101,6 +101,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const [chatReplies, setChatReplies] = React.useState<any[]>([]);
   const [readNotificationIds, setReadNotificationIds] = React.useState<Set<string>>(new Set());
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
+  const [patientProfilePhoto, setPatientProfilePhoto] = React.useState<string | null>(null);
   
   // Update date/time every second
   React.useEffect(() => {
@@ -232,6 +233,27 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     
     fetchClinicSettings();
   }, [t]);
+
+  // Fetch patient profile photo
+  React.useEffect(() => {
+    async function fetchPatientProfile() {
+      if (!user?.email) return;
+      
+      try {
+        const response = await fetch(`/api/patient/profile?email=${encodeURIComponent(user.email)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.patient?.profilePhotoUrl) {
+            setPatientProfilePhoto(data.patient.profilePhotoUrl);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch patient profile:', error);
+      }
+    }
+    
+    fetchPatientProfile();
+  }, [user?.email]);
 
   React.useEffect(() => {
     async function fetchNotifications() {
@@ -597,7 +619,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                 <button className="flex items-center gap-3 hover:bg-accent/10 rounded-xl px-3 py-2 transition-all duration-300 group">
                   <Avatar className="h-10 w-10 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all duration-300 group-hover:ring-primary/40">
                     <AvatarImage
-                      src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${getUserInitials()}`}
+                      src={patientProfilePhoto ? getClientFtpProxyUrl(patientProfilePhoto) : (user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${getUserInitials()}`)}
                       alt={getUserDisplayName()}
                     />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-sm font-bold">
