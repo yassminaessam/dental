@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Download, Eye, Image as ImageIcon, Calendar, Loader2, X } from 'lucide-react';
+import { FileText, Download, Eye, Image as ImageIcon, Calendar, Loader2, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getClientFtpProxyUrl } from '@/lib/ftp-proxy-url';
+import Image from 'next/image';
 
 function PatientRecordsContent() {
   const { t } = useLanguage();
@@ -21,6 +23,9 @@ function PatientRecordsContent() {
   const [loading, setLoading] = React.useState(true);
   const [selectedRecord, setSelectedRecord] = React.useState<any | null>(null);
   const [selectedImage, setSelectedImage] = React.useState<any | null>(null);
+  const [imageZoom, setImageZoom] = React.useState(1);
+  const [imageRotation, setImageRotation] = React.useState(0);
+  const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     if (user?.email) {
@@ -149,15 +154,38 @@ function PatientRecordsContent() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {images.map((image) => (
-              <Card key={image.id}>
-                <CardHeader>
-                  <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center mb-2">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
+              <Card key={image.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <CardHeader className="p-0">
+                  <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative overflow-hidden group cursor-pointer"
+                       onClick={() => {
+                         setSelectedImage(image);
+                         setImageZoom(1);
+                         setImageRotation(0);
+                       }}>
+                    {image.url && !imageLoadErrors.has(image.id) ? (
+                      <>
+                        <img
+                          src={getClientFtpProxyUrl(image.url)}
+                          alt={image.title || 'Clinical Image'}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={() => {
+                            setImageLoadErrors(prev => new Set([...prev, image.id]));
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
                   </div>
-                  <CardTitle className="text-base">{image.title}</CardTitle>
-                  <CardDescription>{image.type}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4">
+                  <CardTitle className="text-base mb-1">{image.title}</CardTitle>
+                  <CardDescription className="mb-3">{image.type}</CardDescription>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-600">
                       {new Date(image.date).toLocaleDateString()}
@@ -167,7 +195,11 @@ function PatientRecordsContent() {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => {
+                      setSelectedImage(image);
+                      setImageZoom(1);
+                      setImageRotation(0);
+                    }}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     {t('patient_pages.records.view_image')}
@@ -249,8 +281,12 @@ function PatientRecordsContent() {
       </Dialog>
 
       {/* Medical Image Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={!!selectedImage} onOpenChange={() => {
+        setSelectedImage(null);
+        setImageZoom(1);
+        setImageRotation(0);
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <ImageIcon className="h-5 w-5 mr-2" />
@@ -261,14 +297,64 @@ function PatientRecordsContent() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-              <ImageIcon className="h-24 w-24 text-gray-400" />
+            {/* Image Controls */}
+            <div className="flex items-center justify-center gap-2 pb-2 border-b">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImageZoom(prev => Math.max(0.5, prev - 0.25))}
+                disabled={imageZoom <= 0.5}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium min-w-[60px] text-center">
+                {Math.round(imageZoom * 100)}%
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImageZoom(prev => Math.min(3, prev + 0.25))}
+                disabled={imageZoom >= 3}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <div className="w-px h-6 bg-border mx-2" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImageRotation(prev => (prev + 90) % 360)}
+              >
+                <RotateCw className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Image Container */}
+            <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-auto max-h-[60vh] flex items-center justify-center p-4">
+              {selectedImage?.url ? (
+                <img
+                  src={getClientFtpProxyUrl(selectedImage.url)}
+                  alt={selectedImage.title || 'Clinical Image'}
+                  className="max-w-full transition-transform duration-300"
+                  style={{
+                    transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
+                    transformOrigin: 'center center',
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center py-20">
+                  <ImageIcon className="h-24 w-24 text-gray-400" />
+                </div>
+              )}
             </div>
             
             {selectedImage?.description && (
               <div>
                 <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-gray-700">{selectedImage.description}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{selectedImage.description}</p>
               </div>
             )}
 
@@ -276,7 +362,11 @@ function PatientRecordsContent() {
               <Button 
                 variant="outline" 
                 className="flex-1"
-                onClick={() => alert(`Downloading: ${selectedImage?.title}`)}
+                onClick={() => {
+                  if (selectedImage?.url) {
+                    window.open(getClientFtpProxyUrl(selectedImage.url), '_blank');
+                  }
+                }}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Image
