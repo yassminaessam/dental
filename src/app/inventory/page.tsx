@@ -502,9 +502,18 @@ const mapMedicationResponse = (row: any): PharmacyMedication => ({
     }
   };
 
-  const createQuickPurchaseOrder = async (item: InventoryItem) => {
-    await handleRestock(item);
-  };
+  const createQuickPurchaseOrder = React.useCallback((item: InventoryItem) => {
+    const params = new URLSearchParams();
+    params.set('openNewPo', '1');
+    const supplierLabel = getSupplierDisplayName(item);
+    if (supplierLabel && supplierLabel !== missingSupplierLabel) {
+      params.set('supplierName', supplierLabel);
+    } else if (item.supplierId) {
+      params.set('supplierId', item.supplierId);
+    }
+    params.set('inventoryItemId', item.id);
+    router.push(`/suppliers?${params.toString()}`);
+  }, [getSupplierDisplayName, missingSupplierLabel, router]);
 
   const handleManualOrderRedirect = React.useCallback((item: InventoryItem) => {
     const params = new URLSearchParams();
