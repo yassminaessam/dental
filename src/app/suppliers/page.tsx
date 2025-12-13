@@ -347,70 +347,11 @@ function SuppliersPageContent() {
       : date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-EG');
   }, [language, t]);
 
-  const createQuickPurchaseOrder = async (supplier: Supplier) => {
-    try {
-      const lowStockFromSupplier = inventory.filter((item) => {
-        const matchesSupplier = item.supplierId === supplier.id || item.supplierName === supplier.name;
-        return matchesSupplier && (item.status === 'LowStock' || item.status === 'OutOfStock');
-      });
-
-      if (lowStockFromSupplier.length === 0) {
-        toast({ title: t('suppliers.toast.no_low_stock') });
-        return;
-      }
-
-      const orderItems = lowStockFromSupplier
-        .map((item) => {
-          const quantity = Math.max(item.maxQuantity - item.quantity, 0);
-          return {
-            itemId: item.id,
-            description: item.name,
-            quantity,
-            unitPrice: item.unitCost,
-          };
-        })
-        .filter((item) => item.quantity > 0);
-
-      if (!orderItems.length) {
-        toast({ title: t('suppliers.toast.no_low_stock') });
-        return;
-      }
-
-      const total = orderItems.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-      const payload = {
-        supplierId: supplier.id,
-        supplierName: supplier.name,
-        total,
-        status: 'Pending' as PurchaseOrder['status'],
-        orderDate: new Date().toISOString(),
-        expectedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        items: orderItems,
-      };
-
-      const response = await fetch('/api/purchase-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) throw new Error('Failed to create quick purchase order');
-      const result = await response.json();
-      const created = result?.order ? mapPurchaseOrderResponse(result.order) : null;
-      if (created) {
-        setPurchaseOrders((prev) => [created, ...prev]);
-      }
-
-      toast({
-        title: t('suppliers.toast.quick_order_created'),
-        description: t('suppliers.toast.po_created_desc'),
-      });
-    } catch (error) {
-      console.error('[SuppliersPage] quick PO error', error);
-      toast({
-        title: t('suppliers.toast.error_quick_order'),
-        description: t('suppliers.toast.error_quick_order_desc'),
-        variant: 'destructive',
-      });
-    }
+  const openQuickPurchaseOrder = (supplier: Supplier) => {
+    // Set the supplier and open the New Purchase Order form
+    setNewPoSupplier(supplier.id);
+    setActiveTab('purchase-orders');
+    setIsNewPoOpen(true);
   };
 
   const handleSaveSupplier = async (data: Partial<Supplier>) => {
@@ -977,7 +918,7 @@ function SuppliersPageContent() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => createQuickPurchaseOrder(supplier)}>
+                                    <DropdownMenuItem onClick={() => openQuickPurchaseOrder(supplier)}>
                                         <ShoppingCart className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
                     {t('suppliers.quick_order')}
                                     </DropdownMenuItem>

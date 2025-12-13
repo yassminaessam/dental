@@ -16,7 +16,7 @@ const parseItems = (raw: unknown): PurchaseOrderItem[] | undefined => {
 const parseCreatePayload = async (req: Request): Promise<PurchaseOrderCreateInput> => {
   const body = await req.json();
   if (!body?.supplierName) throw new Error('Supplier name is required.');
-  if (!body?.total) throw new Error('Total amount is required.');
+  if (body?.total === undefined || body?.total === null) throw new Error('Total amount is required.');
   if (!body?.orderDate) throw new Error('Order date is required.');
 
   return {
