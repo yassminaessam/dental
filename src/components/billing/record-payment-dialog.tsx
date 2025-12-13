@@ -220,19 +220,15 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
       if (selectedClaimId) {
         claimToUse = insuranceData.approvedClaims.find(c => c.id === selectedClaimId);
         if (claimToUse && claimToUse.approvedAmount) {
-          paymentAmount = Math.min(
-            parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, '')),
-            amountDue
-          );
+          const claimBalance = parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, ''));
+          paymentAmount = Math.min(claimBalance, amountDue);
         }
       } else {
         // Use the first available approved claim
         claimToUse = insuranceData.approvedClaims[0];
         if (claimToUse && claimToUse.approvedAmount) {
-          paymentAmount = Math.min(
-            parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, '')),
-            amountDue
-          );
+          const claimBalance = parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, ''));
+          paymentAmount = Math.min(claimBalance, amountDue);
         }
       }
 
@@ -240,12 +236,36 @@ export function RecordPaymentDialog({ invoice, open, onOpenChange, onSave }: Rec
         throw new Error(t('insurance.no_approved_claims'));
       }
 
-      // Mark the claim as paid
-      await updateDocument('insurance-claims', claimToUse.id, {
-        status: 'Paid',
-        paidAmount: `EGP ${paymentAmount.toFixed(2)}`,
-        paidDate: new Date().toLocaleDateString(),
-      });
+      // Calculate the current claim balance and the remaining balance after payment
+      const currentClaimBalance = claimToUse.approvedAmount 
+        ? parseFloat(claimToUse.approvedAmount.replace(/[^0-9.-]+/g, '')) 
+        : 0;
+      const remainingBalance = currentClaimBalance - paymentAmount;
+      
+      // Get current total paid from this claim (if any)
+      const currentPaidAmount = claimToUse.paidAmount 
+        ? parseFloat(claimToUse.paidAmount.replace(/[^0-9.-]+/g, '')) 
+        : 0;
+      const newTotalPaid = currentPaidAmount + paymentAmount;
+
+      // Update the claim: deduct from approved amount
+      // If remaining balance is 0 or less, mark as Paid
+      // Otherwise, keep as Approved with reduced balance
+      if (remainingBalance <= 0) {
+        // Fully used - mark as Paid
+        await updateDocument('insurance-claims', claimToUse.id, {
+          status: 'Paid',
+          approvedAmount: 'EGP 0.00',
+          paidAmount: `EGP ${newTotalPaid.toFixed(2)}`,
+          paidDate: new Date().toLocaleDateString(),
+        });
+      } else {
+        // Partially used - keep as Approved with reduced balance
+        await updateDocument('insurance-claims', claimToUse.id, {
+          approvedAmount: `EGP ${remainingBalance.toFixed(2)}`,
+          paidAmount: `EGP ${newTotalPaid.toFixed(2)}`,
+        });
+      }
 
       // Call onSave with insurance payment method
       onSave(invoice.id, paymentAmount, 'Insurance');
