@@ -16,22 +16,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Phone, User } from 'lucide-react';
+import { Check, ChevronsUpDown, Phone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare as MessageSquareIcon } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { GenerateMessageAi } from './generate-message-ai';
 import { Patient } from '@/app/patients/page';
-import { listDocuments } from '@/lib/data-client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const messageSchema = z.object({
@@ -157,14 +148,6 @@ export function NewMessageDialog({
             {dialogDescriptionText}
           </DialogDescription>
         </DialogHeader>
-        
-        <GenerateMessageAi
-          patientName={patientName}
-          onGeneration={({ subject, message }) => {
-            form.setValue('subject', subject);
-            form.setValue('message', message);
-          }}
-        />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">

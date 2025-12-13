@@ -18,6 +18,7 @@ import {
 import { Wand2, Loader2 } from 'lucide-react';
 import { Label } from '../ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface GenerateMessageAiProps {
   patientName: string;
@@ -37,14 +38,18 @@ export function GenerateMessageAi({
   onGeneration,
 }: GenerateMessageAiProps) {
   const { t, isRTL } = useLanguage();
+  const { toast } = useToast();
   const [context, setContext] =
     React.useState<GenerateMessageInput['context']>('appointment-reminder');
   const [isGenerating, setIsGenerating] = React.useState(false);
 
   const handleGenerate = async () => {
     if (!patientName) {
-      // Ideally, you'd show a toast or inline error here
-      alert(t('communications.select_patient'));
+      toast({
+        title: t('common.error'),
+        description: t('communications.select_patient'),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -55,10 +60,17 @@ export function GenerateMessageAi({
         context,
       });
       onGeneration(result);
+      toast({
+        title: t('common.success'),
+        description: t('communications.message_generated'),
+      });
     } catch (error) {
       console.error('Failed to generate message:', error);
-      // Ideally, you'd show a toast error here
-      alert(t('communications.toast.error_sending_message'));
+      toast({
+        title: t('common.error'),
+        description: t('communications.ai_generation_failed'),
+        variant: 'destructive',
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -95,7 +107,7 @@ export function GenerateMessageAi({
           ) : (
             <Wand2 className="mr-2 h-4 w-4" />
           )}
-          {t('ai.generate') ?? 'Ask AI to Write'}
+          {t('ai.generate') ?? 'Generate'}
         </Button>
       </div>
     </div>

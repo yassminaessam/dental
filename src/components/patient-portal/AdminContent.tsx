@@ -182,6 +182,18 @@ export default function AdminContent() {
           </div>
         </CardHeader>
         <CardContent>
+          {promotions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t('patient_portal_admin.no_promotions')}</p>
+              {canEdit && (
+                <Button onClick={() => setShowPromotionForm(true)} className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('patient_portal_admin.add_first_promotion')}
+                </Button>
+              )}
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {promotions.map((promotion) => (
               <Card key={promotion.id} className="relative">
@@ -213,12 +225,14 @@ export default function AdminContent() {
                     <div>{t('patient_portal_admin.code_label')}: <code className="bg-gray-100 px-1 rounded text-xs">{promotion.code}</code></div>
                   </div>
                   {canEdit && (
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline" onClick={() => setEditingPromotion(promotion)}>
-                        <Edit className="h-3 w-3" />
+                    <div className="flex gap-2 mt-3 pt-3 border-t">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditingPromotion(promotion)}>
+                        <Edit className="h-3 w-3 mr-1" />
+                        {t('common.edit')}
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deletePromotion(promotion.id)}>
-                        <Trash2 className="h-3 w-3" />
+                      <Button size="sm" variant="destructive" className="flex-1" onClick={() => deletePromotion(promotion.id)}>
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        {t('common.delete')}
                       </Button>
                     </div>
                   )}
@@ -226,6 +240,7 @@ export default function AdminContent() {
               </Card>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 
