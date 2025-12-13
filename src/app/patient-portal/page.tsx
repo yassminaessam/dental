@@ -89,15 +89,33 @@ export default function PatientPortalPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const [msgData, apptData, userData, docData] = await Promise.all([
+        // Fetch from real Neon database endpoints
+        const [msgRes, apptRes, userRes, docData] = await Promise.all([
           listDocuments<Message>('messages'),
-          listDocuments<Appointment>('appointments'),
-          listDocuments<PortalUser>('portal-users'),
+          fetch('/api/appointments').then(r => r.json()),
+          fetch('/api/auth/users?role=patient').then(r => r.json()),
           listDocuments<SharedDocument>('shared-documents'),
         ]);
-        setMessages(msgData.filter(m => m.category === 'billing' || m.category === 'other'));
-        setAppointments(apptData.map(a => ({...a, dateTime: new Date(a.dateTime) })));
-        setPortalUsers(userData);
+        
+        setMessages(msgRes.filter(m => m.category === 'billing' || m.category === 'other'));
+        
+        // Appointments from real Prisma endpoint
+        const appointmentsData = (apptRes.appointments || []).map((a: any) => ({
+          ...a,
+          dateTime: new Date(a.dateTime)
+        }));
+        setAppointments(appointmentsData);
+        
+        // Portal users from real User table (patients with portal access)
+        const usersData = (userRes.users || []).map((u: any) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          email: u.email,
+          status: u.isActive ? 'Active' : 'Deactivated',
+          lastLogin: u.lastLoginAt || u.updatedAt || new Date().toISOString(),
+        }));
+        setPortalUsers(usersData);
+        
         setSharedDocuments(docData);
       } catch (error) {
         toast({ title: t('patient_portal.toast.error_fetching'), variant: 'destructive' });
@@ -139,7 +157,14 @@ export default function PatientPortalPage() {
 
   const handleRequestStatusChange = async (appointmentId: string, newStatus: 'Confirmed' | 'Cancelled') => {
     try {
-        await updateDocument('appointments', appointmentId, { status: newStatus });
+        // Use real Neon database API endpoint
+        const response = await fetch(`/api/appointments/${appointmentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!response.ok) throw new Error('Failed to update appointment');
+        
         setAppointments(prev => prev.map(appt =>
           appt.id === appointmentId ? { ...appt, status: newStatus } : appt
         ));
@@ -195,7 +220,14 @@ export default function PatientPortalPage() {
     
     const newStatus = user.status === 'Active' ? 'Deactivated' : 'Active';
     try {
-        await updateDocument('portal-users', userId, { status: newStatus });
+        // Use real Neon database API endpoint
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: newStatus === 'Active' }),
+        });
+        if (!response.ok) throw new Error('Failed to update user status');
+        
         setPortalUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
         toast({
           title: t('patient_portal.toast.user_status_updated'),

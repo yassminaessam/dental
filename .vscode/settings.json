@@ -9,7 +9,7 @@
     "files.associations": {
         "*.css": "tailwindcss"
     },
-    "chat.agent.maxRequests": 100,
+    "chat.agent.maxRequests": 30,
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },

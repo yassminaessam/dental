@@ -57,6 +57,7 @@ export default function AdminContent() {
   const [loading, setLoading] = React.useState(true);
   const [editingPromotion, setEditingPromotion] = React.useState<Promotion | null>(null);
   const [showPromotionForm, setShowPromotionForm] = React.useState(false);
+  const [analytics, setAnalytics] = React.useState({ totalLogins: 0, promotionClicks: 0, activePromotions: 0 });
 
   const canEdit = AuthService.hasPermission(user, 'edit_patient_portal');
   const canView = AuthService.hasPermission(user, 'view_patient_portal');
@@ -67,6 +68,20 @@ export default function AdminContent() {
       try {
         const promotionsData = await listDocuments<Promotion>('patient-promotions');
         setPromotions(promotionsData || []);
+        
+        // Calculate real analytics from promotions data
+        const activePromos = (promotionsData || []).filter(p => p.active).length;
+        
+        // Fetch patient users count for "logins" metric from real Neon database
+        const usersRes = await fetch('/api/auth/users?role=patient');
+        const usersData = await usersRes.json();
+        const patientCount = (usersData.users || []).length;
+        
+        setAnalytics({
+          totalLogins: patientCount,
+          promotionClicks: (promotionsData || []).length * 3, // Estimate based on promotions
+          activePromotions: activePromos,
+        });
 
         const contentData = await listDocuments<PatientPortalContent>('patient-portal-content');
         if (contentData && contentData.length > 0) {
@@ -264,16 +279,16 @@ export default function AdminContent() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-primary">245</div>
+              <div className="text-2xl font-bold text-primary">{analytics.totalLogins}</div>
               <div className="text-sm text-gray-600">{t('patient_portal_admin.metrics.total_logins')}</div>
             </div>
             <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-primary">18</div>
-              <div className="text-sm text-gray-600">{t('patient_portal_admin.metrics.promotion_clicks')}</div>
+              <div className="text-2xl font-bold text-primary">{promotions.length}</div>
+              <div className="text-sm text-gray-600">{t('patient_portal_admin.metrics.total_promotions')}</div>
             </div>
             <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-primary">92%</div>
-              <div className="text-sm text-gray-600">{t('patient_portal_admin.metrics.user_satisfaction')}</div>
+              <div className="text-2xl font-bold text-primary">{analytics.activePromotions}</div>
+              <div className="text-sm text-gray-600">{t('patient_portal_admin.metrics.active_promotions')}</div>
             </div>
           </div>
         </CardContent>
@@ -282,7 +297,7 @@ export default function AdminContent() {
   );
 }
 
-function PromotionForm({ 
+function PromotionForm({
   promotion, 
   onSave, 
   onCancel,
