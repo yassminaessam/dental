@@ -638,37 +638,39 @@ const mapMedicationResponse = (row: any): PharmacyMedication => ({
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="relative z-10 grid gap-4 md:grid-cols-2">
+          <CardContent className="relative z-10 grid gap-4 grid-cols-1 lg:grid-cols-2">
             {lowStockItems.map((item) => (
               <div
                 key={item.name}
-                className="flex items-center justify-between rounded-lg border bg-card p-3"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border bg-card p-3"
               >
-                <div>
-                  <p className="font-semibold">{item.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-	{t('inventory.stock')}: {numberFmt.format(item.quantity)} / {t('inventory.min')}: {numberFmt.format(item.minQuantity)}
+                    {t('inventory.stock')}: {numberFmt.format(item.quantity)} / {t('inventory.min')}: {numberFmt.format(item.minQuantity)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-	{t('inventory.supplier')}: {getSupplierDisplayName(item)}
+                  <p className="text-sm text-muted-foreground truncate">
+                    {t('inventory.supplier')}: {getSupplierDisplayName(item)}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:shrink-0">
                   <Button 
                     variant="outline" 
                     size="sm" 
+                    className="flex-1 sm:flex-none"
                     onClick={() => createQuickPurchaseOrder(item)}
                   >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-        {t('inventory.quick_order')}
+                    <ShoppingCart className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                    {t('inventory.quick_order')}
                   </Button>
-		  <Button
-			    variant="destructive"
-			    size="sm"
-			    onClick={() => handleManualOrderRedirect(item)}
-			  >
-			    <Plus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
-        {t('inventory.manual_order')}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => handleManualOrderRedirect(item)}
+                  >
+                    <Plus className={cn('h-4 w-4', isRTL ? 'ml-2' : 'mr-2')} />
+                    {t('inventory.manual_order')}
                   </Button>
                 </div>
               </div>
