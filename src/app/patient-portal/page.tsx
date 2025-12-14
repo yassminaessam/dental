@@ -363,7 +363,7 @@ export default function PatientPortalPage() {
                       <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className={cn("text-lg font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300")}>
+                      <div className={cn("text-lg font-bold text-gray-800 dark:text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300")}>
                         {stat.value}
                       </div>
                     </div>
