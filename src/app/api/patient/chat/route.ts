@@ -1,6 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
+// Helper function to create notifications for all admin/staff users
+async function createNotificationForAdmins(
+  conversationId: string,
+  patientName: string,
+  messagePreview: string
+) {
+  try {
+    // Get all admin and staff users who should receive notifications
+    const staffUsers = await prisma.user.findMany({
+      where: {
+        role: {
+          in: ['admin', 'doctor', 'receptionist'],
+        },
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    if (staffUsers.length === 0) return;
+
+    // Create notifications for all staff users
+    const notifications = staffUsers.map((user) => ({
+      userId: user.id,
+      type: 'CHAT_MESSAGE' as const,
+      title: 'رسالة محادثة جديدة | New Chat Message',
+      message: `${patientName}: ${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`,
+      relatedId: conversationId,
+      relatedType: 'chat',
+      link: `/admin/chats?conversation=${conversationId}`,
+      priority: 'NORMAL' as const,
+      metadata: { patientName, messagePreview: messagePreview.substring(0, 200) },
+    }));
+
+    await prisma.notification.createMany({
+      data: notifications,
+    });
+  } catch (error) {
+    console.error('[api/patient/chat] Failed to create notifications:', error);
+    // Don't throw - notification failure shouldn't break the chat
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -95,6 +137,9 @@ export async function POST(request: NextRequest) {
       where: { id: conversation.id },
       data: { lastMessageAt: new Date() },
     });
+
+    // Create notifications for admin/staff users
+    await createNotificationForAdmins(conversation.id, patientName, message);
 
     return NextResponse.json({ 
       message: {

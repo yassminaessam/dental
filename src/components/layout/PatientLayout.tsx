@@ -97,11 +97,27 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const pathname = usePathname();
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL, direction } = useLanguage();
-  const [staffReplies, setStaffReplies] = React.useState<any[]>([]);
-  const [chatReplies, setChatReplies] = React.useState<any[]>([]);
-  const [readNotificationIds, setReadNotificationIds] = React.useState<Set<string>>(new Set());
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
   const [patientProfilePhoto, setPatientProfilePhoto] = React.useState<string | null>(null);
+
+  // Use database-backed notification hook for patient
+  const {
+    unreadNotifications,
+    unreadCount,
+    markAsRead,
+    refetch: refetchNotifications,
+  } = useNotifications(user?.id);
+
+  // Group notifications by type for display
+  const groupedNotifications = React.useMemo(() => {
+    return {
+      chats: unreadNotifications.filter(n => n.type === 'CHAT_MESSAGE'),
+      appointments: unreadNotifications.filter(n => n.type.includes('APPOINTMENT')),
+      other: unreadNotifications.filter(n => 
+        n.type !== 'CHAT_MESSAGE' && !n.type.includes('APPOINTMENT')
+      ),
+    };
+  }, [unreadNotifications]);
   
   // Update date/time every second
   React.useEffect(() => {
@@ -183,15 +199,6 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     }
   };
 
-  // Mark notification as read (simple local state for patient)
-  const markAsRead = React.useCallback((id: string) => {
-    setReadNotificationIds(prev => new Set([...prev, id]));
-  }, []);
-
-  const filterUnread = React.useCallback((items: any[]) => {
-    return items.filter(item => !readNotificationIds.has(item.id));
-  }, [readNotificationIds]);
-
   // Fetch clinic settings for logo and name
   React.useEffect(() => {
     async function fetchClinicSettings() {
@@ -255,58 +262,23 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     fetchPatientProfile();
   }, [user?.email]);
 
+  // Refresh notifications every 30 seconds
   React.useEffect(() => {
-    async function fetchNotifications() {
-      if (!user?.email) return;
-      
-      try {
-        const [messagesResponse, chatResponse] = await Promise.all([
-          fetch(`/api/patient-messages?patientEmail=${user.email}`),
-          fetch(`/api/chat/unread?userType=patient&patientEmail=${encodeURIComponent(user.email)}&limit=5`)
-        ]);
-        
-        let replies: any[] = [];
-        let chatMessages: any[] = [];
-        
-        if (messagesResponse.ok) {
-          const data = await messagesResponse.json();
-          replies = (data.messages || []).filter((m: any) => 
-            m.from === 'فريق الدعم' || m.from === 'Staff'
-          );
-        }
-        
-        if (chatResponse.ok) {
-          const data = await chatResponse.json();
-          chatMessages = data.unreadMessages || [];
-        }
-        
-        setStaffReplies(replies.slice(0, 5));
-        setChatReplies(chatMessages);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      }
-    }
+    if (!user?.id) return;
     
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => {
+      refetchNotifications();
+    }, 30000);
+    
     return () => clearInterval(interval);
-  }, [user?.email]);
-
-  // Filter out read notifications and calculate count
-  const unreadStaffReplies = React.useMemo(
-    () => filterUnread(staffReplies.map(r => ({ ...r, type: 'message' as const }))),
-    [staffReplies, filterUnread]
-  );
-  const unreadChatReplies = React.useMemo(
-    () => filterUnread(chatReplies.map(c => ({ ...c, type: 'chat' as const }))),
-    [chatReplies, filterUnread]
-  );
-
-  const notificationCount = unreadStaffReplies.length + unreadChatReplies.length;
+  }, [user?.id, refetchNotifications]);
 
   // Handler to mark notification as read when clicked
-  const handleNotificationClick = (notificationId: string) => {
-    markAsRead(notificationId);
+  const handleNotificationClick = async (notificationId: string, link?: string | null) => {
+    await markAsRead(notificationId);
+    if (link) {
+      router.push(link);
+    }
   };
 
   const getUserInitials = () => {
@@ -542,71 +514,85 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl hover:bg-accent/10 transition-all duration-300">
                   <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-xs text-white font-bold shadow-lg animate-pulse">
-                      {notificationCount}
+                      {unreadCount}
                     </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 sm:w-80">
+              <DropdownMenuContent align="end" className="w-72 sm:w-80 max-h-[500px] overflow-y-auto">
                 <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {unreadChatReplies.length > 0 && (
-                  <>
-                    {unreadChatReplies.map((msg: any) => (
-                      <DropdownMenuItem key={msg.id} asChild>
-                        <Link 
-                          href="/patient-messages" 
-                          className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40"
-                          onClick={() => handleNotificationClick(msg.id)}
-                        >
-                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">💬 رد من الفريق</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {msg.conversation?.staffName || 'فريق الدعم'}: {msg.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(msg.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {unreadStaffReplies.length > 0 && (
-                  <>
-                    {unreadStaffReplies.map((reply: any) => (
-                      <DropdownMenuItem key={reply.id} asChild>
-                        <Link 
-                          href="/patient-messages" 
-                          className="flex items-start gap-2 p-3"
-                          onClick={() => handleNotificationClick(reply.id)}
-                        >
-                          <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm">{t('patient_pages.messages.new_reply')}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {reply.subject}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(reply.date || reply.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                {notificationCount === 0 && (
+                {/* Chat Message Notifications */}
+                {groupedNotifications.chats.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 dark:hover:bg-purple-950/40 cursor-pointer"
+                  >
+                    <MessageSquare className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-purple-700 dark:text-purple-300">
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {/* Appointment Notifications */}
+                {groupedNotifications.appointments.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Calendar className="mt-1 h-4 w-4 flex-shrink-0 text-orange-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {/* Other Notifications */}
+                {groupedNotifications.other.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 cursor-pointer"
+                  >
+                    <Bell className="mt-1 h-4 w-4 flex-shrink-0 text-blue-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {unreadCount === 0 && (
                   <DropdownMenuItem disabled className="p-3">
                     {t('header.no_notifications')}
                   </DropdownMenuItem>

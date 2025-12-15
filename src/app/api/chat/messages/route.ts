@@ -1,6 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+// Helper function to create notification for patient when staff replies
+async function createNotificationForPatient(
+  conversationId: string,
+  staffName: string,
+  messagePreview: string
+) {
+  try {
+    // Get the conversation to find the patient's user account
+    const conversation = await prisma.chatConversation.findUnique({
+      where: { id: conversationId },
+      select: { patientEmail: true, patientName: true, patientId: true },
+    });
+
+    if (!conversation?.patientEmail) return;
+
+    // Find the patient's user account by email
+    const patientUser = await prisma.user.findUnique({
+      where: { email: conversation.patientEmail },
+      select: { id: true },
+    });
+
+    if (!patientUser) return;
+
+    // Create notification for the patient
+    await prisma.notification.create({
+      data: {
+        userId: patientUser.id,
+        type: 'CHAT_MESSAGE',
+        title: 'رد جديد من الطاقم | New Staff Reply',
+        message: `${staffName}: ${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`,
+        relatedId: conversationId,
+        relatedType: 'chat',
+        link: '/patient-messages',
+        priority: 'NORMAL',
+        metadata: { staffName, messagePreview: messagePreview.substring(0, 200) },
+      },
+    });
+  } catch (error) {
+    console.error('[api/chat/messages] Failed to create patient notification:', error);
+    // Don't throw - notification failure shouldn't break the chat
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,6 +75,11 @@ export async function POST(request: NextRequest) {
         ...(senderType === 'staff' && { staffId: senderId, staffName: senderName }),
       },
     });
+
+    // If staff is sending a message, create notification for the patient
+    if (senderType === 'staff') {
+      await createNotificationForPatient(conversationId, senderName, message);
+    }
 
     return NextResponse.json({ message: newMessage });
   } catch (error) {
