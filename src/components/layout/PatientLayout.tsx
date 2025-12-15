@@ -113,8 +113,13 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     return {
       chats: unreadNotifications.filter(n => n.type === 'CHAT_MESSAGE'),
       appointments: unreadNotifications.filter(n => n.type.includes('APPOINTMENT')),
+      billing: unreadNotifications.filter(n => n.type.includes('BILLING')),
+      lab: unreadNotifications.filter(n => n.type.includes('LAB')),
       other: unreadNotifications.filter(n => 
-        n.type !== 'CHAT_MESSAGE' && !n.type.includes('APPOINTMENT')
+        n.type !== 'CHAT_MESSAGE' && 
+        !n.type.includes('APPOINTMENT') && 
+        !n.type.includes('BILLING') && 
+        !n.type.includes('LAB')
       ),
     };
   }, [unreadNotifications]);
@@ -553,11 +558,55 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                   <DropdownMenuItem 
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification.id, notification.link)}
-                    className="flex items-start gap-2 p-3 cursor-pointer"
+                    className="flex items-start gap-2 p-3 bg-orange-50/50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/40 cursor-pointer"
                   >
                     <Calendar className="mt-1 h-4 w-4 flex-shrink-0 text-orange-500" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="font-semibold text-sm text-orange-700 dark:text-orange-300">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {/* Billing Notifications */}
+                {groupedNotifications.billing.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 bg-green-50/50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/40 cursor-pointer"
+                  >
+                    <CreditCard className="mt-1 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-green-700 dark:text-green-300">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {/* Lab Notifications */}
+                {groupedNotifications.lab.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
+                    className="flex items-start gap-2 p-3 bg-teal-50/50 dark:bg-teal-950/20 hover:bg-teal-100 dark:hover:bg-teal-950/40 cursor-pointer"
+                  >
+                    <FlaskConical className="mt-1 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-teal-700 dark:text-teal-300">{notification.title}</p>
                       <p className="text-xs text-muted-foreground truncate">
                         {notification.message}
                       </p>

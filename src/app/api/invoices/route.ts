@@ -1,6 +1,56 @@
 import { NextResponse } from 'next/server';
 import { InvoicesService, type InvoiceCreateInput } from '@/services/invoices';
 import { syncInvoiceTransaction } from '@/services/transactions.server';
+import { prisma } from '@/lib/prisma';
+
+// Helper function to create notification for patient when invoice is created
+async function createInvoiceNotificationForPatient(invoice: any) {
+  try {
+    if (!invoice.patientId) return;
+
+    // Find the patient to get their email
+    const patient = await prisma.patient.findUnique({
+      where: { id: invoice.patientId },
+      select: { email: true, name: true },
+    });
+
+    if (!patient?.email) return;
+
+    // Find the patient's user account by email
+    const patientUser = await prisma.user.findUnique({
+      where: { email: patient.email },
+      select: { id: true },
+    });
+
+    if (!patientUser) return;
+
+    // Calculate total amount
+    const totalAmount = invoice.items?.reduce(
+      (sum: number, item: any) => sum + (item.quantity * item.unitPrice),
+      0
+    ) || 0;
+
+    await prisma.notification.create({
+      data: {
+        userId: patientUser.id,
+        type: 'BILLING_INVOICE_CREATED',
+        title: 'فاتورة جديدة | New Invoice',
+        message: `فاتورة رقم ${invoice.number} بمبلغ ${totalAmount.toFixed(2)} ج.م | Invoice #${invoice.number} for ${totalAmount.toFixed(2)} EGP`,
+        relatedId: invoice.id,
+        relatedType: 'invoice',
+        link: '/patient-billing',
+        priority: 'NORMAL',
+        metadata: { 
+          invoiceNumber: invoice.number, 
+          totalAmount,
+          status: invoice.status 
+        },
+      },
+    });
+  } catch (error) {
+    console.error('[api/invoices] Failed to create patient notification:', error);
+  }
+}
 
 const parseAmount = (value: unknown): number | undefined => {
   const num = Number(value);
@@ -48,6 +98,10 @@ export async function POST(request: Request) {
   try {
     const payload = await parseCreatePayload(request);
     const invoice = await InvoicesService.create(payload);
+    
+    // Create notification for patient about the new invoice
+    await createInvoiceNotificationForPatient(invoice);
+    
     try {
       await syncInvoiceTransaction(invoice);
     } catch (error) {

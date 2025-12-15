@@ -1,5 +1,58 @@
 import { NextResponse } from 'next/server';
 import { InventoryService, type InventoryUpdateInput } from '@/services/inventory';
+import { prisma } from '@/lib/prisma';
+
+// Helper function to create notifications for admins when stock is low or out
+async function createLowStockNotificationForAdmins(
+  itemId: string,
+  itemName: string,
+  quantity: number,
+  minQuantity: number
+) {
+  try {
+    // Only notify if quantity is at or below minimum
+    if (quantity > minQuantity) return;
+
+    // Get all admin users who should receive notifications
+    const adminUsers = await prisma.user.findMany({
+      where: {
+        role: 'admin',
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    if (adminUsers.length === 0) return;
+
+    const isOutOfStock = quantity === 0;
+    const notificationType = isOutOfStock ? 'INVENTORY_OUT_OF_STOCK' : 'INVENTORY_LOW_STOCK';
+    const title = isOutOfStock 
+      ? 'نفاد المخزون | Out of Stock' 
+      : 'مخزون منخفض | Low Stock Alert';
+    const message = isOutOfStock
+      ? `${itemName} نفذ من المخزون | ${itemName} is out of stock`
+      : `${itemName} - الكمية المتبقية: ${quantity} | Remaining: ${quantity}`;
+
+    // Create notifications for admin users
+    const notifications = adminUsers.map((user) => ({
+      userId: user.id,
+      type: notificationType as any,
+      title,
+      message,
+      relatedId: itemId,
+      relatedType: 'inventory',
+      link: `/inventory?id=${itemId}`,
+      priority: isOutOfStock ? 'URGENT' as const : 'HIGH' as const,
+      metadata: { itemName, quantity, minQuantity },
+    }));
+
+    await prisma.notification.createMany({
+      data: notifications,
+    });
+  } catch (error) {
+    console.error('[api/inventory] Failed to create low stock notification:', error);
+  }
+}
 
 const parsePatch = async (req: Request): Promise<Partial<InventoryUpdateInput>> => {
   const b = await req.json();
@@ -33,6 +86,17 @@ export async function PATCH(req: Request, ctx: any) {
   try {
     const patch = await parsePatch(req);
     const item = await InventoryService.update({ id: ctx?.params?.id, ...patch } as InventoryUpdateInput);
+    
+    // Check if we need to send low stock notification
+    if (item.minQuantity != null && item.quantity <= item.minQuantity) {
+      await createLowStockNotificationForAdmins(
+        item.id,
+        item.name,
+        item.quantity,
+        item.minQuantity
+      );
+    }
+    
     return NextResponse.json({ item });
   } catch (e: any) {
     console.error('[api/inventory/:id] PATCH error', e);
