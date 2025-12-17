@@ -36,8 +36,6 @@ import StaffPerformanceChart from '@/components/analytics/staff-performance-char
 import PatientSatisfactionChart from '@/components/analytics/patient-satisfaction-chart';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-// Switched to client REST data layer (listDocuments) instead of server getCollection
-import { listDocuments } from '@/lib/data-client';
 import type { Invoice } from '../billing/page';
 import type { Patient } from '../patients/page';
 import type { Appointment } from '../appointments/page';
@@ -102,14 +100,23 @@ export default function AnalyticsPage() {
     async function fetchData() {
         setLoading(true);
         try {
-        const [invoices, patients, appointments, treatments, transactions, staff] = await Promise.all([
-          listDocuments<Invoice>('invoices'),
-          listDocuments<Patient>('patients'),
-          listDocuments<any>('appointments'),
-          listDocuments<Treatment>('treatments'),
-          listDocuments<Transaction>('transactions'),
-          listDocuments<StaffMember>('staff'),
+        // Fetch from dedicated API endpoints that use Prisma models
+        const [invoicesRes, patientsRes, appointmentsRes, treatmentsRes, transactionsRes, staffRes] = await Promise.all([
+          fetch('/api/invoices').then(r => r.json()),
+          fetch('/api/patients').then(r => r.json()),
+          fetch('/api/appointments').then(r => r.json()),
+          fetch('/api/treatments').then(r => r.json()),
+          fetch('/api/transactions').then(r => r.json()),
+          fetch('/api/staff').then(r => r.json()),
         ]);
+        
+        // Extract data from response wrappers
+        const invoices: Invoice[] = invoicesRes.invoices || invoicesRes.items || invoicesRes || [];
+        const patients: Patient[] = patientsRes.patients || patientsRes.items || patientsRes || [];
+        const appointments: any[] = appointmentsRes.appointments || appointmentsRes.items || appointmentsRes || [];
+        const treatments: Treatment[] = treatmentsRes.treatments || treatmentsRes.items || treatmentsRes || [];
+        const transactions: Transaction[] = transactionsRes.transactions || transactionsRes.items || transactionsRes || [];
+        const staff: StaffMember[] = staffRes.staff || staffRes.items || staffRes || [];
         
         setStaffMembers(staff);
         
