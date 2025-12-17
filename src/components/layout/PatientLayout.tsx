@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home, Activity, Clock, FlaskConical } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, Calendar, FileText, MessageSquare, CreditCard, Home, Activity, Clock, FlaskConical, Send } from 'lucide-react';
 import { DentalProLogo } from '../icons';
 import Link from 'next/link';
 import { Button } from '../ui/button';
@@ -72,6 +72,12 @@ const patientNavItems = [
     href: '/patient-lab',
     icon: FlaskConical,
     descriptionKey: 'patient_pages.lab.subtitle'
+  },
+  {
+    titleKey: 'patient_pages.referrals.title',
+    href: '/patient-referrals',
+    icon: Send,
+    descriptionKey: 'patient_pages.referrals.subtitle'
   },
   {
     titleKey: 'patient_pages.billing.title',

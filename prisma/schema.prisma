@@ -614,10 +614,26 @@ model Referral {
   notes             String?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+  statusLogs        ReferralStatusLog[]
 
   @@index([patientId])
   @@index([status])
   @@index([referralDate])
+}
+
+model ReferralStatusLog {
+  id              String   @id @default(uuid())
+  referralId      String
+  fromStatus      String
+  toStatus        String
+  changedBy       String   // User ID who made the change
+  changedByName   String   // User name for display
+  changedAt       DateTime @default(now())
+  notes           String?
+  referral        Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([referralId])
+  @@index([changedAt])
 }
 
 model ToothImageLink {

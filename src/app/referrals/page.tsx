@@ -4,6 +4,7 @@
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,12 +36,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2, Sparkles, TrendingUp, Users, Activity, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Search, Send, Eye, Phone, Mail, MoreHorizontal, Pencil, Trash2, Loader2, Sparkles, TrendingUp, Users, Activity, CheckCircle2, Clock, AlertCircle, CalendarCheck, XCircle } from "lucide-react";
 import { CardIcon } from '@/components/ui/card-icon';
 import { AddSpecialistDialog } from "@/components/referrals/add-specialist-dialog";
 import { NewReferralDialog } from "@/components/referrals/new-referral-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
 import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
@@ -69,6 +70,7 @@ export type Specialist = {
 
 export default function ReferralsPage() {
   const { t, isRTL } = useLanguage();
+  const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [referrals, setReferrals] = React.useState<Referral[]>([]);
   const [specialists, setSpecialists] = React.useState<Specialist[]>([]);
@@ -244,6 +246,39 @@ export default function ReferralsPage() {
     title: t('referrals.toast.followup_sent'),
     description: t('referrals.toast.followup_sent_desc')
   });
+  };
+
+  const handleUpdateReferralStatus = async (referralId: string, newStatus: Referral['status']) => {
+    try {
+      const response = await fetch(`/api/referrals/${referralId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: newStatus,
+          changedBy: user?.id || 'system',
+          changedByName: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : 'System',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update referral status');
+      }
+
+      const result = await response.json();
+      setReferrals(prev => prev.map(r => r.id === referralId ? { ...r, ...result.referral } : r));
+      toast({
+        title: t('referrals.toast.status_updated') || 'Status Updated',
+        description: t('referrals.toast.status_updated_desc') || 'Referral status has been updated successfully.',
+      });
+    } catch(e: any) {
+      console.error('[ReferralsPage] Error updating referral status:', e);
+      toast({ 
+        title: t('referrals.toast.error_updating_status') || 'Error', 
+        description: e.message || 'Failed to update referral status',
+        variant: 'destructive' 
+      });
+    }
   };
 
   const filteredReferrals = React.useMemo(() => {
@@ -515,12 +550,54 @@ export default function ReferralsPage() {
                             <div className={cn('flex items-center gap-2', isRTL ? 'justify-start' : 'justify-end')}>
                               <Button variant="outline" size="sm" onClick={() => setReferralToView(referral)}>
                                 <Eye className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
-                {t('referrals.actions.view')}
+                                {t('referrals.actions.view')}
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleFollowUp(referral)}>
-                                <Send className={cn("h-3 w-3", isRTL ? 'ml-2' : 'mr-2')} />
-                {t('referrals.actions.follow_up')}
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
+                                  <DropdownMenuLabel>{t('referrals.change_status') || 'Change Status'}</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateReferralStatus(referral.id, 'pending')}
+                                    disabled={referral.status === 'pending'}
+                                  >
+                                    <Clock className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('common.pending')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateReferralStatus(referral.id, 'scheduled')}
+                                    disabled={referral.status === 'scheduled'}
+                                  >
+                                    <CalendarCheck className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('referrals.scheduled')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateReferralStatus(referral.id, 'completed')}
+                                    disabled={referral.status === 'completed'}
+                                  >
+                                    <CheckCircle2 className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('common.completed')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateReferralStatus(referral.id, 'cancelled')}
+                                    disabled={referral.status === 'cancelled'}
+                                    className="text-destructive"
+                                  >
+                                    <XCircle className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('common.cancelled')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => handleFollowUp(referral)}>
+                                    <Send className={cn("h-4 w-4", isRTL ? 'ml-2' : 'mr-2')} />
+                                    {t('referrals.actions.follow_up')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>

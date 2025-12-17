@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ReferralsService } from '@/services/referrals';
+import prisma from '@/lib/db';
 import type { ReferralStatus, ReferralUrgency } from '@prisma/client';
 
 interface ReferralUpdatePayload {
@@ -12,6 +13,8 @@ interface ReferralUpdatePayload {
   referringDoctorId?: string;
   notes?: string;
   appointmentDate?: string | null;
+  changedBy?: string;
+  changedByName?: string;
 }
 
 export async function GET(
@@ -60,7 +63,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Referral not found.' }, { status: 404 });
     }
 
-    // Build update object
+    // Track if status is changing for logging
+    const isStatusChanging = payload.status !== undefined && payload.status !== existing.status;
+    const previousStatus = existing.status;
+
+    // Build update object (exclude logging fields)
     const updateData: any = {};
     if (payload.specialty !== undefined) updateData.specialty = payload.specialty;
     if (payload.specialist !== undefined) updateData.specialist = payload.specialist;
@@ -75,6 +82,25 @@ export async function PATCH(
     }
 
     const referral = await ReferralsService.update(id, updateData);
+
+    // Log status change if status was updated
+    if (isStatusChanging && payload.changedBy && payload.changedByName) {
+      try {
+        await prisma.referralStatusLog.create({
+          data: {
+            referralId: id,
+            fromStatus: previousStatus,
+            toStatus: payload.status!,
+            changedBy: payload.changedBy,
+            changedByName: payload.changedByName,
+            notes: payload.notes,
+          },
+        });
+      } catch (logError) {
+        // Log error but don't fail the update
+        console.warn('[api/referrals/[id]] Failed to create status log:', logError);
+      }
+    }
 
     // Serialize dates
     const serialized = {
