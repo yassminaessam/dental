@@ -123,10 +123,10 @@ export default function ReferralsPage() {
     const specialistCount = specialists.length;
     
     return [
-      { title: t('referrals.total_referrals'), value: totalReferrals, description: t('referrals.all_outgoing_referrals'), valueClassName: "text-blue-500" },
-      { title: t('referrals.pending_referrals'), value: pendingReferrals, description: t('referrals.awaiting_specialist_action'), valueClassName: "text-orange-500" },
-      { title: t('referrals.completed_referrals'), value: completedReferrals, description: t('referrals.finished_referral_cases'), valueClassName: "text-green-500" },
-      { title: t('referrals.specialist_network'), value: specialistCount, description: t('referrals.total_specialists_in_network'), valueClassName: "" },
+      { title: t('referrals.total_referrals'), value: totalReferrals, description: t('referrals.all_outgoing_referrals'), filter: 'all' },
+      { title: t('referrals.pending_referrals'), value: pendingReferrals, description: t('referrals.awaiting_specialist_action'), filter: 'pending' },
+      { title: t('referrals.completed_referrals'), value: completedReferrals, description: t('referrals.finished_referral_cases'), filter: 'completed' },
+      { title: t('referrals.specialist_network'), value: specialistCount, description: t('referrals.total_specialists_in_network'), filter: 'network' },
     ];
   }, [referrals, specialists, t]);
 
@@ -352,13 +352,29 @@ export default function ReferralsPage() {
             const cardStyle = cardStyles[index % cardStyles.length];
             const icons = [Activity, Clock, CheckCircle2, Users];
             const Icon = icons[index % icons.length];
+            const isActive = stat.filter === 'network' ? false : statusFilter === stat.filter;
+            
+            const handleCardClick = () => {
+              if (stat.filter === 'network') {
+                // Switch to network tab
+                const networkTab = document.querySelector('[value="network"]') as HTMLButtonElement;
+                if (networkTab) networkTab.click();
+              } else {
+                setStatusFilter(stat.filter);
+                // Switch to outgoing tab if not already there
+                const outgoingTab = document.querySelector('[value="outgoing"]') as HTMLButtonElement;
+                if (outgoingTab) outgoingTab.click();
+              }
+            };
             
             return (
               <Card 
                 key={stat.title}
+                onClick={handleCardClick}
                 className={cn(
                   "relative overflow-hidden border-0 shadow-sm transition-all duration-500 hover:scale-105 cursor-pointer group min-h-0",
-                  cardStyle
+                  cardStyle,
+                  isActive && "ring-2 ring-primary ring-offset-2"
                 )}
               >
                 {/* Animated Background Layers */}
@@ -371,7 +387,7 @@ export default function ReferralsPage() {
                       <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className="text-lg font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100 drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
                         {stat.value}
                       </div>
                     </div>
