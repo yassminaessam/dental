@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { PatientCombobox } from '@/components/ui/patient-combobox';
 import type { Specialist } from '@/app/referrals/page';
 import type { Patient } from '@/lib/types';
 
@@ -49,7 +50,7 @@ interface NewReferralDialogProps {
 export function NewReferralDialog({ onSave, specialists, patients }: NewReferralDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const form = useForm<ReferralFormData>({
     resolver: zodResolver(referralSchema),
   });
@@ -63,12 +64,6 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Helper function to get patient display name
-  const getPatientDisplayName = (patient: Patient) => {
-    const fullName = `${patient.name} ${patient.lastName || ''}`.trim();
-    return fullName || patient.email || 'Unknown Patient';
   };
 
   return (
@@ -88,33 +83,23 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="patient"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel>{t('referrals.form.patient')} *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-          <SelectValue placeholder={t('referrals.placeholder.select_patient')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.length === 0 ? (
-                          <SelectItem value="__no_patients__" disabled>
-                            {t('referrals.no_patients_available') || 'No patients available'}
-                          </SelectItem>
-                        ) : (
-                          patients.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {getPatientDisplayName(patient)}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t('referrals.form.patient')} *</FormLabel>
+                    <FormControl>
+                      <PatientCombobox
+                        patients={patients}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder={t('referrals.placeholder.select_patient') || 'Select patient...'}
+                        searchPlaceholder={language === 'ar' ? 'ابحث بالاسم أو الهاتف...' : 'Search by name or phone...'}
+                        emptyMessage={language === 'ar' ? 'لا يوجد مريض' : 'No patient found.'}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -123,12 +108,12 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
                 control={form.control}
                 name="specialist"
                 render={({ field }) => (
-                  <FormItem>
-        <FormLabel>{t('referrals.form.specialist')} *</FormLabel>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t('referrals.form.specialist')} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-          <SelectValue placeholder={t('referrals.placeholder.select_specialist')} />
+                        <SelectTrigger className="h-9 sm:h-10">
+                          <SelectValue placeholder={t('referrals.placeholder.select_specialist')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
