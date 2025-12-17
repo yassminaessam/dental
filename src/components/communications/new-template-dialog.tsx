@@ -18,13 +18,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Pencil } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Template name is required'),
-  type: z.enum(['Email', 'SMS'], { required_error: 'Type is required' }),
+  type: z.enum(['Email'], { required_error: 'Type is required' }),
   subject: z.string().optional(),
   body: z.string().min(1, 'Template body is required'),
 });
@@ -144,40 +143,8 @@ export function NewTemplateDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('communications.type')} *</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <FormControl>
-                          <RadioGroupItem value="Email" id="t-email" />
-                        </FormControl>
-                        <FormLabel htmlFor="t-email" className="font-normal cursor-pointer">
-                          {t('communications.email')}
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <FormControl>
-                          <RadioGroupItem value="SMS" id="t-sms" />
-                        </FormControl>
-                        <FormLabel htmlFor="t-sms" className="font-normal cursor-pointer">
-                          {t('communications.sms')}
-                        </FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Type is always Email, hidden field */}
+            <input type="hidden" {...form.register('type')} value="Email" />
             <FormField
               control={form.control}
               name="subject"
