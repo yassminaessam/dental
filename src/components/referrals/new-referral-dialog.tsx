@@ -23,11 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import type { Specialist } from '@/app/referrals/page';
-import type { Patient } from '@/app/patients/page';
+import type { Patient } from '@/lib/types';
 
 const referralSchema = z.object({
   patient: z.string({ required_error: 'Patient is required.' }),
@@ -48,15 +48,27 @@ interface NewReferralDialogProps {
 
 export function NewReferralDialog({ onSave, specialists, patients }: NewReferralDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { t } = useLanguage();
   const form = useForm<ReferralFormData>({
     resolver: zodResolver(referralSchema),
   });
 
-  const onSubmit = (data: ReferralFormData) => {
-    onSave(data);
-    form.reset();
-    setOpen(false);
+  const onSubmit = async (data: ReferralFormData) => {
+    setIsSubmitting(true);
+    try {
+      await onSave(data);
+      form.reset();
+      setOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to get patient display name
+  const getPatientDisplayName = (patient: Patient) => {
+    const fullName = `${patient.name} ${patient.lastName || ''}`.trim();
+    return fullName || patient.email || 'Unknown Patient';
   };
 
   return (
@@ -90,11 +102,17 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.name}
+                        {patients.length === 0 ? (
+                          <SelectItem value="__no_patients__" disabled>
+                            {t('referrals.no_patients_available') || 'No patients available'}
                           </SelectItem>
-                        ))}
+                        ) : (
+                          patients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              {getPatientDisplayName(patient)}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -114,11 +132,17 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {specialists.map((specialist) => (
-                          <SelectItem key={specialist.id} value={specialist.id}>
-                            {specialist.name} ({specialist.specialty})
+                        {specialists.length === 0 ? (
+                          <SelectItem value="__no_specialists__" disabled>
+                            {t('referrals.no_specialists_available') || 'No specialists available'}
                           </SelectItem>
-                        ))}
+                        ) : (
+                          specialists.map((specialist) => (
+                            <SelectItem key={specialist.id} value={specialist.id}>
+                              {specialist.name} ({specialist.specialty})
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -166,8 +190,13 @@ export function NewReferralDialog({ onSave, specialists, patients }: NewReferral
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
-              <Button type="submit">{t('referrals.actions.send_referral')}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('referrals.actions.send_referral')}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

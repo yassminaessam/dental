@@ -44,8 +44,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ViewReferralDialog } from '@/components/referrals/view-referral-dialog';
 import { EditSpecialistDialog } from '@/components/referrals/edit-specialist-dialog';
-import { listDocuments, setDocument, deleteDocument, updateDocument } from '@/lib/data-client';
-import type { Patient } from '@/app/patients/page';
+import type { Patient } from '@/lib/types';
 
 export type Referral = {
   id: string;
@@ -87,15 +86,26 @@ export default function ReferralsPage() {
     async function fetchData() {
         setLoading(true);
         try {
-      const [referralsData, specialistsData, patientsData] = await Promise.all([
-        listDocuments<Referral>('referrals'),
-        listDocuments<Specialist>('specialists'),
-        listDocuments<Patient>('patients'),
+      // Fetch data from proper Neon-backed APIs
+      const [referralsRes, specialistsRes, patientsRes] = await Promise.all([
+        fetch('/api/referrals'),
+        fetch('/api/specialists'),
+        fetch('/api/patients?activeOnly=true'),
       ]);
-            setReferrals(referralsData);
-            setSpecialists(specialistsData);
-            setPatients(patientsData);
+      
+      if (!referralsRes.ok) throw new Error('Failed to fetch referrals');
+      if (!specialistsRes.ok) throw new Error('Failed to fetch specialists');
+      if (!patientsRes.ok) throw new Error('Failed to fetch patients');
+      
+      const referralsJson = await referralsRes.json();
+      const specialistsJson = await specialistsRes.json();
+      const patientsJson = await patientsRes.json();
+      
+      setReferrals(referralsJson.referrals || []);
+      setSpecialists(specialistsJson.specialists || []);
+      setPatients(patientsJson.patients || []);
     } catch (e) {
+      console.error('[ReferralsPage] Error fetching data:', e);
       toast({ title: t('referrals.toast.error_fetching'), variant: 'destructive' });
         } finally {
             setLoading(false);
@@ -118,78 +128,114 @@ export default function ReferralsPage() {
     ];
   }, [referrals, specialists, t]);
 
-  const handleSaveReferral = async (data: Omit<Referral, 'id'|'specialty'|'date'|'apptDate'|'status'>) => {
+  const handleSaveReferral = async (data: { patient: string; specialist: string; reason: string; urgency: 'routine' | 'urgent' | 'emergency' }) => {
     const specialistDetails = specialists.find(s => s.id === data.specialist);
-    const patientName = patients.find(p => p.id === data.patient)?.name;
+    const patientDetails = patients.find(p => p.id === data.patient);
 
-    const newReferral: Referral = {
-      id: `REF-${Date.now()}`,
-      patient: patientName || 'Unknown Patient',
-      specialist: specialistDetails?.name || 'Unknown Specialist',
-      specialty: specialistDetails?.specialty || 'Unknown',
-      reason: data.reason,
-      urgency: data.urgency,
-      status: 'pending',
-      date: new Date().toLocaleDateString(),
-      apptDate: null,
-    };
     try {
-        await setDocument('referrals', newReferral.id, newReferral);
-        setReferrals(prev => [newReferral, ...prev]);
-        toast({
-          title: t('referrals.toast.referral_sent'),
-          description: t('referrals.toast.referral_sent_desc'),
-        });
-    } catch(e) {
-  toast({ title: t('referrals.toast.error_sending_referral'), variant: 'destructive' });
+      const response = await fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: data.patient,
+          specialty: specialistDetails?.specialty || 'Unknown',
+          specialist: specialistDetails?.name || 'Unknown Specialist',
+          reason: data.reason,
+          urgency: data.urgency,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create referral');
+      }
+
+      const result = await response.json();
+      setReferrals(prev => [result.referral, ...prev]);
+      toast({
+        title: t('referrals.toast.referral_sent'),
+        description: t('referrals.toast.referral_sent_desc'),
+      });
+    } catch(e: any) {
+      console.error('[ReferralsPage] Error saving referral:', e);
+      toast({ title: t('referrals.toast.error_sending_referral'), variant: 'destructive' });
     }
   };
 
   const handleSaveSpecialist = async (data: Omit<Specialist, 'id'>) => {
-    const newSpecialist: Specialist = {
-      id: `SPEC-${Date.now()}`,
-      ...data,
-    };
     try {
-        await setDocument('specialists', newSpecialist.id, newSpecialist);
-        setSpecialists(prev => [newSpecialist, ...prev]);
-        toast({
-          title: t('referrals.toast.specialist_added'),
-          description: t('referrals.toast.specialist_added_desc'),
-        });
-    } catch(e) {
-  toast({ title: t('referrals.toast.error_adding_specialist'), variant: 'destructive' });
+      const response = await fetch('/api/specialists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create specialist');
+      }
+
+      const result = await response.json();
+      setSpecialists(prev => [result.specialist, ...prev]);
+      toast({
+        title: t('referrals.toast.specialist_added'),
+        description: t('referrals.toast.specialist_added_desc'),
+      });
+    } catch(e: any) {
+      console.error('[ReferralsPage] Error saving specialist:', e);
+      toast({ title: t('referrals.toast.error_adding_specialist'), variant: 'destructive' });
     }
   };
 
   const handleUpdateSpecialist = async (updatedSpecialist: Specialist) => {
     try {
-        await updateDocument('specialists', updatedSpecialist.id, updatedSpecialist);
-        setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? updatedSpecialist : s));
-        setSpecialistToEdit(null);
-    toast({
-      title: t('referrals.toast.specialist_updated'),
-      description: t('referrals.toast.specialist_updated_desc')
-    });
-    } catch(e) {
-  toast({ title: t('referrals.toast.error_updating_specialist'), variant: 'destructive' });
+      const response = await fetch(`/api/specialists/${updatedSpecialist.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSpecialist),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update specialist');
+      }
+
+      const result = await response.json();
+      setSpecialists(prev => prev.map(s => s.id === updatedSpecialist.id ? result.specialist : s));
+      setSpecialistToEdit(null);
+      toast({
+        title: t('referrals.toast.specialist_updated'),
+        description: t('referrals.toast.specialist_updated_desc')
+      });
+    } catch(e: any) {
+      console.error('[ReferralsPage] Error updating specialist:', e);
+      toast({ title: t('referrals.toast.error_updating_specialist'), variant: 'destructive' });
     }
   };
 
   const handleDeleteSpecialist = async () => {
     if (specialistToDelete) {
-        try {
-            await deleteDocument('specialists', specialistToDelete.id);
-            setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
-      toast({
-        title: t('referrals.toast.specialist_deleted'),
-        description: t('referrals.toast.specialist_deleted_desc'),
-        variant: "destructive",
-      });
-            setSpecialistToDelete(null);
-        } catch(e) {
-            toast({ title: t('referrals.toast.error_deleting_specialist'), variant: 'destructive' });
+      try {
+        const response = await fetch(`/api/specialists/${specialistToDelete.id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete specialist');
         }
+
+        setSpecialists(prev => prev.filter(s => s.id !== specialistToDelete.id));
+        toast({
+          title: t('referrals.toast.specialist_deleted'),
+          description: t('referrals.toast.specialist_deleted_desc'),
+          variant: "destructive",
+        });
+        setSpecialistToDelete(null);
+      } catch(e: any) {
+        console.error('[ReferralsPage] Error deleting specialist:', e);
+        toast({ title: t('referrals.toast.error_deleting_specialist'), variant: 'destructive' });
+      }
     }
   };
   
