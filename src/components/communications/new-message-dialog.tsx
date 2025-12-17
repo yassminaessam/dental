@@ -18,12 +18,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Phone } from 'lucide-react';
+import { Check, ChevronsUpDown, Phone, FileText } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare as MessageSquareIcon } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Patient } from '@/app/patients/page';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Template } from './new-template-dialog';
 
 const messageSchema = z.object({
   patient: z.string({ required_error: 'communications.select_patient' }),
@@ -42,6 +44,7 @@ interface NewMessageDialogProps {
   onSend: (data: any) => void;
   isReply?: boolean;
   initialData?: { patientName: string; subject: string, originalMessage?: string } | null;
+  templates?: Template[];
 }
 
 export function NewMessageDialog({ 
@@ -53,11 +56,13 @@ export function NewMessageDialog({
   onSend,
   isReply = false,
   initialData = null,
+  templates = [],
 }: NewMessageDialogProps) {
   const { t, isRTL } = useLanguage();
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [patients, setPatients] = React.useState<Patient[]>([]);
   const [comboOpen, setComboOpen] = React.useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = React.useState<string>('');
   
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen || setInternalOpen;
@@ -100,14 +105,28 @@ export function NewMessageDialog({
             ? `\n\n--- Original Message ---\n${initialData.originalMessage}`
             : '',
       });
-    } else if (!isReply) {
+      setSelectedTemplateId('');
+    } else if (!isReply && open) {
       form.reset({
         patient: '',
         subject: '',
         message: '',
       });
+      setSelectedTemplateId('');
     }
   }, [initialData, open, form, isReply, patients]);
+
+  // Handle template selection - populate subject and message from template
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (templateId && templateId !== 'none') {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        form.setValue('subject', template.subject || template.name);
+        form.setValue('message', template.body);
+      }
+    }
+  };
 
 
   const patientId = form.watch('patient');
@@ -239,6 +258,40 @@ export function NewMessageDialog({
                 </FormItem>
               )}
             />
+            
+            {/* Template Selection */}
+            {!isReply && templates.length > 0 && (
+              <div className="space-y-2">
+                <FormLabel className="text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {t('communications.use_template') || 'Use Template'}
+                  </div>
+                </FormLabel>
+                <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('communications.select_template') || 'Select a template...'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('communications.no_template') || 'No template'}</SelectItem>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${template.type === 'Email' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                            {template.type}
+                          </span>
+                          <span>{template.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t('communications.template_hint') || 'Select a template to auto-fill subject and message'}
+                </p>
+              </div>
+            )}
+            
             <FormField
               control={form.control}
               name="subject"

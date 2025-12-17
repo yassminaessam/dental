@@ -39,12 +39,39 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { listDocuments, setDocument, deleteDocument } from '@/lib/data-client';
 import type { Message } from '@/lib/types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Plus, Play, Pause, Calendar, Bell, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+// Automated Workflow type
+interface AutomatedWorkflow {
+  id: string;
+  name: string;
+  trigger: 'appointment_reminder' | 'appointment_confirmation' | 'appointment_followup' | 'new_patient_welcome' | 'birthday_greeting';
+  templateId: string;
+  enabled: boolean;
+  timing?: string; // e.g., "24h_before", "1h_after", "on_day"
+  createdAt: string;
+}
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [templates, setTemplates] = React.useState<Template[]>([]);
+  const [workflows, setWorkflows] = React.useState<AutomatedWorkflow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [templateToDelete, setTemplateToDelete] = React.useState<Template | null>(null);
+  const [templateToEdit, setTemplateToEdit] = React.useState<Template | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [workflowDialogOpen, setWorkflowDialogOpen] = React.useState(false);
+  const [newWorkflow, setNewWorkflow] = React.useState<Partial<AutomatedWorkflow>>({
+    name: '',
+    trigger: 'appointment_reminder',
+    templateId: '',
+    enabled: true,
+    timing: '24h_before',
+  });
   const [searchTerm, setSearchTerm] = React.useState('');
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
@@ -67,9 +94,10 @@ export default function CommunicationsPage() {
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const [messageDataRaw, templateData] = await Promise.all([
+        const [messageDataRaw, templateData, workflowData] = await Promise.all([
           listDocuments<any>('messages'),
           listDocuments<Template>('templates'),
+          listDocuments<AutomatedWorkflow>('workflows'),
         ]);
         const messageData: Message[] = messageDataRaw.map((message: any) => ({
           ...message,
@@ -77,6 +105,7 @@ export default function CommunicationsPage() {
         }));
         setMessages(messageData);
         setTemplates(templateData);
+        setWorkflows(workflowData);
       } catch (error) {
   toast({ title: t('communications.toast.error_fetching'), variant: 'destructive' });
       } finally {
@@ -89,6 +118,7 @@ export default function CommunicationsPage() {
   const communicationsPageStats = React.useMemo(() => {
     const totalMessages = messages.length;
     const totalTemplates = templates.length;
+    const activeWorkflows = workflows.filter(w => w.enabled).length;
     const deliveredRate = totalMessages > 0 ? 
       (messages.filter(m => m.status === 'Delivered' || m.status === 'Read').length / totalMessages) * 100 
       : 0;
@@ -97,9 +127,9 @@ export default function CommunicationsPage() {
       { title: t('communications.messages_sent'), value: totalMessages, description: t('communications.total_messages_desc') },
       { title: t('communications.templates_created'), value: totalTemplates, description: t('communications.reusable_templates') },
       { title: t('communications.delivered_rate'), value: `${deliveredRate.toFixed(1)}%`, description: t('communications.successful_delivery'), valueClassName: "text-green-600" },
-      { title: t('communications.automations'), value: 0, description: t('communications.automated_workflows') }
+      { title: t('communications.automations'), value: activeWorkflows, description: t('communications.automated_workflows') }
     ];
-  }, [messages, templates, t]);
+  }, [messages, templates, workflows, t]);
 
   const filteredMessages = React.useMemo(() => {
     if (!searchTerm.trim()) return messages;
@@ -214,6 +244,145 @@ export default function CommunicationsPage() {
     }
   };
 
+  const handleUpdateTemplate = async (data: Template) => {
+    try {
+      await setDocument('templates', data.id, data);
+      setTemplates(prev => prev.map(t => t.id === data.id ? data : t));
+      toast({
+        title: t('communications.toast.template_updated') || 'Template Updated',
+        description: t('communications.toast.template_updated_desc') || 'Your template has been updated successfully.',
+      });
+      setEditDialogOpen(false);
+      setTemplateToEdit(null);
+    } catch (error) {
+      toast({ title: t('communications.toast.error_updating_template') || 'Error updating template', variant: 'destructive' });
+    }
+  };
+
+  const handleEditTemplate = (template: Template) => {
+    setTemplateToEdit(template);
+    setEditDialogOpen(true);
+  };
+
+  // Workflow handlers
+  const handleCreateWorkflow = async () => {
+    if (!newWorkflow.name || !newWorkflow.templateId) {
+      toast({ 
+        title: t('communications.toast.workflow_validation_error') || 'Validation Error', 
+        description: t('communications.toast.workflow_validation_desc') || 'Please fill in all required fields',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    try {
+      const workflow: AutomatedWorkflow = {
+        id: `WF-${Date.now()}`,
+        name: newWorkflow.name,
+        trigger: newWorkflow.trigger as AutomatedWorkflow['trigger'],
+        templateId: newWorkflow.templateId,
+        enabled: newWorkflow.enabled ?? true,
+        timing: newWorkflow.timing,
+        createdAt: new Date().toISOString(),
+      };
+      
+      await setDocument('workflows', workflow.id, workflow);
+      setWorkflows(prev => [...prev, workflow]);
+      setWorkflowDialogOpen(false);
+      setNewWorkflow({
+        name: '',
+        trigger: 'appointment_reminder',
+        templateId: '',
+        enabled: true,
+        timing: '24h_before',
+      });
+      
+      toast({
+        title: t('communications.toast.workflow_created') || 'Workflow Created',
+        description: t('communications.toast.workflow_created_desc') || 'Your automated workflow has been created.',
+      });
+    } catch (error) {
+      toast({ 
+        title: t('communications.toast.error_creating_workflow') || 'Error creating workflow', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleToggleWorkflow = async (workflow: AutomatedWorkflow) => {
+    try {
+      const updatedWorkflow = { ...workflow, enabled: !workflow.enabled };
+      await setDocument('workflows', workflow.id, updatedWorkflow);
+      setWorkflows(prev => prev.map(w => w.id === workflow.id ? updatedWorkflow : w));
+      
+      toast({
+        title: updatedWorkflow.enabled 
+          ? (t('communications.toast.workflow_enabled') || 'Workflow Enabled')
+          : (t('communications.toast.workflow_disabled') || 'Workflow Disabled'),
+      });
+    } catch (error) {
+      toast({ 
+        title: t('communications.toast.error_updating_workflow') || 'Error updating workflow', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleDeleteWorkflow = async (workflowId: string) => {
+    try {
+      await deleteDocument('workflows', workflowId);
+      setWorkflows(prev => prev.filter(w => w.id !== workflowId));
+      
+      toast({
+        title: t('communications.toast.workflow_deleted') || 'Workflow Deleted',
+        variant: 'destructive',
+      });
+    } catch (error) {
+      toast({ 
+        title: t('communications.toast.error_deleting_workflow') || 'Error deleting workflow', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const getTriggerLabel = (trigger: AutomatedWorkflow['trigger']) => {
+    const labels: Record<AutomatedWorkflow['trigger'], string> = {
+      appointment_reminder: t('communications.trigger_appointment_reminder') || 'Appointment Reminder',
+      appointment_confirmation: t('communications.trigger_appointment_confirmation') || 'Appointment Confirmation',
+      appointment_followup: t('communications.trigger_appointment_followup') || 'Appointment Follow-up',
+      new_patient_welcome: t('communications.trigger_new_patient_welcome') || 'New Patient Welcome',
+      birthday_greeting: t('communications.trigger_birthday_greeting') || 'Birthday Greeting',
+    };
+    return labels[trigger];
+  };
+
+  const getTimingLabel = (timing?: string) => {
+    const labels: Record<string, string> = {
+      '24h_before': t('communications.timing_24h_before') || '24 hours before',
+      '1h_before': t('communications.timing_1h_before') || '1 hour before',
+      'on_day': t('communications.timing_on_day') || 'On the day',
+      '1h_after': t('communications.timing_1h_after') || '1 hour after',
+      '24h_after': t('communications.timing_24h_after') || '24 hours after',
+      'immediately': t('communications.timing_immediately') || 'Immediately',
+    };
+    return timing ? labels[timing] || timing : '';
+  };
+
+  const getTriggerIcon = (trigger: AutomatedWorkflow['trigger']) => {
+    switch (trigger) {
+      case 'appointment_reminder':
+      case 'appointment_confirmation':
+      case 'appointment_followup':
+        return <Calendar className="h-4 w-4" />;
+      case 'new_patient_welcome':
+        return <UserPlus className="h-4 w-4" />;
+      case 'birthday_greeting':
+        return <Bell className="h-4 w-4" />;
+      default:
+        return <Zap className="h-4 w-4" />;
+    }
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -253,7 +422,7 @@ export default function CommunicationsPage() {
               {/* Right side: Action Buttons */}
               <div className="flex flex-wrap gap-3">
                 <NewTemplateDialog onSave={handleSaveTemplate} />
-                <NewMessageDialog onSend={handleSendMessage} />
+                <NewMessageDialog onSend={handleSendMessage} templates={templates} />
               </div>
             </div>
           </div>
@@ -561,7 +730,7 @@ export default function CommunicationsPage() {
                     </CardContent>
                     
                     <CardFooter className="flex justify-end gap-2 p-3 sm:p-4 pt-0 relative z-10">
-                      <Button variant="outline" size="sm" disabled className="font-bold border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                      <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template)} className="font-bold border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
                         <Pencil className={cn(isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2', 'h-3 w-3')} />
                         <span className="hidden sm:inline">{t('communications.edit')}</span>
                       </Button>
@@ -594,20 +763,269 @@ export default function CommunicationsPage() {
             )}
           </TabsContent>
           <TabsContent value="automated" className="mt-0">
-            <Card className="border-2 border-dashed border-muted shadow-xl">
-              <CardContent className="h-48 text-center flex items-center justify-center p-6">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
-                    <div className="relative p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 to-pink-500/10">
-                      <Zap className="h-12 w-12 text-orange-500" />
+            <Card className="border-2 border-muted/50 shadow-xl bg-gradient-to-br from-background/95 via-background to-background/95 backdrop-blur-xl">
+              <CardHeader className="p-4 sm:p-6 border-b-2 border-muted/30">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500/10 to-pink-500/10">
+                      <Zap className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-orange-600 to-pink-600 dark:from-orange-400 dark:to-pink-400 bg-clip-text text-transparent">
+                        {t('communications.automated_workflows_title') || 'Automated Workflows'}
+                      </CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        {t('communications.automated_workflows_desc') || 'Set up automatic messages for appointments and patient events'}
+                      </CardDescription>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold mb-1">{t('communications.no_automated_messages')}</h3>
-                    <p className="text-xs text-muted-foreground">Automated workflows coming soon</p>
-                  </div>
+                  <Dialog open={workflowDialogOpen} onOpenChange={setWorkflowDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="font-bold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t('communications.create_workflow') || 'Create Workflow'}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]" dir={isRTL ? 'rtl' : 'ltr'}>
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Zap className="h-5 w-5 text-orange-500" />
+                          {t('communications.create_workflow') || 'Create Workflow'}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {t('communications.create_workflow_desc') || 'Set up an automated message workflow'}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label>{t('communications.workflow_name') || 'Workflow Name'} *</Label>
+                          <Input 
+                            value={newWorkflow.name || ''} 
+                            onChange={(e) => setNewWorkflow(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder={t('communications.workflow_name_placeholder') || 'e.g., 24h Appointment Reminder'}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('communications.trigger') || 'Trigger'} *</Label>
+                          <Select 
+                            value={newWorkflow.trigger} 
+                            onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, trigger: value as AutomatedWorkflow['trigger'] }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('communications.select_trigger') || 'Select trigger'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="appointment_reminder">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  {t('communications.trigger_appointment_reminder') || 'Appointment Reminder'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="appointment_confirmation">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  {t('communications.trigger_appointment_confirmation') || 'Appointment Confirmation'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="appointment_followup">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  {t('communications.trigger_appointment_followup') || 'Appointment Follow-up'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="new_patient_welcome">
+                                <div className="flex items-center gap-2">
+                                  <UserPlus className="h-4 w-4" />
+                                  {t('communications.trigger_new_patient_welcome') || 'New Patient Welcome'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="birthday_greeting">
+                                <div className="flex items-center gap-2">
+                                  <Bell className="h-4 w-4" />
+                                  {t('communications.trigger_birthday_greeting') || 'Birthday Greeting'}
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('communications.timing') || 'Timing'}</Label>
+                          <Select 
+                            value={newWorkflow.timing} 
+                            onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, timing: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('communications.select_timing') || 'Select timing'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="24h_before">{t('communications.timing_24h_before') || '24 hours before'}</SelectItem>
+                              <SelectItem value="1h_before">{t('communications.timing_1h_before') || '1 hour before'}</SelectItem>
+                              <SelectItem value="on_day">{t('communications.timing_on_day') || 'On the day'}</SelectItem>
+                              <SelectItem value="immediately">{t('communications.timing_immediately') || 'Immediately'}</SelectItem>
+                              <SelectItem value="1h_after">{t('communications.timing_1h_after') || '1 hour after'}</SelectItem>
+                              <SelectItem value="24h_after">{t('communications.timing_24h_after') || '24 hours after'}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('communications.template') || 'Template'} *</Label>
+                          <Select 
+                            value={newWorkflow.templateId} 
+                            onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, templateId: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('communications.select_template') || 'Select a template'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {templates.length > 0 ? (
+                                templates.map((template) => (
+                                  <SelectItem key={template.id} value={template.id}>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs px-1.5 py-0.5 rounded ${template.type === 'Email' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                        {template.type}
+                                      </span>
+                                      <span>{template.name}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="" disabled>
+                                  {t('communications.no_templates_available') || 'No templates available'}
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          {templates.length === 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {t('communications.create_template_first') || 'Please create a template first'}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label>{t('communications.enabled') || 'Enabled'}</Label>
+                          <Switch 
+                            checked={newWorkflow.enabled} 
+                            onCheckedChange={(checked) => setNewWorkflow(prev => ({ ...prev, enabled: checked }))}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setWorkflowDialogOpen(false)}>
+                          {t('common.cancel')}
+                        </Button>
+                        <Button onClick={handleCreateWorkflow} disabled={templates.length === 0}>
+                          {t('communications.create_workflow') || 'Create Workflow'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                {loading ? (
+                  <div className="flex items-center justify-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                  </div>
+                ) : workflows.length > 0 ? (
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {workflows.map((workflow) => {
+                      const template = templates.find(t => t.id === workflow.templateId);
+                      return (
+                        <Card key={workflow.id} className={cn(
+                          "group relative flex flex-col overflow-hidden border-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]",
+                          workflow.enabled 
+                            ? "border-green-300 dark:border-green-700 bg-gradient-to-br from-green-50/50 to-transparent dark:from-green-950/20" 
+                            : "border-muted hover:border-orange-300 dark:hover:border-orange-700"
+                        )}>
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                          
+                          <CardHeader className="p-3 sm:p-4 relative z-10">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "p-2 rounded-lg",
+                                  workflow.enabled ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"
+                                )}>
+                                  {getTriggerIcon(workflow.trigger)}
+                                </div>
+                                <div>
+                                  <CardTitle className="text-sm font-bold truncate">
+                                    {workflow.name}
+                                  </CardTitle>
+                                  <p className="text-xs text-muted-foreground">
+                                    {getTriggerLabel(workflow.trigger)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={workflow.enabled} 
+                                onCheckedChange={() => handleToggleWorkflow(workflow)}
+                              />
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="flex-grow p-3 sm:p-4 pt-0 relative z-10">
+                            <div className="space-y-2">
+                              {workflow.timing && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-muted-foreground">{getTimingLabel(workflow.timing)}</span>
+                                </div>
+                              )}
+                              <div className="p-2 rounded-lg bg-muted/30">
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">{t('communications.template')}:</span>{' '}
+                                  {template?.name || t('communications.template_not_found') || 'Template not found'}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                          
+                          <CardFooter className="flex justify-between items-center gap-2 p-3 sm:p-4 pt-0 relative z-10">
+                            <Badge variant={workflow.enabled ? "default" : "secondary"} className="text-xs">
+                              {workflow.enabled ? (
+                                <><Play className="h-3 w-3 mr-1" />{t('communications.active') || 'Active'}</>
+                              ) : (
+                                <><Pause className="h-3 w-3 mr-1" />{t('communications.paused') || 'Paused'}</>
+                              )}
+                            </Badge>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDeleteWorkflow(workflow.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-48 gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
+                      <div className="relative p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 to-pink-500/10">
+                        <Zap className="h-12 w-12 text-orange-500" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-sm font-bold mb-1">{t('communications.no_automated_messages')}</h3>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        {t('communications.create_first_workflow') || 'Create your first automated workflow to get started'}
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setWorkflowDialogOpen(true)}
+                        className="font-bold"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t('communications.create_workflow') || 'Create Workflow'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -628,6 +1046,19 @@ export default function CommunicationsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Template Dialog */}
+      <NewTemplateDialog 
+        onSave={handleSaveTemplate}
+        onUpdate={handleUpdateTemplate}
+        editTemplate={templateToEdit}
+        mode="edit"
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setTemplateToEdit(null);
+        }}
+      />
 
     </DashboardLayout>
   );
