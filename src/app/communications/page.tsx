@@ -73,6 +73,7 @@ export default function CommunicationsPage() {
     timing: '24h_before',
   });
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('history');
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
   const getStatusLabel = React.useCallback((status: string) => {
@@ -435,10 +436,12 @@ export default function CommunicationsPage() {
             const cardStyle = cardStyles[index % cardStyles.length];
             const icons = [Send, CheckCircle2, TrendingUp, Zap];
             const Icon = icons[index % icons.length];
+            const tabTargets = ['history', 'templates', 'history', 'automated'];
             
             return (
               <Card 
                 key={stat.title}
+                onClick={() => setActiveTab(tabTargets[index])}
                 className={cn(
                   "relative overflow-hidden border-0 shadow-sm transition-all duration-500 hover:scale-105 cursor-pointer group min-h-0",
                   cardStyle
@@ -453,7 +456,7 @@ export default function CommunicationsPage() {
                       <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide leading-tight mb-1">
                         {stat.title}
                       </CardTitle>
-                      <div className="text-lg font-bold text-white drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100 drop-shadow-md leading-tight group-hover:scale-110 transition-transform duration-300">
                         {stat.value}
                       </div>
                     </div>
@@ -474,7 +477,7 @@ export default function CommunicationsPage() {
         </div>
 
         {/* Ultra Enhanced Tabs */}
-        <Tabs defaultValue="history" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl blur-xl"></div>
             <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-3 shadow-lg">
