@@ -384,6 +384,33 @@ export default function CommunicationsPage() {
     }
   };
 
+  const [processingWorkflows, setProcessingWorkflows] = React.useState(false);
+  
+  const handleRunWorkflows = async () => {
+    setProcessingWorkflows(true);
+    try {
+      const response = await fetch('/api/workflows/process', { method: 'POST' });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: t('communications.toast.workflows_processed') || 'Workflows Processed',
+          description: data.message,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to process workflows');
+      }
+    } catch (error: any) {
+      toast({
+        title: t('communications.toast.error_processing_workflows') || 'Error Processing Workflows',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingWorkflows(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <main className="flex w-full flex-1 flex-col gap-6 sm:gap-8 p-6 sm:p-8 max-w-screen-2xl mx-auto relative" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -782,13 +809,27 @@ export default function CommunicationsPage() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Dialog open={workflowDialogOpen} onOpenChange={setWorkflowDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="font-bold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {t('communications.create_workflow') || 'Create Workflow'}
-                      </Button>
-                    </DialogTrigger>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRunWorkflows}
+                      disabled={processingWorkflows || workflows.filter(w => w.enabled).length === 0}
+                      className="font-bold"
+                    >
+                      {processingWorkflows ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      {t('communications.run_now') || 'Run Now'}
+                    </Button>
+                    <Dialog open={workflowDialogOpen} onOpenChange={setWorkflowDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="font-bold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
+                          <Plus className="h-4 w-4 mr-2" />
+                          {t('communications.create_workflow') || 'Create Workflow'}
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px]" dir={isRTL ? 'rtl' : 'ltr'}>
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -922,6 +963,7 @@ export default function CommunicationsPage() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
