@@ -78,6 +78,7 @@ export default function ReferralsPage() {
 
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [activeTab, setActiveTab] = React.useState('outgoing');
   const [specialistSearchTerm, setSpecialistSearchTerm] = React.useState('');
   const [referralToView, setReferralToView] = React.useState<Referral | null>(null);
   const [specialistToEdit, setSpecialistToEdit] = React.useState<Specialist | null>(null);
@@ -346,24 +347,24 @@ export default function ReferralsPage() {
         </div>
 
         {/* Ultra Enhanced Stats Cards */}
-        <div className="grid gap-1.5 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {referralPageStats.map((stat, index) => {
             const cardStyles = ['metric-card-blue', 'metric-card-green', 'metric-card-orange', 'metric-card-purple'];
             const cardStyle = cardStyles[index % cardStyles.length];
             const icons = [Activity, Clock, CheckCircle2, Users];
             const Icon = icons[index % icons.length];
-            const isActive = stat.filter === 'network' ? false : statusFilter === stat.filter;
+            const isActive = stat.filter === 'network' 
+              ? activeTab === 'network' 
+              : (statusFilter === stat.filter && activeTab === 'outgoing');
             
             const handleCardClick = () => {
               if (stat.filter === 'network') {
                 // Switch to network tab
-                const networkTab = document.querySelector('[value="network"]') as HTMLButtonElement;
-                if (networkTab) networkTab.click();
+                setActiveTab('network');
               } else {
                 setStatusFilter(stat.filter);
-                // Switch to outgoing tab if not already there
-                const outgoingTab = document.querySelector('[value="outgoing"]') as HTMLButtonElement;
-                if (outgoingTab) outgoingTab.click();
+                // Switch to outgoing tab
+                setActiveTab('outgoing');
               }
             };
             
@@ -408,7 +409,7 @@ export default function ReferralsPage() {
         </div>
 
         {/* Ultra Enhanced Tabs */}
-        <Tabs defaultValue="outgoing" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-cyan-500/5 rounded-2xl blur-xl"></div>
             <TabsList className="relative bg-background/80 backdrop-blur-xl border-2 border-muted/50 p-1.5 rounded-2xl grid w-full grid-cols-2 lg:grid-cols-4 shadow-lg">
