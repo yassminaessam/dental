@@ -32,7 +32,8 @@ import {
   HeadphonesIcon,
   LifeBuoy,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Download
 } from 'lucide-react';
 import {
   Accordion,
@@ -53,6 +54,32 @@ export default function HelpPage() {
   const [chatOpen, setChatOpen] = React.useState(false);
 
   const handlePrint = () => typeof window !== 'undefined' && window.print();
+
+  const handleDownloadPDF = async () => {
+    const pdfUrl = 'https://dental.adsolutions-eg.com/assets/pdf/Cairo Dental Clinic.pdf';
+    try {
+      // Fetch the PDF file
+      const response = await fetch(pdfUrl);
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+      const blob = await response.blob();
+      
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Cairo Dental Clinic User Guide.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      // Fallback: open in new tab if download fails
+      window.open(pdfUrl, '_blank');
+    }
+  };
 
   type SectionData = {
     id: string;
@@ -612,8 +639,12 @@ export default function HelpPage() {
               <div className="text-center space-y-4">
                 <h4 className="font-bold text-xl">{t('page.help.additional_resources')}</h4>
                 <div className="flex flex-wrap justify-center gap-4">
-                  <Button variant="outline" className="gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/30">
-                    <FileText className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                    onClick={handleDownloadPDF}
+                  >
+                    <Download className="h-4 w-4" />
                     <span>{t('page.help.user_guide_pdf')}</span>
                   </Button>
                   <Button variant="outline" className="gap-2 hover:bg-purple-50 dark:hover:bg-purple-950/30">
