@@ -55,30 +55,16 @@ export default function HelpPage() {
 
   const handlePrint = () => typeof window !== 'undefined' && window.print();
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     const pdfUrl = 'https://dental.adsolutions-eg.com/assets/pdf/Cairo Dental Clinic.pdf';
-    try {
-      // Fetch the PDF file
-      const response = await fetch(pdfUrl);
-      if (!response.ok) {
-        throw new Error('Failed to download PDF');
-      }
-      const blob = await response.blob();
-      
-      // Create a download link and trigger download
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'Cairo Dental Clinic User Guide.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      // Fallback: open in new tab if download fails
-      window.open(pdfUrl, '_blank');
-    }
+    // Create a direct download link - works in all browsers without popup blockers
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = 'Cairo Dental Clinic User Guide.pdf';
+    link.target = '_self'; // Stay in same tab to avoid popup blockers
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   type SectionData = {
