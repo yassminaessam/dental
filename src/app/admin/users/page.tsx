@@ -42,10 +42,14 @@ const ALL_PERMISSIONS: UserPermission[] = [
   'view_appointments', 'edit_appointments', 'delete_appointments',
   'view_treatments', 'edit_treatments', 'delete_treatments',
   'view_billing', 'edit_billing', 'delete_billing',
+  'view_wallets', 'edit_wallets', 'delete_wallets',
   'view_reports', 'edit_reports',
   'view_staff', 'edit_staff', 'delete_staff',
+  'view_attendance', 'edit_attendance', 'delete_attendance',
   'view_inventory', 'edit_inventory', 'delete_inventory',
+  'view_lab_management', 'edit_lab_management', 'delete_lab_management',
   'view_settings', 'edit_settings',
+  'view_website_edit', 'edit_website_edit',
   'view_medical_records', 'edit_medical_records',
   'view_dental_chart', 'edit_dental_chart',
   'view_communications', 'send_communications',
@@ -713,16 +717,20 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
       'appointments': [],
       'treatments': [],
       'billing': [],
+      'wallets': [],
       'financial': [],
       'reports': [],
       'staff': [],
+      'attendance': [],
       'inventory': [],
+      'lab_management': [],
       'pharmacy': [],
       'prescriptions': [],
       'purchase_orders': [],
       'suppliers': [],
       'referrals': [],
       'settings': [],
+      'website_edit': [],
       'medical_records': [],
       'dental_chart': [],
       'communications': [],
@@ -740,16 +748,20 @@ function CreateUserForm({ onSubmit }: { onSubmit: (data: RegisterData & { permis
       else if (permission.includes('patient')) groups['patients'].push(permission);
       else if (permission.includes('appointment')) groups['appointments'].push(permission);
       else if (permission.includes('treatment')) groups['treatments'].push(permission);
+      else if (permission.includes('wallet')) groups['wallets'].push(permission);
       else if (permission.includes('billing')) groups['billing'].push(permission);
       else if (permission.includes('financial')) groups['financial'].push(permission);
       else if (permission.includes('report')) groups['reports'].push(permission);
+      else if (permission.includes('attendance')) groups['attendance'].push(permission);
       else if (permission.includes('staff')) groups['staff'].push(permission);
+      else if (permission.includes('lab_management')) groups['lab_management'].push(permission);
       else if (permission.includes('inventory')) groups['inventory'].push(permission);
       else if (permission.includes('pharmacy')) groups['pharmacy'].push(permission);
       else if (permission.includes('prescription')) groups['prescriptions'].push(permission);
       else if (permission.includes('purchase_order')) groups['purchase_orders'].push(permission);
       else if (permission.includes('supplier')) groups['suppliers'].push(permission);
       else if (permission.includes('referral')) groups['referrals'].push(permission);
+      else if (permission.includes('website_edit')) groups['website_edit'].push(permission);
       else if (permission.includes('settings')) groups['settings'].push(permission);
       else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
       else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
@@ -999,16 +1011,20 @@ function UserDetailsView({
       'appointments': [],
       'treatments': [],
       'billing': [],
+      'wallets': [],
       'financial': [],
       'reports': [],
       'staff': [],
+      'attendance': [],
       'inventory': [],
+      'lab_management': [],
       'pharmacy': [],
       'prescriptions': [],
       'purchase_orders': [],
       'suppliers': [],
       'referrals': [],
       'settings': [],
+      'website_edit': [],
       'medical_records': [],
       'dental_chart': [],
       'communications': [],
@@ -1026,16 +1042,20 @@ function UserDetailsView({
       else if (permission.includes('patient')) groups['patients'].push(permission);
       else if (permission.includes('appointment')) groups['appointments'].push(permission);
       else if (permission.includes('treatment')) groups['treatments'].push(permission);
+      else if (permission.includes('wallet')) groups['wallets'].push(permission);
       else if (permission.includes('billing')) groups['billing'].push(permission);
       else if (permission.includes('financial')) groups['financial'].push(permission);
       else if (permission.includes('report')) groups['reports'].push(permission);
+      else if (permission.includes('attendance')) groups['attendance'].push(permission);
       else if (permission.includes('staff')) groups['staff'].push(permission);
+      else if (permission.includes('lab_management')) groups['lab_management'].push(permission);
       else if (permission.includes('inventory')) groups['inventory'].push(permission);
       else if (permission.includes('pharmacy')) groups['pharmacy'].push(permission);
       else if (permission.includes('prescription')) groups['prescriptions'].push(permission);
       else if (permission.includes('purchase_order')) groups['purchase_orders'].push(permission);
       else if (permission.includes('supplier')) groups['suppliers'].push(permission);
       else if (permission.includes('referral')) groups['referrals'].push(permission);
+      else if (permission.includes('website_edit')) groups['website_edit'].push(permission);
       else if (permission.includes('settings')) groups['settings'].push(permission);
       else if (permission.includes('medical_records')) groups['medical_records'].push(permission);
       else if (permission.includes('dental_chart')) groups['dental_chart'].push(permission);
