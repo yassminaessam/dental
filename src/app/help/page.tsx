@@ -52,6 +52,9 @@ export default function HelpPage() {
   const [query, setQuery] = React.useState('');
   const [showTop, setShowTop] = React.useState(false);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [isTocFixed, setIsTocFixed] = React.useState(false);
+  const faqSectionRef = React.useRef<HTMLDivElement>(null);
+  const tocContainerRef = React.useRef<HTMLElement>(null);
 
   const handlePrint = () => typeof window !== 'undefined' && window.print();
 
@@ -166,7 +169,16 @@ export default function HelpPage() {
   }, [filtered]);
 
   React.useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 400);
+    const onScroll = () => {
+      setShowTop(window.scrollY > 400);
+      
+      // Check if we've scrolled past the FAQ section
+      if (faqSectionRef.current && tocContainerRef.current) {
+        const faqRect = faqSectionRef.current.getBoundingClientRect();
+        // TOC becomes fixed when FAQ section's bottom is above the viewport top (with some offset)
+        setIsTocFixed(faqRect.bottom < 100);
+      }
+    };
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -409,7 +421,7 @@ export default function HelpPage() {
         </div>
 
         {/* FAQ Section */}
-        <Card className="border-2 border-muted shadow-xl bg-gradient-to-br from-background via-amber-50/20 to-orange-50/10 dark:via-amber-950/10 dark:to-orange-950/5">
+        <Card ref={faqSectionRef} className="border-2 border-muted shadow-xl bg-gradient-to-br from-background via-amber-50/20 to-orange-50/10 dark:via-amber-950/10 dark:to-orange-950/5">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
@@ -484,9 +496,12 @@ export default function HelpPage() {
 
         {/* Content Layout */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 relative">
-          {/* Sidebar - Fixed TOC */}
-          <aside className="lg:w-72 lg:shrink-0 print:hidden">
-            <nav className="lg:fixed lg:w-72 lg:top-24 border-2 border-muted rounded-2xl p-6 bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-xl shadow-xl max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent hover:scrollbar-thumb-blue-500/40 transition-colors">
+          {/* Sidebar - Fixed TOC after FAQ section */}
+          <aside ref={tocContainerRef} className="lg:w-72 lg:shrink-0 print:hidden">
+            <nav className={cn(
+              "border-2 border-muted rounded-2xl p-6 bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-xl shadow-xl max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent hover:scrollbar-thumb-blue-500/40 transition-all duration-300",
+              isTocFixed ? "lg:fixed lg:w-72 lg:top-24" : "lg:sticky lg:top-4"
+            )}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
