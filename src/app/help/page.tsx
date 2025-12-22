@@ -483,10 +483,10 @@ export default function HelpPage() {
         </Card>
 
         {/* Content Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Sidebar */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 relative">
+          {/* Sidebar - Fixed TOC */}
           <aside className="lg:w-72 lg:shrink-0 print:hidden">
-            <nav className="sticky top-4 border-2 border-muted rounded-2xl p-6 bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-xl shadow-xl max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <nav className="lg:fixed lg:w-72 lg:top-24 border-2 border-muted rounded-2xl p-6 bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-xl shadow-xl max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent hover:scrollbar-thumb-blue-500/40 transition-colors">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
