@@ -246,7 +246,7 @@ export default function DentalChartPage() {
                 body: JSON.stringify({
                     patient: data.patientName,
                     patientId: data.patient,
-                    type: data.type,
+                    type: data.type || 'clinical',
                     imageUrl: data.imageUrl,
                     caption: data.caption || '',
                     date: new Date().toISOString(),
