@@ -9,42 +9,15 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    // Allow images from any HTTPS domain
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'dental.adsolutions-eg.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'sysdental1.adsolutions-eg.com',
-        port: '',
-        pathname: '/**',
+        hostname: '**',
       },
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '',
-        pathname: '/**',
       },
     ],
   },
